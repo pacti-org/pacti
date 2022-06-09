@@ -1,9 +1,9 @@
 
 #include <ppl.hh>
-#include <iostream>
-#include <unordered_set>
+//#include <iostream>
 #include <cassert>
 #include "mathset.h"
+#include "designvar.h"
 
 #define NDEBUG
 
@@ -39,46 +39,6 @@ print_constraints(const Polyhedron& ph,
 
 
 
-class variable
-{
-private:
-public:
-  string name;
-  variable(string name);
-  bool operator==(const variable & other) const;
-  friend ostream& operator<<(ostream& os, const variable& var);
-};
-
-variable::variable(string name)
-{
-  this->name = name;
-}
-
-
-bool variable::operator==(const variable & other) const {
-  return this->name == other.name;
-}
-
-ostream& operator<<(ostream& os, const variable& var)
-{
-    os << "Var: " << var.name << " ";
-    return os;
-}
-
-// custom specialization of std::hash can be injected in namespace std
-template<>
-struct std::hash<variable>
-{
-    std::size_t operator()(variable const& s) const noexcept
-    {
-        std::size_t h1 = std::hash<std::string>{}(s.name);
-        return h1; // or use boost::hash_combine
-    }
-};
-
-using VarSet = mathset<variable>;
-
-
 class Term
 {
 private:
@@ -86,7 +46,7 @@ private:
 public:
   virtual VarSet* getvars() const = 0;
   virtual bool operator==(const Term & other) const = 0;
-  virtual void eliminateVariable(variable& var) = 0;
+  virtual void eliminateVariable(designvar& var) = 0;
   /* This is a string that will be hashed to implement unordered lists */
   virtual string hashstr() const = 0;
   virtual ~Term();
@@ -277,9 +237,9 @@ int main() {
     hola5->print();
 
     // creating a set of variables
-    mathset<variable> * varset = new mathset<variable>;
-    varset->insert(variable("a"));
-    varset->insert(variable("b"));
+    mathset<designvar> * varset = new mathset<designvar>;
+    varset->insert(designvar("a"));
+    varset->insert(designvar("b"));
     varset->print();
     
 
