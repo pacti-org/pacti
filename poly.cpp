@@ -3,7 +3,7 @@
 #include <iostream>
 #include <unordered_set>
 #include <cassert>
-
+#include "mathset.h"
 
 #define NDEBUG
 
@@ -36,100 +36,6 @@ print_constraints(const Polyhedron& ph,
                   const std::string& intro) {
   print_constraints(ph.constraints(), intro);
 }
-
-
-
-/* Implementations for set operations */
-template <class T>
-class mathset: public unordered_set<T> {
-    public:
-    using unordered_set<T>::unordered_set;
-    /* Binary operations on sets */
-    mathset<T>* setint(const mathset<T> * other) const;
-    mathset<T>* setunion(const mathset<T> * other) const;
-    mathset<T>* setdiff(const mathset<T> * other) const;
-    /* Relations */
-    // say if set contains element
-    bool contains(const T* element) const;
-    // say if two sets are disjoint
-    bool isdisjoint(const mathset<T> * other) const; 
-    /* Printing. Depends on T supporting << */
-    void print();
-};
-
-template <class T>
-bool mathset<T>::contains(const T* element) const {
-  return this->find(*element) != this->end();
-}
-
-template <class T>
-bool mathset<T>::isdisjoint(const mathset<T> * other) const {
-  return this->setint(other)->empty();
-}
-
-
-template <class T>
-mathset<T>* mathset<T>::setint(const mathset<T> * other) const {
-  mathset<T> * result = new mathset<T>;
-  const mathset<T>* basea;
-  const mathset<T>* baseb;
-
-  basea = this;
-  baseb = other;
-  if (other->size() < this->size()) {
-    basea = other;
-    baseb = this; 
-  }
-
-  typename unordered_set<T> :: iterator itr;
-  
-  for (auto itr = basea->begin(); itr != basea->end(); itr++) {
-    if (baseb->contains(&*itr)) {
-      result->insert(*itr);
-    }
-  }
-  return result;
-}
-
-template <class T>
-mathset<T>* mathset<T>::setunion(const mathset<T> * other) const {
-  mathset<T> * result = new mathset<T>;
-
-  typename unordered_set<T> :: iterator itr;
-  for (auto itr = this->begin(); itr != this->end(); itr++) {
-    result->insert(*itr);
-  }
-  for (auto itr = other->begin(); itr != other->end(); itr++) {
-    result->insert(*itr);
-  }
-  return result;
-}
-
-template <class T>
-mathset<T>* mathset<T>::setdiff(const mathset<T> * other) const {
-  mathset<T> * result = new mathset<T>;
-
-  typename unordered_set<T> :: iterator itr;
-  for (auto itr = this->begin(); itr != this->end(); itr++) {
-    if (!other->contains(&*itr)) {
-      result->insert(*itr);
-    }
-  }
-  return result;
-}
-
-template <class T>
-void mathset<T>::print() {
-  typename unordered_set<T> :: iterator itr;
-  for (auto itr = this->begin(); itr != this->end(); itr++) {
-    cout << *itr << " ";
-  }
-  cout << "\n";
-}
-
-
-
-
 
 
 
@@ -211,7 +117,7 @@ class TermList: public mathset<Term*> {
 
 VarSet* TermList::getVars() const{
   VarSet* result = new VarSet();
-  typename unordered_set<Term*> :: iterator itr;
+  typename mathset<Term*> :: iterator itr;
   for (auto itr = this->begin(); itr != this->end(); itr++) {
     result = result->setunion((*itr)->getvars());
   }
@@ -222,7 +128,7 @@ TermList* TermList::getTermsWithVars(const VarSet & vars) {
   TermList* result;
   result->clear();
 
-  typename unordered_set<Term*> :: iterator itr;
+  typename mathset<Term*> :: iterator itr;
   for (auto itr = this->begin(); itr != this->end(); itr++) {
     if (! (*itr)->getvars()->isdisjoint(&vars)) {
       result->insert(*itr);
