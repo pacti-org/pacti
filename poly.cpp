@@ -4,9 +4,9 @@
 #include <cassert>
 #include "mathset.h"
 #include "designvar.h"
+#include "term.h"
 
 #define NDEBUG
-
 
 
 using namespace std;
@@ -39,71 +39,6 @@ print_constraints(const Polyhedron& ph,
 
 
 
-class Term
-{
-private:
-  /* data */
-public:
-  virtual VarSet* getvars() const = 0;
-  virtual bool operator==(const Term & other) const = 0;
-  virtual void eliminateVariable(designvar& var) = 0;
-  /* This is a string that will be hashed to implement unordered lists */
-  virtual string hashstr() const = 0;
-  virtual ~Term();
-};
-
-Term::~Term(){}
-
-// custom specialization of std::hash can be injected in namespace std
-template<>
-struct std::hash<Term>
-{
-    std::size_t operator()(Term const& s) const noexcept
-    {
-        std::size_t h1 = std::hash<std::string>{}(s.hashstr());
-        return h1; // or use boost::hash_combine
-    }
-};
-
-
-class TermList: public mathset<Term*> {
-  public:
-    VarSet* getVars() const;
-    VarSet* sharedVariables(const TermList* other) const;
-    TermList* getTermsWithVars(const VarSet & vars);
-    virtual TermList* simplifyWithTerms(const TermList* otherTems) const = 0;
-};
-
-
-VarSet* TermList::getVars() const{
-  VarSet* result = new VarSet();
-  typename mathset<Term*> :: iterator itr;
-  for (auto itr = this->begin(); itr != this->end(); itr++) {
-    result = result->setunion((*itr)->getvars());
-  }
-  return result;
-}
-
-TermList* TermList::getTermsWithVars(const VarSet & vars) {
-  TermList* result;
-  result->clear();
-
-  typename mathset<Term*> :: iterator itr;
-  for (auto itr = this->begin(); itr != this->end(); itr++) {
-    if (! (*itr)->getvars()->isdisjoint(&vars)) {
-      result->insert(*itr);
-    }
-  }
-  return result;
-}
-
-
-VarSet* TermList::sharedVariables(const TermList* other) const {
-  VarSet* varIntersection = this->getVars()->setint(other->getVars());
-  return varIntersection;
-}
-
-
 
 
 class IoContract
@@ -111,17 +46,17 @@ class IoContract
 private:
   VarSet* inputs;
   VarSet* outputs;
-  TermList* assumptions;
-  TermList* guarantees;
+  TermSet* assumptions;
+  TermSet* guarantees;
 public:
-  IoContract(VarSet* in, VarSet* out, TermList* assmpt, TermList* gtees) {
+  IoContract(VarSet* in, VarSet* out, TermSet* assmpt, TermSet* gtees) {
     inputs = in; outputs = out; assumptions = assmpt; guarantees = gtees;
   }
   //~IoContract();
   VarSet* getInputs() const {return this->inputs;}
   VarSet* getOutputs() const {return this->outputs;}
-  TermList* getAssumptions() const {return this->assumptions;}
-  TermList* getGuarantees() const {return this->guarantees;}
+  TermSet* getAssumptions() const {return this->assumptions;}
+  TermSet* getGuarantees() const {return this->guarantees;}
   IoContract* compose(IoContract * other);
 };
 
@@ -138,21 +73,21 @@ IoContract* IoContract::compose(IoContract* other) {
   both internal and output vars from the assumptions */
   VarSet* varsNotInAssumptions = outvars->setunion(internalvars);
   /* compute assumptions */
-  TermList* assumptions_a = this->getAssumptions();
-  TermList* assumptions_b = other->getAssumptions();
-  TermList* guarantees_a = this->getGuarantees();
-  TermList* guarantees_b = other->getGuarantees();
+  TermSet* assumptions_a = this->getAssumptions();
+  TermSet* assumptions_b = other->getAssumptions();
+  TermSet* guarantees_a = this->getGuarantees();
+  TermSet* guarantees_b = other->getGuarantees();
 
-  TermList* assumptions_comp;
+  TermSet* assumptions_comp;
   if (! assumptions_a->sharedVariables(guarantees_b)->setint(varsNotInAssumptions)->empty()) {
-    assumptions_comp = static_cast<TermList *> (assumptions_a->simplifyWithTerms(guarantees_b)->setunion(assumptions_b));
+    assumptions_comp = static_cast<TermSet *> (assumptions_a->simplifyWithTerms(guarantees_b, varsNotInAssumptions)->setunion(assumptions_b));
   } else if (! assumptions_b->sharedVariables(guarantees_a)->setint(varsNotInAssumptions)->empty())
   {
-    assumptions_comp = static_cast<TermList *> (assumptions_b->simplifyWithTerms(guarantees_a)->setunion(assumptions_a));
+    assumptions_comp = static_cast<TermSet *> (assumptions_b->simplifyWithTerms(guarantees_a, varsNotInAssumptions)->setunion(assumptions_a));
   }
   /* compute guarantees */
-  TermList* guarantees_comp;
-  guarantees_comp = static_cast<TermList *> (guarantees_a->setunion(guarantees_b))->simplifyWithTerms(assumptions_comp);
+  TermSet* guarantees_comp;
+  guarantees_comp = static_cast<TermSet *> (guarantees_a->setunion(guarantees_b))->simplifyWithTerms(assumptions_comp, internalvars);
 
   IoContract * result = new IoContract(invars, outvars, assumptions_comp, guarantees_comp);
   return result;
@@ -215,26 +150,24 @@ IoContract* IoContract::compose(IoContract* other) {
 
 
 int main() {
-    //unordered_set <int> hola;
-
-    mathset<int> *hola = new mathset<int>;
-    hola->insert(1);
-    hola->insert(2);
-    hola->insert(3);
-    hola->insert(5);
-    cout << "Hola\n";
-    hola->print();
-    mathset<int> * hola2 = new mathset<int> {2,3,3, 5, 4,5};
-    hola2->print();
-    mathset<int> *hola3 = hola->setint(hola2);
+    mathset<int> *test = new mathset<int>;
+    test->insert(1);
+    test->insert(2);
+    test->insert(3);
+    test->insert(5);
+    cout << "Tests begin\n";
+    test->print();
+    mathset<int> * test2 = new mathset<int> {2,3,3, 5, 4,5};
+    test2->print();
+    mathset<int> *test3 = test->setint(test2);
     cout << "Intersection is ";
-    hola3->print();
-    mathset<int> *hola4 = hola->setunion(hola2);
+    test3->print();
+    mathset<int> *test4 = test->setunion(test2);
     cout << "Union is ";
-    hola4->print();
-    mathset<int> *hola5 = hola->setdiff(hola2);
+    test4->print();
+    mathset<int> *test5 = test->setdiff(test2);
     cout << "Diff is ";
-    hola5->print();
+    test5->print();
 
     // creating a set of variables
     mathset<designvar> * varset = new mathset<designvar>;
