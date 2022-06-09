@@ -1,4 +1,3 @@
-
 #ifndef DESIGNVAR_H
 #define DESIGNVAR_H
 
@@ -10,9 +9,9 @@ class designvar
 private:
 public:
   std::string name;
-  designvar(std::string name);
-  bool operator==(const designvar & other) const;
-  friend std::ostream& operator<<(std::ostream& os, const designvar& var);
+  inline designvar(std::string name);
+  inline bool operator==(const designvar & other) const;
+  inline friend std::ostream& operator<<(std::ostream& os, const designvar& var);
 };
 
 designvar::designvar(std::string name)

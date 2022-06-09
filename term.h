@@ -15,7 +15,7 @@ public:
   virtual bool operator==(const Term & other) const = 0;
   /* This is a string that will be hashed to implement unordered lists */
   virtual std::string hashstr() const = 0;
-  virtual ~Term();
+  inline virtual ~Term();
 };
 
 Term::~Term(){}
@@ -35,9 +35,9 @@ struct std::hash<Term>
 
 class TermSet: public mathset<Term*> {
   public:
-    VarSet* getVars() const;
-    VarSet* sharedVariables(const TermSet* other) const;
-    TermSet* getTermsWithVars(const VarSet & vars);
+    inline VarSet* getVars() const;
+    inline VarSet* sharedVariables(const TermSet* other) const;
+    inline TermSet* getTermsWithVars(const VarSet & vars);
     virtual TermSet* simplifyWithTerms(const TermSet* otherTems, const VarSet* varsToElim) const = 0;
 };
 
