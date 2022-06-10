@@ -8,11 +8,11 @@
 
 CFLAGS = -lppl -lgmp -std=c++0x
 CC = g++
-SRC = poly.cpp iocontract.cpp
+SRC = contracttool.cpp iocontract.cpp
 OBJ = $(SRC:.cpp = .o)
 
 main: $(OBJ)
-	$(CC) $(OBJ) -o poly $(CFLAGS)
+	$(CC) $(OBJ) -o contracttool $(CFLAGS)
 
 clean:
 	rm -f core *.o
