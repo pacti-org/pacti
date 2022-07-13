@@ -70,14 +70,17 @@ int main() {
 
     pll::Variable x(0);
     pll::Variable y(1);
-    NNC_Polyhedron ph(4);
-    ph.add_constraint(y <= 10);
-    ph.add_constraint(x <= 5 + y);
-    ph.add_constraint(2*x >= y);
+    NNC_Polyhedron ph(3);
+    //ph.add_constraint(y <= 10);
+    //ph.add_constraint(x <= 5 + y);
+    //ph.add_constraint(2*x >= y);
+    //ph.add_constraint(y >= 2);
+    ph.add_constraint(x+ y <= 2);
     ph.add_constraint(y >= 2);
     print_constraints(ph, "** before removal **");
     pll::Variables_Set to_remove;
     to_remove.insert(y);
+    //to_remove.insert(x);
     ph.remove_space_dimensions(to_remove);
     print_constraints(ph, "** after removal **");
 
