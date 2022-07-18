@@ -30,16 +30,18 @@ std::ostream& operator<<(std::ostream& os, const designvar& var)
     return os;
 }
 
+namespace std {
 // custom specialization of std::hash can be injected in namespace std
 template<>
-struct std::hash<designvar>
+struct hash<designvar>
 {
-    std::size_t operator()(designvar const& s) const noexcept
+    size_t operator()(designvar const& s) const noexcept
     {
-        std::size_t h1 = std::hash<std::string>{}(s.name);
+        size_t h1 = hash<string>{}(s.name);
         return h1; // or use boost::hash_combine
     }
 };
+}
 
 using VarSet = mathset<designvar>;
 

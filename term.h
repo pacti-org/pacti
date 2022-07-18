@@ -20,17 +20,18 @@ public:
 
 Term::~Term(){}
 
+namespace std {
 // custom specialization of std::hash can be injected in namespace std
 template<>
-struct std::hash<Term>
+struct hash<Term>
 {
-    std::size_t operator()(Term const& s) const noexcept
+    size_t operator()(Term const& s) const noexcept
     {
-        std::size_t h1 = std::hash<std::string>{}(s.hashstr());
+        size_t h1 = hash<string>{}(s.hashstr());
         return h1; // or use boost::hash_combine
     }
 };
-
+}
 
 
 class TermSet: public mathset<Term*> {

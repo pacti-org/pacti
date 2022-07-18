@@ -6,7 +6,7 @@
 
 
 
-CFLAGS = -lppl -lgmp -std=c++0x
+CFLAGS = -lppl -lgmp -std=c++0x -fpermissive
 CC = g++
 SRC = contracttool.cpp iocontract.cpp
 OBJ = $(SRC:.cpp = .o)
