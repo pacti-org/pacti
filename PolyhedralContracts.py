@@ -1,8 +1,7 @@
 
-from aenum import constant
 import networkx as nx
 import sympy
-from uritemplate import variables
+
 
 class Number:
     def __init__(self, val):
@@ -41,7 +40,7 @@ class Term:
     # are the coefficients of those variables in the term, and (b) a constant.
     # The term is assumed to be in the form \Sigma_i a_i v_i + constant <= 0
     def __init__(self, variables, constant):
-        vars = {key:val for key, val in variables if val != 0}
+        vars = {key:val for key, val in variables.items() if val != 0}
         self.variables = vars
         self.constant = constant
 
@@ -60,13 +59,13 @@ class Term:
             return 0
 
     def getMatchingVars(self, varPol):
-        varSet = {}
+        varSet = set()
         for var in varPol.keys():
             if self.containsVar(var):
-                if self.getVarPolarity[var] == varPol[var]:
-                    varSet.append(var)
+                if self.getVarPolarity(var) == varPol[var]:
+                    varSet.add(var)
                 else:
-                    varSet = {}
+                    varSet = set()
                     break
         return varSet
         
@@ -84,7 +83,7 @@ class Term:
         vars = list(self.vars | other.vars)
         variables = {}
         for var in vars:
-            variables[var] = self.variables[var] + other.variables[var]
+            variables[var] = self.getVarCoeff(var) + other.getVarCoeff(var)
         return Term(variables, self.constant + other.constant)
 
     def removeVar(self, var):
@@ -92,15 +91,16 @@ class Term:
             self.variables.pop(var)
 
     def multiply(self, factor):
-        vars = self.variables.keys()
-        return Term(vars, [factor*self.variables[var] for var in vars], factor*self.constant)
+        return Term({key:factor*val for key,val in self.variables.items()}, factor*self.constant)
 
     # This routine accepts a variable to be substituted by a term and plugs in a subst term in place
     def substVar(self, var, substTerm):
         if self.containsVar(var):
             term = substTerm.multiply(self.getVarCoeff(var))
+            print("Term is " + str(term))
             self.removeVar(var)
-            return term + substTerm
+            print(self)
+            return self + term
         else:
             return self.copy()
         
@@ -110,7 +110,7 @@ class Term:
 
 
     def __str__(self) -> str:
-        res = " + ".join([str(self.variables[var])+var.val for var in self.variables.keys()])
+        res = " + ".join([str(self.variables[var])+"*"+var.val for var in self.variables.keys()])
         res += "<= " + str(self.constant)
         return res
     
@@ -122,6 +122,44 @@ class Term:
 
     def copy(self):
         return Term(self.variables, self.constant)
+
+    class Interfaces:
+        def termToSymb(term):
+            ex = 0
+            for var in term.vars:
+                sv = sympy.symbols(var.val)
+                ex += sv * term.getVarCoeff(var)
+            return ex
+        
+
+        def symbToTerm(expression):
+            exAry = expression.as_coefficients_dict()
+            keys = list(exAry.keys())
+            vars = {}
+            coeffs = []
+            constant = 0
+            for key in keys:
+                if key == 1:
+                    constant = exAry[key]
+                else:
+                    var = Var(str(key))
+                    vars[var] = exAry[key]
+            return Term(vars, constant)
+    
+
+    # This routine accepts a set of terms and a set of variables that should be optimized.
+    # ----------------------
+    # Inputs: the terms and the variables that will be optimized
+    # Assumptions: the number of equations matches the number of varsToElim contained in the terms
+    def getValuesOfVarsToElim(termsToUse, varsToElim):
+        print("GetVals: " + str(termsToUse) + " Vars: " + str(varsToElim))
+        varsToOpt = termsToUse.vars & varsToElim
+        assert len(termsToUse.terms) == len(varsToOpt)
+        exprs = [Term.Interfaces.termToSymb(term) for term in termsToUse.terms]
+        varsToSolve = [sympy.symbols(var.val) for var in varsToOpt]
+        sols = sympy.solve(exprs, *varsToSolve)
+        print(sols)
+        return {Var(str(key)):Term.Interfaces.symbToTerm(sols[key]) for key in sols.keys()}
 
 
 
@@ -168,76 +206,51 @@ class TermList:
         return TermList(self.terms)
 
 
-    # This routine accepts a set of terms and a set of variables that should be optimized.
-    # ----------------------
-    # Inputs: the terms and the variables that will be optimized
-    # Assumptions: the number of equations matches the number of varsToElim
-    def __getValuesOfVarsToElim(termsToUse, varsToElim):
-        def termToSymb(term):
-            ex = 0
-            for var in term.vars:
-                sv = sympy.symbols(var.val)
-                ex += sv * term.getVarCoeff(var)
-            return ex
-        
-
-        def symbToTerm(expression):
-            exAry = expression.as_coefficients_dictionary()
-            keys = list(exAry.keys())
-            vars = []
-            coeffs = []
-            for key in keys:
-                if key == 1:
-                    constant = exAry[key]
-                else:
-                    var = Var(str(key))
-                    vars.append(var)
-                    coeffs.append(exAry[key])
-            return Term(vars, coeffs, constant)
-
-        varsToOpt = Term.__getVars(termsToUse) & varsToElim
-        assert len(termsToUse) == len(varsToOpt)
-        exprs = [termToSymb(term) for term in termsToUse]
-        varsToSolve = [sympy.symbols(var.val) for var in varsToOpt]
-        sols = sympy.solve(exprs, *varsToSolve)
-        return {Var(str(key)):symbToTerm(sols[key]) for key in sols.keys()}
-
-
-
 
     # This routine accepts a term that will be adbuced with the help of other
     # terms The abduction aims to eliminate from the term appearances of the
     # variables contained in varsToElim
     def abduceWithHelpers(self, helperTerms:set, varsToElim:set):
+        print("Helper terms" + str(helperTerms))
+        print("Variables to eliminate: " + str(varsToElim))
         helpers = helperTerms.copy()
-        vars_elim = {}
-        for var in self.vars & varsToElim:
-            vars_elim[var] = self.getVarPolarity(var)
-        varsToCover = set(vars_elim.keys())
-        termsToUse = set()
-        
-        # now we have to choose from the helpers any terms that we can use to eliminate these variables
-        for term in helpers:
-            varsMatch = self.getMatchingVars(vars_elim)
-            if len(varsMatch & varsToCover) > 0:
-                varsToCover = varsToCover - varsMatch
-                termsToUse.add(term)
-                helpers.remove(term)
-                if len(varsToCover) == 0:
-                    break
+        for i, term in enumerate(self.terms):
+            print("Abducing " + str(term))
+            vars_elim = {}
+            for var in term.vars & varsToElim:
+                vars_elim[var] = term.getVarPolarity(var)
+            print("Vars to elim: " + str(vars_elim))
+            varsToCover = set(vars_elim.keys())
+            termsToUse = TermList(set())
+            
+            # now we have to choose from the helpers any terms that we can use to eliminate these variables
+            for helper in helpers.terms:
+                varsMatch = term.getMatchingVars(vars_elim)
+                if len(varsMatch & varsToCover) > 0:
+                    varsToCover = varsToCover - varsMatch
+                    termsToUse.terms.add(helper)
+                    helpers.terms.remove(helper)
+                    if len(varsToCover) == 0:
+                        break
 
-        # as long as we have more "to_elim" variables than terms, we seek additional terms. For now, we throw an error if we don't have enough terms
-        assert len(termsToUse) == len(Term.__getVars(termsToUse) & varsToElim)
-        
-        sols = Term.__getValuesOfVarsToElim(termsToUse, varsToElim)
-        for var in sols.keys():
-            self = self.substVar(var, sols[var])
+            print("TermsToUse: " + str(termsToUse))
+
+            # as long as we have more "to_elim" variables than terms, we seek additional terms. For now, we throw an error if we don't have enough terms
+            assert len(termsToUse.terms) == len(termsToUse.vars & varsToElim)
+            
+            sols = Term.getValuesOfVarsToElim(termsToUse, varsToElim)
+            print(sols)
+            for var in sols.keys():
+                term = term.substVar(var, sols[var])
+            self.terms[i] = term
+            
+            print("After subst: " + str(term))
 
         # the last step needs to be a simplication
         self.simplify()
 
 
-    def simplify():
+    def simplify(self):
         print("Term simplification not implemented yet")
 
 
@@ -286,6 +299,22 @@ class IoContract:
 
 
 if __name__ == '__main__':
+    terml_a = TermList([Term(variables={Var('o'):1}, constant=-1)])
+    terml_b = TermList([Term(variables={Var('i'):1,Var('o'):-1}, constant=0)])
+    print(terml_a)
+    print(terml_b)
+    terml_a.abduceWithHelpers(terml_b, {Var('o')})
+    print("Term after abduction")
+    print(terml_a)
+
+    terml_a = TermList([Term(variables={Var('o'):1}, constant=-1)])
+    terml_b = TermList([Term(variables={Var('i'):-1,Var('o'):1}, constant=0)])
+    print(terml_a)
+    print(terml_b)
+    terml_a.abduceWithHelpers(terml_b, {Var('o')})
+    print(terml_a)
+
+    exit()
     requirements = {Term.LT(Var("a"), 5), Term.LT(Var("a"), 6)}
     requirements = TermList(requirements)
     print(requirements)
