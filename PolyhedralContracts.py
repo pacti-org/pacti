@@ -1,9 +1,10 @@
 
-import networkx as nx
+#import networkx as nx
+import logging
 import sympy
-import polytope as pc
+#import polytope as pc
 import numpy as np
-import scipy
+import scipy.optimize
 
 class Number:
     def __init__(self, val):
@@ -60,11 +61,11 @@ class Term:
         else:
             return 0
 
-    def getMatchingVars(self, varPol):
+    def getMatchingVars(self, varPol, polarity=True):
         varSet = set()
         for var in varPol.keys():
             if self.containsVar(var):
-                if self.getVarPolarity(var) == varPol[var]:
+                if (self.getVarPolarity(var, True) == varPol[var]) or (self.getVarCoeff(var) == 0):
                     varSet.add(var)
                 else:
                     varSet = set()
@@ -76,8 +77,11 @@ class Term:
         return len(self.getMatchingVars(varPol)) > 0
 
 
-    def getVarPolarity(self, var):
-        return self.variables[var] > 0
+    def getVarPolarity(self, var, polarity=True):
+        if polarity:
+            return self.variables[var] >= 0
+        else:
+            return self.variables[var] <= 0
 
 
 
@@ -179,7 +183,26 @@ class Term:
             return {}
 
 
-
+def ReducePolytope(A:np.array, b:np.array):
+    n,m = A.shape
+    assert n == len(b)
+    if n <= 1:
+        return A, b
+    i = 0
+    A_temp = np.copy(A)
+    b_temp = np.copy(b)
+    while i < n:
+        objective = A_temp[i,:]
+        b_temp[i] += 1
+        res = scipy.optimize.linprog(c=b_temp, A_ub=A_temp, b_ub=b_temp)
+        b_temp[i] -= 1
+        if res['fun'] <= b_temp[i]:
+            A_temp = np.delete(A_temp, i, 0)
+            b_temp = np.delete(b_temp, i)
+            n -= 1
+        else:
+            i += 1
+    return A_temp, b_temp
 
 
 class TermList:
@@ -230,7 +253,7 @@ class TermList:
     # This routine accepts a term that will be adbuced with the help of other
     # terms The abduction aims to eliminate from the term appearances of the
     # variables contained in varsToElim
-    def abduceWithHelpers(self, helperTerms:set, varsToElim:set):
+    def transformWithHelpers(self, helperTerms:set, varsToElim:set, polarity:True):
         print("Helper terms" + str(helperTerms))
         print("Variables to eliminate: " + str(varsToElim))
         helpers = helperTerms.copy()
@@ -238,14 +261,14 @@ class TermList:
             print("Abducing " + str(term))
             vars_elim = {}
             for var in term.vars & varsToElim:
-                vars_elim[var] = term.getVarPolarity(var)
+                vars_elim[var] = term.getVarPolarity(var, polarity)
             print("Vars to elim: " + str(vars_elim))
             varsToCover = set(vars_elim.keys())
             termsToUse = TermList(set())
             
             # now we have to choose from the helpers any terms that we can use to eliminate these variables
             for helper in helpers.terms:
-                varsMatch = helper.getMatchingVars(vars_elim)
+                varsMatch = helper.getMatchingVars(vars_elim, polarity)
                 if len(varsMatch & varsToCover) > 0:
                     varsToCover = varsToCover - varsMatch
                     termsToUse.terms.add(helper)
@@ -269,13 +292,23 @@ class TermList:
         # the last step needs to be a simplication
         self.simplify()
 
+    
+    def abduceWithHelpers(self, helperTerms:set, varsToElim:set):
+        self.transformWithHelpers(helperTerms, varsToElim, True)
+
+    def deduceWithHelpers(self, helperTerms:set, varsToElim:set, polarity:True):
+        self.transformWithHelpers(helperTerms, varsToElim, False)
+        # eliminate terms containing the variables to be eliminated
+        termsToElim = self.getTermsWithVars(varsToElim)
+        self.terms = self.terms - termsToElim
+
 
     def simplify(self):
-        vars, polytope = TermList.Interfaces.termsToPolytope(self)
-        print("Polytope is " + str(polytope))
-        pol = pc.reduce(polytope)
-        print("Reduction: " + str(pol))
-        self = TermList.Interfaces.polytopeToTerms(pol, vars)
+        vars, A, b = TermList.Interfaces.termsToPolytope(self)
+        print("Polytope is " + str(A))
+        A_red, b_red = ReducePolytope(A, b)
+        print("Reduction: " + str(A_red))
+        self = TermList.Interfaces.polytopeToTerms(A_red, b_red, vars)
         print("Back to terms: " + str(self))
 
     class Interfaces:
@@ -291,14 +324,12 @@ class TermList:
             A = np.array(A)
             b = np.array(b)
             print("A is " + str(A))
-            return vars, pc.Polytope(A, b)
+            return vars, A, b
 
-        def polytopeToTerms(polytope:pc.Polytope, vars):
-            A = polytope.A
-            b = polytope.b
+        def polytopeToTerms(A, b, vars):
             termList = []
             print("&&&&&&&&&&")
-            print("Poly is " + str(polytope))
+            #print("Poly is " + str(polytope))
             print("A is " + str(A))
             n,m = A.shape
             for i in range(n):
