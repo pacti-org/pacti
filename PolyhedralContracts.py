@@ -1,7 +1,9 @@
 
 import networkx as nx
 import sympy
-
+import polytope as pc
+import numpy as np
+import scipy
 
 class Number:
     def __init__(self, val):
@@ -136,7 +138,6 @@ class Term:
             exAry = expression.as_coefficients_dict()
             keys = list(exAry.keys())
             vars = {}
-            coeffs = []
             constant = 0
             for key in keys:
                 if key == 1:
@@ -145,6 +146,19 @@ class Term:
                     var = Var(str(key))
                     vars[var] = exAry[key]
             return Term(vars, constant)
+
+
+        def termToPolytope(term, vars):
+            coeffs = []
+            for var in vars:
+                coeffs.append(term.getVarCoeff(var))
+            return coeffs, term.constant
+
+        def polytopeToTerm(poly, const, vars):
+            variables = {}
+            for i, var in enumerate(vars):
+                variables[var] = poly[i]
+            return Term(variables, const)
     
 
     # This routine accepts a set of terms and a set of variables that should be optimized.
@@ -159,7 +173,10 @@ class Term:
         varsToSolve = [sympy.symbols(var.val) for var in varsToOpt]
         sols = sympy.solve(exprs, *varsToSolve)
         print(sols)
-        return {Var(str(key)):Term.Interfaces.symbToTerm(sols[key]) for key in sols.keys()}
+        if len(sols) >0:
+            return {Var(str(key)):Term.Interfaces.symbToTerm(sols[key]) for key in sols.keys()}
+        else:
+            return {}
 
 
 
@@ -181,6 +198,9 @@ class TermList:
     def __str__(self) -> str:
         res = [str(el) for el in self.terms]
         return ", ".join(res)
+
+    def __eq__(self, other):
+        return (self.terms == other.terms)
 
 
 
@@ -225,7 +245,7 @@ class TermList:
             
             # now we have to choose from the helpers any terms that we can use to eliminate these variables
             for helper in helpers.terms:
-                varsMatch = term.getMatchingVars(vars_elim)
+                varsMatch = helper.getMatchingVars(vars_elim)
                 if len(varsMatch & varsToCover) > 0:
                     varsToCover = varsToCover - varsMatch
                     termsToUse.terms.add(helper)
@@ -251,7 +271,42 @@ class TermList:
 
 
     def simplify(self):
-        print("Term simplification not implemented yet")
+        vars, polytope = TermList.Interfaces.termsToPolytope(self)
+        print("Polytope is " + str(polytope))
+        pol = pc.reduce(polytope)
+        print("Reduction: " + str(pol))
+        self = TermList.Interfaces.polytopeToTerms(pol, vars)
+        print("Back to terms: " + str(self))
+
+    class Interfaces:
+        
+        def termsToPolytope(terms):
+            vars = list(terms.vars)
+            A = []
+            b = []
+            for term in terms.terms:
+                pol, coeff = Term.Interfaces.termToPolytope(term, vars)
+                A.append(pol)
+                b.append(coeff)
+            A = np.array(A)
+            b = np.array(b)
+            print("A is " + str(A))
+            return vars, pc.Polytope(A, b)
+
+        def polytopeToTerms(polytope:pc.Polytope, vars):
+            A = polytope.A
+            b = polytope.b
+            termList = []
+            print("&&&&&&&&&&")
+            print("Poly is " + str(polytope))
+            print("A is " + str(A))
+            n,m = A.shape
+            for i in range(n):
+                vect = list(A[i])
+                const = b[i]
+                term = Term.Interfaces.polytopeToTerm(vect, const, vars)
+                termList.append(term)
+            return TermList(termList)
 
 
 
@@ -299,20 +354,8 @@ class IoContract:
 
 
 if __name__ == '__main__':
-    terml_a = TermList([Term(variables={Var('o'):1}, constant=-1)])
-    terml_b = TermList([Term(variables={Var('i'):1,Var('o'):-1}, constant=0)])
-    print(terml_a)
-    print(terml_b)
-    terml_a.abduceWithHelpers(terml_b, {Var('o')})
-    print("Term after abduction")
-    print(terml_a)
 
-    terml_a = TermList([Term(variables={Var('o'):1}, constant=-1)])
-    terml_b = TermList([Term(variables={Var('i'):-1,Var('o'):1}, constant=0)])
-    print(terml_a)
-    print(terml_b)
-    terml_a.abduceWithHelpers(terml_b, {Var('o')})
-    print(terml_a)
+
 
     exit()
     requirements = {Term.LT(Var("a"), 5), Term.LT(Var("a"), 6)}
