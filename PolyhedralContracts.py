@@ -1,21 +1,10 @@
 
-#import networkx as nx
+
 import logging
 import sympy
-#import polytope as pc
 import numpy as np
 import scipy.optimize
 
-class Number:
-    def __init__(self, val):
-        self.value = val
-
-    @property
-    def val(self):
-        return self.value
-
-    def __str__(self):
-        return self.value
 
 class Var:
     def __init__(self, val):
@@ -183,18 +172,29 @@ class Term:
             return {}
 
 
-def ReducePolytope(A:np.array, b:np.array):
+def ReducePolytope(A:np.array, b:np.array, A_help:np.array=np.array([[]]), b_help:np.array=np.array([])):
     n,m = A.shape
+    n_h, m_h = A_help.shape
+    helperPresent = n_h*m_h > 0
     assert n == len(b)
-    if n <= 1:
+    assert n_h == len(b_help)
+    if helperPresent:
+        assert m_h == m
+    if n == 0:
         return A, b
+    if n == 1 and not helperPresent:
+        return A, b
+    
     i = 0
     A_temp = np.copy(A)
     b_temp = np.copy(b)
     while i < n:
         objective = A_temp[i,:]
         b_temp[i] += 1
-        res = scipy.optimize.linprog(c=b_temp, A_ub=A_temp, b_ub=b_temp)
+        if helperPresent:
+            res = scipy.optimize.linprog(c=b_temp, A_ub=np.concatenate((A_temp, A_help),axis=0), b_ub=np.concatenate((b_temp, b_help)))
+        else:
+            res = scipy.optimize.linprog(c=b_temp, A_ub=A_temp, b_ub=b_temp)
         b_temp[i] -= 1
         if res['fun'] <= b_temp[i]:
             A_temp = np.delete(A_temp, i, 0)
@@ -294,37 +294,49 @@ class TermList:
 
     
     def abduceWithHelpers(self, helperTerms:set, varsToElim:set):
+        self.simplify(helperTerms)
         self.transformWithHelpers(helperTerms, varsToElim, True)
 
     def deduceWithHelpers(self, helperTerms:set, varsToElim:set, polarity:True):
+        self.simplify(helperTerms)
         self.transformWithHelpers(helperTerms, varsToElim, False)
         # eliminate terms containing the variables to be eliminated
         termsToElim = self.getTermsWithVars(varsToElim)
-        self.terms = self.terms - termsToElim
+        self = self - termsToElim
 
 
-    def simplify(self):
-        vars, A, b = TermList.Interfaces.termsToPolytope(self)
+    def simplify(self, helpers=[]):
+        vars, A, b, A_h, b_h = TermList.Interfaces.termsToPolytope(self, helpers)
         print("Polytope is " + str(A))
-        A_red, b_red = ReducePolytope(A, b)
+        A_red, b_red = ReducePolytope(A, b, A_h, b_h)
         print("Reduction: " + str(A_red))
         self = TermList.Interfaces.polytopeToTerms(A_red, b_red, vars)
         print("Back to terms: " + str(self))
 
     class Interfaces:
         
-        def termsToPolytope(terms):
-            vars = list(terms.vars)
+        def termsToPolytope(terms, helpers=[]):
+            vars = list(terms.vars | helpers.vars)
             A = []
             b = []
             for term in terms.terms:
                 pol, coeff = Term.Interfaces.termToPolytope(term, vars)
                 A.append(pol)
                 b.append(coeff)
+
+            A_h = []
+            b_h = []
+            for term in helpers.terms:
+                pol, coeff = Term.Interfaces.termToPolytope(term, vars)
+                A_h.append(pol)
+                b_h.append(coeff)
+            
             A = np.array(A)
             b = np.array(b)
+            A_h = np.array(A_h)
+            b_h = np.array(b_h)
             print("A is " + str(A))
-            return vars, A, b
+            return vars, A, b, A_h, b_h
 
         def polytopeToTerms(A, b, vars):
             termList = []
@@ -351,6 +363,8 @@ class IoContract:
         self.g = guarantees.copy()
         self.inputvars = inputVars.copy()
         self.outputvars = outputVars.copy()
+        # simplify the guarantees with the assumptions
+        self.g.simplify(self.a)
 
     @property
     def vars(self):
@@ -369,19 +383,31 @@ class IoContract:
         inputvars = (self.inputvars | other.inputvars) - intvars
         outputvars = (self.outputvars | other.outputvars) - intvars
         assert self.composable(other)
-        allassumptions = self.a | other.a
+        otherHelpsSelf = len(other.outputvars & self.inputvars) > 0
+        selfHelpsOther = len(other.inputvars & self.outputvars) > 0
+        # process assumptions
+        if otherHelpsSelf and selfHelpsOther:
+            assert False
+        elif selfHelpsOther:
+            otherAssumptions = other.a.abduceWithHelpers(self.g, intvars | outputvars)
+            assumptions = otherAssumptions | self.a
+        elif otherHelpsSelf:
+            selfAssumptions = self.a.abduceWithHelpers(other.g, intvars | outputvars)
+            assumptions = selfAssumptions | other.a
+        assumptions.simplify()
+
+        # process guarantees
         allguarantees = self.g | other.g
+        allguarantees.deduceWithHelpers(assumptions, intvars)
+        
+        # build contract
+        result = IoContract(assumptions, allguarantees, inputvars, outputvars)
+        
         print("****************")
         print("****************")
-        print("MSG> Computing assumptions")
-        assumptions = allassumptions.reduceMultipleVariables(allguarantees, intvars | outputvars)
-        print("****************")
-        print("MSG> Computing guarantees")
-        guarantees  = allguarantees.reduceMultipleVariables(allassumptions, intvars)
-        guarantees.eliminateTerms(intvars)
-        print("Comp A: " + str(assumptions))
-        print("Comp G: " + str(guarantees))
-        return IoContract(assumptions, guarantees, inputvars, outputvars)
+        print("Comp A: " + str(result.a))
+        print("Comp G: " + str(result.g))
+        return result
 
 
 if __name__ == '__main__':
