@@ -38,5 +38,5 @@ if __name__ == '__main__':
     FORMAT = "[%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
     FORMAT = "[%(levelname)s:%(funcName)s()] %(message)s"
     FORMAT2 = '%(asctime)s:%(levelname)s:%(name)s:%(message)s'
-    logging.basicConfig(level = logging.DEBUG, format = FORMAT)
+    logging.basicConfig(level = logging.INFO, format = FORMAT)
     readInputFile()

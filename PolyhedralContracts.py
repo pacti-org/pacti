@@ -399,7 +399,7 @@ class IoContract:
         return self.a.vars | self.g.vars
 
     def __str__(self):
-        return "A: " + str(self.a) + "\n" + "G: " + str(self.g)
+        return "InVars: " + str(self.inputvars) + "\nOutVars:" + str(self.outputvars) + "\nA: " + str(self.a) + "\n" + "G: " + str(self.g)
 
     def composable(self, other) -> bool:
         # make sure sets of output variables don't intersect
@@ -427,6 +427,19 @@ class IoContract:
         # process guarantees
         allguarantees = self.g | other.g
         allguarantees.deduceWithHelpers(assumptions, intvars)
+        gteeList = list(allguarantees.terms)
+        helpers = allguarantees.terms.copy()
+        for i,gtee in enumerate(gteeList):
+            term = TermList({gtee})
+            print("----->>> " + str(term))
+            helpers = helpers - term.terms
+            term.transformWithHelpers(TermList(helpers), intvars, False)
+            helpers.add(list(term.terms)[0])
+        allguarantees.terms = helpers
+
+        # eliminate terms with forbidden vars
+        termsToElim = allguarantees.getTermsWithVars(intvars)
+        allguarantees = allguarantees - termsToElim
         
         # build contract
         result = IoContract(assumptions, allguarantees, inputvars, outputvars)
