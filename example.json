@@ -10,6 +10,8 @@
         "assumptions":
         [
             {"coefficients":{"i":1},
+            "constant":1},
+            {"coefficients":{"i":-1},
             "constant":1}
         ],
         "guarantees":
