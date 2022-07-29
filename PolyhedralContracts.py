@@ -310,16 +310,16 @@ class TermList:
 
     
     def abduceWithHelpers(self, helperTerms:set, varsToElim:set):
-        logging.info("Abducing from term" + str(self))
-        logging.info("Helpers: " + str(helperTerms))
-        logging.info("Vars to elim: " + str(varsToElim))
+        logging.debug("Abducing from term" + str(self))
+        logging.debug("Helpers: " + str(helperTerms))
+        logging.debug("Vars to elim: " + str(varsToElim))
         self.simplify(helperTerms)
         self.transformWithHelpers(helperTerms, varsToElim, True)
 
     def deduceWithHelpers(self, helperTerms:set, varsToElim:set):
-        logging.info("Deducing from term" + str(self))
-        logging.info("Helpers: " + str(helperTerms))
-        logging.info("Vars to elim: " + str(varsToElim))
+        logging.debug("Deducing from term" + str(self))
+        logging.debug("Helpers: " + str(helperTerms))
+        logging.debug("Vars to elim: " + str(varsToElim))
         self.simplify(helperTerms)
         self.transformWithHelpers(helperTerms, varsToElim, False)
         # eliminate terms containing the variables to be eliminated
@@ -431,7 +431,7 @@ class IoContract:
         helpers = allguarantees.terms.copy()
         for i,gtee in enumerate(gteeList):
             term = TermList({gtee})
-            print("----->>> " + str(term))
+            #print("----->>> " + str(term))
             helpers = helpers - term.terms
             term.transformWithHelpers(TermList(helpers), intvars, False)
             helpers.add(list(term.terms)[0])

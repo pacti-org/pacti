@@ -25,18 +25,18 @@ def readInputFile(filename):
             reqs.append([PC.Term(term['coefficients'], term['constant']) for term in c[key]])
         cont = PC.IoContract(inputVars=getVarset(c['InputVars']), outputVars=getVarset(c['OutputVars']), assumptions=PC.TermList(set(reqs[0])), guarantees=PC.TermList(set(reqs[1])))
         contracts.append(cont)
-    print(contracts[0])
-    print(contracts[1])
+    logging.info("Contract1:\n" + str(contracts[0]))
+    logging.info("Contract2:\n" + str(contracts[1]))
     if data['operation'] == 'composition':
-        print(contracts[0].compose(contracts[1]))
+        logging.info("Composed contract:\n" + str(contracts[0].compose(contracts[1])))
     else:
-        print("Operation not supported")
+        logging.info("Operation not supported")
 
 
  
 if __name__ == '__main__':
     FORMAT = "[%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
-    FORMAT = "[%(levelname)s:%(funcName)s()] %(message)s"
+    FORMAT1 = "[%(levelname)s:%(funcName)s()] %(message)s"
     FORMAT2 = '%(asctime)s:%(levelname)s:%(name)s:%(message)s'
-    logging.basicConfig(level = logging.INFO, format = FORMAT)
+    logging.basicConfig(level = logging.INFO, format = FORMAT2)
     readInputFile()
