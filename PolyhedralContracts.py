@@ -32,7 +32,13 @@ class Term:
     # are the coefficients of those variables in the term, and (b) a constant.
     # The term is assumed to be in the form \Sigma_i a_i v_i + constant <= 0
     def __init__(self, variables, constant):
-        vars = {key:val for key, val in variables.items() if val != 0}
+        vars = {}
+        for key, val in variables.items():
+            if val != 0:
+                if isinstance(key, str):
+                    vars[Var(key)] = val
+                else:
+                    vars[key] = val
         self.variables = vars
         self.constant = constant
 
@@ -92,9 +98,9 @@ class Term:
     def substVar(self, var, substTerm):
         if self.containsVar(var):
             term = substTerm.multiply(self.getVarCoeff(var))
-            print("Term is " + str(term))
+            logging.debug("Term is " + str(term))
             self.removeVar(var)
-            print(self)
+            logging.debug(self)
             return self + term
         else:
             return self.copy()
@@ -106,7 +112,7 @@ class Term:
 
     def __str__(self) -> str:
         res = " + ".join([str(self.variables[var])+"*"+var.val for var in self.variables.keys()])
-        res += "<= " + str(self.constant)
+        res += " <= " + str(self.constant)
         return res
     
     def __hash__(self):
@@ -159,13 +165,13 @@ class Term:
     # Inputs: the terms and the variables that will be optimized
     # Assumptions: the number of equations matches the number of varsToElim contained in the terms
     def getValuesOfVarsToElim(termsToUse, varsToElim):
-        print("GetVals: " + str(termsToUse) + " Vars: " + str(varsToElim))
+        logging.debug("GetVals: " + str(termsToUse) + " Vars: " + str(varsToElim))
         varsToOpt = termsToUse.vars & varsToElim
         assert len(termsToUse.terms) == len(varsToOpt)
         exprs = [Term.Interfaces.termToSymb(term) for term in termsToUse.terms]
         varsToSolve = [sympy.symbols(var.val) for var in varsToOpt]
         sols = sympy.solve(exprs, *varsToSolve)
-        print(sols)
+        logging.debug(sols)
         if len(sols) >0:
             return {Var(str(key)):Term.Interfaces.symbToTerm(sols[key]) for key in sols.keys()}
         else:
@@ -174,10 +180,14 @@ class Term:
 
 def ReducePolytope(A:np.array, b:np.array, A_help:np.array=np.array([[]]), b_help:np.array=np.array([])):
     n,m = A.shape
+    logging.debug("A_help is " + str(A_help))
     n_h, m_h = A_help.shape
     helperPresent = n_h*m_h > 0
     assert n == len(b)
-    assert n_h == len(b_help)
+    if helperPresent:
+        assert n_h == len(b_help)
+    else:
+        assert len(b_help) == 0
     if helperPresent:
         assert m_h == m
     if n == 0:
@@ -189,14 +199,17 @@ def ReducePolytope(A:np.array, b:np.array, A_help:np.array=np.array([[]]), b_hel
     A_temp = np.copy(A)
     b_temp = np.copy(b)
     while i < n:
-        objective = A_temp[i,:]
+        objective = A_temp[i,:] * -1
         b_temp[i] += 1
         if helperPresent:
-            res = scipy.optimize.linprog(c=b_temp, A_ub=np.concatenate((A_temp, A_help),axis=0), b_ub=np.concatenate((b_temp, b_help)))
+            logging.debug("A_temp is " + str(A_temp))
+            logging.debug("A_help is " + str(A_help))
+            res = scipy.optimize.linprog(c=objective, A_ub=np.concatenate((A_temp, A_help),axis=0), b_ub=np.concatenate((b_temp, b_help)))
         else:
-            res = scipy.optimize.linprog(c=b_temp, A_ub=A_temp, b_ub=b_temp)
+            res = scipy.optimize.linprog(c=objective, A_ub=A_temp, b_ub=b_temp)
         b_temp[i] -= 1
-        if res['fun'] <= b_temp[i]:
+        if -res['fun'] <= b_temp[i]:
+            logging.debug("Can remove")
             A_temp = np.delete(A_temp, i, 0)
             b_temp = np.delete(b_temp, i)
             n -= 1
@@ -232,7 +245,7 @@ class TermList:
         for t in self.terms:
             if len(t.vars & varSet) > 0:
                 terms.add(t)
-        return terms
+        return TermList(terms)
 
 
 
@@ -254,15 +267,16 @@ class TermList:
     # terms The abduction aims to eliminate from the term appearances of the
     # variables contained in varsToElim
     def transformWithHelpers(self, helperTerms:set, varsToElim:set, polarity:True):
-        print("Helper terms" + str(helperTerms))
-        print("Variables to eliminate: " + str(varsToElim))
+        logging.debug("Helper terms" + str(helperTerms))
+        logging.debug("Variables to eliminate: " + str(varsToElim))
         helpers = helperTerms.copy()
-        for i, term in enumerate(self.terms):
-            print("Abducing " + str(term))
+        termList = list(self.terms)
+        for i, term in enumerate(termList):
+            logging.debug("Abducing " + str(term))
             vars_elim = {}
             for var in term.vars & varsToElim:
                 vars_elim[var] = term.getVarPolarity(var, polarity)
-            print("Vars to elim: " + str(vars_elim))
+            logging.debug("Vars to elim: " + str(vars_elim))
             varsToCover = set(vars_elim.keys())
             termsToUse = TermList(set())
             
@@ -276,28 +290,36 @@ class TermList:
                     if len(varsToCover) == 0:
                         break
 
-            print("TermsToUse: " + str(termsToUse))
+            logging.debug("TermsToUse: " + str(termsToUse))
 
             # as long as we have more "to_elim" variables than terms, we seek additional terms. For now, we throw an error if we don't have enough terms
             assert len(termsToUse.terms) == len(termsToUse.vars & varsToElim)
             
             sols = Term.getValuesOfVarsToElim(termsToUse, varsToElim)
-            print(sols)
+            logging.debug(sols)
             for var in sols.keys():
                 term = term.substVar(var, sols[var])
-            self.terms[i] = term
+            termList[i] = term
             
-            print("After subst: " + str(term))
+            logging.debug("After subst: " + str(term))
+
+        self.terms = set(termList)
 
         # the last step needs to be a simplication
         self.simplify()
 
     
     def abduceWithHelpers(self, helperTerms:set, varsToElim:set):
+        logging.info("Abducing from term" + str(self))
+        logging.info("Helpers: " + str(helperTerms))
+        logging.info("Vars to elim: " + str(varsToElim))
         self.simplify(helperTerms)
         self.transformWithHelpers(helperTerms, varsToElim, True)
 
-    def deduceWithHelpers(self, helperTerms:set, varsToElim:set, polarity:True):
+    def deduceWithHelpers(self, helperTerms:set, varsToElim:set):
+        logging.info("Deducing from term" + str(self))
+        logging.info("Helpers: " + str(helperTerms))
+        logging.info("Vars to elim: " + str(varsToElim))
         self.simplify(helperTerms)
         self.transformWithHelpers(helperTerms, varsToElim, False)
         # eliminate terms containing the variables to be eliminated
@@ -305,17 +327,20 @@ class TermList:
         self = self - termsToElim
 
 
-    def simplify(self, helpers=[]):
-        vars, A, b, A_h, b_h = TermList.Interfaces.termsToPolytope(self, helpers)
-        print("Polytope is " + str(A))
+    def simplify(self, helpers=set()):
+        if isinstance(helpers, set):
+            vars, A, b, A_h, b_h = TermList.Interfaces.termsToPolytope(self, TermList(helpers))
+        else:
+            vars, A, b, A_h, b_h = TermList.Interfaces.termsToPolytope(self, helpers)
+        logging.debug("Polytope is " + str(A))
         A_red, b_red = ReducePolytope(A, b, A_h, b_h)
-        print("Reduction: " + str(A_red))
+        logging.debug("Reduction: " + str(A_red))
         self = TermList.Interfaces.polytopeToTerms(A_red, b_red, vars)
-        print("Back to terms: " + str(self))
+        logging.debug("Back to terms: " + str(self))
 
     class Interfaces:
         
-        def termsToPolytope(terms, helpers=[]):
+        def termsToPolytope(terms, helpers=set()):
             vars = list(terms.vars | helpers.vars)
             A = []
             b = []
@@ -333,16 +358,19 @@ class TermList:
             
             A = np.array(A)
             b = np.array(b)
-            A_h = np.array(A_h)
+            if len(helpers.terms) == 0:
+                A_h = np.array([[]])
+            else:
+                A_h = np.array(A_h)
             b_h = np.array(b_h)
-            print("A is " + str(A))
+            logging.debug("A is " + str(A))
             return vars, A, b, A_h, b_h
 
         def polytopeToTerms(A, b, vars):
             termList = []
-            print("&&&&&&&&&&")
-            #print("Poly is " + str(polytope))
-            print("A is " + str(A))
+            logging.debug("&&&&&&&&&&")
+            #logging.debug("Poly is " + str(polytope))
+            logging.debug("A is " + str(A))
             n,m = A.shape
             for i in range(n):
                 vect = list(A[i])
@@ -389,11 +417,11 @@ class IoContract:
         if otherHelpsSelf and selfHelpsOther:
             assert False
         elif selfHelpsOther:
-            otherAssumptions = other.a.abduceWithHelpers(self.g, intvars | outputvars)
-            assumptions = otherAssumptions | self.a
+            other.a.abduceWithHelpers(self.g, intvars | outputvars)
+            assumptions = other.a | self.a
         elif otherHelpsSelf:
-            selfAssumptions = self.a.abduceWithHelpers(other.g, intvars | outputvars)
-            assumptions = selfAssumptions | other.a
+            self.a.abduceWithHelpers(other.g, intvars | outputvars)
+            assumptions = self.a | other.a
         assumptions.simplify()
 
         # process guarantees
@@ -403,51 +431,8 @@ class IoContract:
         # build contract
         result = IoContract(assumptions, allguarantees, inputvars, outputvars)
         
-        print("****************")
-        print("****************")
-        print("Comp A: " + str(result.a))
-        print("Comp G: " + str(result.g))
         return result
 
 
 if __name__ == '__main__':
-
-
-
     exit()
-    requirements = {Term.LT(Var("a"), 5), Term.LT(Var("a"), 6)}
-    requirements = TermList(requirements)
-    print(requirements)
-    requirements.reduceTerms()
-    print(requirements)
-    
-    requirements = {Term.LT(Var("a"), 5), Term.EQ(Var("b"), Var("a"))}
-    requirements = TermList(requirements)
-    print(requirements)
-    requirements.reduceVariable({Var("a")})
-    print(requirements)
-
-
-    # now we operate with contracts
-    iVar = Var("i")
-    oVar = Var("o")
-    assumptions = TermList({Term.LT(iVar, 2)})
-    guarantees = TermList({Term.EQ(oVar, iVar)})
-    cont = IoContract(assumptions, guarantees, {iVar}, {oVar})
-
-    opVar = Var("o'")
-    assumptions = TermList({Term.LT(oVar, 1)})
-    guarantees = TermList({Term.EQ(opVar, oVar)})
-    contp = IoContract(assumptions, guarantees, {oVar}, {opVar})
-
-    oppVar = Var("o''")
-    assumptions = TermList({Term.LT(opVar, 0)})
-    guarantees = TermList({Term.EQ(oppVar, opVar)})
-    contpp = IoContract(assumptions, guarantees, {opVar}, {oppVar})
-
-    print("Contract is")
-    print(cont)
-    print("Contract' is")
-    print(contp)
-    print("Their composition is")
-    print(contp.compose(cont.compose(contpp)))
