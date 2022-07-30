@@ -29,6 +29,8 @@ def readInputFile(filename):
     logging.info("Contract2:\n" + str(contracts[1]))
     if data['operation'] == 'composition':
         logging.info("Composed contract:\n" + str(contracts[0].compose(contracts[1])))
+    elif data['operation'] == 'quotient':
+        logging.info("Contract quotient:\n" + str(contracts[0].quotient(contracts[1])))
     else:
         logging.info("Operation not supported")
 
@@ -38,5 +40,5 @@ if __name__ == '__main__':
     FORMAT = "[%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
     FORMAT1 = "[%(levelname)s:%(funcName)s()] %(message)s"
     FORMAT2 = '%(asctime)s:%(levelname)s:%(name)s:%(message)s'
-    logging.basicConfig(level = logging.INFO, format = FORMAT2)
+    logging.basicConfig(filename='log.log', filemode='w', level = logging.DEBUG, format = FORMAT2)
     readInputFile()

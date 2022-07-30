@@ -4,6 +4,7 @@ import logging
 import sympy
 import numpy as np
 import scipy.optimize
+import copy
 
 
 class Var:
@@ -310,7 +311,7 @@ class TermList:
 
     
     def abduceWithHelpers(self, helperTerms:set, varsToElim:set):
-        logging.debug("Abducing from term" + str(self))
+        logging.debug("Abducing from terms: " + str(self))
         logging.debug("Helpers: " + str(helperTerms))
         logging.debug("Vars to elim: " + str(varsToElim))
         self.simplify(helperTerms)
@@ -328,6 +329,8 @@ class TermList:
 
 
     def simplify(self, helpers=set()):
+        logging.debug("Simplifying terms: " + str(self))
+        logging.debug("Helpers: " + str(helpers))
         if isinstance(helpers, set):
             vars, A, b, A_h, b_h = TermList.Interfaces.termsToPolytope(self, TermList(helpers))
         else:
@@ -335,7 +338,7 @@ class TermList:
         logging.debug("Polytope is " + str(A))
         A_red, b_red = ReducePolytope(A, b, A_h, b_h)
         logging.debug("Reduction: " + str(A_red))
-        self = TermList.Interfaces.polytopeToTerms(A_red, b_red, vars)
+        self.terms = TermList.Interfaces.polytopeToTerms(A_red, b_red, vars).terms
         logging.debug("Back to terms: " + str(self))
 
     class Interfaces:
@@ -377,7 +380,7 @@ class TermList:
                 const = b[i]
                 term = Term.Interfaces.polytopeToTerm(vect, const, vars)
                 termList.append(term)
-            return TermList(termList)
+            return TermList(set(termList))
 
 
 
@@ -385,8 +388,12 @@ class TermList:
 
 class IoContract:
     def __init__(self, assumptions:TermList, guarantees:TermList, inputVars:set, outputVars:set) -> None:
+        # make sure the input & output variables are disjoint
+        assert len(inputVars & outputVars) == 0
+        # make sure the assumptions only contain input variables
         assert len(assumptions.vars - inputVars) == 0, print("A: " + str(assumptions.vars) + " Input vars: " + str(inputVars))
-        assert len(guarantees.vars - inputVars - outputVars) == 0, print("G: " + str(guarantees.vars) + " Input: " + str(inputVars) + " Output: " + str(outputVars))
+        # make sure the guaranteees only contain input or output variables
+        assert len(guarantees.vars - inputVars - outputVars) == 0, print("G: " + str(guarantees) + " G Vars: "+ str(guarantees.vars) + " Input: " + str(inputVars) + " Output: " + str(outputVars))
         self.a = assumptions.copy()
         self.g = guarantees.copy()
         self.inputvars = inputVars.copy()
@@ -401,16 +408,20 @@ class IoContract:
     def __str__(self):
         return "InVars: " + str(self.inputvars) + "\nOutVars:" + str(self.outputvars) + "\nA: " + str(self.a) + "\n" + "G: " + str(self.g)
 
-    def composable(self, other) -> bool:
+    def canComposeWith(self, other) -> bool:
         # make sure sets of output variables don't intersect
         return len(self.outputvars & other.outputvars) == 0
+
+    def canQuotientBy(self, other) -> bool:
+        # make sure the top level ouputs not contained in outputs of the existing component do not intersect with the inputs of the existing component
+        return len((self.outputvars - other.outputvars) & other.inputvars) == 0
 
 
     def compose(self, other):
         intvars = (self.outputvars & other.inputvars) | (self.inputvars & other.outputvars)
         inputvars = (self.inputvars | other.inputvars) - intvars
         outputvars = (self.outputvars | other.outputvars) - intvars
-        assert self.composable(other)
+        assert self.canComposeWith(other)
         otherHelpsSelf = len(other.outputvars & self.inputvars) > 0
         selfHelpsOther = len(other.inputvars & self.outputvars) > 0
         # process assumptions
@@ -425,17 +436,21 @@ class IoContract:
         assumptions.simplify()
 
         # process guarantees
-        allguarantees = self.g | other.g
+        g1 = self.g.copy()
+        g2 = other.g.copy()
+        g1.deduceWithHelpers(g2,intvars)
+        g2.deduceWithHelpers(g1,intvars)
+        allguarantees = g1 | g2
         allguarantees.deduceWithHelpers(assumptions, intvars)
-        gteeList = list(allguarantees.terms)
-        helpers = allguarantees.terms.copy()
-        for i,gtee in enumerate(gteeList):
-            term = TermList({gtee})
-            #print("----->>> " + str(term))
-            helpers = helpers - term.terms
-            term.transformWithHelpers(TermList(helpers), intvars, False)
-            helpers.add(list(term.terms)[0])
-        allguarantees.terms = helpers
+        # gteeList = list(allguarantees.terms)
+        # helpers = allguarantees.terms.copy()
+        # for i,gtee in enumerate(gteeList):
+        #     term = TermList({gtee})
+        #     #print("----->>> " + str(term))
+        #     helpers = helpers - term.terms
+        #     term.transformWithHelpers(TermList(helpers), intvars, False)
+        #     helpers.add(list(term.terms)[0])
+        # allguarantees.terms = helpers
 
         # eliminate terms with forbidden vars
         termsToElim = allguarantees.getTermsWithVars(intvars)
@@ -445,6 +460,31 @@ class IoContract:
         result = IoContract(assumptions, allguarantees, inputvars, outputvars)
         
         return result
+    
+    def quotient(self, other):
+        assert self.canQuotientBy(other)
+        outputvars = (self.outputvars - other.outputvars) | (other.inputvars - self.inputvars)
+        inputvars  = (self.inputvars - other.inputvars) | (other.outputvars - self.outputvars)
+        intvars = (self.outputvars & other.outputvars) | (self.inputvars & other.inputvars)
+        
+        # get assumptions
+        logging.debug("Computing quotient assumptions")
+        assumptions = copy.deepcopy(self.a)
+        assumptions.deduceWithHelpers(other.g, intvars | outputvars)
+        logging.debug("Assumptions after processing: " + str(assumptions))
+
+        # get guarantees
+        logging.debug("Computing quotient guarantees")
+        guarantees = self.g
+        logging.debug("Using existing guarantees to aid system-level guarantees")
+        guarantees.abduceWithHelpers(other.g, intvars)
+        logging.debug("Using system-level assumptions to aid quotient guarantees")
+        guarantees = guarantees | other.a
+        guarantees.abduceWithHelpers(self.a, intvars)
+        logging.debug("Guarantees after processing: " + str(guarantees))
+        
+
+        return IoContract(assumptions, guarantees, inputvars, outputvars)
 
 
 if __name__ == '__main__':
