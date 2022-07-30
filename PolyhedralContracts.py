@@ -181,7 +181,6 @@ class Term:
 
 def ReducePolytope(A:np.array, b:np.array, A_help:np.array=np.array([[]]), b_help:np.array=np.array([])):
     n,m = A.shape
-    logging.debug("A_help is " + str(A_help))
     n_h, m_h = A_help.shape
     helperPresent = n_h*m_h > 0
     assert n == len(b)
@@ -202,13 +201,18 @@ def ReducePolytope(A:np.array, b:np.array, A_help:np.array=np.array([[]]), b_hel
     while i < n:
         objective = A_temp[i,:] * -1
         b_temp[i] += 1
+        logging.debug("Obj is \n" + str(objective))
+        logging.debug("A_temp is \n" + str(A_temp))
+        logging.debug("A_help is \n" + str(A_help))
+        logging.debug("b_temp is \n" + str(b_temp))
+        logging.debug("b_help is \n" + str(b_help))
         if helperPresent:
-            logging.debug("A_temp is " + str(A_temp))
-            logging.debug("A_help is " + str(A_help))
-            res = scipy.optimize.linprog(c=objective, A_ub=np.concatenate((A_temp, A_help),axis=0), b_ub=np.concatenate((b_temp, b_help)))
+            res = scipy.optimize.linprog(c=objective, A_ub=np.concatenate((A_temp, A_help),axis=0), b_ub=np.concatenate((b_temp, b_help)), bounds=(None,None))
         else:
-            res = scipy.optimize.linprog(c=objective, A_ub=A_temp, b_ub=b_temp)
+            res = scipy.optimize.linprog(c=objective, A_ub=A_temp, b_ub=b_temp, bounds=(None,None))
         b_temp[i] -= 1
+        logging.debug("Optimal value: " + str(-res['fun']))
+        logging.debug("Results: " + str(res))
         if -res['fun'] <= b_temp[i]:
             logging.debug("Can remove")
             A_temp = np.delete(A_temp, i, 0)
@@ -273,7 +277,7 @@ class TermList:
         helpers = helperTerms.copy()
         termList = list(self.terms)
         for i, term in enumerate(termList):
-            logging.debug("Abducing " + str(term))
+            logging.debug("Transforming " + str(term))
             vars_elim = {}
             for var in term.vars & varsToElim:
                 vars_elim[var] = term.getVarPolarity(var, polarity)

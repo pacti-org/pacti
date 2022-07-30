@@ -28,8 +28,6 @@
         "assumptions":
         [
             {"coefficients":{"i":1},
-            "constant":2},
-            {"coefficients":{"i":-1},
             "constant":2}
         ],
         "guarantees":
