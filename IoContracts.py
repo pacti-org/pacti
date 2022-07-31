@@ -87,20 +87,20 @@ class TermList(ABC):
         for t in self.terms:
             if len(t.vars & varSet) > 0:
                 terms.add(t)
-        return TermList(terms)
+        return type(self)(terms)
 
 
     def __and__(self, other):
-        return TermList(self.terms & other.terms)
+        return type(self)(self.terms & other.terms)
 
     def __or__(self, other):
-        return TermList(self.terms | other.terms)
+        return type(self)(self.terms | other.terms)
 
     def __sub__(self, other):
-        return TermList(self.terms - other.terms)
+        return type(self)(self.terms - other.terms)
 
     def copy(self):
-        return TermList(self.terms)
+        return type(self)(self.terms)
 
     @abstractmethod
     def abduceWithHelpers(self, helperTerms:set, varsToElim:set):

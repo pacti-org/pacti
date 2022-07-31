@@ -205,48 +205,6 @@ def ReducePolytope(A:np.array, b:np.array, A_help:np.array=np.array([[]]), b_hel
 
 
 class PolyhedralTermList(IoContracts.TermList):
-    def __init__(self, termSet:set):
-        self.terms = termSet.copy()
-
-    @property
-    def vars(self):
-        varset = set()
-        for t in self.terms:
-            varset = varset | t.vars
-        return varset
-
-
-
-    def __str__(self) -> str:
-        res = [str(el) for el in self.terms]
-        return ", ".join(res)
-
-    def __eq__(self, other):
-        return (self.terms == other.terms)
-
-
-
-    def getTermsWithVars(self, varSet):
-        terms = set()
-        for t in self.terms:
-            if len(t.vars & varSet) > 0:
-                terms.add(t)
-        return PolyhedralTermList(terms)
-
-
-
-    def __and__(self, other):
-        return PolyhedralTermList(self.terms & other.terms)
-
-    def __or__(self, other):
-        return PolyhedralTermList(self.terms | other.terms)
-
-    def __sub__(self, other):
-        return PolyhedralTermList(self.terms - other.terms)
-
-    def copy(self):
-        return PolyhedralTermList(self.terms)
-
 
 
     # This routine accepts a term that will be adbuced with the help of other
