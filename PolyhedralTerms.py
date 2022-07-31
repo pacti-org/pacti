@@ -5,11 +5,11 @@ import sympy
 import numpy as np
 import scipy.optimize
 import copy
-import IoContracts
+import IoContract
 
 
 
-class PolyhedralTerm(IoContracts.Term):
+class PolyhedralTerm(IoContract.Term):
     # Constructor: get (i) a dictionary whose keys are variabes and whose values
     # are the coefficients of those variables in the term, and (b) a constant.
     # The term is assumed to be in the form \Sigma_i a_i v_i + constant <= 0
@@ -18,7 +18,7 @@ class PolyhedralTerm(IoContracts.Term):
         for key, val in variables.items():
             if val != 0:
                 if isinstance(key, str):
-                    vars[IoContracts.Var(key)] = val
+                    vars[IoContract.Var(key)] = val
                 else:
                     vars[key] = val
         self.variables = vars
@@ -124,7 +124,7 @@ class PolyhedralTerm(IoContracts.Term):
                 if key == 1:
                     constant = exAry[key]
                 else:
-                    var = IoContracts.Var(str(key))
+                    var = IoContract.Var(str(key))
                     vars[var] = exAry[key]
             return PolyhedralTerm(vars, constant)
 
@@ -155,7 +155,7 @@ class PolyhedralTerm(IoContracts.Term):
         sols = sympy.solve(exprs, *varsToSolve)
         logging.debug(sols)
         if len(sols) >0:
-            return {IoContracts.Var(str(key)):PolyhedralTerm.Interfaces.symbToTerm(sols[key]) for key in sols.keys()}
+            return {IoContract.Var(str(key)):PolyhedralTerm.Interfaces.symbToTerm(sols[key]) for key in sols.keys()}
         else:
             return {}
 
@@ -204,7 +204,7 @@ def ReducePolytope(A:np.array, b:np.array, A_help:np.array=np.array([[]]), b_hel
     return A_temp, b_temp
 
 
-class PolyhedralTermList(IoContracts.TermList):
+class PolyhedralTermList(IoContract.TermList):
 
 
     # This routine accepts a term that will be adbuced with the help of other
