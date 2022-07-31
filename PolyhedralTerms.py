@@ -5,30 +5,11 @@ import sympy
 import numpy as np
 import scipy.optimize
 import copy
+import IoContracts
 
 
-class Var:
-    def __init__(self, val):
-        self.value = str(val)
 
-    @property
-    def val(self):
-        return self.value
-
-    def __eq__(self, other):
-        return self.val == other.val
-
-    def __str__(self) -> str:
-        return self.val
-
-    def __hash__(self) -> int:
-        return hash(self.val)
-
-    def __repr__(self):
-        return "<Var {0}>".format(self.val)
-
-
-class Term:
+class PolyhedralTerm(IoContracts.Term):
     # Constructor: get (i) a dictionary whose keys are variabes and whose values
     # are the coefficients of those variables in the term, and (b) a constant.
     # The term is assumed to be in the form \Sigma_i a_i v_i + constant <= 0
@@ -37,7 +18,7 @@ class Term:
         for key, val in variables.items():
             if val != 0:
                 if isinstance(key, str):
-                    vars[Var(key)] = val
+                    vars[IoContracts.Var(key)] = val
                 else:
                     vars[key] = val
         self.variables = vars
@@ -86,14 +67,14 @@ class Term:
         variables = {}
         for var in vars:
             variables[var] = self.getVarCoeff(var) + other.getVarCoeff(var)
-        return Term(variables, self.constant + other.constant)
+        return PolyhedralTerm(variables, self.constant + other.constant)
 
     def removeVar(self, var):
         if self.containsVar(var):
             self.variables.pop(var)
 
     def multiply(self, factor):
-        return Term({key:factor*val for key,val in self.variables.items()}, factor*self.constant)
+        return PolyhedralTerm({key:factor*val for key,val in self.variables.items()}, factor*self.constant)
 
     # This routine accepts a variable to be substituted by a term and plugs in a subst term in place
     def substVar(self, var, substTerm):
@@ -123,7 +104,7 @@ class Term:
         return "<Term {0}>".format(self)
 
     def copy(self):
-        return Term(self.variables, self.constant)
+        return PolyhedralTerm(self.variables, self.constant)
 
     class Interfaces:
         def termToSymb(term):
@@ -143,9 +124,9 @@ class Term:
                 if key == 1:
                     constant = exAry[key]
                 else:
-                    var = Var(str(key))
+                    var = IoContracts.Var(str(key))
                     vars[var] = exAry[key]
-            return Term(vars, constant)
+            return PolyhedralTerm(vars, constant)
 
 
         def termToPolytope(term, vars):
@@ -158,7 +139,7 @@ class Term:
             variables = {}
             for i, var in enumerate(vars):
                 variables[var] = poly[i]
-            return Term(variables, const)
+            return PolyhedralTerm(variables, const)
     
 
     # This routine accepts a set of terms and a set of variables that should be optimized.
@@ -169,12 +150,12 @@ class Term:
         logging.debug("GetVals: " + str(termsToUse) + " Vars: " + str(varsToElim))
         varsToOpt = termsToUse.vars & varsToElim
         assert len(termsToUse.terms) == len(varsToOpt)
-        exprs = [Term.Interfaces.termToSymb(term) for term in termsToUse.terms]
+        exprs = [PolyhedralTerm.Interfaces.termToSymb(term) for term in termsToUse.terms]
         varsToSolve = [sympy.symbols(var.val) for var in varsToOpt]
         sols = sympy.solve(exprs, *varsToSolve)
         logging.debug(sols)
         if len(sols) >0:
-            return {Var(str(key)):Term.Interfaces.symbToTerm(sols[key]) for key in sols.keys()}
+            return {IoContracts.Var(str(key)):PolyhedralTerm.Interfaces.symbToTerm(sols[key]) for key in sols.keys()}
         else:
             return {}
 
@@ -223,7 +204,7 @@ def ReducePolytope(A:np.array, b:np.array, A_help:np.array=np.array([[]]), b_hel
     return A_temp, b_temp
 
 
-class TermList:
+class PolyhedralTermList(IoContracts.TermList):
     def __init__(self, termSet:set):
         self.terms = termSet.copy()
 
@@ -250,21 +231,21 @@ class TermList:
         for t in self.terms:
             if len(t.vars & varSet) > 0:
                 terms.add(t)
-        return TermList(terms)
+        return PolyhedralTermList(terms)
 
 
 
     def __and__(self, other):
-        return TermList(self.terms & other.terms)
+        return PolyhedralTermList(self.terms & other.terms)
 
     def __or__(self, other):
-        return TermList(self.terms | other.terms)
+        return PolyhedralTermList(self.terms | other.terms)
 
     def __sub__(self, other):
-        return TermList(self.terms - other.terms)
+        return PolyhedralTermList(self.terms - other.terms)
 
     def copy(self):
-        return TermList(self.terms)
+        return PolyhedralTermList(self.terms)
 
 
 
@@ -283,7 +264,7 @@ class TermList:
                 vars_elim[var] = term.getVarPolarity(var, polarity)
             logging.debug("Vars to elim: " + str(vars_elim))
             varsToCover = set(vars_elim.keys())
-            termsToUse = TermList(set())
+            termsToUse = PolyhedralTermList(set())
             
             # now we have to choose from the helpers any terms that we can use to eliminate these variables
             for helper in helpers.terms:
@@ -300,7 +281,7 @@ class TermList:
             # as long as we have more "to_elim" variables than terms, we seek additional terms. For now, we throw an error if we don't have enough terms
             assert len(termsToUse.terms) == len(termsToUse.vars & varsToElim)
             
-            sols = Term.getValuesOfVarsToElim(termsToUse, varsToElim)
+            sols = PolyhedralTerm.getValuesOfVarsToElim(termsToUse, varsToElim)
             logging.debug(sols)
             for var in sols.keys():
                 term = term.substVar(var, sols[var])
@@ -336,13 +317,13 @@ class TermList:
         logging.debug("Simplifying terms: " + str(self))
         logging.debug("Helpers: " + str(helpers))
         if isinstance(helpers, set):
-            vars, A, b, A_h, b_h = TermList.Interfaces.termsToPolytope(self, TermList(helpers))
+            vars, A, b, A_h, b_h = PolyhedralTermList.Interfaces.termsToPolytope(self, PolyhedralTermList(helpers))
         else:
-            vars, A, b, A_h, b_h = TermList.Interfaces.termsToPolytope(self, helpers)
+            vars, A, b, A_h, b_h = PolyhedralTermList.Interfaces.termsToPolytope(self, helpers)
         logging.debug("Polytope is " + str(A))
         A_red, b_red = ReducePolytope(A, b, A_h, b_h)
         logging.debug("Reduction: " + str(A_red))
-        self.terms = TermList.Interfaces.polytopeToTerms(A_red, b_red, vars).terms
+        self.terms = PolyhedralTermList.Interfaces.polytopeToTerms(A_red, b_red, vars).terms
         logging.debug("Back to terms: " + str(self))
 
     class Interfaces:
@@ -352,14 +333,14 @@ class TermList:
             A = []
             b = []
             for term in terms.terms:
-                pol, coeff = Term.Interfaces.termToPolytope(term, vars)
+                pol, coeff = PolyhedralTerm.Interfaces.termToPolytope(term, vars)
                 A.append(pol)
                 b.append(coeff)
 
             A_h = []
             b_h = []
             for term in helpers.terms:
-                pol, coeff = Term.Interfaces.termToPolytope(term, vars)
+                pol, coeff = PolyhedralTerm.Interfaces.termToPolytope(term, vars)
                 A_h.append(pol)
                 b_h.append(coeff)
             
@@ -382,114 +363,7 @@ class TermList:
             for i in range(n):
                 vect = list(A[i])
                 const = b[i]
-                term = Term.Interfaces.polytopeToTerm(vect, const, vars)
+                term = PolyhedralTerm.Interfaces.polytopeToTerm(vect, const, vars)
                 termList.append(term)
-            return TermList(set(termList))
+            return PolyhedralTermList(set(termList))
 
-
-
-
-
-class IoContract:
-    def __init__(self, assumptions:TermList, guarantees:TermList, inputVars:set, outputVars:set) -> None:
-        # make sure the input & output variables are disjoint
-        assert len(inputVars & outputVars) == 0
-        # make sure the assumptions only contain input variables
-        assert len(assumptions.vars - inputVars) == 0, print("A: " + str(assumptions.vars) + " Input vars: " + str(inputVars))
-        # make sure the guaranteees only contain input or output variables
-        assert len(guarantees.vars - inputVars - outputVars) == 0, print("G: " + str(guarantees) + " G Vars: "+ str(guarantees.vars) + " Input: " + str(inputVars) + " Output: " + str(outputVars))
-        self.a = assumptions.copy()
-        self.g = guarantees.copy()
-        self.inputvars = inputVars.copy()
-        self.outputvars = outputVars.copy()
-        # simplify the guarantees with the assumptions
-        self.g.simplify(self.a)
-
-    @property
-    def vars(self):
-        return self.a.vars | self.g.vars
-
-    def __str__(self):
-        return "InVars: " + str(self.inputvars) + "\nOutVars:" + str(self.outputvars) + "\nA: " + str(self.a) + "\n" + "G: " + str(self.g)
-
-    def canComposeWith(self, other) -> bool:
-        # make sure sets of output variables don't intersect
-        return len(self.outputvars & other.outputvars) == 0
-
-    def canQuotientBy(self, other) -> bool:
-        # make sure the top level ouputs not contained in outputs of the existing component do not intersect with the inputs of the existing component
-        return len((self.outputvars - other.outputvars) & other.inputvars) == 0
-
-
-    def compose(self, other):
-        intvars = (self.outputvars & other.inputvars) | (self.inputvars & other.outputvars)
-        inputvars = (self.inputvars | other.inputvars) - intvars
-        outputvars = (self.outputvars | other.outputvars) - intvars
-        assert self.canComposeWith(other)
-        otherHelpsSelf = len(other.outputvars & self.inputvars) > 0
-        selfHelpsOther = len(other.inputvars & self.outputvars) > 0
-        # process assumptions
-        if otherHelpsSelf and selfHelpsOther:
-            assert False
-        elif selfHelpsOther:
-            other.a.abduceWithHelpers(self.g, intvars | outputvars)
-            assumptions = other.a | self.a
-        elif otherHelpsSelf:
-            self.a.abduceWithHelpers(other.g, intvars | outputvars)
-            assumptions = self.a | other.a
-        assumptions.simplify()
-
-        # process guarantees
-        g1 = self.g.copy()
-        g2 = other.g.copy()
-        g1.deduceWithHelpers(g2,intvars)
-        g2.deduceWithHelpers(g1,intvars)
-        allguarantees = g1 | g2
-        allguarantees.deduceWithHelpers(assumptions, intvars)
-        # gteeList = list(allguarantees.terms)
-        # helpers = allguarantees.terms.copy()
-        # for i,gtee in enumerate(gteeList):
-        #     term = TermList({gtee})
-        #     #print("----->>> " + str(term))
-        #     helpers = helpers - term.terms
-        #     term.transformWithHelpers(TermList(helpers), intvars, False)
-        #     helpers.add(list(term.terms)[0])
-        # allguarantees.terms = helpers
-
-        # eliminate terms with forbidden vars
-        termsToElim = allguarantees.getTermsWithVars(intvars)
-        allguarantees = allguarantees - termsToElim
-        
-        # build contract
-        result = IoContract(assumptions, allguarantees, inputvars, outputvars)
-        
-        return result
-    
-    def quotient(self, other):
-        assert self.canQuotientBy(other)
-        outputvars = (self.outputvars - other.outputvars) | (other.inputvars - self.inputvars)
-        inputvars  = (self.inputvars - other.inputvars) | (other.outputvars - self.outputvars)
-        intvars = (self.outputvars & other.outputvars) | (self.inputvars & other.inputvars)
-        
-        # get assumptions
-        logging.debug("Computing quotient assumptions")
-        assumptions = copy.deepcopy(self.a)
-        assumptions.deduceWithHelpers(other.g, intvars | outputvars)
-        logging.debug("Assumptions after processing: " + str(assumptions))
-
-        # get guarantees
-        logging.debug("Computing quotient guarantees")
-        guarantees = self.g
-        logging.debug("Using existing guarantees to aid system-level guarantees")
-        guarantees.abduceWithHelpers(other.g, intvars)
-        logging.debug("Using system-level assumptions to aid quotient guarantees")
-        guarantees = guarantees | other.a
-        guarantees.abduceWithHelpers(self.a, intvars)
-        logging.debug("Guarantees after processing: " + str(guarantees))
-        
-
-        return IoContract(assumptions, guarantees, inputvars, outputvars)
-
-
-if __name__ == '__main__':
-    exit()
