@@ -100,7 +100,7 @@ class TermList(ABC):
         return type(self)(self.terms - other.terms)
 
     def copy(self):
-        return type(self)(self.terms)
+        return type(self)(copy.copy(self.terms))
 
     @abstractmethod
     def abduceWithHelpers(self, helperTerms:set, varsToElim:set):
