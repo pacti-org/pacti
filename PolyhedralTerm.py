@@ -229,11 +229,11 @@ class PolyhedralTermList(IoContract.TermList):
     # This routine accepts a term that will be adbuced with the help of other
     # terms The abduction aims to eliminate from the term appearances of the
     # variables contained in varsToElim
-    def transformWithHelpers(self, helperTerms:set, varsToElim:set, polarity:True):
+    def transformWithHelpers(self, context:set, varsToElim:set, polarity:True):
         """Definition"""
-        logging.debug("Helper terms" + str(helperTerms))
+        logging.debug("Helper terms" + str(context))
         logging.debug("Variables to eliminate: " + str(varsToElim))
-        helpers = helperTerms.copy()
+        helpers = context.copy()
         termList = list(self.terms)
         for i, term in enumerate(termList):
             logging.debug("Transforming " + str(term))
@@ -273,34 +273,34 @@ class PolyhedralTermList(IoContract.TermList):
         self.simplify()
 
     
-    def abduceWithContext(self, helperTerms:set, varsToElim:set):
+    def abduceWithContext(self, context:set, varsToElim:set):
         """Definition"""
         logging.debug("Abducing from terms: " + str(self))
-        logging.debug("Helpers: " + str(helperTerms))
+        logging.debug("Helpers: " + str(context))
         logging.debug("Vars to elim: " + str(varsToElim))
-        self.simplify(helperTerms)
-        self.transformWithHelpers(helperTerms, varsToElim, True)
+        self.simplify(context)
+        self.transformWithHelpers(context, varsToElim, True)
 
-    def deduceWithContext(self, helperTerms:set, varsToElim:set):
+    def deduceWithContext(self, context:set, varsToElim:set):
         """Definition"""
         logging.debug("Deducing from term" + str(self))
-        logging.debug("Helpers: " + str(helperTerms))
+        logging.debug("Helpers: " + str(context))
         logging.debug("Vars to elim: " + str(varsToElim))
-        self.simplify(helperTerms)
-        self.transformWithHelpers(helperTerms, varsToElim, False)
+        self.simplify(context)
+        self.transformWithHelpers(context, varsToElim, False)
         # eliminate terms containing the variables to be eliminated
         termsToElim = self.getTermsWithVars(varsToElim)
         self = self - termsToElim
 
 
-    def simplify(self, helpers=set()):
+    def simplify(self, context=set()):
         """Definition"""
         logging.debug("Simplifying terms: " + str(self))
-        logging.debug("Helpers: " + str(helpers))
-        if isinstance(helpers, set):
-            vars, A, b, A_h, b_h = PolyhedralTermList.Interfaces.termsToPolytope(self, PolyhedralTermList(helpers))
+        logging.debug("Context: " + str(context))
+        if isinstance(context, set):
+            vars, A, b, A_h, b_h = PolyhedralTermList.Interfaces.termsToPolytope(self, PolyhedralTermList(context))
         else:
-            vars, A, b, A_h, b_h = PolyhedralTermList.Interfaces.termsToPolytope(self, helpers)
+            vars, A, b, A_h, b_h = PolyhedralTermList.Interfaces.termsToPolytope(self, context)
         logging.debug("Polytope is " + str(A))
         A_red, b_red = ReducePolytope(A, b, A_h, b_h)
         logging.debug("Reduction: " + str(A_red))

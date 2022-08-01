@@ -152,13 +152,13 @@ class TermList(ABC):
 
 
     @abstractmethod
-    def abduceWithContext(self, helperTerms:set, varsToElim:set):
+    def abduceWithContext(self, context:set, varsToElim:set):
         """
         Abduce terms containing variables to be eliminated using
         a user-provided context.
 
         Args:
-            helperTerms:
+            context:
                 Set of context terms that will be used to abduce the TermList.
             varsToElim:
                 Variables that cannot be present in TermList after abduction. 
@@ -166,13 +166,13 @@ class TermList(ABC):
         pass
 
     @abstractmethod
-    def deduceWithContext(self, helperTerms:set, varsToElim:set):
+    def deduceWithContext(self, context:set, varsToElim:set):
         """
         Deduce terms containing variables to be eliminated using
         a user-provided context.
 
         Args:
-            helperTerms:
+            context:
                 Set of context terms that will be used to abstract the TermList.
             varsToElim:
                 Variables that cannot be present in TermList after deduction. 
@@ -180,11 +180,11 @@ class TermList(ABC):
         pass
 
     @abstractmethod
-    def simplify(self, helpers=set()):
+    def simplify(self, context=set()):
         """Remove redundant terms in TermList.
         
         Args:
-            helpers:
+            context:
                 Set of context terms that will be used to remove redundancies in the TermList.
         """
         pass
