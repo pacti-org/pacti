@@ -152,7 +152,7 @@ class TermList(ABC):
 
 
     @abstractmethod
-    def abduceWithHelpers(self, helperTerms:set, varsToElim:set):
+    def abduceWithContext(self, helperTerms:set, varsToElim:set):
         """
         Abduce terms containing variables to be eliminated using
         a user-provided context.
@@ -166,7 +166,7 @@ class TermList(ABC):
         pass
 
     @abstractmethod
-    def deduceWithHelpers(self, helperTerms:set, varsToElim:set):
+    def deduceWithContext(self, helperTerms:set, varsToElim:set):
         """
         Deduce terms containing variables to be eliminated using
         a user-provided context.
@@ -300,20 +300,20 @@ class IoContract:
         if otherHelpsSelf and selfHelpsOther:
             assert False
         elif selfHelpsOther:
-            other.a.abduceWithHelpers(self.g, intvars | outputvars)
+            other.a.abduceWithContext(self.g, intvars | outputvars)
             assumptions = other.a | self.a
         elif otherHelpsSelf:
-            self.a.abduceWithHelpers(other.g, intvars | outputvars)
+            self.a.abduceWithContext(other.g, intvars | outputvars)
             assumptions = self.a | other.a
         assumptions.simplify()
 
         # process guarantees
         g1 = self.g.copy()
         g2 = other.g.copy()
-        g1.deduceWithHelpers(g2,intvars)
-        g2.deduceWithHelpers(g1,intvars)
+        g1.deduceWithContext(g2,intvars)
+        g2.deduceWithContext(g1,intvars)
         allguarantees = g1 | g2
-        allguarantees.deduceWithHelpers(assumptions, intvars)
+        allguarantees.deduceWithContext(assumptions, intvars)
 
         # eliminate terms with forbidden vars
         termsToElim = allguarantees.getTermsWithVars(intvars)
@@ -334,17 +334,17 @@ class IoContract:
         # get assumptions
         logging.debug("Computing quotient assumptions")
         assumptions = copy.deepcopy(self.a)
-        assumptions.deduceWithHelpers(other.g, intvars | outputvars)
+        assumptions.deduceWithContext(other.g, intvars | outputvars)
         logging.debug("Assumptions after processing: " + str(assumptions))
 
         # get guarantees
         logging.debug("Computing quotient guarantees")
         guarantees = self.g
         logging.debug("Using existing guarantees to aid system-level guarantees")
-        guarantees.abduceWithHelpers(other.g, intvars)
+        guarantees.abduceWithContext(other.g, intvars)
         logging.debug("Using system-level assumptions to aid quotient guarantees")
         guarantees = guarantees | other.a
-        guarantees.abduceWithHelpers(self.a, intvars)
+        guarantees.abduceWithContext(self.a, intvars)
         logging.debug("Guarantees after processing: " + str(guarantees))
         
 

@@ -273,7 +273,7 @@ class PolyhedralTermList(IoContract.TermList):
         self.simplify()
 
     
-    def abduceWithHelpers(self, helperTerms:set, varsToElim:set):
+    def abduceWithContext(self, helperTerms:set, varsToElim:set):
         """Definition"""
         logging.debug("Abducing from terms: " + str(self))
         logging.debug("Helpers: " + str(helperTerms))
@@ -281,7 +281,7 @@ class PolyhedralTermList(IoContract.TermList):
         self.simplify(helperTerms)
         self.transformWithHelpers(helperTerms, varsToElim, True)
 
-    def deduceWithHelpers(self, helperTerms:set, varsToElim:set):
+    def deduceWithContext(self, helperTerms:set, varsToElim:set):
         """Definition"""
         logging.debug("Deducing from term" + str(self))
         logging.debug("Helpers: " + str(helperTerms))
