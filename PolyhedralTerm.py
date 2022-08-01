@@ -10,6 +10,8 @@ import IoContract
 
 
 class PolyhedralTerm(IoContract.Term):
+    """Class description"""
+
     # Constructor: get (i) a dictionary whose keys are variabes and whose values
     # are the coefficients of those variables in the term, and (b) a constant.
     # The term is assumed to be in the form \Sigma_i a_i v_i + constant <= 0
@@ -26,19 +28,23 @@ class PolyhedralTerm(IoContract.Term):
 
     @property
     def vars(self):
+        """Definition"""
         varset = self.variables.keys()
         return set(varset)
 
     def containsVar(self, var):
+        """Definition"""
         return var in self.vars
 
     def getVarCoeff(self, var):
+        """Definition"""
         if self.containsVar(var):
             return self.variables[var]
         else:
             return 0
 
     def getMatchingVars(self, varPol, polarity=True):
+        """Definition"""
         varSet = set()
         for var in varPol.keys():
             if self.containsVar(var):
@@ -51,10 +57,12 @@ class PolyhedralTerm(IoContract.Term):
         
 
     def varsMatchPolarity(self, varPol):
+        """Definition"""
         return len(self.getMatchingVars(varPol)) > 0
 
 
     def getVarPolarity(self, var, polarity=True):
+        """Definition"""
         if polarity:
             return self.variables[var] >= 0
         else:
@@ -70,14 +78,17 @@ class PolyhedralTerm(IoContract.Term):
         return PolyhedralTerm(variables, self.constant + other.constant)
 
     def removeVar(self, var):
+        """Definition"""
         if self.containsVar(var):
             self.variables.pop(var)
 
     def multiply(self, factor):
+        """Definition"""
         return PolyhedralTerm({key:factor*val for key,val in self.variables.items()}, factor*self.constant)
 
     # This routine accepts a variable to be substituted by a term and plugs in a subst term in place
     def substVar(self, var, substTerm):
+        """Definition"""
         if self.containsVar(var):
             term = substTerm.multiply(self.getVarCoeff(var))
             logging.debug("Term is " + str(term))
@@ -107,7 +118,9 @@ class PolyhedralTerm(IoContract.Term):
         return PolyhedralTerm(self.variables, self.constant)
 
     class Interfaces:
+        """Class description"""
         def termToSymb(term):
+            """Definition"""
             ex = 0
             for var in term.vars:
                 sv = sympy.symbols(var.val)
@@ -116,6 +129,7 @@ class PolyhedralTerm(IoContract.Term):
         
 
         def symbToTerm(expression):
+            """Definition"""
             exAry = expression.as_coefficients_dict()
             keys = list(exAry.keys())
             vars = {}
@@ -130,12 +144,14 @@ class PolyhedralTerm(IoContract.Term):
 
 
         def termToPolytope(term, vars):
+            """Definition"""
             coeffs = []
             for var in vars:
                 coeffs.append(term.getVarCoeff(var))
             return coeffs, term.constant
 
         def polytopeToTerm(poly, const, vars):
+            """Definition"""
             variables = {}
             for i, var in enumerate(vars):
                 variables[var] = poly[i]
@@ -147,6 +163,7 @@ class PolyhedralTerm(IoContract.Term):
     # Inputs: the terms and the variables that will be optimized
     # Assumptions: the number of equations matches the number of varsToElim contained in the terms
     def getValuesOfVarsToElim(termsToUse, varsToElim):
+        """Definition"""
         logging.debug("GetVals: " + str(termsToUse) + " Vars: " + str(varsToElim))
         varsToOpt = termsToUse.vars & varsToElim
         assert len(termsToUse.terms) == len(varsToOpt)
@@ -161,6 +178,7 @@ class PolyhedralTerm(IoContract.Term):
 
 
 def ReducePolytope(A:np.array, b:np.array, A_help:np.array=np.array([[]]), b_help:np.array=np.array([])):
+    """Definition"""
     n,m = A.shape
     n_h, m_h = A_help.shape
     helperPresent = n_h*m_h > 0
@@ -205,12 +223,14 @@ def ReducePolytope(A:np.array, b:np.array, A_help:np.array=np.array([[]]), b_hel
 
 
 class PolyhedralTermList(IoContract.TermList):
+    """Class description"""
 
 
     # This routine accepts a term that will be adbuced with the help of other
     # terms The abduction aims to eliminate from the term appearances of the
     # variables contained in varsToElim
     def transformWithHelpers(self, helperTerms:set, varsToElim:set, polarity:True):
+        """Definition"""
         logging.debug("Helper terms" + str(helperTerms))
         logging.debug("Variables to eliminate: " + str(varsToElim))
         helpers = helperTerms.copy()
@@ -254,6 +274,7 @@ class PolyhedralTermList(IoContract.TermList):
 
     
     def abduceWithHelpers(self, helperTerms:set, varsToElim:set):
+        """Definition"""
         logging.debug("Abducing from terms: " + str(self))
         logging.debug("Helpers: " + str(helperTerms))
         logging.debug("Vars to elim: " + str(varsToElim))
@@ -261,6 +282,7 @@ class PolyhedralTermList(IoContract.TermList):
         self.transformWithHelpers(helperTerms, varsToElim, True)
 
     def deduceWithHelpers(self, helperTerms:set, varsToElim:set):
+        """Definition"""
         logging.debug("Deducing from term" + str(self))
         logging.debug("Helpers: " + str(helperTerms))
         logging.debug("Vars to elim: " + str(varsToElim))
@@ -272,6 +294,7 @@ class PolyhedralTermList(IoContract.TermList):
 
 
     def simplify(self, helpers=set()):
+        """Definition"""
         logging.debug("Simplifying terms: " + str(self))
         logging.debug("Helpers: " + str(helpers))
         if isinstance(helpers, set):
@@ -285,8 +308,9 @@ class PolyhedralTermList(IoContract.TermList):
         logging.debug("Back to terms: " + str(self))
 
     class Interfaces:
-        
+        """Class description"""
         def termsToPolytope(terms, helpers=set()):
+            """Definition"""
             vars = list(terms.vars | helpers.vars)
             A = []
             b = []
@@ -313,6 +337,7 @@ class PolyhedralTermList(IoContract.TermList):
             return vars, A, b, A_h, b_h
 
         def polytopeToTerms(A, b, vars):
+            """Definition"""
             termList = []
             logging.debug("&&&&&&&&&&")
             #logging.debug("Poly is " + str(polytope))

@@ -1,16 +1,17 @@
-
-
+"""This is a docstring for Module"""
 import logging
 import copy
 from abc import ABC, abstractmethod
 
 
 class Var:
+    """This is a docstring for Term"""
     def __init__(self, val):
         self.value = str(val)
 
     @property
     def val(self):
+        """Write doc"""
         return self.value
 
     def __eq__(self, other):
@@ -27,14 +28,17 @@ class Var:
 
 
 class Term(ABC):
+    """This is a docstring for Term"""
 
     @property
     @abstractmethod
     def vars(self):
+        """Write doc"""
         pass
 
     @abstractmethod
     def containsVar(self, var):
+        """Write doc"""
         pass
 
     @abstractmethod
@@ -61,11 +65,13 @@ class Term(ABC):
 
 
 class TermList(ABC):
+    """This is a docstring for TermList"""
     def __init__(self, termSet:set):
         self.terms = termSet.copy()
 
     @property
     def vars(self):
+        """Write doc"""
         varset = set()
         for t in self.terms:
             varset = varset | t.vars
@@ -83,6 +89,7 @@ class TermList(ABC):
 
 
     def getTermsWithVars(self, varSet):
+        """Write doc"""
         terms = set()
         for t in self.terms:
             if len(t.vars & varSet) > 0:
@@ -104,20 +111,25 @@ class TermList(ABC):
 
     @abstractmethod
     def abduceWithHelpers(self, helperTerms:set, varsToElim:set):
+        """Write doc"""
         pass
 
     @abstractmethod
     def deduceWithHelpers(self, helperTerms:set, varsToElim:set):
+        """Write doc"""
         pass
 
     @abstractmethod
     def simplify(self, helpers=set()):
+        """Write doc"""
         pass
 
 
 
 class IoContract:
+    """Class description"""
     def __init__(self, assumptions:TermList, guarantees:TermList, inputVars:set, outputVars:set) -> None:
+        """Init"""
         # make sure the input & output variables are disjoint
         assert len(inputVars & outputVars) == 0
         # make sure the assumptions only contain input variables
@@ -133,21 +145,26 @@ class IoContract:
 
     @property
     def vars(self):
+        """Init"""
         return self.a.vars | self.g.vars
 
     def __str__(self):
+        """Init"""
         return "InVars: " + str(self.inputvars) + "\nOutVars:" + str(self.outputvars) + "\nA: " + str(self.a) + "\n" + "G: " + str(self.g)
 
     def canComposeWith(self, other) -> bool:
+        """Init"""
         # make sure sets of output variables don't intersect
         return len(self.outputvars & other.outputvars) == 0
 
     def canQuotientBy(self, other) -> bool:
+        """Init"""
         # make sure the top level ouputs not contained in outputs of the existing component do not intersect with the inputs of the existing component
         return len((self.outputvars - other.outputvars) & other.inputvars) == 0
 
 
     def compose(self, other):
+        """Init"""
         intvars = (self.outputvars & other.inputvars) | (self.inputvars & other.outputvars)
         inputvars = (self.inputvars | other.inputvars) - intvars
         outputvars = (self.outputvars | other.outputvars) - intvars
@@ -183,6 +200,7 @@ class IoContract:
         return result
     
     def quotient(self, other):
+        """Init"""
         assert self.canQuotientBy(other)
         outputvars = (self.outputvars - other.outputvars) | (other.inputvars - self.inputvars)
         inputvars  = (self.inputvars - other.inputvars) | (other.outputvars - self.outputvars)

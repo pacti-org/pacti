@@ -1,0 +1,22 @@
+.. Gear documentation master file, created by
+   sphinx-quickstart on Sun Jul 31 13:14:31 2022.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
+
+Welcome to Gear's documentation!
+================================
+
+Gear enables contract-based system analysis and design.
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents:
+
+   api
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
