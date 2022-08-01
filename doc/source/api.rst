@@ -6,16 +6,25 @@ API
 .. module:: IoContract
 
 .. autoclass:: Var
-   :members:
+    :members:
+    :member-order: bysource
 
 .. autoclass:: Term
-   :members:
+    :members:
+    :member-order: bysource
 
 .. autoclass:: TermList
-   :members:
+    :members:
+    :member-order: bysource
 
 .. autoclass:: IoContract
-   :members:
+    :members:
+    :member-order: bysource
+
+Polyhedral theory
+-----------------
+
+This code supports the expression of linear inequality constraints.
 
 .. module:: PolyhedralTerm
 
@@ -23,7 +32,9 @@ API
 
 .. autoclass:: PolyhedralTerm
     :members:
+    :member-order: bysource
 
 .. autoclass:: PolyhedralTermList
     :members:
+    :member-order: bysource
 
