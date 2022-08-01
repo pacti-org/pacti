@@ -15,7 +15,7 @@ author = 'GearDevTeam'
 
 import sys
 sys.path.append("..")
-extensions = ['sphinx.ext.autodoc','sphinx.ext.autosummary']
+extensions = ['sphinx.ext.autodoc','sphinx.ext.autosummary','sphinx.ext.napoleon']
 
 templates_path = ['_templates']
 exclude_patterns = []
