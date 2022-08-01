@@ -1,9 +1,10 @@
 
-API
-===
-
+For contributors
+================
 
 .. module:: IoContract
+
+.. automodule:: IoContract
 
 .. autoclass:: Var
     :members:
@@ -21,12 +22,20 @@ API
     :members:
     :member-order: bysource
 
-Polyhedral theory
------------------
 
-This code supports the expression of linear inequality constraints.
+Specification formalisms
+------------------------
+As discussed above, the abstract classes Term and TermList need to be extended
+by a formalism in which specifications can be written. In this section, we
+discuss available formalisms. 
+
+
+Polyhedral constraints
+~~~~~~~~~~~~~~~~~~~~~~
 
 .. module:: PolyhedralTerm
+
+.. automodule:: PolyhedralTerm
 
 .. autofunction:: ReducePolytope
 

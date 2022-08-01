@@ -104,7 +104,7 @@ class PolyhedralTerm(IoContract.Term):
 
 
     def __str__(self) -> str:
-        res = " + ".join([str(self.variables[var])+"*"+var.val for var in self.variables.keys()])
+        res = " + ".join([str(self.variables[var])+"*"+var.name for var in self.variables.keys()])
         res += " <= " + str(self.constant)
         return res
     
@@ -123,7 +123,7 @@ class PolyhedralTerm(IoContract.Term):
             """Definition"""
             ex = 0
             for var in term.vars:
-                sv = sympy.symbols(var.val)
+                sv = sympy.symbols(var.name)
                 ex += sv * term.getVarCoeff(var)
             return ex
         
@@ -168,7 +168,7 @@ class PolyhedralTerm(IoContract.Term):
         varsToOpt = termsToUse.vars & varsToElim
         assert len(termsToUse.terms) == len(varsToOpt)
         exprs = [PolyhedralTerm.Interfaces.termToSymb(term) for term in termsToUse.terms]
-        varsToSolve = [sympy.symbols(var.val) for var in varsToOpt]
+        varsToSolve = [sympy.symbols(var.name) for var in varsToOpt]
         sols = sympy.solve(exprs, *varsToSolve)
         logging.debug(sols)
         if len(sols) >0:
@@ -306,6 +306,16 @@ class PolyhedralTermList(IoContract.TermList):
         logging.debug("Reduction: " + str(A_red))
         self.terms = PolyhedralTermList.Interfaces.polytopeToTerms(A_red, b_red, vars).terms
         logging.debug("Back to terms: " + str(self))
+
+
+    def refines(self, other) -> bool:
+        """Tell whether the argument is a larger specification, i.e., compute self <= other.
+        
+        Args:
+            other:
+                TermList against which we are comparing self.
+        """
+        raise NotImplemented
 
     class Interfaces:
         """Class description"""
