@@ -12,7 +12,7 @@ import IoContract
 class PolyhedralTerm(IoContract.Term):
     """Class description"""
 
-    # Constructor: get (i) a dictionary whose keys are variabes and whose values
+    # Constructor: get (i) a dictionary whose keys are variables and whose values
     # are the coefficients of those variables in the term, and (b) a constant.
     # The term is assumed to be in the form \Sigma_i a_i v_i + constant <= 0
     def __init__(self, variables, constant):

@@ -49,7 +49,7 @@ class Term(ABC):
     """
     Terms, or constraints, to be imposed on the system or components.
 
-    Terms is an abstract class that must be extended in order to support specific constraint languages. 
+    Term is an abstract class that must be extended in order to support specific constraint languages. 
     """
 
     @property
@@ -104,7 +104,7 @@ class TermSet(ABC):
 
     @property
     def vars(self):
-        """The set of variables contained in this list of terms."""
+        """The set of variables contained in this set of terms."""
         varset = set()
         for t in self.terms:
             varset = varset | t.vars
@@ -123,10 +123,10 @@ class TermSet(ABC):
 
     def getTermsWithVars(self, varSet):
         """
-        Returns a set of terms which contain any of the variables indicated.
+        Returns the set of terms which contain any of the variables indicated.
         
         Args:
-            varSet: a set of variables being sought in TermSet. 
+            varSet: a set of variables being sought in current TermSet. 
         """
         terms = set()
         for t in self.terms:
