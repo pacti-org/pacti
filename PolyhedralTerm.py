@@ -117,109 +117,68 @@ class PolyhedralTerm(IoContract.Term):
     def copy(self):
         return PolyhedralTerm(self.variables, self.constant)
 
-    class Interfaces:
-        """Class description"""
-        def termToSymb(term):
-            """Definition"""
-            ex = 0
-            for var in term.vars:
-                sv = sympy.symbols(var.name)
-                ex += sv * term.getVarCoeff(var)
-            return ex
-        
 
-        def symbToTerm(expression):
-            """Definition"""
-            exAry = expression.as_coefficients_dict()
-            keys = list(exAry.keys())
-            vars = {}
-            constant = 0
-            for key in keys:
-                if key == 1:
-                    constant = exAry[key]
-                else:
-                    var = IoContract.Var(str(key))
-                    vars[var] = exAry[key]
-            return PolyhedralTerm(vars, constant)
+    @staticmethod
+    def termToSymb(term):
+        """Definition"""
+        ex = 0
+        for var in term.vars:
+            sv = sympy.symbols(var.name)
+            ex += sv * term.getVarCoeff(var)
+        return ex
+    
+    @staticmethod
+    def symbToTerm(expression):
+        """Definition"""
+        exAry = expression.as_coefficients_dict()
+        keys = list(exAry.keys())
+        vars = {}
+        constant = 0
+        for key in keys:
+            if key == 1:
+                constant = exAry[key]
+            else:
+                var = IoContract.Var(str(key))
+                vars[var] = exAry[key]
+        return PolyhedralTerm(vars, constant)
 
+    @staticmethod
+    def termToPolytope(term, vars):
+        """Definition"""
+        coeffs = []
+        for var in vars:
+            coeffs.append(term.getVarCoeff(var))
+        return coeffs, term.constant
 
-        def termToPolytope(term, vars):
-            """Definition"""
-            coeffs = []
-            for var in vars:
-                coeffs.append(term.getVarCoeff(var))
-            return coeffs, term.constant
-
-        def polytopeToTerm(poly, const, vars):
-            """Definition"""
-            variables = {}
-            for i, var in enumerate(vars):
-                variables[var] = poly[i]
-            return PolyhedralTerm(variables, const)
+    @staticmethod
+    def polytopeToTerm(poly, const, vars):
+        """Definition"""
+        variables = {}
+        for i, var in enumerate(vars):
+            variables[var] = poly[i]
+        return PolyhedralTerm(variables, const)
     
 
-    # This routine accepts a set of terms and a set of variables that should be optimized.
-    # ----------------------
-    # Inputs: the terms and the variables that will be optimized
-    # Assumptions: the number of equations matches the number of varsToElim contained in the terms
+    @staticmethod
     def getValuesOfVarsToElim(termsToUse, varsToElim):
-        """Definition"""
+        """
+        Accepts a set of terms and a set of variables that should be optimized.
+        
+        Inputs: the terms and the variables that will be optimized
+        Assumptions: the number of equations matches the number of varsToElim contained in the terms
+        """
         logging.debug("GetVals: " + str(termsToUse) + " Vars: " + str(varsToElim))
         varsToOpt = termsToUse.vars & varsToElim
         assert len(termsToUse.terms) == len(varsToOpt)
-        exprs = [PolyhedralTerm.Interfaces.termToSymb(term) for term in termsToUse.terms]
+        exprs = [PolyhedralTerm.termToSymb(term) for term in termsToUse.terms]
         varsToSolve = [sympy.symbols(var.name) for var in varsToOpt]
         sols = sympy.solve(exprs, *varsToSolve)
         logging.debug(sols)
         if len(sols) >0:
-            return {IoContract.Var(str(key)):PolyhedralTerm.Interfaces.symbToTerm(sols[key]) for key in sols.keys()}
+            return {IoContract.Var(str(key)):PolyhedralTerm.symbToTerm(sols[key]) for key in sols.keys()}
         else:
             return {}
 
-
-def ReducePolytope(A:np.array, b:np.array, A_help:np.array=np.array([[]]), b_help:np.array=np.array([])):
-    """Definition"""
-    n,m = A.shape
-    n_h, m_h = A_help.shape
-    helperPresent = n_h*m_h > 0
-    assert n == len(b)
-    if helperPresent:
-        assert n_h == len(b_help)
-    else:
-        assert len(b_help) == 0
-    if helperPresent:
-        assert m_h == m
-    if n == 0:
-        return A, b
-    if n == 1 and not helperPresent:
-        return A, b
-    
-    i = 0
-    A_temp = np.copy(A)
-    b_temp = np.copy(b)
-    while i < n:
-        objective = A_temp[i,:] * -1
-        b_temp[i] += 1
-        logging.debug("Obj is \n" + str(objective))
-        logging.debug("A_temp is \n" + str(A_temp))
-        logging.debug("A_help is \n" + str(A_help))
-        logging.debug("b_temp is \n" + str(b_temp))
-        logging.debug("b_help is \n" + str(b_help))
-        if helperPresent:
-            res = scipy.optimize.linprog(c=objective, A_ub=np.concatenate((A_temp, A_help),axis=0), b_ub=np.concatenate((b_temp, b_help)), bounds=(None,None))
-        else:
-            res = scipy.optimize.linprog(c=objective, A_ub=A_temp, b_ub=b_temp, bounds=(None,None))
-        b_temp[i] -= 1
-        logging.debug("Optimal value: " + str(-res['fun']))
-        logging.debug("Results: " + str(res))
-        if -res['fun'] <= b_temp[i]:
-            logging.debug("Can remove")
-            A_temp = np.delete(A_temp, i, 0)
-            b_temp = np.delete(b_temp, i)
-            n -= 1
-        else:
-            i += 1
-    return A_temp, b_temp
 
 
 class PolyhedralTermSet(IoContract.TermSet):
@@ -298,13 +257,13 @@ class PolyhedralTermSet(IoContract.TermSet):
         logging.debug("Simplifying terms: " + str(self))
         logging.debug("Context: " + str(context))
         if isinstance(context, set):
-            vars, A, b, A_h, b_h = PolyhedralTermSet.Interfaces.termsToPolytope(self, PolyhedralTermSet(context))
+            vars, A, b, A_h, b_h = PolyhedralTermSet.termsToPolytope(self, PolyhedralTermSet(context))
         else:
-            vars, A, b, A_h, b_h = PolyhedralTermSet.Interfaces.termsToPolytope(self, context)
+            vars, A, b, A_h, b_h = PolyhedralTermSet.termsToPolytope(self, context)
         logging.debug("Polytope is " + str(A))
-        A_red, b_red = ReducePolytope(A, b, A_h, b_h)
+        A_red, b_red = PolyhedralTermSet.ReducePolytope(A, b, A_h, b_h)
         logging.debug("Reduction: " + str(A_red))
-        self.terms = PolyhedralTermSet.Interfaces.polytopeToTerms(A_red, b_red, vars).terms
+        self.terms = PolyhedralTermSet.polytopeToTerms(A_red, b_red, vars).terms
         logging.debug("Back to terms: " + str(self))
 
 
@@ -317,46 +276,94 @@ class PolyhedralTermSet(IoContract.TermSet):
         """
         raise NotImplemented
 
-    class Interfaces:
-        """Class description"""
-        def termsToPolytope(terms, helpers=set()):
-            """Definition"""
-            vars = list(terms.vars | helpers.vars)
-            A = []
-            b = []
-            for term in terms.terms:
-                pol, coeff = PolyhedralTerm.Interfaces.termToPolytope(term, vars)
-                A.append(pol)
-                b.append(coeff)
 
-            A_h = []
-            b_h = []
-            for term in helpers.terms:
-                pol, coeff = PolyhedralTerm.Interfaces.termToPolytope(term, vars)
-                A_h.append(pol)
-                b_h.append(coeff)
-            
-            A = np.array(A)
-            b = np.array(b)
-            if len(helpers.terms) == 0:
-                A_h = np.array([[]])
+
+    @staticmethod
+    def termsToPolytope(terms, helpers=set()):
+        """Definition"""
+        vars = list(terms.vars | helpers.vars)
+        A = []
+        b = []
+        for term in terms.terms:
+            pol, coeff = PolyhedralTerm.termToPolytope(term, vars)
+            A.append(pol)
+            b.append(coeff)
+
+        A_h = []
+        b_h = []
+        for term in helpers.terms:
+            pol, coeff = PolyhedralTerm.termToPolytope(term, vars)
+            A_h.append(pol)
+            b_h.append(coeff)
+        
+        A = np.array(A)
+        b = np.array(b)
+        if len(helpers.terms) == 0:
+            A_h = np.array([[]])
+        else:
+            A_h = np.array(A_h)
+        b_h = np.array(b_h)
+        logging.debug("A is " + str(A))
+        return vars, A, b, A_h, b_h
+
+    @staticmethod
+    def polytopeToTerms(A, b, vars):
+        """Definition"""
+        termList = []
+        logging.debug("&&&&&&&&&&")
+        #logging.debug("Poly is " + str(polytope))
+        logging.debug("A is " + str(A))
+        n,m = A.shape
+        for i in range(n):
+            vect = list(A[i])
+            const = b[i]
+            term = PolyhedralTerm.polytopeToTerm(vect, const, vars)
+            termList.append(term)
+        return PolyhedralTermSet(set(termList))
+
+
+    @staticmethod
+    def ReducePolytope(A:np.array, b:np.array, A_help:np.array=np.array([[]]), b_help:np.array=np.array([])):
+        """Definition"""
+        n,m = A.shape
+        n_h, m_h = A_help.shape
+        helperPresent = n_h*m_h > 0
+        assert n == len(b)
+        if helperPresent:
+            assert n_h == len(b_help)
+        else:
+            assert len(b_help) == 0
+        if helperPresent:
+            assert m_h == m
+        if n == 0:
+            return A, b
+        if n == 1 and not helperPresent:
+            return A, b
+        
+        i = 0
+        A_temp = np.copy(A)
+        b_temp = np.copy(b)
+        while i < n:
+            objective = A_temp[i,:] * -1
+            b_temp[i] += 1
+            logging.debug("Obj is \n" + str(objective))
+            logging.debug("A_temp is \n" + str(A_temp))
+            logging.debug("A_help is \n" + str(A_help))
+            logging.debug("b_temp is \n" + str(b_temp))
+            logging.debug("b_help is \n" + str(b_help))
+            if helperPresent:
+                res = scipy.optimize.linprog(c=objective, A_ub=np.concatenate((A_temp, A_help),axis=0), b_ub=np.concatenate((b_temp, b_help)), bounds=(None,None))
             else:
-                A_h = np.array(A_h)
-            b_h = np.array(b_h)
-            logging.debug("A is " + str(A))
-            return vars, A, b, A_h, b_h
-
-        def polytopeToTerms(A, b, vars):
-            """Definition"""
-            termList = []
-            logging.debug("&&&&&&&&&&")
-            #logging.debug("Poly is " + str(polytope))
-            logging.debug("A is " + str(A))
-            n,m = A.shape
-            for i in range(n):
-                vect = list(A[i])
-                const = b[i]
-                term = PolyhedralTerm.Interfaces.polytopeToTerm(vect, const, vars)
-                termList.append(term)
-            return PolyhedralTermSet(set(termList))
+                res = scipy.optimize.linprog(c=objective, A_ub=A_temp, b_ub=b_temp, bounds=(None,None))
+            b_temp[i] -= 1
+            logging.debug("Optimal value: " + str(-res['fun']))
+            logging.debug("Results: " + str(res))
+            if -res['fun'] <= b_temp[i]:
+                logging.debug("Can remove")
+                A_temp = np.delete(A_temp, i, 0)
+                b_temp = np.delete(b_temp, i)
+                n -= 1
+            else:
+                i += 1
+        return A_temp, b_temp
 
