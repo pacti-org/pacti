@@ -25,7 +25,7 @@ def readInputFile(filename):
         for key in ['assumptions', 'guarantees']:
             reqs.append([PolyhedralTerm.PolyhedralTerm(term['coefficients'], term['constant']) for term in c[key]])
         cont = IoContract.IoContract(inputVars=getVarset(c['InputVars']), outputVars=getVarset(c['OutputVars']),
-            assumptions=PolyhedralTerm.PolyhedralTermList(set(reqs[0])), guarantees=PolyhedralTerm.PolyhedralTermList(set(reqs[1])))
+            assumptions=PolyhedralTerm.PolyhedralTermSet(set(reqs[0])), guarantees=PolyhedralTerm.PolyhedralTermSet(set(reqs[1])))
         contracts.append(cont)
     logging.info("Contract1:\n" + str(contracts[0]))
     logging.info("Contract2:\n" + str(contracts[1]))

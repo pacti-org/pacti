@@ -14,7 +14,7 @@ For contributors
     :members:
     :member-order: bysource
 
-.. autoclass:: TermList
+.. autoclass:: TermSet
     :members:
     :member-order: bysource
 
@@ -25,7 +25,7 @@ For contributors
 
 Specification formalisms
 ------------------------
-As discussed above, the abstract classes Term and TermList need to be extended
+As discussed above, the abstract classes Term and TermSet need to be extended
 by a formalism in which specifications can be written. In this section, we
 discuss available formalisms. 
 
@@ -43,7 +43,7 @@ Polyhedral constraints
     :members:
     :member-order: bysource
 
-.. autoclass:: PolyhedralTermList
+.. autoclass:: PolyhedralTermSet
     :members:
     :member-order: bysource
 

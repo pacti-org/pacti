@@ -222,7 +222,7 @@ def ReducePolytope(A:np.array, b:np.array, A_help:np.array=np.array([[]]), b_hel
     return A_temp, b_temp
 
 
-class PolyhedralTermList(IoContract.TermList):
+class PolyhedralTermSet(IoContract.TermSet):
     """Class description"""
 
 
@@ -242,7 +242,7 @@ class PolyhedralTermList(IoContract.TermList):
                 vars_elim[var] = term.getVarPolarity(var, polarity)
             logging.debug("Vars to elim: " + str(vars_elim))
             varsToCover = set(vars_elim.keys())
-            termsToUse = PolyhedralTermList(set())
+            termsToUse = PolyhedralTermSet(set())
             
             # now we have to choose from the helpers any terms that we can use to eliminate these variables
             for helper in helpers.terms:
@@ -298,13 +298,13 @@ class PolyhedralTermList(IoContract.TermList):
         logging.debug("Simplifying terms: " + str(self))
         logging.debug("Context: " + str(context))
         if isinstance(context, set):
-            vars, A, b, A_h, b_h = PolyhedralTermList.Interfaces.termsToPolytope(self, PolyhedralTermList(context))
+            vars, A, b, A_h, b_h = PolyhedralTermSet.Interfaces.termsToPolytope(self, PolyhedralTermSet(context))
         else:
-            vars, A, b, A_h, b_h = PolyhedralTermList.Interfaces.termsToPolytope(self, context)
+            vars, A, b, A_h, b_h = PolyhedralTermSet.Interfaces.termsToPolytope(self, context)
         logging.debug("Polytope is " + str(A))
         A_red, b_red = ReducePolytope(A, b, A_h, b_h)
         logging.debug("Reduction: " + str(A_red))
-        self.terms = PolyhedralTermList.Interfaces.polytopeToTerms(A_red, b_red, vars).terms
+        self.terms = PolyhedralTermSet.Interfaces.polytopeToTerms(A_red, b_red, vars).terms
         logging.debug("Back to terms: " + str(self))
 
 
@@ -313,7 +313,7 @@ class PolyhedralTermList(IoContract.TermList):
         
         Args:
             other:
-                TermList against which we are comparing self.
+                TermSet against which we are comparing self.
         """
         raise NotImplemented
 
@@ -358,5 +358,5 @@ class PolyhedralTermList(IoContract.TermList):
                 const = b[i]
                 term = PolyhedralTerm.Interfaces.polytopeToTerm(vect, const, vars)
                 termList.append(term)
-            return PolyhedralTermList(set(termList))
+            return PolyhedralTermSet(set(termList))
 

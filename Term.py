@@ -100,9 +100,9 @@ class rule:
         return self.apply(lterm, rterm)
 
 
-class TermList:
+class TermSet:
     def __init__(self, termSet:set):
-        self.rules = TermList.getRules()
+        self.rules = TermSet.getRules()
         self.terms = termSet.copy()
         self.foreignOrigin = {t:False for t in self.terms}
 
@@ -249,13 +249,13 @@ class TermList:
 
 
     def __and__(self, other):
-        return TermList(self.terms & other.terms)
+        return TermSet(self.terms & other.terms)
 
     def __or__(self, other):
-        return TermList(self.terms | other.terms)
+        return TermSet(self.terms | other.terms)
 
     def __sub__(self, other):
-        return TermList(self.terms - other.terms)
+        return TermSet(self.terms - other.terms)
 
 
     def reduceMultipleVariables(self, additionalTerms, elimVars:set):
@@ -284,12 +284,12 @@ class TermList:
         self.terms -= elimTerms
 
     def copy(self):
-        return TermList(self.terms)
+        return TermSet(self.terms)
 
 
 
 class IoContract:
-    def __init__(self, assumptions:TermList, guarantees:TermList, inputVars:set, outputVars:set) -> None:
+    def __init__(self, assumptions:TermSet, guarantees:TermSet, inputVars:set, outputVars:set) -> None:
         assert len(assumptions.vars - inputVars) == 0, print("A: " + str(assumptions.vars) + " Input vars: " + str(inputVars))
         assert len(guarantees.vars - inputVars - outputVars) == 0, print("G: " + str(guarantees.vars) + " Input: " + str(inputVars) + " Output: " + str(outputVars))
         self.a = assumptions.copy()
@@ -331,13 +331,13 @@ class IoContract:
 
 if __name__ == '__main__':
     requirements = {Term.LT(Var("a"), 5), Term.LT(Var("a"), 6)}
-    requirements = TermList(requirements)
+    requirements = TermSet(requirements)
     print(requirements)
     requirements.reduceTerms()
     print(requirements)
     
     requirements = {Term.LT(Var("a"), 5), Term.EQ(Var("b"), Var("a"))}
-    requirements = TermList(requirements)
+    requirements = TermSet(requirements)
     print(requirements)
     requirements.reduceVariable({Var("a")})
     print(requirements)
@@ -346,18 +346,18 @@ if __name__ == '__main__':
     # now we operate with contracts
     iVar = Var("i")
     oVar = Var("o")
-    assumptions = TermList({Term.LT(iVar, 2)})
-    guarantees = TermList({Term.EQ(oVar, iVar)})
+    assumptions = TermSet({Term.LT(iVar, 2)})
+    guarantees = TermSet({Term.EQ(oVar, iVar)})
     cont = IoContract(assumptions, guarantees, {iVar}, {oVar})
 
     opVar = Var("o'")
-    assumptions = TermList({Term.LT(oVar, 1)})
-    guarantees = TermList({Term.EQ(opVar, oVar)})
+    assumptions = TermSet({Term.LT(oVar, 1)})
+    guarantees = TermSet({Term.EQ(opVar, oVar)})
     contp = IoContract(assumptions, guarantees, {oVar}, {opVar})
 
     oppVar = Var("o''")
-    assumptions = TermList({Term.LT(opVar, 0)})
-    guarantees = TermList({Term.EQ(oppVar, opVar)})
+    assumptions = TermSet({Term.LT(opVar, 0)})
+    guarantees = TermSet({Term.EQ(oppVar, opVar)})
     contpp = IoContract(assumptions, guarantees, {opVar}, {oppVar})
 
     print("Contract is")

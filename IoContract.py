@@ -1,17 +1,17 @@
 """
 IoContracts contains Gear's basic definitions: Var, Term, TemList, and
 IoContract. Var creates variables; Term is an abstract class representing
-constraints; a TermList (also an abstract class) is a collection of terms
+constraints; a TermSet (also an abstract class) is a collection of terms
 semantically equivalent to the term which is the conjunction of all terms
-contained in the TermList; IoContract is an assume-guarantee specification
+contained in the TermSet; IoContract is an assume-guarantee specification
 consisting of assumptions, guarantees, and input and output variables. The
-assumptions and guarantees are given by TermLists. Assumptions make predicates
+assumptions and guarantees are given by TermSets. Assumptions make predicates
 only on inputs, and guarantees on both input and outputs (and no other
 variable).
 
 This module implements all supported contract operations and relations. In order
 to instantiate contracts and perform this operations, it is necessary to extend
-Term and TermList with specific constraint formalisms.
+Term and TermSet with specific constraint formalisms.
 """
 import logging
 import copy
@@ -91,12 +91,12 @@ class Term(ABC):
 
 
 
-class TermList(ABC):
+class TermSet(ABC):
     """
     A collection of terms, or constraints.
     
-    A TermList is semantically equivalent to a single term which is the
-    conjunction of all terms contained in the TermList. TermList is an abstract
+    A TermSet is semantically equivalent to a single term which is the
+    conjunction of all terms contained in the TermSet. TermSet is an abstract
     class that must be extended by specific constraint languages.
     """
     def __init__(self, termSet:set):
@@ -126,7 +126,7 @@ class TermList(ABC):
         Returns a set of terms which contain any of the variables indicated.
         
         Args:
-            varSet: a set of variables being sought in TermList. 
+            varSet: a set of variables being sought in TermSet. 
         """
         terms = set()
         for t in self.terms:
@@ -159,9 +159,9 @@ class TermList(ABC):
 
         Args:
             context:
-                Set of context terms that will be used to abduce the TermList.
+                Set of context terms that will be used to abduce the TermSet.
             varsToElim:
-                Variables that cannot be present in TermList after abduction. 
+                Variables that cannot be present in TermSet after abduction. 
         """
         pass
 
@@ -173,19 +173,19 @@ class TermList(ABC):
 
         Args:
             context:
-                Set of context terms that will be used to abstract the TermList.
+                Set of context terms that will be used to abstract the TermSet.
             varsToElim:
-                Variables that cannot be present in TermList after deduction. 
+                Variables that cannot be present in TermSet after deduction. 
         """
         pass
 
     @abstractmethod
     def simplify(self, context=set()):
-        """Remove redundant terms in TermList.
+        """Remove redundant terms in TermSet.
         
         Args:
             context:
-                Set of context terms that will be used to remove redundancies in the TermList.
+                Set of context terms that will be used to remove redundancies in the TermSet.
         """
         pass
 
@@ -195,7 +195,7 @@ class TermList(ABC):
         
         Args:
             other:
-                TermList against which we are comparing self.
+                TermSet against which we are comparing self.
         """
         pass
 
@@ -210,10 +210,10 @@ class IoContract:
     Attributes:
         inputvars: Variables which are inputs of the implementations of the contract.
         outputvars: Variables which are outputs of the implementations of the contract.
-        a(TermList): Contract assumptions.
-        g(TermList): Contract guarantees.
+        a(TermSet): Contract assumptions.
+        g(TermSet): Contract guarantees.
     """
-    def __init__(self, assumptions:TermList, guarantees:TermList, inputVars:set, outputVars:set) -> None:
+    def __init__(self, assumptions:TermSet, guarantees:TermSet, inputVars:set, outputVars:set) -> None:
         # make sure the input & output variables are disjoint
         assert len(inputVars & outputVars) == 0
         # make sure the assumptions only contain input variables
