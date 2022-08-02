@@ -174,20 +174,20 @@ class PolyhedralTerm(IoContract.Term):
     @staticmethod
     def to_term(expression):
         """Definition"""
-        exAry = expression.as_coefficients_dict()
-        keys = list(exAry.keys())
+        expression_coefficients = expression.as_coefficients_dict()
+        keys = list(expression_coefficients.keys())
         variable_dict = {}
         constant = 0
         for key in keys:
             if key == 1:
-                constant = exAry[key]
+                constant = expression_coefficients[key]
             else:
                 var = IoContract.Var(str(key))
-                variable_dict[var] = exAry[key]
+                variable_dict[var] = expression_coefficients[key]
         return PolyhedralTerm(variable_dict, constant)
 
     @staticmethod
-    def termToPolytope(term, vars):
+    def term_to_polytope(term, vars):
         """Definition"""
         coeffs = []
         for var in vars:
@@ -195,7 +195,7 @@ class PolyhedralTerm(IoContract.Term):
         return coeffs, term.constant
 
     @staticmethod
-    def polytopeToTerm(poly, const, vars):
+    def polytope_to_term(poly, const, vars):
         """Definition"""
         variables = {}
         for i, var in enumerate(vars):
@@ -341,14 +341,14 @@ class PolyhedralTermSet(IoContract.TermSet):
         A = []
         b = []
         for term in terms.terms:
-            pol, coeff = PolyhedralTerm.termToPolytope(term, vars)
+            pol, coeff = PolyhedralTerm.term_to_polytope(term, vars)
             A.append(pol)
             b.append(coeff)
 
         A_h = []
         b_h = []
         for term in helpers.terms:
-            pol, coeff = PolyhedralTerm.termToPolytope(term, vars)
+            pol, coeff = PolyhedralTerm.term_to_polytope(term, vars)
             A_h.append(pol)
             b_h.append(coeff)
 
@@ -373,7 +373,7 @@ class PolyhedralTermSet(IoContract.TermSet):
         for i in range(n):
             vect = list(A[i])
             const = b[i]
-            term = PolyhedralTerm.polytopeToTerm(vect, const, vars)
+            term = PolyhedralTerm.polytope_to_term(vect, const, vars)
             termList.append(term)
         return PolyhedralTermSet(set(termList))
 
