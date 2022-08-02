@@ -97,7 +97,7 @@ class TermSet(ABC):
     
     A TermSet is semantically equivalent to a single term which is the
     conjunction of all terms contained in the TermSet. TermSet is an abstract
-    class that must be extended by specific constraint languages.
+    class that must be extended to support a specific constraint formalism.
     """
     def __init__(self, termSet:set):
         self.terms = termSet.copy()
@@ -229,32 +229,55 @@ class IoContract:
 
     @property
     def vars(self):
-        """Init"""
+        """The set of variables contained in the assumptions and guarantees of the contract."""
         return self.a.vars | self.g.vars
 
     def __str__(self):
-        """Init"""
         return "InVars: " + str(self.inputvars) + "\nOutVars:" + str(self.outputvars) + "\nA: " + str(self.a) + "\n" + "G: " + str(self.g)
 
     def __le__(self, other):
         return self.refines(other)
 
     def canComposeWith(self, other) -> bool:
-        """Init"""
+        """
+        Tell whether the contract can be composed with another contract.
+
+        Args:
+            other: contract whose possibility to compose with self we are verifying.
+        """
         # make sure sets of output variables don't intersect
         return len(self.outputvars & other.outputvars) == 0
 
     def canQuotientBy(self, other) -> bool:
-        """Init"""
+        """
+        Tell whether the contract can quotiented by another contract.
+
+        Args:
+            other: potential quotient by which self would be quotiented.
+        """
         # make sure the top level ouputs not contained in outputs of the existing component do not intersect with the inputs of the existing component
         return len((self.outputvars - other.outputvars) & other.inputvars) == 0
 
+
     def sharesIoWith(self, other) -> bool:
+        """
+        Tell whether two contracts have the same IO signature.
+
+        Args:
+            other: contract whose IO signature is compared with self.
+        """
         assert (self.inputvars == other.inputvars) & (self.outputvars == other.outputvars)
 
 
     def refines(self, other) -> bool:
-        """Init"""
+        """
+        Tell whether the given contract is a refinement of another.
+
+        Return self <= other.
+
+        Args:
+            other: contract being compared with self.
+        """
         assert self.sharesIoWith(other)
         return (other.a <= self.a) and ((self.g | other.a) <= (other.g | other.a))
 
@@ -262,33 +285,16 @@ class IoContract:
     def compose(self, other):
         """Compose IO contracts.
 
-        Retrieves rows pertaining to the given keys from the Table instance
-        represented by table_handle.  String keys will be UTF-8 encoded.
+        Compute the composition of the two given contracts and abstract the
+        result in such a way that the result is a well-defined IO contract,
+        i.e., that assumptions refer only to inputs, and guarantees to both
+        inputs and outputs. 
 
         Args:
-            table_handle:
-                An open smalltable.Table instance.
-            keys:
-                A sequence of strings representing the key of each table row to
-                fetch.  String keys will be UTF-8 encoded.
-            require_all_keys:
-                If True only rows with values set for all keys will be returned.
+            other:
+                The second contract being composed.
 
-        Returns:
-        A dict mapping keys to the corresponding table row data
-        fetched. Each row is represented as a tuple of strings. For
-        example:
-
-        {b'Serak': ('Rigel VII', 'Preparer'),
-        b'Zim': ('Irk', 'Invader'),
-        b'Lrrr': ('Omicron Persei 8', 'Emperor')}
-
-        Returned keys are always bytes.  If a key from the keys argument is
-        missing from the dictionary, then that row was not found in the
-        table (and require_all_keys must have been False).
-
-        Raises:
-        IOError: An error occurred accessing the smalltable.
+        Returns: The abstracted composition of the two contracts.
         """
         intvars = (self.outputvars & other.inputvars) | (self.inputvars & other.outputvars)
         inputvars = (self.inputvars | other.inputvars) - intvars
@@ -325,7 +331,19 @@ class IoContract:
         return result
     
     def quotient(self, other):
-        """Init"""
+        """Compute the contract quotient.
+
+        Compute the quotient self/other of the two given contracts and refine the
+        result in such a way that the result is a well-defined IO contract,
+        i.e., that assumptions refer only to inputs, and guarantees to both
+        inputs and outputs. 
+
+        Args:
+            other:
+                The contract by which we take the quotient.
+
+        Returns: The refined quotient self/other.
+        """
         assert self.canQuotientBy(other)
         outputvars = (self.outputvars - other.outputvars) | (other.inputvars - self.inputvars)
         inputvars  = (self.inputvars - other.inputvars) | (other.outputvars - self.outputvars)

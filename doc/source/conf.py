@@ -27,3 +27,10 @@ exclude_patterns = []
 
 html_theme = 'alabaster'
 html_static_path = ['_static']
+
+html_theme_options = {
+#    'logo': 'logo.png',
+#    'github_user': 'bitprophet',
+#    'github_repo': 'alabaster',
+    'show_powered_by' : False
+}
