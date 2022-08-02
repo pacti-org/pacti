@@ -7,7 +7,7 @@ the constraints are of the form :math:`\sum_{i} a_i x_i \le c`, where the
 import logging
 import sympy
 import numpy as np
-import scipy.optimize
+from scipy.optimize import linprog
 import copy
 import IoContract
 
@@ -35,14 +35,14 @@ class PolyhedralTerm(IoContract.Term):
     # constant. The term is assumed to be in the form \Sigma_i a_i v_i +
     # constant <= 0
     def __init__(self, variables, constant):
-        vars = {}
+        varset = {}
         for key, val in variables.items():
             if val != 0:
                 if isinstance(key, str):
-                    vars[IoContract.Var(key)] = val
+                    varset[IoContract.Var(key)] = val
                 else:
-                    vars[key] = val
-        self.variables = vars
+                    varset[key] = val
+        self.variables = varset
         self.constant = constant
 
     def __eq__(self, other):
@@ -62,9 +62,9 @@ class PolyhedralTerm(IoContract.Term):
         return "<Term {0}>".format(self)
 
     def __add__(self, other):
-        vars = list(self.vars | other.vars)
+        varlist = list(self.vars | other.vars)
         variables = {}
-        for var in vars:
+        for var in varlist:
             variables[var] = self.getVarCoeff(var) + other.getVarCoeff(var)
         return PolyhedralTerm(variables, self.constant + other.constant)
 
@@ -211,7 +211,7 @@ class PolyhedralTerm(IoContract.Term):
         the number of equations matches the number of varsToElim contained in
         the terms
         """
-        logging.debug("GetVals: " + str(termsToUse) + " Vars: " + str(varsToElim))
+        logging.debug("GetVals: %s Vars: %s", termsToUse, varsToElim)
         varsToOpt = termsToUse.vars & varsToElim
         assert len(termsToUse.terms) == len(varsToOpt)
         exprs = [PolyhedralTerm.termToSymb(term) for term in termsToUse.terms]
@@ -234,7 +234,8 @@ class PolyhedralTermSet(IoContract.TermSet):
     # This routine accepts a term that will be adbuced with the help of other
     # terms The abduction aims to eliminate from the term appearances of the
     # variables contained in varsToElim
-    def transformWithContext(self, context:set, varsToElim:set, polarity:True):
+    def transformWithContext(self, context: set,
+                             varsToElim: set, polarity: True):
         """Definition"""
         logging.debug("Context terms" + str(context))
         logging.debug("Variables to eliminate: " + str(varsToElim))
@@ -249,7 +250,8 @@ class PolyhedralTermSet(IoContract.TermSet):
             varsToCover = set(vars_elim.keys())
             termsToUse = PolyhedralTermSet(set())
 
-            # now we have to choose from the helpers any terms that we can use to eliminate these variables
+            # now we have to choose from the helpers any terms that we can use
+            # to eliminate these variables
             for helper in helpers.terms:
                 varsMatch = helper.getMatchingVars(vars_elim, polarity)
                 if len(varsMatch & varsToCover) > 0:
@@ -259,9 +261,11 @@ class PolyhedralTermSet(IoContract.TermSet):
                     if len(varsToCover) == 0:
                         break
 
-            logging.debug("TermsToUse: " + str(termsToUse))
+            logging.debug("TermsToUse: %s", termsToUse)
 
-            # as long as we have more "to_elim" variables than terms, we seek additional terms. For now, we throw an error if we don't have enough terms
+            # as long as we have more "to_elim" variables than terms, we seek
+            # additional terms. For now, we throw an error if we don't have
+            # enough terms
             assert len(termsToUse.terms) == len(termsToUse.vars & varsToElim)
 
             sols = PolyhedralTerm.getValuesOfVarsToElim(termsToUse, varsToElim)
@@ -278,7 +282,7 @@ class PolyhedralTermSet(IoContract.TermSet):
         self.simplify()
 
 
-    def abduceWithContext(self, context:set, varsToElim:set):
+    def abduceWithContext(self, context: set, varsToElim: set):
         """Definition"""
         logging.debug("Abducing from terms: " + str(self))
         logging.debug("Context: " + str(context))
@@ -286,7 +290,7 @@ class PolyhedralTermSet(IoContract.TermSet):
         self.simplify(context)
         self.transformWithContext(context, varsToElim, True)
 
-    def deduceWithContext(self, context:set, varsToElim:set):
+    def deduceWithContext(self, context: set, varsToElim: set):
         """Definition"""
         logging.debug("Deducing from term" + str(self))
         logging.debug("Context: " + str(context))
@@ -303,9 +307,12 @@ class PolyhedralTermSet(IoContract.TermSet):
         logging.debug("Simplifying terms: " + str(self))
         logging.debug("Context: " + str(context))
         if isinstance(context, set):
-            vars, A, b, A_h, b_h = PolyhedralTermSet.termsToPolytope(self, PolyhedralTermSet(context))
+            vars, A, b, A_h, b_h = \
+                PolyhedralTermSet.termsToPolytope(self,
+                                                  PolyhedralTermSet(context))
         else:
-            vars, A, b, A_h, b_h = PolyhedralTermSet.termsToPolytope(self, context)
+            vars, A, b, A_h, b_h = \
+                PolyhedralTermSet.termsToPolytope(self, context)
         logging.debug("Polytope is " + str(A))
         A_red, b_red = PolyhedralTermSet.ReducePolytope(A, b, A_h, b_h)
         logging.debug("Reduction: " + str(A_red))
@@ -314,7 +321,9 @@ class PolyhedralTermSet(IoContract.TermSet):
 
 
     def refines(self, other) -> bool:
-        """Tell whether the argument is a larger specification, i.e., compute self <= other.
+        """
+        Tell whether the argument is a larger specification, i.e., compute self
+        <= other.
 
         Args:
             other:
@@ -359,7 +368,7 @@ class PolyhedralTermSet(IoContract.TermSet):
         logging.debug("&&&&&&&&&&")
         #logging.debug("Poly is " + str(polytope))
         logging.debug("A is " + str(A))
-        n,m = A.shape
+        n, m = A.shape
         for i in range(n):
             vect = list(A[i])
             const = b[i]
@@ -369,9 +378,11 @@ class PolyhedralTermSet(IoContract.TermSet):
 
 
     @staticmethod
-    def ReducePolytope(A:np.array, b:np.array, A_help:np.array=np.array([[]]), b_help:np.array=np.array([])):
+    def ReducePolytope(A: np.array, b: np.array,
+                       A_help: np.array = np.array([[]]),
+                       b_help: np.array = np.array([])):
         """Definition"""
-        n,m = A.shape
+        n, m = A.shape
         n_h, m_h = A_help.shape
         helperPresent = n_h*m_h > 0
         assert n == len(b)
@@ -390,7 +401,7 @@ class PolyhedralTermSet(IoContract.TermSet):
         A_temp = np.copy(A)
         b_temp = np.copy(b)
         while i < n:
-            objective = A_temp[i,:] * -1
+            objective = A_temp[i, :] * -1
             b_temp[i] += 1
             logging.debug("Obj is \n" + str(objective))
             logging.debug("A_temp is \n" + str(A_temp))
@@ -398,13 +409,19 @@ class PolyhedralTermSet(IoContract.TermSet):
             logging.debug("b_temp is \n" + str(b_temp))
             logging.debug("b_help is \n" + str(b_help))
             if helperPresent:
-                res = scipy.optimize.linprog(c=objective, A_ub=np.concatenate((A_temp, A_help),axis=0), b_ub=np.concatenate((b_temp, b_help)), bounds=(None,None))
+                res = linprog(c=objective,
+                              A_ub=np.concatenate((A_temp, A_help), axis=0),
+                              b_ub=np.concatenate((b_temp, b_help)),
+                              bounds=(None, None))
             else:
-                res = scipy.optimize.linprog(c=objective, A_ub=A_temp, b_ub=b_temp, bounds=(None,None))
+                res = linprog(c=objective,
+                              A_ub=A_temp,
+                              b_ub=b_temp,
+                              bounds=(None, None))
             b_temp[i] -= 1
-            logging.debug("Optimal value: " + str(-res['fun']))
+            logging.debug("Optimal value: " + str(-res["fun"]))
             logging.debug("Results: " + str(res))
-            if -res['fun'] <= b_temp[i]:
+            if -res["fun"] <= b_temp[i]:
                 logging.debug("Can remove")
                 A_temp = np.delete(A_temp, i, 0)
                 b_temp = np.delete(b_temp, i)
