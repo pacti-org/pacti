@@ -14,11 +14,26 @@ import IoContract
 
 
 class PolyhedralTerm(IoContract.Term):
-    """Class description"""
+    """
+    Polyhedral terms are linear inequalities over a set of variables.
 
-    # Constructor: get (i) a dictionary whose keys are variables and whose values
-    # are the coefficients of those variables in the term, and (b) a constant.
-    # The term is assumed to be in the form \Sigma_i a_i v_i + constant <= 0
+    Usage:
+        Polyhedral terms are initialized as follows
+
+        .. highlight:: python
+        .. code-block:: python
+
+            variables = {Var(x):2, Var(y):3}
+            constant = 3
+            term = PolyhedralTerm(variables, constant)
+
+        Asi es
+    """
+
+    # Constructor: get (i) a dictionary whose keys are variables and whose
+    # values are the coefficients of those variables in the term, and (b) a
+    # constant. The term is assumed to be in the form \Sigma_i a_i v_i +
+    # constant <= 0
     def __init__(self, variables, constant):
         vars = {}
         for key, val in variables.items():
@@ -30,39 +45,64 @@ class PolyhedralTerm(IoContract.Term):
         self.variables = vars
         self.constant = constant
 
+    def __eq__(self, other):
+        return self.variables == other.variables and \
+            self.constant == other.constant
+
+    def __str__(self) -> str:
+        res = " + ".join([str(self.variables[var])+"*"+var.name
+                          for var in self.variables.keys()])
+        res += " <= " + str(self.constant)
+        return res
+
+    def __hash__(self):
+        return hash(str(self))
+
+    def __repr__(self):
+        return "<Term {0}>".format(self)
+
+    def __add__(self, other):
+        vars = list(self.vars | other.vars)
+        variables = {}
+        for var in vars:
+            variables[var] = self.getVarCoeff(var) + other.getVarCoeff(var)
+        return PolyhedralTerm(variables, self.constant + other.constant)
+
+    def copy(self):
+        return PolyhedralTerm(self.variables, self.constant)
+
     @property
     def vars(self):
-        """Definition"""
+        """
+        Variables appearing in term with a nonzero coefficient.
+
+        Example:
+            For the term a*x + b*y <= c with variables x and y, this function
+            returns the set {x, y} if a and b are nonzero.
+        """
         varset = self.variables.keys()
         return set(varset)
 
-    def containsVar(self, var):
-        """Definition"""
+    def contains_var(self, var):
+        """
+        Tell whether term contains a given variable.
+
+        Args:
+            var: The variable that we are seeking in the current term.
+        """
         return var in self.vars
 
     def getVarCoeff(self, var):
-        """Definition"""
-        if self.containsVar(var):
+        """
+        Output the coefficient multiplying the given variable in the term.
+
+        Args:
+            var: The variable whose coefficient we are seeking.
+        """
+        if self.contains_var(var):
             return self.variables[var]
         else:
             return 0
-
-    def getMatchingVars(self, varPol, polarity=True):
-        """Definition"""
-        varSet = set()
-        for var in varPol.keys():
-            if self.containsVar(var):
-                if (self.getVarPolarity(var, True) == varPol[var]) or (self.getVarCoeff(var) == 0):
-                    varSet.add(var)
-                else:
-                    varSet = set()
-                    break
-        return varSet
-        
-
-    def varsMatchPolarity(self, varPol):
-        """Definition"""
-        return len(self.getMatchingVars(varPol)) > 0
 
 
     def getVarPolarity(self, var, polarity=True):
@@ -73,27 +113,42 @@ class PolyhedralTerm(IoContract.Term):
             return self.variables[var] <= 0
 
 
+    def getMatchingVars(self, varPol, polarity=True):
+        """
+        Return the set of variables
+        """
+        varSet = set()
+        for var in varPol.keys():
+            if self.contains_var(var):
+                if (self.getVarPolarity(var, True) == varPol[var]) or \
+                    (self.getVarCoeff(var) == 0):
+                    varSet.add(var)
+                else:
+                    varSet = set()
+                    break
+        return varSet
 
-    def __add__(self, other):
-        vars = list(self.vars | other.vars)
-        variables = {}
-        for var in vars:
-            variables[var] = self.getVarCoeff(var) + other.getVarCoeff(var)
-        return PolyhedralTerm(variables, self.constant + other.constant)
+
+    def varsMatchPolarity(self, varPol):
+        """Definition"""
+        return len(self.getMatchingVars(varPol)) > 0
+
 
     def removeVar(self, var):
         """Definition"""
-        if self.containsVar(var):
+        if self.contains_var(var):
             self.variables.pop(var)
 
     def multiply(self, factor):
         """Definition"""
-        return PolyhedralTerm({key:factor*val for key,val in self.variables.items()}, factor*self.constant)
+        variables = {key:factor*val for key, val in self.variables.items()}
+        return PolyhedralTerm(variables, factor*self.constant)
 
-    # This routine accepts a variable to be substituted by a term and plugs in a subst term in place
+    # This routine accepts a variable to be substituted by a term and plugs in a
+    # subst term in place
     def substVar(self, var, substTerm):
         """Definition"""
-        if self.containsVar(var):
+        if self.contains_var(var):
             term = substTerm.multiply(self.getVarCoeff(var))
             logging.debug("Term is " + str(term))
             self.removeVar(var)
@@ -101,25 +156,9 @@ class PolyhedralTerm(IoContract.Term):
             return self + term
         else:
             return self.copy()
-        
-
-    def __eq__(self, other):
-        return (self.variables == other.variables and self.constant == other.constant)
 
 
-    def __str__(self) -> str:
-        res = " + ".join([str(self.variables[var])+"*"+var.name for var in self.variables.keys()])
-        res += " <= " + str(self.constant)
-        return res
-    
-    def __hash__(self):
-        return hash(str(self))
 
-    def __repr__(self):
-        return "<Term {0}>".format(self)
-
-    def copy(self):
-        return PolyhedralTerm(self.variables, self.constant)
 
 
     @staticmethod
@@ -130,7 +169,7 @@ class PolyhedralTerm(IoContract.Term):
             sv = sympy.symbols(var.name)
             ex += sv * term.getVarCoeff(var)
         return ex
-    
+
     @staticmethod
     def symbToTerm(expression):
         """Definition"""
@@ -161,15 +200,16 @@ class PolyhedralTerm(IoContract.Term):
         for i, var in enumerate(vars):
             variables[var] = poly[i]
         return PolyhedralTerm(variables, const)
-    
+
 
     @staticmethod
     def getValuesOfVarsToElim(termsToUse, varsToElim):
         """
         Accepts a set of terms and a set of variables that should be optimized.
-        
-        Inputs: the terms and the variables that will be optimized
-        Assumptions: the number of equations matches the number of varsToElim contained in the terms
+
+        Inputs: the terms and the variables that will be optimized Assumptions:
+        the number of equations matches the number of varsToElim contained in
+        the terms
         """
         logging.debug("GetVals: " + str(termsToUse) + " Vars: " + str(varsToElim))
         varsToOpt = termsToUse.vars & varsToElim
@@ -178,8 +218,10 @@ class PolyhedralTerm(IoContract.Term):
         varsToSolve = [sympy.symbols(var.name) for var in varsToOpt]
         sols = sympy.solve(exprs, *varsToSolve)
         logging.debug(sols)
-        if len(sols) >0:
-            return {IoContract.Var(str(key)):PolyhedralTerm.symbToTerm(sols[key]) for key in sols.keys()}
+        if len(sols) > 0:
+            return {IoContract.Var(str(key)):
+                    PolyhedralTerm.symbToTerm(sols[key]) for
+                    key in sols.keys()}
         else:
             return {}
 
@@ -206,7 +248,7 @@ class PolyhedralTermSet(IoContract.TermSet):
             logging.debug("Vars to elim: " + str(vars_elim))
             varsToCover = set(vars_elim.keys())
             termsToUse = PolyhedralTermSet(set())
-            
+
             # now we have to choose from the helpers any terms that we can use to eliminate these variables
             for helper in helpers.terms:
                 varsMatch = helper.getMatchingVars(vars_elim, polarity)
@@ -221,13 +263,13 @@ class PolyhedralTermSet(IoContract.TermSet):
 
             # as long as we have more "to_elim" variables than terms, we seek additional terms. For now, we throw an error if we don't have enough terms
             assert len(termsToUse.terms) == len(termsToUse.vars & varsToElim)
-            
+
             sols = PolyhedralTerm.getValuesOfVarsToElim(termsToUse, varsToElim)
             logging.debug(sols)
             for var in sols.keys():
                 term = term.substVar(var, sols[var])
             termList[i] = term
-            
+
             logging.debug("After subst: " + str(term))
 
         self.terms = set(termList)
@@ -235,7 +277,7 @@ class PolyhedralTermSet(IoContract.TermSet):
         # the last step needs to be a simplication
         self.simplify()
 
-    
+
     def abduceWithContext(self, context:set, varsToElim:set):
         """Definition"""
         logging.debug("Abducing from terms: " + str(self))
@@ -273,7 +315,7 @@ class PolyhedralTermSet(IoContract.TermSet):
 
     def refines(self, other) -> bool:
         """Tell whether the argument is a larger specification, i.e., compute self <= other.
-        
+
         Args:
             other:
                 TermSet against which we are comparing self.
@@ -299,7 +341,7 @@ class PolyhedralTermSet(IoContract.TermSet):
             pol, coeff = PolyhedralTerm.termToPolytope(term, vars)
             A_h.append(pol)
             b_h.append(coeff)
-        
+
         A = np.array(A)
         b = np.array(b)
         if len(helpers.terms) == 0:
@@ -343,7 +385,7 @@ class PolyhedralTermSet(IoContract.TermSet):
             return A, b
         if n == 1 and not helperPresent:
             return A, b
-        
+
         i = 0
         A_temp = np.copy(A)
         b_temp = np.copy(b)
