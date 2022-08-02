@@ -1,4 +1,8 @@
-
+"""
+PolyhedralTerm provides support for linear inequalities as constraints, i.e.,
+the constraints are of the form :math:`\sum_{i} a_i x_i \le c`, where the
+:math:`x_i` are variables and the :math:`a_i` and :math:`c` are constants.
+"""
 
 import logging
 import sympy

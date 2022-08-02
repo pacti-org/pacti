@@ -37,8 +37,6 @@ Polyhedral constraints
 
 .. automodule:: PolyhedralTerm
 
-.. autofunction:: ReducePolytope
-
 .. autoclass:: PolyhedralTerm
     :members:
     :member-order: bysource
