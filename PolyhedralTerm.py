@@ -8,7 +8,6 @@ import logging
 import sympy
 import numpy as np
 from scipy.optimize import linprog
-import copy
 import IoContract
 
 
@@ -50,8 +49,8 @@ class PolyhedralTerm(IoContract.Term):
             self.constant == other.constant
 
     def __str__(self) -> str:
-        res = " + ".join([str(self.variables[var])+"*"+var.name
-                          for var in self.variables.keys()])
+        res = " + ".join([str(coeff)+"*"+var.name
+                          for var, coeff in self.variables.items()])
         res += " <= " + str(self.constant)
         return res
 
@@ -268,7 +267,8 @@ class PolyhedralTermSet(IoContract.TermSet):
             # as long as we have more "to_elim" variables than terms, we seek
             # additional terms. For now, we throw an error if we don't have
             # enough terms
-            assert len(terms_to_use.terms) == len(terms_to_use.vars & vars_to_elim)
+            assert len(terms_to_use.terms) == \
+                len(terms_to_use.vars & vars_to_elim)
 
             sols = PolyhedralTerm.solve_for_variables(terms_to_use,
                                                       vars_to_elim)
@@ -302,7 +302,7 @@ class PolyhedralTermSet(IoContract.TermSet):
         self._transform(context, vars_to_elim, False)
         # eliminate terms containing the variables to be eliminated
         terms_to_elim = self.getTermsWithVars(vars_to_elim)
-        self = self - terms_to_elim
+        self.terms = self.terms - terms_to_elim.terms
 
 
     def simplify(self, context=set()):
@@ -311,8 +311,8 @@ class PolyhedralTermSet(IoContract.TermSet):
         logging.debug("Context: %s", context)
         if isinstance(context, set):
             variables, A, b, A_h, b_h = \
-                PolyhedralTermSet.termset_to_polytope(self,
-                                                      PolyhedralTermSet(context))
+                PolyhedralTermSet.\
+                    termset_to_polytope(self, PolyhedralTermSet(context))
         else:
             variables, A, b, A_h, b_h = \
                 PolyhedralTermSet.termset_to_polytope(self, context)
