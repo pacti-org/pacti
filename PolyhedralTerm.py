@@ -310,14 +310,14 @@ class PolyhedralTermSet(IoContract.TermSet):
         logging.debug("Simplifying terms: %s", self)
         logging.debug("Context: %s", context)
         if isinstance(context, set):
-            variables, A, b, A_h, b_h = \
+            variables, self_mat, self_cons, ctx_mat, ctx_cons = \
                 PolyhedralTermSet.\
                     termset_to_polytope(self, PolyhedralTermSet(context))
         else:
-            variables, A, b, A_h, b_h = \
+            variables, self_mat, self_cons, ctx_mat, ctx_cons = \
                 PolyhedralTermSet.termset_to_polytope(self, context)
-        logging.debug("Polytope is %s", A)
-        A_red, b_red = PolyhedralTermSet.reduce_polytope(A, b, A_h, b_h)
+        logging.debug("Polytope is %s", self_mat)
+        A_red, b_red = PolyhedralTermSet.reduce_polytope(self_mat, self_cons, ctx_mat, ctx_cons)
         logging.debug("Reduction: %s", A_red)
         self.terms = PolyhedralTermSet.polytope_to_termset(A_red, b_red,
                                                            variables).terms
