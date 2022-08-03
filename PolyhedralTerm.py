@@ -285,7 +285,7 @@ class PolyhedralTermSet(IoContract.TermSet):
         self.simplify()
 
 
-    def abduceWithContext(self, context: set, vars_to_elim: set):
+    def abduce_with_context(self, context: set, vars_to_elim: set):
         """Definition"""
         logging.debug("Abducing from terms: %s", self)
         logging.debug("Context: %s", context)
@@ -293,7 +293,7 @@ class PolyhedralTermSet(IoContract.TermSet):
         self.simplify(context)
         self._transform(context, vars_to_elim, True)
 
-    def deduceWithContext(self, context: set, vars_to_elim: set):
+    def deduce_with_context(self, context: set, vars_to_elim: set):
         """Definition"""
         logging.debug("Deducing from term %s", self)
         logging.debug("Context: %s", context)
@@ -301,7 +301,7 @@ class PolyhedralTermSet(IoContract.TermSet):
         self.simplify(context)
         self._transform(context, vars_to_elim, False)
         # eliminate terms containing the variables to be eliminated
-        terms_to_elim = self.getTermsWithVars(vars_to_elim)
+        terms_to_elim = self.get_terms_with_vars(vars_to_elim)
         self.terms = self.terms - terms_to_elim.terms
 
 

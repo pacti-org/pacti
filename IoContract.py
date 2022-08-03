@@ -123,7 +123,7 @@ class TermSet(ABC):
 
 
 
-    def getTermsWithVars(self, varSet):
+    def get_terms_with_vars(self, variable_set):
         """
         Returns the set of terms which contain any of the variables indicated.
 
@@ -132,7 +132,7 @@ class TermSet(ABC):
         """
         terms = set()
         for t in self.terms:
-            if len(t.vars & varSet) > 0:
+            if len(t.vars & variable_set) > 0:
                 terms.add(t)
         return type(self)(terms)
 
@@ -154,39 +154,39 @@ class TermSet(ABC):
 
 
     @abstractmethod
-    def abduceWithContext(self, context: set, varsToElim: set):
+    def abduce_with_context(self, context: set, vars_to_elim: set):
         """
         Abduce terms containing variables to be eliminated using a user-provided
         context.
 
         Given a context :math:`\\Gamma`, and the set of terms contained in self,
         :math:`s`, this routine identifies a TermSet :math:`x` lacking variables
-        varsToElim such that :math:`\\frac{\\Gamma\\colon \\; x}{\\Gamma: \\;
+        vars_to_elim such that :math:`\\frac{\\Gamma\\colon \\; x}{\\Gamma: \\;
         s}`.
 
         Args:
             context:
                 Set of context terms that will be used to abduce the TermSet.
-            varsToElim:
+            vars_to_elim:
                 Variables that cannot be present in TermSet after abduction.
         """
         pass
 
     @abstractmethod
-    def deduceWithContext(self, context: set, varsToElim: set):
+    def deduce_with_context(self, context: set, vars_to_elim: set):
         """
         Deduce terms containing variables to be eliminated using a user-provided
         context.
 
         Given a context :math:`\\Gamma`, and the set of terms contained in self,
         :math:`s`, this routine identifies a formula :math:`x` lacking variables
-        varsToElim such that :math:`\\frac{\\Gamma\\colon \\; s}{\\Gamma: \\;
+        vars_to_elim such that :math:`\\frac{\\Gamma\\colon \\; s}{\\Gamma: \\;
         x}`.
 
         Args:
             context:
                 Set of context terms that will be used to abstract the TermSet.
-            varsToElim:
+            vars_to_elim:
                 Variables that cannot be present in TermSet after deduction.
         """
         pass
@@ -269,7 +269,7 @@ class IoContract:
     def __le__(self, other):
         return self.refines(other)
 
-    def canComposeWith(self, other) -> bool:
+    def can_compose_with(self, other) -> bool:
         """
         Tell whether the contract can be composed with another contract.
 
@@ -280,7 +280,7 @@ class IoContract:
         # make sure sets of output variables don't intersect
         return len(self.outputvars & other.outputvars) == 0
 
-    def canQuotientBy(self, other) -> bool:
+    def can_quotient_by(self, other) -> bool:
         """
         Tell whether the contract can quotiented by another contract.
 
@@ -293,7 +293,7 @@ class IoContract:
         return len((self.outputvars - other.outputvars) & other.inputvars) == 0
 
 
-    def sharesIoWith(self, other) -> bool:
+    def shares_io_with(self, other) -> bool:
         """
         Tell whether two contracts have the same IO signature.
 
@@ -313,7 +313,7 @@ class IoContract:
         Args:
             other: contract being compared with self.
         """
-        assert self.sharesIoWith(other)
+        assert self.shares_io_with(other)
         return (other.a <= self.a) and \
             ((self.g | other.a) <= (other.g | other.a))
 
@@ -337,31 +337,31 @@ class IoContract:
             (self.inputvars & other.outputvars)
         inputvars = (self.inputvars | other.inputvars) - intvars
         outputvars = (self.outputvars | other.outputvars) - intvars
-        assert self.canComposeWith(other)
-        otherHelpsSelf = len(other.outputvars & self.inputvars) > 0
-        selfHelpsOther = len(other.inputvars & self.outputvars) > 0
+        assert self.can_compose_with(other)
+        other_helps_self = len(other.outputvars & self.inputvars) > 0
+        self_helps_other = len(other.inputvars & self.outputvars) > 0
         # process assumptions
-        if otherHelpsSelf and selfHelpsOther:
+        if other_helps_self and self_helps_other:
             assert False
-        elif selfHelpsOther:
-            other.a.abduceWithContext(self.g, intvars | outputvars)
+        elif self_helps_other:
+            other.a.abduce_with_context(self.g, intvars | outputvars)
             assumptions = other.a | self.a
-        elif otherHelpsSelf:
-            self.a.abduceWithContext(other.g, intvars | outputvars)
+        elif other_helps_self:
+            self.a.abduce_with_context(other.g, intvars | outputvars)
             assumptions = self.a | other.a
         assumptions.simplify()
 
         # process guarantees
         g1 = self.g.copy()
         g2 = other.g.copy()
-        g1.deduceWithContext(g2, intvars)
-        g2.deduceWithContext(g1, intvars)
+        g1.deduce_with_context(g2, intvars)
+        g2.deduce_with_context(g1, intvars)
         allguarantees = g1 | g2
-        allguarantees.deduceWithContext(assumptions, intvars)
+        allguarantees.deduce_with_context(assumptions, intvars)
 
         # eliminate terms with forbidden vars
-        termsToElim = allguarantees.getTermsWithVars(intvars)
-        allguarantees = allguarantees - termsToElim
+        terms_to_elim = allguarantees.get_terms_with_vars(intvars)
+        allguarantees = allguarantees - terms_to_elim
 
         # build contract
         result = IoContract(assumptions, allguarantees, inputvars, outputvars)
@@ -383,7 +383,7 @@ class IoContract:
         Returns:
             The refined quotient self/other.
         """
-        assert self.canQuotientBy(other)
+        assert self.can_quotient_by(other)
         outputvars = (self.outputvars - other.outputvars) | \
             (other.inputvars - self.inputvars)
         inputvars = (self.inputvars - other.inputvars) | \
@@ -394,7 +394,7 @@ class IoContract:
         # get assumptions
         logging.debug("Computing quotient assumptions")
         assumptions = copy.deepcopy(self.a)
-        assumptions.deduceWithContext(other.g, intvars | outputvars)
+        assumptions.deduce_with_context(other.g, intvars | outputvars)
         logging.debug("Assumptions after processing: %s", assumptions)
 
         # get guarantees
@@ -403,11 +403,11 @@ class IoContract:
         logging.debug("""
         Using existing guarantees to aid system-level guarantees
         """)
-        guarantees.abduceWithContext(other.g, intvars)
+        guarantees.abduce_with_context(other.g, intvars)
         logging.debug("""
         Using system-level assumptions to aid quotient guarantees""")
         guarantees = guarantees | other.a
-        guarantees.abduceWithContext(self.a, intvars)
+        guarantees.abduce_with_context(self.a, intvars)
         logging.debug("Guarantees after processing: %s", guarantees)
 
 
