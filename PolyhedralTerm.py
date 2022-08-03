@@ -311,15 +311,16 @@ class PolyhedralTermSet(IoContract.TermSet):
         logging.debug("Context: %s", context)
         if isinstance(context, set):
             variables, A, b, A_h, b_h = \
-                PolyhedralTermSet.termsToPolytope(self,
-                                                  PolyhedralTermSet(context))
+                PolyhedralTermSet.termset_to_polytope(self,
+                                                      PolyhedralTermSet(context))
         else:
             variables, A, b, A_h, b_h = \
-                PolyhedralTermSet.termsToPolytope(self, context)
+                PolyhedralTermSet.termset_to_polytope(self, context)
         logging.debug("Polytope is %s", A)
-        A_red, b_red = PolyhedralTermSet.ReducePolytope(A, b, A_h, b_h)
+        A_red, b_red = PolyhedralTermSet.reduce_polytope(A, b, A_h, b_h)
         logging.debug("Reduction: %s", A_red)
-        self.terms = PolyhedralTermSet.polytopeToTerms(A_red, b_red, variables).terms
+        self.terms = PolyhedralTermSet.polytope_to_termset(A_red, b_red,
+                                                           variables).terms
         logging.debug("Back to terms: %s", self)
 
 
@@ -332,25 +333,25 @@ class PolyhedralTermSet(IoContract.TermSet):
             other:
                 TermSet against which we are comparing self.
         """
-        raise NotImplemented
+        raise NotImplementedError
 
 
 
     @staticmethod
-    def termsToPolytope(terms, helpers=set()):
+    def termset_to_polytope(terms, helpers=set()):
         """Definition"""
-        vars = list(terms.vars | helpers.vars)
+        variables = list(terms.vars | helpers.vars)
         A = []
         b = []
         for term in terms.terms:
-            pol, coeff = PolyhedralTerm.term_to_polytope(term, vars)
+            pol, coeff = PolyhedralTerm.term_to_polytope(term, variables)
             A.append(pol)
             b.append(coeff)
 
         A_h = []
         b_h = []
         for term in helpers.terms:
-            pol, coeff = PolyhedralTerm.term_to_polytope(term, vars)
+            pol, coeff = PolyhedralTerm.term_to_polytope(term, variables)
             A_h.append(pol)
             b_h.append(coeff)
 
@@ -362,10 +363,10 @@ class PolyhedralTermSet(IoContract.TermSet):
             A_h = np.array(A_h)
         b_h = np.array(b_h)
         logging.debug("A is %s", A)
-        return vars, A, b, A_h, b_h
+        return variables, A, b, A_h, b_h
 
     @staticmethod
-    def polytopeToTerms(A, b, vars):
+    def polytope_to_termset(A, b, variables):
         """Definition"""
         term_list = []
         logging.debug("&&&&&&&&&&")
@@ -375,29 +376,29 @@ class PolyhedralTermSet(IoContract.TermSet):
         for i in range(n):
             vect = list(A[i])
             const = b[i]
-            term = PolyhedralTerm.polytope_to_term(vect, const, vars)
+            term = PolyhedralTerm.polytope_to_term(vect, const, variables)
             term_list.append(term)
         return PolyhedralTermSet(set(term_list))
 
 
     @staticmethod
-    def ReducePolytope(A: np.array, b: np.array,
-                       A_help: np.array = np.array([[]]),
-                       b_help: np.array = np.array([])):
+    def reduce_polytope(A: np.array, b: np.array,
+                        A_help: np.array = np.array([[]]),
+                        b_help: np.array = np.array([])):
         """Definition"""
         n, m = A.shape
         n_h, m_h = A_help.shape
-        helperPresent = n_h*m_h > 0
+        helper_present = n_h*m_h > 0
         assert n == len(b)
-        if helperPresent:
+        if helper_present:
             assert n_h == len(b_help)
         else:
             assert len(b_help) == 0
-        if helperPresent:
+        if helper_present:
             assert m_h == m
         if n == 0:
             return A, b
-        if n == 1 and not helperPresent:
+        if n == 1 and not helper_present:
             return A, b
 
         i = 0
@@ -411,7 +412,7 @@ class PolyhedralTermSet(IoContract.TermSet):
             logging.debug("A_help is \n%s", A_help)
             logging.debug("b_temp is \n%s", b_temp)
             logging.debug("b_help is \n%s", b_help)
-            if helperPresent:
+            if helper_present:
                 res = linprog(c=objective,
                               A_ub=np.concatenate((A_temp, A_help), axis=0),
                               b_ub=np.concatenate((b_temp, b_help)),
