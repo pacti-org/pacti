@@ -151,7 +151,7 @@ class PolyhedralTerm(IoContract.Term):
         """Definition"""
         if self.contains_var(var):
             term = subst_with_term.multiply(self.get_coefficient(var))
-            logging.debug("Term is " + str(term))
+            logging.debug("Term is %s", term)
             self.remove_variable(var)
             logging.debug(self)
             return self + term
@@ -187,33 +187,33 @@ class PolyhedralTerm(IoContract.Term):
         return PolyhedralTerm(variable_dict, constant)
 
     @staticmethod
-    def term_to_polytope(term, vars):
+    def term_to_polytope(term, variables):
         """Definition"""
         coeffs = []
-        for var in vars:
+        for var in variables:
             coeffs.append(term.get_coefficient(var))
         return coeffs, term.constant
 
     @staticmethod
-    def polytope_to_term(poly, const, vars):
+    def polytope_to_term(poly, const, variables):
         """Definition"""
-        variables = {}
-        for i, var in enumerate(vars):
-            variables[var] = poly[i]
-        return PolyhedralTerm(variables, const)
+        variable_dict = {}
+        for i, var in enumerate(variables):
+            variable_dict[var] = poly[i]
+        return PolyhedralTerm(variable_dict, const)
 
 
     @staticmethod
-    def getValuesOfVarsToElim(termsToUse, varsToElim):
+    def getValuesOfVarsToElim(termsToUse, vars_to_elim):
         """
         Accepts a set of terms and a set of variables that should be optimized.
 
         Inputs: the terms and the variables that will be optimized Assumptions:
-        the number of equations matches the number of varsToElim contained in
+        the number of equations matches the number of vars_to_elim contained in
         the terms
         """
-        logging.debug("GetVals: %s Vars: %s", termsToUse, varsToElim)
-        varsToOpt = termsToUse.vars & varsToElim
+        logging.debug("GetVals: %s Vars: %s", termsToUse, vars_to_elim)
+        varsToOpt = termsToUse.vars & vars_to_elim
         assert len(termsToUse.terms) == len(varsToOpt)
         exprs = [PolyhedralTerm.to_symbolic(term) for term in termsToUse.terms]
         varsToSolve = [sympy.symbols(var.name) for var in varsToOpt]
@@ -234,18 +234,18 @@ class PolyhedralTermSet(IoContract.TermSet):
 
     # This routine accepts a term that will be adbuced with the help of other
     # terms The abduction aims to eliminate from the term appearances of the
-    # variables contained in varsToElim
+    # variables contained in vars_to_elim
     def transformWithContext(self, context: set,
-                             varsToElim: set, polarity: True):
+                             vars_to_elim: set, polarity: True):
         """Definition"""
         logging.debug("Context terms" + str(context))
-        logging.debug("Variables to eliminate: " + str(varsToElim))
+        logging.debug("Variables to eliminate: " + str(vars_to_elim))
         helpers = context.copy()
         termList = list(self.terms)
         for i, term in enumerate(termList):
             logging.debug("Transforming " + str(term))
             vars_elim = {}
-            for var in term.vars & varsToElim:
+            for var in term.vars & vars_to_elim:
                 vars_elim[var] = term.get_polarity(var, polarity)
             logging.debug("Vars to elim: " + str(vars_elim))
             varsToCover = set(vars_elim.keys())
@@ -267,9 +267,9 @@ class PolyhedralTermSet(IoContract.TermSet):
             # as long as we have more "to_elim" variables than terms, we seek
             # additional terms. For now, we throw an error if we don't have
             # enough terms
-            assert len(termsToUse.terms) == len(termsToUse.vars & varsToElim)
+            assert len(termsToUse.terms) == len(termsToUse.vars & vars_to_elim)
 
-            sols = PolyhedralTerm.getValuesOfVarsToElim(termsToUse, varsToElim)
+            sols = PolyhedralTerm.getValuesOfVarsToElim(termsToUse, vars_to_elim)
             logging.debug(sols)
             for var in sols.keys():
                 term = term.substitute_variable(var, sols[var])
@@ -283,23 +283,23 @@ class PolyhedralTermSet(IoContract.TermSet):
         self.simplify()
 
 
-    def abduceWithContext(self, context: set, varsToElim: set):
+    def abduceWithContext(self, context: set, vars_to_elim: set):
         """Definition"""
         logging.debug("Abducing from terms: " + str(self))
         logging.debug("Context: " + str(context))
-        logging.debug("Vars to elim: " + str(varsToElim))
+        logging.debug("Vars to elim: " + str(vars_to_elim))
         self.simplify(context)
-        self.transformWithContext(context, varsToElim, True)
+        self.transformWithContext(context, vars_to_elim, True)
 
-    def deduceWithContext(self, context: set, varsToElim: set):
+    def deduceWithContext(self, context: set, vars_to_elim: set):
         """Definition"""
         logging.debug("Deducing from term" + str(self))
         logging.debug("Context: " + str(context))
-        logging.debug("Vars to elim: " + str(varsToElim))
+        logging.debug("Vars to elim: " + str(vars_to_elim))
         self.simplify(context)
-        self.transformWithContext(context, varsToElim, False)
+        self.transformWithContext(context, vars_to_elim, False)
         # eliminate terms containing the variables to be eliminated
-        termsToElim = self.getTermsWithVars(varsToElim)
+        termsToElim = self.getTermsWithVars(vars_to_elim)
         self = self - termsToElim
 
 
