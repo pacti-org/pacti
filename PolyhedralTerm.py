@@ -317,7 +317,8 @@ class PolyhedralTermSet(IoContract.TermSet):
             variables, self_mat, self_cons, ctx_mat, ctx_cons = \
                 PolyhedralTermSet.termset_to_polytope(self, context)
         logging.debug("Polytope is %s", self_mat)
-        A_red, b_red = PolyhedralTermSet.reduce_polytope(self_mat, self_cons, ctx_mat, ctx_cons)
+        A_red, b_red = PolyhedralTermSet.reduce_polytope(self_mat, self_cons,
+                                                         ctx_mat, ctx_cons)
         logging.debug("Reduction: %s", A_red)
         self.terms = PolyhedralTermSet.polytope_to_termset(A_red, b_red,
                                                            variables).terms
