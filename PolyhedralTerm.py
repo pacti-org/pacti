@@ -154,11 +154,11 @@ class PolyhedralTerm(IoContract.Term):
             constant  = 4
             term = PolyhedralTerm(variables, constant)
             polarities = {y:True}
-            term.get_matching_vars(polarities)        
-        
+            term.get_matching_vars(polarities)
+
         The last call returns :code:`{y, z}` because the variable y matches the
         requested polarity in the term, and the variable z has a zero
-        coefficient. 
+        coefficient.
 
 
         Args:
@@ -195,7 +195,7 @@ class PolyhedralTerm(IoContract.Term):
 
     def multiply(self, factor):
         """Multiplies a term by a constant factor.
-        
+
         For example, multiplying the term :math:`2x + 3y \\le 4` by the factor 2
         yields :math:`4x + 6y \\le 8`.
 
@@ -209,7 +209,7 @@ class PolyhedralTerm(IoContract.Term):
         variables = {key:factor*val for key, val in self.variables.items()}
         return PolyhedralTerm(variables, factor*self.constant)
 
-    
+
     def substitute_variable(self, var, subst_with_term):
         """
         Substitutes a specified variable in a term with a given term.
@@ -221,7 +221,7 @@ class PolyhedralTerm(IoContract.Term):
 
         Args:
             var: The term variable to be substituted.
-            
+
             subst_with_term: The term used to replace var.
 
         Returns:
@@ -303,7 +303,7 @@ class PolyhedralTerm(IoContract.Term):
 
         Args:
             term: The term to be transformed.
-            
+
             variable_list:
                 A list of variables indicating the order of appearance of
                 variable coefficients.
@@ -347,7 +347,7 @@ class PolyhedralTerm(IoContract.Term):
             context:
                 The set of terms to be solved. Each term will be interpreted as
                 an equality.
-            
+
             vars_to_elim:
                 The set of variables whose solutions will be sought.
 
@@ -532,16 +532,17 @@ class PolyhedralTermSet(IoContract.TermSet):
 
 
     @staticmethod
-    def termset_to_polytope(terms:PolyhedralTermSet, context:PolyhedralTermSet):
+    def termset_to_polytope(terms: PolyhedralTermSet,
+                            context: PolyhedralTermSet):
         """
         Converts a set of terms with its context into matrix-vector pairs.
 
         Example:
             Suppose the set of terms is :math:`\\{x+y \\le 1, x - y \\le 4\\}`
-            and the context is :math:`\\{x + 4w \le 5\\}`. The routine extracts
+            and the context is :math:`\\{x + 4w \\le 5\\}`. The routine extracts
             all variables and generates an order for them, say, :math:`[x, w,
             y]`. Then the routine returns matrix-vector pairs for both the terms
-            TermSet and the context. It returns :math:`A = \left(
+            TermSet and the context. It returns :math:`A = \\left(
             \\begin{smallmatrix} 1 & 0 & 1 \\\\ 1 &0 &-1
             \\end{smallmatrix}\\right)` and :math:`b = \\left(
             \\begin{smallmatrix} 1 \\\\ 4 \\end{smallmatrix}\\right)` for the
@@ -586,7 +587,8 @@ class PolyhedralTermSet(IoContract.TermSet):
 
     @staticmethod
     def polytope_to_termset(matrix, vector,
-                            variables:list[IoContract.Var]) -> PolyhedralTermSet:
+                            variables: list[IoContract.Var]) -> \
+                                PolyhedralTermSet:
         """
         Transforms a matrix-vector pair into a PolyhedralTermSet, assuming that
         the variable coefficients in the matrix are ordered as specified.
