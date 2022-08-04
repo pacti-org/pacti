@@ -532,9 +532,9 @@ class PolyhedralTermSet(IoContract.TermSet):
 
 
     @staticmethod
-    def termset_to_polytope(terms, helpers=set()):
+    def termset_to_polytope(terms, context=set()):
         """Definition"""
-        variables = list(terms.vars | helpers.vars)
+        variables = list(terms.vars | context.vars)
         A = []
         b = []
         for term in terms.terms:
@@ -544,14 +544,14 @@ class PolyhedralTermSet(IoContract.TermSet):
 
         A_h = []
         b_h = []
-        for term in helpers.terms:
+        for term in context.terms:
             pol, coeff = PolyhedralTerm.term_to_polytope(term, variables)
             A_h.append(pol)
             b_h.append(coeff)
 
         A = np.array(A)
         b = np.array(b)
-        if len(helpers.terms) == 0:
+        if len(context.terms) == 0:
             A_h = np.array([[]])
         else:
             A_h = np.array(A_h)
