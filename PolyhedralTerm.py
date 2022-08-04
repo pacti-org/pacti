@@ -510,10 +510,10 @@ class PolyhedralTermSet(IoContract.TermSet):
             variables, self_mat, self_cons, ctx_mat, ctx_cons = \
                 PolyhedralTermSet.termset_to_polytope(self, context)
         logging.debug("Polytope is %s", self_mat)
-        A_red, b_red = PolyhedralTermSet.reduce_polytope(self_mat, self_cons,
+        a_red, b_red = PolyhedralTermSet.reduce_polytope(self_mat, self_cons,
                                                          ctx_mat, ctx_cons)
-        logging.debug("Reduction: %s", A_red)
-        self.terms = PolyhedralTermSet.polytope_to_termset(A_red, b_red,
+        logging.debug("Reduction: %s", a_red)
+        self.terms = PolyhedralTermSet.polytope_to_termset(a_red, b_red,
                                                            variables).terms
         logging.debug("Back to terms: %s", self)
 
@@ -557,33 +557,33 @@ class PolyhedralTermSet(IoContract.TermSet):
                 Context terms to convert to matrix-vector form.
 
         Returns:
-            A tuple :code:`variables, A, b, A_h, b_h` consisting of the variable
+            A tuple :code:`variables, A, b, a_h, b_h` consisting of the variable
             order and the matrix-vector pairs for the terms and the context.
         """
         variables = list(terms.vars | context.vars)
-        A = []
+        a = []
         b = []
         for term in terms.terms:
             pol, coeff = PolyhedralTerm.term_to_polytope(term, variables)
-            A.append(pol)
+            a.append(pol)
             b.append(coeff)
 
-        A_h = []
+        a_h = []
         b_h = []
         for term in context.terms:
             pol, coeff = PolyhedralTerm.term_to_polytope(term, variables)
-            A_h.append(pol)
+            a_h.append(pol)
             b_h.append(coeff)
 
-        A = np.array(A)
+        a = np.array(a)
         b = np.array(b)
         if len(context.terms) == 0:
-            A_h = np.array([[]])
+            a_h = np.array([[]])
         else:
-            A_h = np.array(A_h)
+            a_h = np.array(a_h)
         b_h = np.array(b_h)
-        logging.debug("A is %s", A)
-        return variables, A, b, A_h, b_h
+        logging.debug("a is %s", a)
+        return variables, a, b, a_h, b_h
 
     @staticmethod
     def polytope_to_termset(matrix, vector,
@@ -620,25 +620,25 @@ class PolyhedralTermSet(IoContract.TermSet):
 
 
     @staticmethod
-    def reduce_polytope(A: np.array, b: np.array,
-                        A_help: np.array = np.array([[]]),
+    def reduce_polytope(a: np.array, b: np.array,
+                        a_help: np.array = np.array([[]]),
                         b_help: np.array = np.array([])):
         """
         Eliminate redundant constraints from the H-representation of a given
         polytope using as context a given polytope.
 
         Args:
-            A:
+            a:
                 Matrix of H-representation of polytope to reduce.
             b:
                 Vector of H-representation of polytope to reduce.
-            A_help:
+            a_help:
                 Matrix of H-representation of context polytope.
             b_help:
                 Vector of H-representation of context polytope.
         """
-        n, m = A.shape
-        n_h, m_h = A_help.shape
+        n, m = a.shape
+        n_h, m_h = a_help.shape
         helper_present = n_h*m_h > 0
         assert n == len(b)
         if helper_present:
@@ -648,29 +648,29 @@ class PolyhedralTermSet(IoContract.TermSet):
         if helper_present:
             assert m_h == m
         if n == 0:
-            return A, b
+            return a, b
         if n == 1 and not helper_present:
-            return A, b
+            return a, b
 
         i = 0
-        A_temp = np.copy(A)
+        a_temp = np.copy(a)
         b_temp = np.copy(b)
         while i < n:
-            objective = A_temp[i, :] * -1
+            objective = a_temp[i, :] * -1
             b_temp[i] += 1
             logging.debug("Obj is \n%s", objective)
-            logging.debug("A_temp is \n%s", A_temp)
-            logging.debug("A_help is \n%s", A_help)
+            logging.debug("a_temp is \n%s", a_temp)
+            logging.debug("a_help is \n%s", a_help)
             logging.debug("b_temp is \n%s", b_temp)
             logging.debug("b_help is \n%s", b_help)
             if helper_present:
                 res = linprog(c=objective,
-                              A_ub=np.concatenate((A_temp, A_help), axis=0),
+                              A_ub=np.concatenate((a_temp, a_help), axis=0),
                               b_ub=np.concatenate((b_temp, b_help)),
                               bounds=(None, None))
             else:
                 res = linprog(c=objective,
-                              A_ub=A_temp,
+                              A_ub=a_temp,
                               b_ub=b_temp,
                               bounds=(None, None))
             b_temp[i] -= 1
@@ -678,10 +678,10 @@ class PolyhedralTermSet(IoContract.TermSet):
             logging.debug("Results: %s", res)
             if -res["fun"] <= b_temp[i]:
                 logging.debug("Can remove")
-                A_temp = np.delete(A_temp, i, 0)
+                a_temp = np.delete(a_temp, i, 0)
                 b_temp = np.delete(b_temp, i)
                 n -= 1
             else:
                 i += 1
-        return A_temp, b_temp
+        return a_temp, b_temp
 
