@@ -585,13 +585,23 @@ class PolyhedralTermSet(IoContract.TermSet):
         return variables, A, b, A_h, b_h
 
     @staticmethod
-    def polytope_to_termset(matrix, vector, variables) -> PolyhedralTermSet:
+    def polytope_to_termset(matrix, vector,
+                            variables:list[IoContract.Var]) -> PolyhedralTermSet:
         """
         Transforms a matrix-vector pair into a PolyhedralTermSet, assuming that
         the variable coefficients in the matrix are ordered as specified.
 
         Args:
-            matrix: 
+            matrix:
+                The matrix of the pair.
+            vector:
+                The vector of the pair.
+            variables:
+                A list indicating the variable which corresponds to each column
+                of the matrix.
+
+        Returns:
+            The PolyhedralTermSet corresponding to the given data.
         """
         term_list = []
         logging.debug("&&&&&&&&&&")
@@ -611,7 +621,20 @@ class PolyhedralTermSet(IoContract.TermSet):
     def reduce_polytope(A: np.array, b: np.array,
                         A_help: np.array = np.array([[]]),
                         b_help: np.array = np.array([])):
-        """Definition"""
+        """
+        Eliminate redundant constraints from the H-representation of a given
+        polytope using as context a given polytope.
+
+        Args:
+            A:
+                Matrix of H-representation of polytope to reduce.
+            b:
+                Vector of H-representation of polytope to reduce.
+            A_help:
+                Matrix of H-representation of context polytope.
+            b_help:
+                Vector of H-representation of context polytope.
+        """
         n, m = A.shape
         n_h, m_h = A_help.shape
         helper_present = n_h*m_h > 0
