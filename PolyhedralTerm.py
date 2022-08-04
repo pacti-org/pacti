@@ -3,7 +3,7 @@ PolyhedralTerm provides support for linear inequalities as constraints, i.e.,
 the constraints are of the form :math:`\\sum_{i} a_i x_i \\le c`, where the
 :math:`x_i` are variables and the :math:`a_i` and :math:`c` are constants.
 """
-
+from __future__ import annotations
 import logging
 import sympy
 import numpy as np
@@ -532,7 +532,7 @@ class PolyhedralTermSet(IoContract.TermSet):
 
 
     @staticmethod
-    def termset_to_polytope(terms, context=set()):
+    def termset_to_polytope(terms, context:PolyhedralTermSet):
         """Definition"""
         variables = list(terms.vars | context.vars)
         A = []
