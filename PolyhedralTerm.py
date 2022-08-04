@@ -199,7 +199,7 @@ class PolyhedralTerm(IoContract.Term):
         For example, multiplying the term :math:`2x + 3y \\le 4` by the factor 2
         yields :math:`4x + 6y \\le 8`.
 
-        Ars:
+        Args:
             factor: element by which the term is multiplied.
 
         Returns:
@@ -277,7 +277,7 @@ class PolyhedralTerm(IoContract.Term):
             The expression :math:`2x + 3y - 1` is translated into
             :code:`PolyhedralTerm(variables={x:2, y:3}, constant=1)`.
 
-        ArgsL
+        Args:
             expression: The symbolic expression to be translated.
         """
         expression_coefficients = expression.as_coefficients_dict()
@@ -385,7 +385,6 @@ class PolyhedralTermSet(IoContract.TermSet):
     # variables contained in vars_to_elim
     def _transform(self, context: set,
                    vars_to_elim: set, polarity: True):
-        """Definition"""
         logging.debug("Context terms: %s", context)
         logging.debug("Variables to eliminate: %s", vars_to_elim)
         helpers = context.copy()
@@ -429,20 +428,54 @@ class PolyhedralTermSet(IoContract.TermSet):
 
         self.terms = set(term_list)
 
-        # the last step needs to be a simplication
+        # the last step needs to be a simplification
         self.simplify()
 
 
-    def abduce_with_context(self, context: set, vars_to_elim: set):
-        """Definition"""
+    def abduce_with_context(self, context: set, vars_to_elim: set) -> None:
+        """
+        Obtain a set of PolyhedralTerm instances lacking the indicated variables
+        and implying the given TermSet in the given context.
+
+        Example:
+            Suppose the current set of terms is :math:`\\{x + y \\le 6\\}`, the
+            context is :math:`\\{y \\le 5\\}`, and the abduced terms should not
+            contain variable :math:`y`. Then the current TermSet could be
+            abduced to :math:`\\{x \\le 1\\}` because :math:`x \\le 1
+            \\;\\land\\; y \\le 5 \\Rightarrow x + y \\le 6`.
+
+        Args:
+            context:
+                The TermSet providing the context for the abduction.
+
+            vars_to_elim:
+                Variables that should not appear in the abduced term.
+        """
         logging.debug("Abducing from terms: %s", self)
         logging.debug("Context: %s", context)
         logging.debug("Vars to elim: %s", vars_to_elim)
         self.simplify(context)
         self._transform(context, vars_to_elim, True)
 
-    def deduce_with_context(self, context: set, vars_to_elim: set):
-        """Definition"""
+    def deduce_with_context(self, context: set, vars_to_elim: set) -> None:
+        """
+        Obtain a set of PolyhedralTerm instances lacking the indicated variables
+        and implied by the given TermSet in the given context.
+
+        Example:
+            Suppose the current set of terms is :math:`\\{x - y \\le 6\\}`, the
+            context is :math:`\\{y \\le 5\\}`, and the deduced terms should not
+            contain variable :math:`y`. Then the current TermSet could be
+            deduced to :math:`\\{x \\le 11\\}` because :math:`x - y \\le 6
+            \\;\\land\\; y \\le 5 \\Rightarrow x + y \\le 6`.
+
+        Args:
+            context:
+                The TermSet providing the context for the deduction.
+
+            vars_to_elim:
+                Variables that should not appear in the deduced term.
+        """
         logging.debug("Deducing from term %s", self)
         logging.debug("Context: %s", context)
         logging.debug("Vars to elim: %s", vars_to_elim)
@@ -453,8 +486,20 @@ class PolyhedralTermSet(IoContract.TermSet):
         self.terms = self.terms - terms_to_elim.terms
 
 
-    def simplify(self, context=set()):
-        """Definition"""
+    def simplify(self, context=set()) -> None:
+        """
+        Remove redundant terms in the PolyhedralTermSet using the provided
+        context.
+
+        Example:
+            Suppose the TermSet is :math:`\\{x - 2y \\le 5, x - y \\le 0\\}` and
+            the context is :math:`\\{x + y \\le 0\\}`. Then the TermSet could be
+            simplified to :math:`\\{x - y \\le 0\\}`.
+
+        Args:
+            context:
+                The TermSet providing the context for the simplification.
+        """
         logging.debug("Simplifying terms: %s", self)
         logging.debug("Context: %s", context)
         if isinstance(context, set):
