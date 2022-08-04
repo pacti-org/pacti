@@ -532,8 +532,33 @@ class PolyhedralTermSet(IoContract.TermSet):
 
 
     @staticmethod
-    def termset_to_polytope(terms, context:PolyhedralTermSet):
-        """Definition"""
+    def termset_to_polytope(terms:PolyhedralTermSet, context:PolyhedralTermSet):
+        """
+        Converts a set of terms with its context into matrix-vector pairs.
+
+        Example:
+            Suppose the set of terms is :math:`\\{x+y \\le 1, x - y \\le 4\\}`
+            and the context is :math:`\\{x + 4w \le 5\\}`. The routine extracts
+            all variables and generates an order for them, say, :math:`[x, w,
+            y]`. Then the routine returns matrix-vector pairs for both the terms
+            TermSet and the context. It returns :math:`A = \left(
+            \\begin{smallmatrix} 1 & 0 & 1 \\\\ 1 &0 &-1
+            \\end{smallmatrix}\\right)` and :math:`b = \\left(
+            \\begin{smallmatrix} 1 \\\\ 4 \\end{smallmatrix}\\right)` for the
+            current TermSet and :math:`A_{c} = \\left( \\begin{smallmatrix} 1 &
+            4 & 0 \\end{smallmatrix}\\right)` and :math:`b_c = \\left(
+            \\begin{smallmatrix} 5 \\end{smallmatrix}\\right)` for the context.
+
+        Args:
+            terms:
+                Set of terms to convert to matrix-vector form.
+            context:
+                Context terms to convert to matrix-vector form.
+
+        Returns:
+            A tuple :code:`variables, A, b, A_h, b_h` consisting of the variable
+            order and the matrix-vector pairs for the terms and the context.
+        """
         variables = list(terms.vars | context.vars)
         A = []
         b = []
