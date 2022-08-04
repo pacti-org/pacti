@@ -14,6 +14,7 @@ to instantiate contracts and perform this operations, it is necessary to extend
 Term and TermSet with specific constraint formalisms.
 """
 from __future__ import annotations
+from typing import Set
 import logging
 import copy
 import sys
@@ -124,7 +125,7 @@ class TermSet(ABC):
 
 
 
-    def get_terms_with_vars(self, variable_set: set[Var]):
+    def get_terms_with_vars(self, variable_set: Set[Var]):
         """
         Returns the set of terms which contain any of the variables indicated.
 
@@ -155,7 +156,7 @@ class TermSet(ABC):
 
 
     @abstractmethod
-    def abduce_with_context(self, context: TermSet, vars_to_elim: set[Var]):
+    def abduce_with_context(self, context: TermSet, vars_to_elim: Set[Var]):
         """
         Abduce terms containing variables to be eliminated using a user-provided
         context.
@@ -174,7 +175,7 @@ class TermSet(ABC):
         pass
 
     @abstractmethod
-    def deduce_with_context(self, context: TermSet, vars_to_elim: set[Var]):
+    def deduce_with_context(self, context: TermSet, vars_to_elim: Set[Var]):
         """
         Deduce terms containing variables to be eliminated using a user-provided
         context.
@@ -241,7 +242,7 @@ class IoContract:
         g(TermSet): Contract guarantees.
     """
     def __init__(self, assumptions: TermSet, guarantees: TermSet,
-                 inputVars: set[Var], outputVars: set[Var]) -> None:
+                 inputVars: Set[Var], outputVars: Set[Var]) -> None:
         # make sure the input & output variables are disjoint
         assert len(inputVars & outputVars) == 0
         # make sure the assumptions only contain input variables
