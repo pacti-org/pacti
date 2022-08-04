@@ -585,17 +585,24 @@ class PolyhedralTermSet(IoContract.TermSet):
         return variables, A, b, A_h, b_h
 
     @staticmethod
-    def polytope_to_termset(A, b, variables):
-        """Definition"""
+    def polytope_to_termset(matrix, vector, variables) -> PolyhedralTermSet:
+        """
+        Transforms a matrix-vector pair into a PolyhedralTermSet, assuming that
+        the variable coefficients in the matrix are ordered as specified.
+
+        Args:
+            matrix: 
+        """
         term_list = []
         logging.debug("&&&&&&&&&&")
         #logging.debug("Poly is " + str(polytope))
-        logging.debug("A is %s", A)
-        n, m = A.shape
+        logging.debug("matrix is %s", matrix)
+        n, m = matrix.shape
+        assert m == len(variables)
         for i in range(n):
-            vect = list(A[i])
-            const = b[i]
-            term = PolyhedralTerm.polytope_to_term(vect, const, variables)
+            row = list(matrix[i])
+            const = vector[i]
+            term = PolyhedralTerm.polytope_to_term(row, const, variables)
             term_list.append(term)
         return PolyhedralTermSet(set(term_list))
 
