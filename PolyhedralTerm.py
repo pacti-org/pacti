@@ -220,8 +220,9 @@ class PolyhedralTerm(IoContract.Term):
             substituting term is understood as an equality.
 
         Args:
-            var: The term variable to be substituted. subst_with_term: The term
-            used to replace var.
+            var: The term variable to be substituted.
+            
+            subst_with_term: The term used to replace var.
 
         Returns:
             A new term in which the variable is substituted with the given term
@@ -249,18 +250,16 @@ class PolyhedralTerm(IoContract.Term):
 
             .. code-block:: python
 
-            x = Var('x')
-            y = Var('y')
-            variables = {x:-2, y:3}
-            constant  = 4
-            term = PolyhedralTerm(variables, constant)
-            expression = PolyhedralTerm.to_symbolic(term)
+                x = Var('x') y = Var('y') variables = {x:-2, y:3} constant  = 4
+                term = PolyhedralTerm(variables, constant) expression =
+                PolyhedralTerm.to_symbolic(term)
 
-            yields for the expression :math:`-2x + 3y`.
+            yields the expression :math:`-2x + 3y`.
 
         Args:
-            term(PolyhedralTerm): The term whose coefficients and variables are
-            to be translated to sympy's data structure.
+            term(PolyhedralTerm):
+                The term whose coefficients and variables are to be translated
+                to sympy's data structure.
         """
         ex = 0
         for var in term.vars:
@@ -303,8 +302,11 @@ class PolyhedralTerm(IoContract.Term):
             x, w, z]` yields the tuple :code:`[5, 3, 0, -2], 7`.
 
         Args:
-            term: The term to be transformed. variable_list: A list of variables
-            indicating the order of appearance of variable coefficients.
+            term: The term to be transformed.
+            
+            variable_list:
+                A list of variables indicating the order of appearance of
+                variable coefficients.
 
         Returns:
             A tuple consisting of (i) the ordered list of coefficients and (ii)
@@ -325,8 +327,8 @@ class PolyhedralTerm(IoContract.Term):
 
             const: The term's coefficient.
 
-            variables: An ordered list of variables corresponding to the
-            coefficients.
+            variables:
+                An ordered list of variables corresponding to the coefficients.
         """
         assert len(poly) == len(variables)
         variable_dict = {}
@@ -342,16 +344,19 @@ class PolyhedralTerm(IoContract.Term):
         for the given variables.
 
         Args:
-            context: The set of terms to be solved. Each term will be
-            interpreted as an equality.
+            context:
+                The set of terms to be solved. Each term will be interpreted as
+                an equality.
             
-            vars_to_elim: The set of variables whose solutions will be sought.
+            vars_to_elim:
+                The set of variables whose solutions will be sought.
 
         Assumptions: the number of equations matches the number of vars_to_elim
-        contained in the terms
+        contained in the terms.
 
         Returns:
-            A dictionary mapping variables to their solutions.
+            A dictionary mapping variables to their solutions. The solutions are
+            expressed as PolyhedralTerm instances.
         """
         logging.debug("GetVals: %s Vars: %s", context, vars_to_elim)
         vars_to_solve = context.vars & vars_to_elim
@@ -370,7 +375,9 @@ class PolyhedralTerm(IoContract.Term):
 
 
 class PolyhedralTermSet(IoContract.TermSet):
-    """Class description"""
+    """
+    A TermSet of PolyhedralTerm instances.
+    """
 
 
     # This routine accepts a term that will be adbuced with the help of other
@@ -468,7 +475,7 @@ class PolyhedralTermSet(IoContract.TermSet):
 
     def refines(self, other) -> bool:
         """
-        Tell whether the argument is a larger specification, i.e., compute self
+        Tells whether the argument is a larger specification, i.e., compute self
         <= other.
 
         Args:

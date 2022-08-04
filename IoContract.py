@@ -229,10 +229,15 @@ class IoContract:
     guarantees, and input and output vars.
 
     Attributes:
-        inputvars: Variables which are inputs of the implementations of the
-        contract. outputvars: Variables which are outputs of the implementations
-        of the contract. a(TermSet): Contract assumptions. g(TermSet): Contract
-        guarantees.
+        inputvars:
+            Variables which are inputs of the implementations of the contract.
+                
+        outputvars:
+            Variables which are outputs of the implementations of the contract.
+        
+        a(TermSet): Contract assumptions.
+        
+        g(TermSet): Contract guarantees.
     """
     def __init__(self, assumptions: TermSet, guarantees: TermSet,
                  inputVars: set, outputVars: set) -> None:
@@ -274,8 +279,9 @@ class IoContract:
         Tell whether the contract can be composed with another contract.
 
         Args:
-            other: contract whose possibility to compose with self we are
-            verifying.
+            other:
+                Contract whose possibility to compose with self we are
+                verifying.
         """
         # make sure sets of output variables don't intersect
         return len(self.outputvars & other.outputvars) == 0
