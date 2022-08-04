@@ -2,9 +2,9 @@
 For contributors
 ================
 
-.. module:: IoContract
+.. module:: iocontract
 
-.. automodule:: IoContract
+.. automodule:: iocontract
 
 .. autoclass:: Var
     :members:
@@ -33,9 +33,9 @@ discuss available formalisms.
 Polyhedral constraints
 ~~~~~~~~~~~~~~~~~~~~~~
 
-.. module:: PolyhedralTerm
+.. module:: polyhedralterm
 
-.. automodule:: PolyhedralTerm
+.. automodule:: polyhedralterm
 
 .. autoclass:: PolyhedralTerm
     :members:
