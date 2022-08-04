@@ -231,12 +231,12 @@ class IoContract:
     Attributes:
         inputvars:
             Variables which are inputs of the implementations of the contract.
-                
+
         outputvars:
             Variables which are outputs of the implementations of the contract.
-        
+
         a(TermSet): Contract assumptions.
-        
+
         g(TermSet): Contract guarantees.
     """
     def __init__(self, assumptions: TermSet, guarantees: TermSet,
