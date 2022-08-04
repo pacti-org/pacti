@@ -17,7 +17,9 @@
         "guarantees":
         [
             {"coefficients":{"i":-1,"o":1},
-            "constant":0}
+            "constant":0},
+            {"coefficients":{"i":1,"o":-2},
+            "constant":5}
         ]
     },
     "contract2":{
@@ -29,7 +31,9 @@
         ],
         "assumptions":
         [
-            {"coefficients":{"o":1},
+            {"coefficients":{"o":3},
+            "constant":1},
+            {"coefficients":{"o":-1},
             "constant":1}
         ],
         "guarantees":
