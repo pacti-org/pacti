@@ -469,7 +469,7 @@ class PolyhedralTermSet(iocontract.TermSet):
             context is :math:`\\{y \\le 5\\}`, and the deduced terms should not
             contain variable :math:`y`. Then the current TermSet could be
             deduced to :math:`\\{x \\le 11\\}` because :math:`x - y \\le 6
-            \\;\\land\\; y \\le 5 \\Rightarrow x + y \\le 6`.
+            \\;\\land\\; y \\le 5 \\Rightarrow x \\le 11`.
 
         Args:
             context:

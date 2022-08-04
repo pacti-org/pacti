@@ -1,5 +1,5 @@
 """
-IoContracts contains Gear's basic definitions: Var, Term, TemList, and
+IoContracts contains Gear's basic definitions: Var, Term, TemSet, and
 IoContract. Var creates variables; Term is an abstract class representing
 constraints; a TermSet (also an abstract class) is a collection of terms
 semantically equivalent to the term which is the conjunction of all terms
