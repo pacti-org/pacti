@@ -1,15 +1,15 @@
 #!python
 
 import os
-import IoContract
+import iocontract
 import json
 import click
 import logging
-import PolyhedralTerm
+import polyhedralterm
 
 
 def getVarset(aList):
-    return set([IoContract.Var(varstr) for varstr in aList])
+    return set([iocontract.Var(varstr) for varstr in aList])
 
 
 @click.command()
@@ -23,9 +23,9 @@ def readInputFile(filename):
         c = data[contKey]
         reqs = []
         for key in ['assumptions', 'guarantees']:
-            reqs.append([PolyhedralTerm.PolyhedralTerm(term['coefficients'], term['constant']) for term in c[key]])
-        cont = IoContract.IoContract(inputVars=getVarset(c['InputVars']), outputVars=getVarset(c['OutputVars']),
-            assumptions=PolyhedralTerm.PolyhedralTermSet(set(reqs[0])), guarantees=PolyhedralTerm.PolyhedralTermSet(set(reqs[1])))
+            reqs.append([polyhedralterm.PolyhedralTerm(term['coefficients'], term['constant']) for term in c[key]])
+        cont = iocontract.IoContract(inputVars=getVarset(c['InputVars']), outputVars=getVarset(c['OutputVars']),
+            assumptions=polyhedralterm.PolyhedralTermSet(set(reqs[0])), guarantees=polyhedralterm.PolyhedralTermSet(set(reqs[1])))
         contracts.append(cont)
     logging.info("Contract1:\n" + str(contracts[0]))
     logging.info("Contract2:\n" + str(contracts[1]))

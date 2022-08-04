@@ -8,11 +8,11 @@ import logging
 import sympy
 import numpy as np
 from scipy.optimize import linprog
-import IoContract
+import iocontract
 
 
 
-class PolyhedralTerm(IoContract.Term):
+class PolyhedralTerm(iocontract.Term):
     """
     Polyhedral terms are linear inequalities over a set of variables.
 
@@ -40,7 +40,7 @@ class PolyhedralTerm(IoContract.Term):
         for key, val in variables.items():
             if val != 0:
                 if isinstance(key, str):
-                    variable_dict[IoContract.Var(key)] = val
+                    variable_dict[iocontract.Var(key)] = val
                 else:
                     variable_dict[key] = val
         self.variables = variable_dict
@@ -288,7 +288,7 @@ class PolyhedralTerm(IoContract.Term):
             if key == 1:
                 constant = -expression_coefficients[key]
             else:
-                var = IoContract.Var(str(key))
+                var = iocontract.Var(str(key))
                 variable_dict[var] = expression_coefficients[key]
         return PolyhedralTerm(variable_dict, constant)
 
@@ -366,7 +366,7 @@ class PolyhedralTerm(IoContract.Term):
         sols = sympy.solve(exprs, *vars_to_solve_symb)
         logging.debug(sols)
         if len(sols) > 0:
-            return {IoContract.Var(str(key)):
+            return {iocontract.Var(str(key)):
                     PolyhedralTerm.to_term(sols[key]) for
                     key in sols.keys()}
         else:
@@ -374,7 +374,7 @@ class PolyhedralTerm(IoContract.Term):
 
 
 
-class PolyhedralTermSet(IoContract.TermSet):
+class PolyhedralTermSet(iocontract.TermSet):
     """
     A TermSet of PolyhedralTerm instances.
     """
@@ -587,7 +587,7 @@ class PolyhedralTermSet(IoContract.TermSet):
 
     @staticmethod
     def polytope_to_termset(matrix, vector,
-                            variables: list[IoContract.Var]) -> \
+                            variables: list[iocontract.Var]) -> \
                                 PolyhedralTermSet:
         """
         Transforms a matrix-vector pair into a PolyhedralTermSet, assuming that
