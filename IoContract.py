@@ -13,6 +13,7 @@ This module implements all supported contract operations and relations. In order
 to instantiate contracts and perform this operations, it is necessary to extend
 Term and TermSet with specific constraint formalisms.
 """
+from __future__ import annotations
 import logging
 import copy
 import sys
