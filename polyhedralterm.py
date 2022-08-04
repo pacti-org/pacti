@@ -383,8 +383,8 @@ class PolyhedralTermSet(iocontract.TermSet):
     # This routine accepts a term that will be adbuced with the help of other
     # terms The abduction aims to eliminate from the term appearances of the
     # variables contained in vars_to_elim
-    def _transform(self, context: set,
-                   vars_to_elim: set, polarity: True):
+    def _transform(self, context: iocontract.TermSet,
+                   vars_to_elim: set, polarity):
         logging.debug("Context terms: %s", context)
         logging.debug("Variables to eliminate: %s", vars_to_elim)
         helpers = context.copy()
@@ -432,7 +432,8 @@ class PolyhedralTermSet(iocontract.TermSet):
         self.simplify()
 
 
-    def abduce_with_context(self, context: set, vars_to_elim: set) -> None:
+    def abduce_with_context(self, context: iocontract.TermSet,
+                            vars_to_elim: set) -> None:
         """
         Obtain a set of PolyhedralTerm instances lacking the indicated variables
         and implying the given TermSet in the given context.
@@ -457,7 +458,8 @@ class PolyhedralTermSet(iocontract.TermSet):
         self.simplify(context)
         self._transform(context, vars_to_elim, True)
 
-    def deduce_with_context(self, context: set, vars_to_elim: set) -> None:
+    def deduce_with_context(self, context: iocontract.TermSet,
+                            vars_to_elim: set) -> None:
         """
         Obtain a set of PolyhedralTerm instances lacking the indicated variables
         and implied by the given TermSet in the given context.

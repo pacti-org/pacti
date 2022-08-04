@@ -124,7 +124,7 @@ class TermSet(ABC):
 
 
 
-    def get_terms_with_vars(self, variable_set):
+    def get_terms_with_vars(self, variable_set: set[Var]):
         """
         Returns the set of terms which contain any of the variables indicated.
 
@@ -155,7 +155,7 @@ class TermSet(ABC):
 
 
     @abstractmethod
-    def abduce_with_context(self, context: set, vars_to_elim: set):
+    def abduce_with_context(self, context: TermSet, vars_to_elim: set[Var]):
         """
         Abduce terms containing variables to be eliminated using a user-provided
         context.
@@ -174,7 +174,7 @@ class TermSet(ABC):
         pass
 
     @abstractmethod
-    def deduce_with_context(self, context: set, vars_to_elim: set):
+    def deduce_with_context(self, context: TermSet, vars_to_elim: set[Var]):
         """
         Deduce terms containing variables to be eliminated using a user-provided
         context.
@@ -209,7 +209,7 @@ class TermSet(ABC):
         pass
 
     @abstractmethod
-    def refines(self, other) -> bool:
+    def refines(self, other: TermSet) -> bool:
         """
         Tell whether the argument is a larger specification, i.e., compute self
         <= other.
@@ -241,7 +241,7 @@ class IoContract:
         g(TermSet): Contract guarantees.
     """
     def __init__(self, assumptions: TermSet, guarantees: TermSet,
-                 inputVars: set, outputVars: set) -> None:
+                 inputVars: set[Var], outputVars: set[Var]) -> None:
         # make sure the input & output variables are disjoint
         assert len(inputVars & outputVars) == 0
         # make sure the assumptions only contain input variables
@@ -275,7 +275,7 @@ class IoContract:
     def __le__(self, other):
         return self.refines(other)
 
-    def can_compose_with(self, other) -> bool:
+    def can_compose_with(self, other: IoContract) -> bool:
         """
         Tell whether the contract can be composed with another contract.
 
@@ -287,7 +287,7 @@ class IoContract:
         # make sure sets of output variables don't intersect
         return len(self.outputvars & other.outputvars) == 0
 
-    def can_quotient_by(self, other) -> bool:
+    def can_quotient_by(self, other: IoContract) -> bool:
         """
         Tell whether the contract can quotiented by another contract.
 
@@ -300,7 +300,7 @@ class IoContract:
         return len((self.outputvars - other.outputvars) & other.inputvars) == 0
 
 
-    def shares_io_with(self, other) -> bool:
+    def shares_io_with(self, other: IoContract) -> bool:
         """
         Tell whether two contracts have the same IO signature.
 
@@ -311,7 +311,7 @@ class IoContract:
             (self.outputvars == other.outputvars)
 
 
-    def refines(self, other) -> bool:
+    def refines(self, other: IoContract) -> bool:
         """
         Tell whether the given contract is a refinement of another.
 
@@ -325,7 +325,7 @@ class IoContract:
             ((self.g | other.a) <= (other.g | other.a))
 
 
-    def compose(self, other):
+    def compose(self, other: IoContract) -> IoContract:
         """Compose IO contracts.
 
         Compute the composition of the two given contracts and abstract the
@@ -375,7 +375,7 @@ class IoContract:
 
         return result
 
-    def quotient(self, other):
+    def quotient(self, other: IoContract) -> IoContract:
         """Compute the contract quotient.
 
         Compute the quotient self/other of the two given contracts and refine
