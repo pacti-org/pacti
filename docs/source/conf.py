@@ -14,7 +14,7 @@ author = 'GearDevTeam'
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 import sys
-sys.path.append("..")
+sys.path.append("../src/gear")
 extensions = ['sphinx.ext.autodoc','sphinx.ext.autosummary','sphinx.ext.napoleon']
 
 templates_path = ['_templates']
