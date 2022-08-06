@@ -30,3 +30,5 @@ _minted-paper
 *.bcf
 *.vscode
 *.pyc
+gear.egg-info
+3.7

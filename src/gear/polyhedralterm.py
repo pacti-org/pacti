@@ -8,7 +8,7 @@ import logging
 import sympy
 import numpy as np
 from scipy.optimize import linprog
-import iocontract
+import gear.iocontract as iocontract
 
 
 

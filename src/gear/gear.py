@@ -1,11 +1,11 @@
 #!python
 
 import os
-import iocontract
+import gear.iocontract as iocontract
 import json
 import click
 import logging
-import polyhedralterm
+import gear.polyhedralterm as polyhedralterm
 
 
 def getVarset(aList):
