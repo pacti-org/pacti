@@ -36,11 +36,12 @@ def readInputFile(filename):
     else:
         logging.info("Operation not supported")
 
-
- 
-if __name__ == '__main__':
+def main():
     FORMAT = "[%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
     FORMAT1 = "[%(levelname)s:%(funcName)s()] %(message)s"
     FORMAT2 = '%(asctime)s:%(levelname)s:%(name)s:%(message)s'
     logging.basicConfig(filename='log.log', filemode='w', level = logging.INFO, format = FORMAT2)
     readInputFile()
+
+if __name__ == '__main__':
+    main()
