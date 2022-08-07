@@ -13,10 +13,11 @@ def getVarset(aList):
 
 
 @click.command()
-@click.argument('filename')
-def readInputFile(filename):
-    assert os.path.isfile(filename)
-    with open(filename) as f:
+@click.argument('inputfilename')
+@click.argument('outputfilename')
+def readInputFile(inputfilename,outputfilename):
+    assert os.path.isfile(inputfilename)
+    with open(inputfilename) as f:
         data = json.load(f)
     contracts = []
     for contKey in ['contract1', 'contract2']:
@@ -27,20 +28,34 @@ def readInputFile(filename):
         cont = iocontract.IoContract(inputVars=getVarset(c['InputVars']), outputVars=getVarset(c['OutputVars']),
             assumptions=polyhedralterm.PolyhedralTermSet(set(reqs[0])), guarantees=polyhedralterm.PolyhedralTermSet(set(reqs[1])))
         contracts.append(cont)
-    logging.info("Contract1:\n" + str(contracts[0]))
-    logging.info("Contract2:\n" + str(contracts[1]))
+    print("Contract1:\n" + str(contracts[0]))
+    print("Contract2:\n" + str(contracts[1]))
     if data['operation'] == 'composition':
-        logging.info("Composed contract:\n" + str(contracts[0].compose(contracts[1])))
+        data = {'contract_composition'}
+        result = contracts[0].compose(contracts[1])
+        print("Composed contract:\n" + str(result))
     elif data['operation'] == 'quotient':
-        logging.info("Contract quotient:\n" + str(contracts[0].quotient(contracts[1])))
+        data = {'contract_quotient'}
+        result = contracts[0].quotient(contracts[1])
+        print("Contract quotient:\n" + str(result))
     else:
-        logging.info("Operation not supported")
+        print("Operation not supported")
+    # now store the result in the provided file
+    data = {}
+    data['InputVars']  = [str(var) for var in result.inputvars]
+    data['OutputVars'] = [str(var) for var in result.outputvars]
+    data['assumptions'] = [{'constant':str(term.constant), 'coefficients':{str(k):str(v) for k,v in term.variables.items()}} for term in result.a.terms]
+    data['guarantees'] = [{'constant':str(term.constant), 'coefficients':{str(k):str(v) for k,v in term.variables.items()}} for term in result.g.terms]
+    data = {'contract_comp':data}
+    with open(outputfilename, 'w') as f:
+        json.dump(data, f)
+    
 
 def main():
     FORMAT = "[%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
     FORMAT1 = "[%(levelname)s:%(funcName)s()] %(message)s"
     FORMAT2 = '%(asctime)s:%(levelname)s:%(name)s:%(message)s'
-    logging.basicConfig(filename='log.log', filemode='w', level = logging.INFO, format = FORMAT2)
+    logging.basicConfig(filename='gear.log', filemode='w', level = logging.INFO, format = FORMAT2)
     readInputFile()
 
 if __name__ == '__main__':
