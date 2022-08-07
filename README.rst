@@ -3,13 +3,13 @@ Gear
 
 Gear is a Python package for carrying out compositional system analysis and
 design. Gear represents components in a system using assume-guarantee
-specifications, or contracts. Gear's capabilities include:
+specifications, or contracts. Gear's capabilities include the following:
 
-- Verifying whether a component meets a specification.
 - Obtaining sensible specifications systems from the specification of their
   subsystems.
 - Computing specifications of elements that need to be added to a design in
   order to meet an objective.
+- Verifying whether a component meets a specification.
 
 
 Installing
@@ -25,10 +25,6 @@ As Gear is in development, we use pip to install the package using the current d
 
 The installation will provide access to the command-line tool :code:`gear` and to the the Python package of the same name. Any updates to the dev folder :code:`src/gear` will immediately be available in the system.
 
-A Simple Example
-----------------
-
-Suppose we have the following system:
 
 
 Links
