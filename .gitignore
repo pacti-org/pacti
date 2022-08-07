@@ -4,7 +4,6 @@
 *.pdf
 *.gz
 *.lb
-*.html
 *.dvi
 *~
 *.DS_Store
@@ -32,3 +31,8 @@ _minted-paper
 *.pyc
 gear.egg-info
 3.7
+*.doctree
+*.pickle
+*.buildinfo
+*.inv
+*.rst.txt
