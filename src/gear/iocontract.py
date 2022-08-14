@@ -357,6 +357,9 @@ class IoContract:
         elif other_helps_self:
             self.a.abduce_with_context(other.g, intvars | outputvars)
             assumptions = self.a | other.a
+        # contracts can't help each other
+        else:
+            assumptions = self.a | other.a
         assumptions.simplify()
 
         # process guarantees
