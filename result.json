@@ -1,0 +1,1 @@
+{"contract_comp": {"InputVars": ["u_1", "u_2"], "OutputVars": ["x_2", "x_1"], "assumptions": [{"constant": "-1", "coefficients": {"u_2": "-1"}}, {"constant": "-1", "coefficients": {"u_1": "-1"}}], "guarantees": [{"constant": "-1.5", "coefficients": {"x_1": "-1"}}, {"constant": "-0.30000000000000004", "coefficients": {"x_2": "-1"}}]}}
