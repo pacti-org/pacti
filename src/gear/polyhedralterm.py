@@ -434,7 +434,7 @@ class PolyhedralTermSet(iocontract.TermSet):
 
 
     def abduce_with_context(self, context: iocontract.TermSet,
-                            vars_to_elim: set) -> None:
+                            vars_to_elim: set) -> iocontract.TermSet:
         """
         Obtain a set of PolyhedralTerm instances lacking the indicated variables
         and implying the given TermSet in the given context.
@@ -452,15 +452,22 @@ class PolyhedralTermSet(iocontract.TermSet):
 
             vars_to_elim:
                 Variables that should not appear in the abduced term.
+
+        Returns:
+            A set of terms not containing any variables in :code:`vars_to_elim`
+            and which, in the context provided, imply the terms contained in the
+            calling termset.
         """
+        termset = self.copy()
         logging.debug("Abducing from terms: %s", self)
         logging.debug("Context: %s", context)
         logging.debug("Vars to elim: %s", vars_to_elim)
-        self.simplify(context)
-        self._transform(context, vars_to_elim, True)
+        termset.simplify(context)
+        termset._transform(context, vars_to_elim, True)
+        return termset
 
     def deduce_with_context(self, context: iocontract.TermSet,
-                            vars_to_elim: set) -> None:
+                            vars_to_elim: set) -> iocontract.TermSet:
         """
         Obtain a set of PolyhedralTerm instances lacking the indicated variables
         and implied by the given TermSet in the given context.
@@ -478,15 +485,22 @@ class PolyhedralTermSet(iocontract.TermSet):
 
             vars_to_elim:
                 Variables that should not appear in the deduced term.
+
+        Returns:
+            A set of terms not containing any variables in :code:`vars_to_elim`
+            and which, in the context provided, are implied by the terms
+            contained in the calling termset.
         """
+        termset = self.copy()
         logging.debug("Deducing from term %s", self)
         logging.debug("Context: %s", context)
         logging.debug("Vars to elim: %s", vars_to_elim)
-        self.simplify(context)
-        self._transform(context, vars_to_elim, False)
+        termset.simplify(context)
+        termset._transform(context, vars_to_elim, False)
         # eliminate terms containing the variables to be eliminated
-        terms_to_elim = self.get_terms_with_vars(vars_to_elim)
-        self.terms = self.terms - terms_to_elim.terms
+        terms_to_elim = termset.get_terms_with_vars(vars_to_elim)
+        termset.terms = termset.terms - terms_to_elim.terms
+        return termset
 
 
     def simplify(self, context=set()) -> None:
