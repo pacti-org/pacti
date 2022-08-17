@@ -341,6 +341,7 @@ class IoContract:
         Returns:
             The abstracted composition of the two contracts.
         """
+        logging.debug("Composing contracts \n%s and \n%s", self, other)
         intvars = (self.outputvars & other.inputvars) | \
             (self.inputvars & other.outputvars)
         inputvars = (self.inputvars | other.inputvars) - intvars
@@ -352,14 +353,18 @@ class IoContract:
         if other_helps_self and self_helps_other:
             assert False
         elif self_helps_other:
+            logging.debug("Assumption computation: self provides context for other")
             other.a.abduce_with_context(self.g, intvars | outputvars)
             assumptions = other.a | self.a
         elif other_helps_self:
+            logging.debug("Assumption computation: other provides context for self")
             self.a.abduce_with_context(other.g, intvars | outputvars)
             assumptions = self.a | other.a
         # contracts can't help each other
         else:
+            logging.debug("Assumption computation: other provides context for self")
             assumptions = self.a | other.a
+        logging.debug("Assumption computation: computed assumptions:\n%s", assumptions)
         assumptions.simplify()
 
         # process guarantees

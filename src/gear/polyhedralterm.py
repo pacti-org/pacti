@@ -429,6 +429,7 @@ class PolyhedralTermSet(iocontract.TermSet):
         self.terms = set(term_list)
 
         # the last step needs to be a simplification
+        logging.debug("Ending transformation with simplification")
         self.simplify()
 
 
@@ -502,6 +503,7 @@ class PolyhedralTermSet(iocontract.TermSet):
             context:
                 The TermSet providing the context for the simplification.
         """
+        logging.debug("Starting simplification procedure")
         logging.debug("Simplifying terms: %s", self)
         logging.debug("Context: %s", context)
         if isinstance(context, set):
@@ -584,7 +586,7 @@ class PolyhedralTermSet(iocontract.TermSet):
         else:
             a_h = np.array(a_h)
         b_h = np.array(b_h)
-        logging.debug("a is %s", a)
+        logging.debug("a is \n%s", a)
         return variables, a, b, a_h, b_h
 
     @staticmethod
@@ -611,7 +613,11 @@ class PolyhedralTermSet(iocontract.TermSet):
         logging.debug("&&&&&&&&&&")
         #logging.debug("Poly is " + str(polytope))
         logging.debug("matrix is %s", matrix)
-        n, m = matrix.shape
+        if len(matrix.shape) > 1:
+            n, m = matrix.shape
+        else:
+            n = matrix.shape[0]
+            m = 0
         assert m == len(variables)
         for i in range(n):
             row = list(matrix[i])
@@ -639,10 +645,14 @@ class PolyhedralTermSet(iocontract.TermSet):
             b_help:
                 Vector of H-representation of context polytope.
         """
-        n, m = a.shape
+        if len(a.shape) > 1:
+            n, m = a.shape
+        else:
+            n = a.shape[0]
+            m = 0
         n_h, m_h = a_help.shape
         helper_present = n_h*m_h > 0
-        assert n == len(b)
+        assert n == len(b), "n is {} and b is {}".format(n, b)
         if helper_present:
             assert n_h == len(b_help)
         else:
