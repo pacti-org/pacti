@@ -156,7 +156,7 @@ class TermSet(ABC):
 
 
     @abstractmethod
-    def abduce_with_context(self, context: TermSet, vars_to_elim: Set[Var]):
+    def abduce_with_context(self, context: TermSet, vars_to_elim: Set[Var]) -> TermSet:
         """
         Abduce terms containing variables to be eliminated using a user-provided
         context.
@@ -171,11 +171,16 @@ class TermSet(ABC):
                 Set of context terms that will be used to abduce the TermSet.
             vars_to_elim:
                 Variables that cannot be present in TermSet after abduction.
+        
+        Returns:
+            A set of terms not containing any variables in :code:`vars_to_elim`
+            and which, in the context provided, imply the terms contained in the
+            calling termset. 
         """
         pass
 
     @abstractmethod
-    def deduce_with_context(self, context: TermSet, vars_to_elim: Set[Var]):
+    def deduce_with_context(self, context: TermSet, vars_to_elim: Set[Var]) -> TermSet:
         """
         Deduce terms containing variables to be eliminated using a user-provided
         context.
@@ -190,6 +195,11 @@ class TermSet(ABC):
                 Set of context terms that will be used to abstract the TermSet.
             vars_to_elim:
                 Variables that cannot be present in TermSet after deduction.
+
+        Returns:
+            A set of terms not containing any variables in :code:`vars_to_elim`
+            and which, in the context provided, are implied by the terms
+            contained in the calling termset.
         """
         pass
 
@@ -354,12 +364,12 @@ class IoContract:
             assert False
         elif self_helps_other:
             logging.debug("Assumption computation: self provides context for other")
-            other.a.abduce_with_context(self.g, intvars | outputvars)
-            assumptions = other.a | self.a
+            new_a = other.a.abduce_with_context(self.g, intvars | outputvars)
+            assumptions = new_a | self.a
         elif other_helps_self:
             logging.debug("Assumption computation: other provides context for self")
-            self.a.abduce_with_context(other.g, intvars | outputvars)
-            assumptions = self.a | other.a
+            new_a = self.a.abduce_with_context(other.g, intvars | outputvars)
+            assumptions = new_a | other.a
         # contracts can't help each other
         else:
             logging.debug("Assumption computation: other provides context for self")
@@ -370,10 +380,10 @@ class IoContract:
         # process guarantees
         g1 = self.g.copy()
         g2 = other.g.copy()
-        g1.deduce_with_context(g2, intvars)
-        g2.deduce_with_context(g1, intvars)
+        g1 = g1.deduce_with_context(g2, intvars)
+        g2 = g2.deduce_with_context(g1, intvars)
         allguarantees = g1 | g2
-        allguarantees.deduce_with_context(assumptions, intvars)
+        allguarantees = allguarantees.deduce_with_context(assumptions, intvars)
 
         # eliminate terms with forbidden vars
         terms_to_elim = allguarantees.get_terms_with_vars(intvars)
@@ -410,7 +420,7 @@ class IoContract:
         # get assumptions
         logging.debug("Computing quotient assumptions")
         assumptions = copy.deepcopy(self.a)
-        assumptions.deduce_with_context(other.g, intvars | outputvars)
+        assumptions = assumptions.deduce_with_context(other.g, intvars | outputvars)
         logging.debug("Assumptions after processing: %s", assumptions)
 
         # get guarantees
@@ -419,11 +429,11 @@ class IoContract:
         logging.debug("""
         Using existing guarantees to aid system-level guarantees
         """)
-        guarantees.abduce_with_context(other.g, intvars)
+        guarantees = guarantees.abduce_with_context(other.g, intvars)
         logging.debug("""
         Using system-level assumptions to aid quotient guarantees""")
         guarantees = guarantees | other.a
-        guarantees.abduce_with_context(self.a, intvars)
+        guarantees = guarantees.abduce_with_context(self.a, intvars)
         logging.debug("Guarantees after processing: %s", guarantees)
 
 
