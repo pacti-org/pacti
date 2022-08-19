@@ -356,6 +356,7 @@ class IoContract:
             (self.inputvars & other.outputvars)
         inputvars = (self.inputvars | other.inputvars) - intvars
         outputvars = (self.outputvars | other.outputvars) - intvars
+        assumptions_forbidden_vars = intvars | outputvars
         assert self.can_compose_with(other)
         other_helps_self = len(other.outputvars & self.inputvars) > 0
         self_helps_other = len(other.inputvars & self.outputvars) > 0
@@ -364,11 +365,19 @@ class IoContract:
             assert False
         elif self_helps_other:
             logging.debug("Assumption computation: self provides context for other")
-            new_a = other.a.abduce_with_context(self.g, intvars | outputvars)
+            new_a = other.a.abduce_with_context(self.g, assumptions_forbidden_vars)
+            if len(new_a.vars & assumptions_forbidden_vars) > 0:
+                raise ValueError("The guarantees \n{}\n".format(self.g) +
+                                 "were insufficient to abduce the assumptions \n{}\n".format(other.a) +
+                                 "by eliminating the variables \n{}".format(assumptions_forbidden_vars))
             assumptions = new_a | self.a
         elif other_helps_self:
             logging.debug("Assumption computation: other provides context for self")
-            new_a = self.a.abduce_with_context(other.g, intvars | outputvars)
+            new_a = self.a.abduce_with_context(other.g, assumptions_forbidden_vars)
+            if len(new_a.vars & assumptions_forbidden_vars) > 0:
+                raise ValueError("The guarantees \n{}\n".format(other.g) +
+                                 "were insufficient to abduce the assumptions \n{}\n".format(self.a) +
+                                 "by eliminating the variables \n{}".format(assumptions_forbidden_vars))
             assumptions = new_a | other.a
         # contracts can't help each other
         else:
