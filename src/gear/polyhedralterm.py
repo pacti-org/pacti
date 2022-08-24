@@ -47,8 +47,11 @@ class PolyhedralTerm(iocontract.Term):
         self.constant = constant
 
     def __eq__(self, other):
-        return self.variables == other.variables and \
-            self.constant == other.constant
+        match = self.variables.keys() == other.variables.keys()
+        if match:
+            for k,v in self.variables.items():
+                match = match and (v == other.variables[k])
+        return match and self.constant == other.constant
 
     def __str__(self) -> str:
         res = " + ".join([str(coeff)+"*"+var.name
@@ -261,7 +264,7 @@ class PolyhedralTerm(iocontract.Term):
                 The term whose coefficients and variables are to be translated
                 to sympy's data structure.
         """
-        ex = 0
+        ex = -term.constant
         for var in term.vars:
             sv = sympy.symbols(var.name)
             ex += sv * term.get_coefficient(var)
@@ -362,6 +365,7 @@ class PolyhedralTerm(iocontract.Term):
         vars_to_solve = context.vars & vars_to_elim
         assert len(context.terms) == len(vars_to_solve)
         exprs = [PolyhedralTerm.to_symbolic(term) for term in context.terms]
+        logging.debug("Solving %s", exprs)
         vars_to_solve_symb = [sympy.symbols(var.name) for var in vars_to_solve]
         sols = sympy.solve(exprs, *vars_to_solve_symb)
         logging.debug(sols)
@@ -402,7 +406,7 @@ class PolyhedralTermSet(iocontract.TermSet):
             # to eliminate these variables
             for helper in helpers.terms:
                 matching_vars = helper.get_matching_vars(vars_elim)
-                if len(matching_vars & vars_to_cover) > 0:
+                if len(matching_vars & vars_to_cover) > 0 and len(helper.vars & (vars_to_elim - term.vars)) == 0:
                     vars_to_cover = vars_to_cover - matching_vars
                     terms_to_use.terms.add(helper)
                     helpers.terms.remove(helper)
@@ -417,6 +421,10 @@ class PolyhedralTermSet(iocontract.TermSet):
             assert len(terms_to_use.terms) == \
                 len(terms_to_use.vars & vars_to_elim)
 
+            if len(term.vars - vars_to_elim) == 0 and len(terms_to_use.vars - vars_to_elim) == 0:
+                term_list[i] = term
+                continue
+
             sols = PolyhedralTerm.solve_for_variables(terms_to_use,
                                                       vars_to_elim)
             logging.debug(sols)
@@ -430,7 +438,7 @@ class PolyhedralTermSet(iocontract.TermSet):
 
         # the last step needs to be a simplification
         logging.debug("Ending transformation with simplification")
-        self.simplify()
+        self.simplify(context)
 
 
     def abduce_with_context(self, context: iocontract.TermSet,
@@ -462,8 +470,19 @@ class PolyhedralTermSet(iocontract.TermSet):
         logging.debug("Abducing from terms: %s", self)
         logging.debug("Context: %s", context)
         logging.debug("Vars to elim: %s", vars_to_elim)
-        termset.simplify(context)
-        termset._transform(context, vars_to_elim, True)
+        try:
+            termset.simplify(context)
+        except ValueError as e:
+            raise ValueError("Provided constraints \n{}\n".format(self) + 
+                             "are unsatisfiable in context \n{}".format(context)) \
+                            from e
+        try:
+            termset._transform(context, vars_to_elim, True)
+        except ValueError as e:
+            raise ValueError("The elimination of variables \n{}\n".format(vars_to_elim)+
+                             "by abducing terms \n{}\n".format(self)+
+                             "in context \n{}\n".format(context)+
+                             "was not possible") from e
         return termset
 
     def deduce_with_context(self, context: iocontract.TermSet,
@@ -495,8 +514,19 @@ class PolyhedralTermSet(iocontract.TermSet):
         logging.debug("Deducing from term %s", self)
         logging.debug("Context: %s", context)
         logging.debug("Vars to elim: %s", vars_to_elim)
-        termset.simplify(context)
-        termset._transform(context, vars_to_elim, False)
+        try:
+            termset.simplify(context)
+        except ValueError as e:
+            raise ValueError("Provided constraints \n{}\n".format(self) + 
+                             "are unsatisfiable in context \n{}".format(context)) \
+                            from e
+        try:
+            termset._transform(context, vars_to_elim, False)
+        except ValueError as e:
+            raise ValueError("The elimination of variables \n{}\n".format(vars_to_elim)+
+                             "by deducing terms \n{}\n".format(self)+
+                             "in context \n{}\n".format(context)+
+                             "was not possible") from e
         # eliminate terms containing the variables to be eliminated
         terms_to_elim = termset.get_terms_with_vars(vars_to_elim)
         termset.terms = termset.terms - terms_to_elim.terms
@@ -527,13 +557,19 @@ class PolyhedralTermSet(iocontract.TermSet):
         else:
             variables, self_mat, self_cons, ctx_mat, ctx_cons = \
                 PolyhedralTermSet.termset_to_polytope(self, context)
-        logging.debug("Polytope is %s", self_mat)
-        a_red, b_red = PolyhedralTermSet.reduce_polytope(self_mat, self_cons,
-                                                         ctx_mat, ctx_cons)
-        logging.debug("Reduction: %s", a_red)
+        logging.debug("Polytope is \n%s", self_mat)
+        try:
+            a_red, b_red = PolyhedralTermSet.reduce_polytope(self_mat,
+                                                             self_cons,
+                                                             ctx_mat, ctx_cons)
+        except ValueError as e:
+            raise ValueError("The constraints \n{}\n".format(self) +
+                             "are unsatisfiable in context \n{}".format(context)) \
+                            from e
+        logging.debug("Reduction: \n%s", a_red)
         self.terms = PolyhedralTermSet.polytope_to_termset(a_red, b_red,
                                                            variables).terms
-        logging.debug("Back to terms: %s", self)
+        logging.debug("Back to terms: \n%s", self)
 
 
     def refines(self, other) -> bool:
@@ -629,10 +665,10 @@ class PolyhedralTermSet(iocontract.TermSet):
         logging.debug("matrix is %s", matrix)
         if len(matrix.shape) > 1:
             n, m = matrix.shape
+            assert m == len(variables)
         else:
             n = matrix.shape[0]
             m = 0
-        assert m == len(variables)
         for i in range(n):
             row = list(matrix[i])
             const = vector[i]
@@ -671,7 +707,7 @@ class PolyhedralTermSet(iocontract.TermSet):
             assert n_h == len(b_help)
         else:
             assert len(b_help) == 0
-        if helper_present:
+        if helper_present and m > 0:
             assert m_h == m
         if n == 0:
             return a, b
@@ -684,30 +720,33 @@ class PolyhedralTermSet(iocontract.TermSet):
         while i < n:
             objective = a_temp[i, :] * -1
             b_temp[i] += 1
-            logging.debug("Obj is \n%s", objective)
+            logging.debug("Optimization objective: \n%s", objective)
             logging.debug("a_temp is \n%s", a_temp)
             logging.debug("a_help is \n%s", a_help)
             logging.debug("b_temp is \n%s", b_temp)
             logging.debug("b_help is \n%s", b_help)
             if helper_present:
-                res = linprog(c=objective,
-                              A_ub=np.concatenate((a_temp, a_help), axis=0),
-                              b_ub=np.concatenate((b_temp, b_help)),
-                              bounds=(None, None))
+                a_opt = np.concatenate((a_temp, a_help), axis=0)
+                b_opt = np.concatenate((b_temp, b_help))
             else:
-                res = linprog(c=objective,
-                              A_ub=a_temp,
-                              b_ub=b_temp,
-                              bounds=(None, None))
+                a_opt = a_temp
+                b_opt = b_temp
+            res = linprog(c=objective,
+                          A_ub=a_opt,
+                          b_ub=b_opt,
+                          bounds=(None, None))#,options={'tol':0.000001})
             b_temp[i] -= 1
             logging.debug("Optimal value: %s", -res["fun"])
             logging.debug("Results: %s", res)
-            if -res["fun"] <= b_temp[i]:
+            #if res["success"] and -res["fun"] <= b_temp[i]:
+            if res["status"] != 2 and -res["fun"] <= b_temp[i]:
                 logging.debug("Can remove")
                 a_temp = np.delete(a_temp, i, 0)
                 b_temp = np.delete(b_temp, i)
                 n -= 1
             else:
                 i += 1
+            if res["status"] == 2:
+                raise ValueError("The constraints are unsatisfiable")
         return a_temp, b_temp
 
