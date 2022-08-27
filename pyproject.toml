@@ -42,7 +42,7 @@ dev = [
 
 [tool.pdm.scripts]
 conda-create = "pdm venv create --with conda"
-conda-activate = "eval '$(conda shell.bash hook)'; conda activate ./.venv"
+conda-activate = "conda activate ./.venv"
 conda-install = "conda env update --file environment.yml --prune"
 gear = "gear.gear:main"
 
