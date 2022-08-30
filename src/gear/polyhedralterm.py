@@ -391,7 +391,7 @@ class PolyhedralTermSet(iocontract.TermSet):
                    vars_to_elim: set, polarity):
         logging.debug("Context terms: %s", context)
         logging.debug("Variables to eliminate: %s", vars_to_elim)
-        helpers = context.copy()
+        helpers = context | self
         term_list = list(self.terms)
         for i, term in enumerate(term_list):
             logging.debug("Transforming %s", term)
@@ -405,13 +405,14 @@ class PolyhedralTermSet(iocontract.TermSet):
             # now we have to choose from the helpers any terms that we can use
             # to eliminate these variables
             for helper in helpers.terms:
-                matching_vars = helper.get_matching_vars(vars_elim)
-                if len(matching_vars & vars_to_cover) > 0 and len(helper.vars & (vars_to_elim - term.vars)) == 0:
-                    vars_to_cover = vars_to_cover - matching_vars
-                    terms_to_use.terms.add(helper)
-                    helpers.terms.remove(helper)
-                    if len(vars_to_cover) == 0:
-                        break
+                if helper != term:
+                    matching_vars = helper.get_matching_vars(vars_elim)
+                    if len(matching_vars & vars_to_cover) > 0 and len(helper.vars & (vars_to_elim - term.vars)) == 0:
+                        vars_to_cover = vars_to_cover - matching_vars
+                        terms_to_use.terms.add(helper)
+                        helpers.terms.remove(helper)
+                        if len(vars_to_cover) == 0:
+                            break
 
             logging.debug("TermsToUse: %s", terms_to_use)
 
@@ -572,7 +573,7 @@ class PolyhedralTermSet(iocontract.TermSet):
         logging.debug("Back to terms: \n%s", self)
 
 
-    def refines(self, other) -> bool:
+    def refines(self, other:PolyhedralTermSet) -> bool:
         """
         Tells whether the argument is a larger specification, i.e., compute self
         <= other.
@@ -581,7 +582,17 @@ class PolyhedralTermSet(iocontract.TermSet):
             other:
                 TermSet against which we are comparing self.
         """
-        raise NotImplementedError
+        logging.debug("Verifying refinement")
+        logging.debug("LH term: %s", self)
+        logging.debug("RH term: %s", other)
+        variables, self_mat, self_cons, ctx_mat, ctx_cons = \
+            PolyhedralTermSet.termset_to_polytope(self, other)
+        logging.debug("Polytope is \n%s", self_mat)
+        result = PolyhedralTermSet.verify_polytope_containment(self_mat,
+                                                               self_cons,
+                                                               ctx_mat,
+                                                               ctx_cons)
+        return result
 
 
 
@@ -748,5 +759,94 @@ class PolyhedralTermSet(iocontract.TermSet):
                 i += 1
             if res["status"] == 2:
                 raise ValueError("The constraints are unsatisfiable")
+
         return a_temp, b_temp
 
+
+    @staticmethod
+    def verify_polytope_containment(a_l: np.array, b_l: np.array,
+                                    a_r: np.array = np.array([[]]),
+                                    b_r: np.array = np.array([])) -> bool:
+        """
+        Say whether a polytope is contained in another. Both are given in their
+        H-representation.
+
+        Args:
+            a_l:
+                Matrix of H-representation of polytope on LHS of inequality.
+            b_l:
+                Vector of H-representation of polytope on LHS of inequality.
+            a_r:
+                Matrix of H-representation of polytope on RHS of inequality.
+            b_r:
+                Vector of H-representation of polytope on RHS of inequality.
+        """
+        # If the LHS is empty, it is a refinement
+        if PolyhedralTermSet.is_polytope_empty(a_l, b_l):
+            return True
+        # If the RHS is empty, but not the LHS, not a refinement
+        if PolyhedralTermSet.is_polytope_empty(a_r, b_r):
+            return False
+        # If no side is empty, check whether the RHS terms are included in the
+        # LHS
+        n_l, m_l = a_l.shape
+        n_r, m_r = a_r.shape
+        assert m_l == m_r
+        assert n_l == len(b_l)
+        assert n_r == len(b_r)
+        
+        is_refinement = True
+        for i in range(n_r):
+            constraint = a_r[[i], :] 
+            objective = constraint * -1
+            b_temp = b_r[i] + 1
+            logging.debug("Optimization objective: \n%s", objective)
+            logging.debug("a_l is \n%s", a_l)
+            logging.debug("a_r is \n%s", a_r)
+            logging.debug("b_l is \n%s", b_l)
+            logging.debug("b_r is \n%s", b_r)
+            
+            a_opt = np.concatenate((a_l, constraint), axis=0)
+            b_opt = np.concatenate((b_l, [b_temp]))
+            
+            res = linprog(c=objective,
+                          A_ub=a_opt,
+                          b_ub=b_opt,
+                          bounds=(None, None))#,options={'tol':0.000001})
+            b_temp -= 1
+            logging.debug("Optimal value: %s", -res["fun"])
+            logging.debug("Results: %s", res)
+            #if res["success"] and -res["fun"] <= b_temp[i]:
+            if res["status"] != 2 and -res["fun"] <= b_temp:
+                logging.debug("Redundant constraint")
+            else:
+                is_refinement = False
+                break
+        return is_refinement
+
+
+    @staticmethod
+    def is_polytope_empty(a: np.array, b: np.array) -> bool:
+        """
+        Say whether a polytope is empty.
+
+        Args:
+            a:
+                Matrix of H-representation of polytope to verify.
+            b:
+                Vector of H-representation of polytope to verify.
+        """
+        n, m = a.shape
+        assert n == len(b)
+        if n*m == 0:
+            return True
+        objective = np.zeros((1,m))
+        res = linprog(c=objective,
+                      A_ub=a,
+                      b_ub=b,
+                      bounds=(None, None))#,options={'tol':0.000001})
+        if res["status"] != 2:
+            return False
+        else:
+            return True
+    
