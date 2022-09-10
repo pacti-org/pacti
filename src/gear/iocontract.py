@@ -117,8 +117,11 @@ class TermSet(ABC):
 
 
     def __str__(self) -> str:
-        res = [str(el) for el in self.terms]
-        return ", ".join(res)
+        if len(self.terms) > 0:
+            res = [str(el) for el in self.terms]
+            return ", ".join(res)
+        else:
+            return "true"
 
     def __eq__(self, other):
         return self.terms == other.terms
@@ -429,7 +432,10 @@ class IoContract:
         # get assumptions
         logging.debug("Computing quotient assumptions")
         assumptions = copy.deepcopy(self.a)
-        assumptions = assumptions.deduce_with_context(other.g, intvars | outputvars)
+        empty_context = type(assumptions)(set())
+        if assumptions.refines(other.a):
+            assumptions = assumptions | other.g
+        assumptions = assumptions.deduce_with_context(empty_context,intvars | outputvars)
         logging.debug("Assumptions after processing: %s", assumptions)
 
         # get guarantees

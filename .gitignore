@@ -36,3 +36,5 @@ gear.egg-info
 *.buildinfo
 *.inv
 *.rst.txt
+.venv
+.vscode
