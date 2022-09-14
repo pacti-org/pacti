@@ -69,11 +69,11 @@ def readContract(contract):
         reqs = []
         for key in ['assumptions', 'guarantees']:
             reqs.append([polyhedralterm.PolyhedralTerm(term['coefficients'], term['constant']) for term in c[key]])
-            iocont = iocontract.IoContract(inputVars=getVarset(c['InputVars']),
-                                           outputVars=getVarset(c['OutputVars']),
-                                           assumptions=polyhedralterm.PolyhedralTermSet(set(reqs[0])),
-                                           guarantees=polyhedralterm.PolyhedralTermSet(set(reqs[1])))
-            list_iocontracts.append(iocont)
+        iocont = iocontract.IoContract(inputVars=getVarset(c['InputVars']),
+                                       outputVars=getVarset(c['OutputVars']),
+                                       assumptions=polyhedralterm.PolyhedralTermSet(set(reqs[0])),
+                                       guarantees=polyhedralterm.PolyhedralTermSet(set(reqs[1])))
+        list_iocontracts.append(iocont)
     if len(list_iocontracts) == 1:
         return list_iocontracts[0]
     else:
@@ -92,24 +92,28 @@ def writeContract(contract, filename: str = None):
     Returns:
         * contract_dict (dict): A dictionary for the given IoContract 
     """
-    if type(contract) is dict:
+    if type(contract) is iocontract.IoContract:
         contract = [contract]
     contract_list = []
     for c in contract:
         if not isinstance(c, iocontract.IoContract):
             return ValueError('A IoContract is expected.')
         contract_dict = {}
-        contract_dict['InputVars']  = [str(var) for var in contract.inputvars]
-        contract_dict['OutputVars'] = [str(var) for var in contract.outputvars]
+        contract_dict['InputVars']  = [str(var) for var in c.inputvars]
+        contract_dict['OutputVars'] = [str(var) for var in c.outputvars]
         contract_dict['assumptions'] = [{'constant':str(term.constant), 'coefficients':{str(k):str(v)\
-                                    for k,v in term.variables.items()}} for term in contract.a.terms]
+                                    for k,v in term.variables.items()}} for term in c.a.terms]
         contract_dict['guarantees'] = [{'constant':str(term.constant), 'coefficients':{str(k):str(v)\
-                                    for k,v in term.variables.items()}} for term in contract.g.terms]
+                                    for k,v in term.variables.items()}} for term in c.g.terms]
         contract_list.append(contract_dict)
     if filename:
-        for c_dict in contract_list:
-            with open(filename, 'w+') as f:
+        with open(filename, 'w+') as f:
+            count = 0
+            for c_dict in contract_list:
+                f.write('"contract'+str(count)+'"'+'=')
                 json.dump(c_dict, f)
+                f.write("\n")
+                count += 1
     if len(contract_list) == 1:
         return contract_list[0]
     else:
