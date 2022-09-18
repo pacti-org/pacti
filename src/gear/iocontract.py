@@ -455,5 +455,21 @@ class IoContract:
         return IoContract(assumptions, guarantees, inputvars, outputvars)
 
 
-if __name__ == "__main__":
-    sys.exit()
+    def merge(self, other: IoContract) -> IoContract:
+        """Compute the merging operation for two contracts.
+
+        Compute the merging operation of the two given contracts. No
+        abstraction/refinement is applied.
+
+        Args:
+            other:
+                The contract with which we are merging self.
+
+        Returns:
+            The result of merging.
+        """
+        assert self.shares_io_with(other)
+        assumptions = self.a | other.a
+        guarantees = self.g | other.g
+        return IoContract(assumptions, guarantees, self.inputvars, self.outputvars)
+
