@@ -359,14 +359,22 @@ class IoContract:
             (self.inputvars & other.outputvars)
         inputvars = (self.inputvars | other.inputvars) - intvars
         outputvars = (self.outputvars | other.outputvars) - intvars
+
+        selfinputconst = self.a.vars
+        otherinputconst = other.a.vars
+        cycle_present = len(self.inputvars & other.outputvars) > 0 and len(other.inputvars & self.outputvars) > 0
+
         assumptions_forbidden_vars = intvars | outputvars
         assert self.can_compose_with(other)
         other_helps_self = len(other.outputvars & self.inputvars) > 0
         self_helps_other = len(other.inputvars & self.outputvars) > 0
+        #
+        other_drives_const_inputs = len(other.outputvars & selfinputconst) > 0
+        self_drives_const_inputs = len(self.outputvars & otherinputconst) > 0
         # process assumptions
-        if other_helps_self and self_helps_other:
-            assert False
-        elif self_helps_other:
+        if cycle_present and (other_drives_const_inputs or self_drives_const_inputs):
+            assert False, "Cannot compose due to feedback"
+        elif self_helps_other and not other_helps_self:
             logging.debug("Assumption computation: self provides context for other")
             new_a = other.a.abduce_with_context(self.g, assumptions_forbidden_vars)
             if len(new_a.vars & assumptions_forbidden_vars) > 0:
@@ -374,7 +382,7 @@ class IoContract:
                                  "were insufficient to abduce the assumptions \n{}\n".format(other.a) +
                                  "by eliminating the variables \n{}".format(assumptions_forbidden_vars))
             assumptions = new_a | self.a
-        elif other_helps_self:
+        elif other_helps_self and not self_helps_other:
             logging.debug("Assumption computation: other provides context for self")
             new_a = self.a.abduce_with_context(other.g, assumptions_forbidden_vars)
             if len(new_a.vars & assumptions_forbidden_vars) > 0:
