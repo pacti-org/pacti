@@ -140,6 +140,31 @@ class PolyhedralTerm(iocontract.Term):
         else:
             return self.variables[var] <= 0
 
+    def get_sign(self, var):
+        """
+        Tells whether the polarity of a given variable in the term matches the
+        given polarity.
+
+        The polarity of a variable in a term is defined as the polarity of the
+        coefficient that multiplies it in a term, e.g., the variables :math:`x`
+        and :math:`y` in the term :math:`-2x + y \\le 3` have negative and
+        positive polarities respectively.
+
+        Args:
+            var: The variable whose polarity in the term we are seeking.
+            polarity: The polarity that we are comparing against the variable's
+            polarity.
+
+        Returns:
+            :code:`True` if the variable's polarity matches :code:`polarity` and
+            :code:`False` otherwise. If the variable's coefficient in the term
+            is zero, return :code:`True`.
+        """
+        if self.get_polarity(var, True):
+            return 1
+        else:
+            return -1
+
 
     def get_matching_vars(self, variable_polarity):
         """
@@ -387,7 +412,7 @@ class PolyhedralTermSet(iocontract.TermSet):
     # This routine accepts a term that will be adbuced with the help of other
     # terms The abduction aims to eliminate from the term appearances of the
     # variables contained in vars_to_elim
-    def _transform(self, context: iocontract.TermSet,
+    def _transform2(self, context: iocontract.TermSet,
                    vars_to_elim: set, polarity):
         logging.debug("Context terms: %s", context)
         logging.debug("Variables to eliminate: %s", vars_to_elim)
@@ -436,6 +461,27 @@ class PolyhedralTermSet(iocontract.TermSet):
             logging.debug("After subst: %s", term)
 
         self.terms = set(term_list)
+
+        # the last step needs to be a simplification
+        logging.debug("Ending transformation with simplification")
+        self.simplify(context)
+
+    def _transform(self, context: iocontract.TermSet,
+                   vars_to_elim: set, abduce:bool):
+        logging.debug("Transforming: %s", self)
+        logging.debug("Context terms: %s", context)
+        logging.debug("Variables to eliminate: %s", vars_to_elim)
+        term_list = list(self.terms)
+        new_terms = list()
+        for term in term_list:
+            helpers = (context | self) - PolyhedralTermSet({term})
+            try:
+                new_term = PolyhedralTermSet.transform_term(term, helpers, vars_to_elim, abduce)
+            except ValueError as e:
+                new_term = term
+            new_terms.append(new_term)
+
+        self.terms = set(new_terms)
 
         # the last step needs to be a simplification
         logging.debug("Ending transformation with simplification")
@@ -850,3 +896,90 @@ class PolyhedralTermSet(iocontract.TermSet):
         else:
             return True
     
+    @staticmethod
+    def get_kaykobad_context(term:PolyhedralTerm, context:PolyhedralTermSet,
+                             vars_to_elim:set, abduce:bool):
+        forbidden_vars = list(vars_to_elim & term.vars)
+        other_forbibben_vars = vars_to_elim - term.vars
+        n = len(forbidden_vars)
+        matrix_row_terms = list()
+        partial_sums = [0.0] * n
+        transform_coeff = -1
+        if abduce:
+            transform_coeff = 1
+        matrix_contains_others = False
+        # We add a row to the matrix in each iteration
+        for i, i_var in enumerate(forbidden_vars):
+            row_found = False
+            logging.debug("Iterating for variable %s", i_var)
+            for context_term in context.terms - set(matrix_row_terms):
+                logging.debug("Analyzing context term %s", context_term)
+                if context_term == term:
+                    next
+                term_is_invalid = False
+                # make sure the term does not include other forbidden variables
+                for var in other_forbibben_vars:
+                    if context_term.get_coefficient(var) != 0:
+                        term_is_invalid = True
+                        logging.debug("Term contains other forbidden vars")
+                        break
+                if term_is_invalid:
+                    continue
+                # 1. Verify Kaykobad pair: sign of nonzero matrix terms
+                for var in forbidden_vars:
+                    if context_term.get_coefficient(var) != 0 and context_term.get_sign(var) != term.get_sign(var):
+                        term_is_invalid = True
+                        logging.debug("Failed first matrix-vector verification")
+                        break
+                # 2. Verify Kaykobad pair: matrix diagonal terms
+                if context_term.get_coefficient(i_var) == 0 or term_is_invalid:
+                    logging.debug("Failed second matrix-vector verification")
+                    continue
+                # 3. Verify Kaykobad pair: relation between matrix and vector
+                residuals = [0.0] * n
+                for j, j_var in enumerate(forbidden_vars):
+                    logging.debug("Verifying third condition on variable %s", j_var)
+                    if j != i:
+                        residuals[j] = term.get_sign(j_var) * transform_coeff * context_term.get_coefficient(j_var) * term.get_coefficient(i_var) / context_term.get_coefficient(i_var)
+                    if np.abs(term.get_coefficient(j_var)) * transform_coeff <= partial_sums[j] + residuals[j]:
+                        logging.debug("q coefficient: %s", term.get_coefficient(j_var))
+                        logging.debug("RHS: %s", partial_sums[j] + residuals[j])
+                        term_is_invalid = True
+                        logging.debug("Failed third matrix-vector verification")
+                        break
+                if not term_is_invalid:
+                    matrix_contains_others = matrix_contains_others or len(context_term.vars - set(forbidden_vars)) > 0
+                    row_found = True
+                    for j in range(n):
+                        partial_sums[j] += residuals[j]
+                    matrix_row_terms.append(context_term)
+                    break
+            if not row_found:
+                logging.debug("Hola")
+                raise ValueError("Could not find the {}th row of matrix".format(i))
+        if (not matrix_contains_others) and len(term.vars - vars_to_elim) == 0:
+            logging.debug("Hola2")
+            raise ValueError("Found context will produce empty transformation")
+        logging.debug("Matrix row terms %s", matrix_row_terms)
+        return matrix_row_terms, forbidden_vars
+
+    @staticmethod
+    def transform_term(term:PolyhedralTerm, context:PolyhedralTermSet,
+                       vars_to_elim:set, abduce:bool):
+        logging.debug("Transforming term: %s", term)
+        logging.debug("Context: %s", context)
+        try:
+            matrix_row_terms, forbidden_vars = PolyhedralTermSet.get_kaykobad_context(term, context, vars_to_elim, abduce)
+        except ValueError as e:
+            logging.debug("Could not transform %s", term)
+            raise ValueError("Could not transform term {}".format(term)) from e
+        matrix_row_terms = PolyhedralTermSet(set(matrix_row_terms))
+        sols = PolyhedralTerm.solve_for_variables(matrix_row_terms, set(forbidden_vars))
+        
+        result = term.copy()
+        for var in sols.keys():
+            result = result.substitute_variable(var, sols[var])
+        logging.debug("Term %s transformed to %s", term, result)
+        
+        return result
+        
