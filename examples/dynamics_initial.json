@@ -8,11 +8,10 @@
       {"constant": 0, "coefficients": {"x_0": -1}},
       {"constant": 3, "coefficients": {"y_0": 1}},
       {"constant": 0, "coefficients": {"y_0": -1}},
-    {"constant": 1.1, "coefficients": {"t_0": 1}},
-    {"constant": -1, "coefficients": {"t_0": 1}},
-    {"constant": 1.1, "coefficients": {"x_0": 1}},
+    {"constant": 1, "coefficients": {"t_0": 1}},
+    {"constant": 1, "coefficients": {"x_0": 1}},
     {"constant": -1, "coefficients": {"x_0": -1}},
-    {"constant": 1.1, "coefficients": {"y_0": 1}},
+    {"constant": 1, "coefficients": {"y_0": 1}},
     {"constant": -1, "coefficients": {"y_0": -1}}
   ],
 
@@ -43,6 +42,7 @@
       {"constant": 0, "coefficients": {"x_2": -1}},
       {"constant": 3, "coefficients": {"y_2": 1}},
       {"constant": 0, "coefficients": {"y_2": -1}},
+      {"constant": 1, "coefficients": {"t_2": 1, "t_1": -1}},
       {"constant": -1, "coefficients": {"t_2": -1, "t_1": 1}},
       {"constant": 1, "coefficients": {"x_2": 1, "x_1": -1, "y_2": 1, "y_1": -1}},
       {"constant": 1, "coefficients": {"x_2": 1, "x_1": -1, "y_2": -1, "y_1": 1}},
