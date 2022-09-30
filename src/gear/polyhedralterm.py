@@ -54,8 +54,10 @@ class PolyhedralTerm(iocontract.Term):
         return match and self.constant == other.constant
 
     def __str__(self) -> str:
+        varlist = list(self.variables.items())
+        varlist.sort(key = lambda x: str(x[0]))
         res = " + ".join([str(coeff)+"*"+var.name
-                          for var, coeff in self.variables.items()])
+                          for var, coeff in varlist])
         res += " <= " + str(self.constant)
         return res
 
@@ -927,7 +929,7 @@ class PolyhedralTermSet(iocontract.TermSet):
                     continue
                 # 1. Verify Kaykobad pair: sign of nonzero matrix terms
                 for var in forbidden_vars:
-                    if context_term.get_coefficient(var) != 0 and context_term.get_sign(var) != term.get_sign(var):
+                    if context_term.get_coefficient(var) != 0 and transform_coeff * context_term.get_sign(var) != term.get_sign(var):
                         term_is_invalid = True
                         logging.debug("Failed first matrix-vector verification")
                         break
@@ -940,8 +942,8 @@ class PolyhedralTermSet(iocontract.TermSet):
                 for j, j_var in enumerate(forbidden_vars):
                     logging.debug("Verifying third condition on variable %s", j_var)
                     if j != i:
-                        residuals[j] = term.get_sign(j_var) * transform_coeff * context_term.get_coefficient(j_var) * term.get_coefficient(i_var) / context_term.get_coefficient(i_var)
-                    if np.abs(term.get_coefficient(j_var)) * transform_coeff <= partial_sums[j] + residuals[j]:
+                        residuals[j] = term.get_sign(j_var) * context_term.get_coefficient(j_var) * term.get_coefficient(i_var) / context_term.get_coefficient(i_var)
+                    if np.abs(term.get_coefficient(j_var)) <= partial_sums[j] + residuals[j]:
                         logging.debug("q coefficient: %s", term.get_coefficient(j_var))
                         logging.debug("RHS: %s", partial_sums[j] + residuals[j])
                         term_is_invalid = True
