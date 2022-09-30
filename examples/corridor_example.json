@@ -1,0 +1,46 @@
+
+{
+"contract1" : {
+    "InputVars": ["x_0", "t_0"],
+    "OutputVars": ["x_1", "t_1"],
+    "assumptions": [
+      {"constant": 3, "coefficients": {"x_0": 1}},
+      {"constant": 0, "coefficients": {"x_0": -1}},
+    {"constant": 1.1, "coefficients": {"t_0": 1}},
+    {"constant": -1, "coefficients": {"t_0": 1}},
+    {"constant": 1.1, "coefficients": {"x_0": 1}},
+    {"constant": -1, "coefficients": {"x_0": -1}}
+  ],
+
+    "guarantees": [{"constant": 1, "coefficients": {"t_1": 1, "t_0": -1}},
+      {"constant": 3, "coefficients": {"x_1": 1}},
+      {"constant": 0, "coefficients": {"x_1": -1}},
+      {"constant": -1, "coefficients": {"t_1": -1, "t_0": 1}},
+      {"constant": 1, "coefficients": {"x_1": 1, "x_0": -1}},
+      {"constant": 1, "coefficients": {"x_1": -1, "x_0": 1}}
+      ]
+    },
+"contract2": {
+    "InputVars": ["x_1", "t_1"],
+    "OutputVars": ["x_2", "t_2"],
+    "assumptions": [{"constant": 3, "coefficients": {"x_1": 1}},
+    {"constant": 0, "coefficients": {"x_1": -1}},
+    {"constant": 3, "coefficients": {"y_1": 1}},
+    {"constant": 0, "coefficients": {"y_1": -1}},
+    {"constant": 0, "coefficients": {"t_1": -1}}
+  ],
+
+    "guarantees": [
+      {"constant": 3, "coefficients": {"x_2": 1}},
+      {"constant": 0, "coefficients": {"x_2": -1}},
+      {"constant": 3, "coefficients": {"y_2": 1}},
+      {"constant": 0, "coefficients": {"y_2": -1}},
+      {"constant": -1, "coefficients": {"t_2": -1, "t_1": 1}},
+      {"constant": 1, "coefficients": {"x_2": 1, "x_1": -1, "y_2": 1, "y_1": -1}},
+      {"constant": 1, "coefficients": {"x_2": 1, "x_1": -1, "y_2": -1, "y_1": 1}},
+      {"constant": 1, "coefficients": {"x_2": -1, "x_1": 1, "y_2": 1, "y_1": -1}},
+      {"constant": 1, "coefficients": {"x_2": -1, "x_1": 1, "y_2": -1, "y_1": 1}}
+      ]
+    },
+"operation":"composition"
+}
