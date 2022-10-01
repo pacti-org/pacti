@@ -38,3 +38,4 @@ gear.egg-info
 *.rst.txt
 .venv
 .vscode
+examples/.ipynb_checkpoints/*
