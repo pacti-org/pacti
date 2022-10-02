@@ -1,7 +1,8 @@
 """
 PolyhedralTerm provides support for linear inequalities as constraints, i.e.,
-the constraints are of the form :math:`\\sum_{i} a_i x_i \\le c`, where the
+the constraints are of the form $\\sum_{i} a_i x_i \\le c$, where the
 :math:`x_i` are variables and the :math:`a_i` and :math:`c` are constants.
+$\operatorname{ker} f=\{g\in G:f(g)=e_{H}\}{\mbox{.}}$
 """
 from __future__ import annotations
 import logging
@@ -29,6 +30,9 @@ class PolyhedralTerm(iocontract.Term):
         :code:`variables` is a dictionary whose keys are :code:`Var` instances,
         and :code:`constant` is a number. Thus, our example represents the
         expression :math:`2x + 3y \\le 3`.
+        $$
+        \operatorname{ker} f=\{g\in G:f(g)=e_{H}\}{\mbox{.}}
+        $$
     """
 
     # Constructor: get (i) a dictionary whose keys are variables and whose
