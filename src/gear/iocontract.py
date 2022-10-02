@@ -376,7 +376,7 @@ class IoContract:
             assert False, "Cannot compose due to feedback"
         elif self_helps_other and not other_helps_self:
             logging.debug("Assumption computation: self provides context for other")
-            new_a = other.a.abduce_with_context(self.g, assumptions_forbidden_vars)
+            new_a = other.a.abduce_with_context(self.a | self.g, assumptions_forbidden_vars)
             if len(new_a.vars & assumptions_forbidden_vars) > 0:
                 raise ValueError("The guarantees \n{}\n".format(self.g) +
                                  "were insufficient to abduce the assumptions \n{}\n".format(other.a) +
@@ -384,7 +384,7 @@ class IoContract:
             assumptions = new_a | self.a
         elif other_helps_self and not self_helps_other:
             logging.debug("Assumption computation: other provides context for self")
-            new_a = self.a.abduce_with_context(other.g, assumptions_forbidden_vars)
+            new_a = self.a.abduce_with_context(other.a | other.g, assumptions_forbidden_vars)
             if len(new_a.vars & assumptions_forbidden_vars) > 0:
                 raise ValueError("The guarantees \n{}\n".format(other.g) +
                                  "were insufficient to abduce the assumptions \n{}\n".format(self.a) +
@@ -452,7 +452,7 @@ class IoContract:
         logging.debug("""
         Using existing guarantees to aid system-level guarantees
         """)
-        guarantees = guarantees.abduce_with_context(other.g, intvars)
+        guarantees = guarantees.abduce_with_context(other.a | other.g, intvars)
         logging.debug("""
         Using system-level assumptions to aid quotient guarantees""")
         guarantees = guarantees | other.a
