@@ -19,15 +19,14 @@ class PolyhedralTerm(iocontract.Term):
     Usage:
         Polyhedral terms are initialized as follows:
 
-        .. highlight:: python
-        .. code-block:: python
-
+        ```
             variables = {Var('x'):2, Var('y'):3}
             constant = 3
             term = PolyhedralTerm(variables, constant)
+        ```
 
-        :code:`variables` is a dictionary whose keys are :code:`Var` instances,
-        and :code:`constant` is a number. Thus, our example represents the
+        `variables` is a dictionary whose keys are `Var` instances,
+        and `constant` is a number. Thus, our example represents the
         expression $2x + 3y \\le 3$.
     """
 
@@ -99,8 +98,8 @@ class PolyhedralTerm(iocontract.Term):
             var: The variable that we are seeking in the current term.
 
         Returns:
-            :code:`True` if the syntax of the term refers to the given variable;
-            :code:`False` otherwise.
+            `True` if the syntax of the term refers to the given variable;
+            `False` otherwise.
         """
         return var in self.vars
 
@@ -133,9 +132,9 @@ class PolyhedralTerm(iocontract.Term):
             polarity.
 
         Returns:
-            :code:`True` if the variable's polarity matches :code:`polarity` and
-            :code:`False` otherwise. If the variable's coefficient in the term
-            is zero, return :code:`True`.
+            `True` if the variable's polarity matches `polarity` and
+            `False` otherwise. If the variable's coefficient in the term
+            is zero, return `True`.
         """
         if polarity:
             return self.variables[var] >= 0
@@ -158,9 +157,9 @@ class PolyhedralTerm(iocontract.Term):
             polarity.
 
         Returns:
-            :code:`True` if the variable's polarity matches :code:`polarity` and
-            :code:`False` otherwise. If the variable's coefficient in the term
-            is zero, return :code:`True`.
+            `True` if the variable's polarity matches `polarity` and
+            `False` otherwise. If the variable's coefficient in the term
+            is zero, return `True`.
         """
         if self.get_polarity(var, True):
             return 1
@@ -175,8 +174,7 @@ class PolyhedralTerm(iocontract.Term):
 
         Example:
 
-        .. code-block:: python
-
+        ```
             x = Var('x')
             y = Var('y')
             z = Var('z')
@@ -185,8 +183,9 @@ class PolyhedralTerm(iocontract.Term):
             term = PolyhedralTerm(variables, constant)
             polarities = {y:True}
             term.get_matching_vars(polarities)
+        ```
 
-        The last call returns :code:`{y, z}` because the variable y matches the
+        The last call returns `{y, z}` because the variable y matches the
         requested polarity in the term, and the variable z has a zero
         coefficient.
 
@@ -234,7 +233,7 @@ class PolyhedralTerm(iocontract.Term):
 
         Returns:
             A new term which is the result of the given term multiplied by
-            :code:`factor`.
+            `factor`.
         """
         variables = {key:factor*val for key, val in self.variables.items()}
         return PolyhedralTerm(variables, factor*self.constant)
@@ -278,11 +277,11 @@ class PolyhedralTerm(iocontract.Term):
         Example:
             The code
 
-            .. code-block:: python
-
+            ```
                 x = Var('x') y = Var('y') variables = {x:-2, y:3} constant  = 4
                 term = PolyhedralTerm(variables, constant) expression =
                 PolyhedralTerm.to_symbolic(term)
+            ```
 
             yields the expression $-2x + 3y$.
 
@@ -305,7 +304,7 @@ class PolyhedralTerm(iocontract.Term):
 
         Example:
             The expression $2x + 3y - 1$ is translated into
-            :code:`PolyhedralTerm(variables={x:2, y:3}, constant=1)`.
+            `PolyhedralTerm(variables={x:2, y:3}, constant=1)`.
 
         Args:
             expression: The symbolic expression to be translated.
@@ -329,7 +328,7 @@ class PolyhedralTerm(iocontract.Term):
 
         Example:
             The term $3x + 5y -2z \\le 7$ with `variable_list = [y,
-            x, w, z]` yields the tuple :code:`[5, 3, 0, -2], 7`.
+            x, w, z]` yields the tuple `[5, 3, 0, -2], 7`.
 
         Args:
             term: The term to be transformed.
@@ -511,7 +510,7 @@ class PolyhedralTermSet(iocontract.TermSet):
                 Variables that should not appear in the abduced term.
 
         Returns:
-            A set of terms not containing any variables in :code:`vars_to_elim`
+            A set of terms not containing any variables in `vars_to_elim`
             and which, in the context provided, imply the terms contained in the
             calling termset.
         """
@@ -555,7 +554,7 @@ class PolyhedralTermSet(iocontract.TermSet):
                 Variables that should not appear in the deduced term.
 
         Returns:
-            A set of terms not containing any variables in :code:`vars_to_elim`
+            A set of terms not containing any variables in `vars_to_elim`
             and which, in the context provided, are implied by the terms
             contained in the calling termset.
         """
@@ -670,7 +669,7 @@ class PolyhedralTermSet(iocontract.TermSet):
                 Context terms to convert to matrix-vector form.
 
         Returns:
-            A tuple :code:`variables, A, b, a_h, b_h` consisting of the variable
+            A tuple `variables, A, b, a_h, b_h` consisting of the variable
             order and the matrix-vector pairs for the terms and the context.
         """
         variables = list(terms.vars | context.vars)
