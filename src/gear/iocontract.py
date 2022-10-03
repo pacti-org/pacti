@@ -164,10 +164,10 @@ class TermSet(ABC):
         Abduce terms containing variables to be eliminated using a user-provided
         context.
 
-        Given a context :math:`\\Gamma`, and the set of terms contained in self,
-        :math:`s`, this routine identifies a TermSet :math:`x` lacking variables
-        vars_to_elim such that :math:`\\frac{\\Gamma\\colon \\; x}{\\Gamma: \\;
-        s}`.
+        Given a context $\\Gamma$, and the set of terms contained in self,
+        $s$, this routine identifies a TermSet $x$ lacking variables
+        vars_to_elim such that $\\frac{\\Gamma\\colon \\; x}{\\Gamma: \\;
+        s}$.
 
         Args:
             context:
@@ -176,7 +176,7 @@ class TermSet(ABC):
                 Variables that cannot be present in TermSet after abduction.
         
         Returns:
-            A set of terms not containing any variables in :code:`vars_to_elim`
+            A set of terms not containing any variables in `vars_to_elim`
             and which, in the context provided, imply the terms contained in the
             calling termset. 
         """
@@ -188,10 +188,10 @@ class TermSet(ABC):
         Deduce terms containing variables to be eliminated using a user-provided
         context.
 
-        Given a context :math:`\\Gamma`, and the set of terms contained in self,
-        :math:`s`, this routine identifies a formula :math:`x` lacking variables
-        vars_to_elim such that :math:`\\frac{\\Gamma\\colon \\; s}{\\Gamma: \\;
-        x}`.
+        Given a context $\\Gamma$, and the set of terms contained in self,
+        $s$, this routine identifies a formula $x$ lacking variables
+        vars_to_elim such that $\\frac{\\Gamma\\colon \\; s}{\\Gamma: \\;
+        x}$.
 
         Args:
             context:
@@ -200,7 +200,7 @@ class TermSet(ABC):
                 Variables that cannot be present in TermSet after deduction.
 
         Returns:
-            A set of terms not containing any variables in :code:`vars_to_elim`
+            A set of terms not containing any variables in `vars_to_elim`
             and which, in the context provided, are implied by the terms
             contained in the calling termset.
         """
@@ -210,10 +210,10 @@ class TermSet(ABC):
     def simplify(self, context=set()):
         """Remove redundant terms in TermSet.
 
-        Let :math:`S` be this TermSet and suppose :math:`T \\subseteq S`. Let
-        :math:`S_T = S \\setminus T`. Simplify will remove from :math:`S` a
-        maximal subset :math:`T` such that :math:`\\frac{\\Gamma, S_T\\colon \\;
-        \\top}{\\Gamma, S_T\\colon \\; \\wedge_{t \\in T} t}`.
+        Let $S$ be this TermSet and suppose $T \\subseteq S$. Let
+        $S_T = S \\setminus T$. Simplify will remove from $S$ a
+        maximal subset $T$ such that $\\frac{\\Gamma, S_T\\colon \\;
+        \\top}{\\Gamma, S_T\\colon \\; \\wedge_{t \\in T} t}$.
 
         Args:
             context:
