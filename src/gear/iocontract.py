@@ -14,11 +14,11 @@ to instantiate contracts and perform this operations, it is necessary to extend
 Term and TermSet with specific constraint formalisms.
 """
 from __future__ import annotations
-from typing import Set
-import logging
+
 import copy
-import sys
+import logging
 from abc import ABC, abstractmethod
+from typing import Set
 
 
 class Var:
@@ -27,6 +27,7 @@ class Var:
 
     Variables allow us to name an entity for which we want to write constraints.
     """
+
     def __init__(self, val):
         self._name = str(val)
 
@@ -60,7 +61,6 @@ class Term(ABC):
     @abstractmethod
     def vars(self):
         """Variables contained in the syntax of the term."""
-        pass
 
     @abstractmethod
     def contains_var(self, var: Var):
@@ -70,7 +70,6 @@ class Term(ABC):
         Args:
             var: The variable that we are seeking in the current term.
         """
-        pass
 
     @abstractmethod
     def __eq__(self, other):
@@ -93,8 +92,6 @@ class Term(ABC):
         pass
 
 
-
-
 class TermSet(ABC):
     """
     A collection of terms, or constraints.
@@ -103,6 +100,7 @@ class TermSet(ABC):
     conjunction of all terms contained in the TermSet. TermSet is an abstract
     class that must be extended to support a specific constraint formalism.
     """
+
     def __init__(self, termSet: set):
         self.terms = termSet.copy()
 
@@ -114,8 +112,6 @@ class TermSet(ABC):
             varset = varset | t.vars
         return varset
 
-
-
     def __str__(self) -> str:
         if len(self.terms) > 0:
             res = [str(el) for el in self.terms]
@@ -125,8 +121,6 @@ class TermSet(ABC):
 
     def __eq__(self, other):
         return self.terms == other.terms
-
-
 
     def get_terms_with_vars(self, variable_set: Set[Var]):
         """
@@ -140,7 +134,6 @@ class TermSet(ABC):
             if len(t.vars & variable_set) > 0:
                 terms.add(t)
         return type(self)(terms)
-
 
     def __and__(self, other):
         return type(self)(self.terms & other.terms)
@@ -156,7 +149,6 @@ class TermSet(ABC):
 
     def copy(self):
         return type(self)(copy.copy(self.terms))
-
 
     @abstractmethod
     def abduce_with_context(self, context: TermSet, vars_to_elim: Set[Var]) -> TermSet:
@@ -174,13 +166,12 @@ class TermSet(ABC):
                 Set of context terms that will be used to abduce the TermSet.
             vars_to_elim:
                 Variables that cannot be present in TermSet after abduction.
-        
+
         Returns:
             A set of terms not containing any variables in :code:`vars_to_elim`
             and which, in the context provided, imply the terms contained in the
-            calling termset. 
+            calling termset.
         """
-        pass
 
     @abstractmethod
     def deduce_with_context(self, context: TermSet, vars_to_elim: Set[Var]) -> TermSet:
@@ -204,7 +195,6 @@ class TermSet(ABC):
             and which, in the context provided, are implied by the terms
             contained in the calling termset.
         """
-        pass
 
     @abstractmethod
     def simplify(self, context=set()):
@@ -220,7 +210,6 @@ class TermSet(ABC):
                 Set of context terms that will be used to remove redundancies in
                 the TermSet.
         """
-        pass
 
     @abstractmethod
     def refines(self, other: TermSet) -> bool:
@@ -232,10 +221,6 @@ class TermSet(ABC):
             other:
                 TermSet against which we are comparing self.
         """
-        pass
-
-
-
 
 
 class IoContract:
@@ -254,18 +239,25 @@ class IoContract:
 
         g(TermSet): Contract guarantees.
     """
-    def __init__(self, assumptions: TermSet, guarantees: TermSet,
-                 inputVars: Set[Var], outputVars: Set[Var]) -> None:
+
+    def __init__(self, assumptions: TermSet, guarantees: TermSet, inputVars: Set[Var], outputVars: Set[Var]) -> None:
         # make sure the input & output variables are disjoint
         assert len(inputVars & outputVars) == 0
         # make sure the assumptions only contain input variables
-        assert len(assumptions.vars - inputVars) == 0, \
-            print("A: " + str(assumptions.vars) +
-                  " Input vars: " + str(inputVars))
+        assert len(assumptions.vars - inputVars) == 0, print(
+            "A: " + str(assumptions.vars) + " Input vars: " + str(inputVars)
+        )
         # make sure the guaranteees only contain input or output variables
-        assert len(guarantees.vars - inputVars - outputVars) == 0, \
-            print("G: " + str(guarantees) + " G Vars: "+ str(guarantees.vars) +
-                  " Input: " + str(inputVars) + " Output: " + str(outputVars))
+        assert len(guarantees.vars - inputVars - outputVars) == 0, print(
+            "G: "
+            + str(guarantees)
+            + " G Vars: "
+            + str(guarantees.vars)
+            + " Input: "
+            + str(inputVars)
+            + " Output: "
+            + str(outputVars)
+        )
         self.a = assumptions.copy()
         self.g = guarantees.copy()
         self.inputvars = inputVars.copy()
@@ -282,9 +274,17 @@ class IoContract:
         return self.a.vars | self.g.vars
 
     def __str__(self):
-        return "InVars: " + str(self.inputvars) + "\nOutVars:" + \
-                str(self.outputvars) + "\nA: " + str(self.a) + \
-                "\n" + "G: " + str(self.g)
+        return (
+            "InVars: "
+            + str(self.inputvars)
+            + "\nOutVars:"
+            + str(self.outputvars)
+            + "\nA: "
+            + str(self.a)
+            + "\n"
+            + "G: "
+            + str(self.g)
+        )
 
     def __le__(self, other):
         return self.refines(other)
@@ -313,7 +313,6 @@ class IoContract:
         # component
         return len((self.outputvars - other.outputvars) & other.inputvars) == 0
 
-
     def shares_io_with(self, other: IoContract) -> bool:
         """
         Tell whether two contracts have the same IO signature.
@@ -321,9 +320,7 @@ class IoContract:
         Args:
             other: contract whose IO signature is compared with self.
         """
-        return (self.inputvars == other.inputvars) & \
-            (self.outputvars == other.outputvars)
-
+        return (self.inputvars == other.inputvars) & (self.outputvars == other.outputvars)
 
     def refines(self, other: IoContract) -> bool:
         """
@@ -335,9 +332,7 @@ class IoContract:
             other: contract being compared with self.
         """
         assert self.shares_io_with(other)
-        return (other.a <= self.a) and \
-            ((self.g | other.a) <= (other.g | other.a))
-
+        return (other.a <= self.a) and ((self.g | other.a) <= (other.g | other.a))
 
     def compose(self, other: IoContract) -> IoContract:
         """Compose IO contracts.
@@ -355,8 +350,7 @@ class IoContract:
             The abstracted composition of the two contracts.
         """
         logging.debug("Composing contracts \n%s and \n%s", self, other)
-        intvars = (self.outputvars & other.inputvars) | \
-            (self.inputvars & other.outputvars)
+        intvars = (self.outputvars & other.inputvars) | (self.inputvars & other.outputvars)
         inputvars = (self.inputvars | other.inputvars) - intvars
         outputvars = (self.outputvars | other.outputvars) - intvars
 
@@ -378,17 +372,21 @@ class IoContract:
             logging.debug("Assumption computation: self provides context for other")
             new_a = other.a.abduce_with_context(self.a | self.g, assumptions_forbidden_vars)
             if len(new_a.vars & assumptions_forbidden_vars) > 0:
-                raise ValueError("The guarantees \n{}\n".format(self.g) +
-                                 "were insufficient to abduce the assumptions \n{}\n".format(other.a) +
-                                 "by eliminating the variables \n{}".format(assumptions_forbidden_vars))
+                raise ValueError(
+                    "The guarantees \n{}\n".format(self.g)
+                    + "were insufficient to abduce the assumptions \n{}\n".format(other.a)
+                    + "by eliminating the variables \n{}".format(assumptions_forbidden_vars)
+                )
             assumptions = new_a | self.a
         elif other_helps_self and not self_helps_other:
             logging.debug("Assumption computation: other provides context for self")
             new_a = self.a.abduce_with_context(other.a | other.g, assumptions_forbidden_vars)
             if len(new_a.vars & assumptions_forbidden_vars) > 0:
-                raise ValueError("The guarantees \n{}\n".format(other.g) +
-                                 "were insufficient to abduce the assumptions \n{}\n".format(self.a) +
-                                 "by eliminating the variables \n{}".format(assumptions_forbidden_vars))
+                raise ValueError(
+                    "The guarantees \n{}\n".format(other.g)
+                    + "were insufficient to abduce the assumptions \n{}\n".format(self.a)
+                    + "by eliminating the variables \n{}".format(assumptions_forbidden_vars)
+                )
             assumptions = new_a | other.a
         # contracts can't help each other
         else:
@@ -430,12 +428,9 @@ class IoContract:
             The refined quotient self/other.
         """
         assert self.can_quotient_by(other)
-        outputvars = (self.outputvars - other.outputvars) | \
-            (other.inputvars - self.inputvars)
-        inputvars = (self.inputvars - other.inputvars) | \
-            (other.outputvars - self.outputvars)
-        intvars = (self.outputvars & other.outputvars) | \
-            (self.inputvars & other.inputvars)
+        outputvars = (self.outputvars - other.outputvars) | (other.inputvars - self.inputvars)
+        inputvars = (self.inputvars - other.inputvars) | (other.outputvars - self.outputvars)
+        intvars = (self.outputvars & other.outputvars) | (self.inputvars & other.inputvars)
 
         # get assumptions
         logging.debug("Computing quotient assumptions")
@@ -443,25 +438,27 @@ class IoContract:
         empty_context = type(assumptions)(set())
         if assumptions.refines(other.a):
             assumptions = assumptions | other.g
-        assumptions = assumptions.deduce_with_context(empty_context,intvars | outputvars)
+        assumptions = assumptions.deduce_with_context(empty_context, intvars | outputvars)
         logging.debug("Assumptions after processing: %s", assumptions)
 
         # get guarantees
         logging.debug("Computing quotient guarantees")
         guarantees = self.g
-        logging.debug("""
+        logging.debug(
+            """
         Using existing guarantees to aid system-level guarantees
-        """)
+        """
+        )
         guarantees = guarantees.abduce_with_context(other.a | other.g, intvars)
-        logging.debug("""
-        Using system-level assumptions to aid quotient guarantees""")
+        logging.debug(
+            """
+        Using system-level assumptions to aid quotient guarantees"""
+        )
         guarantees = guarantees | other.a
         guarantees = guarantees.abduce_with_context(self.a, intvars)
         logging.debug("Guarantees after processing: %s", guarantees)
 
-
         return IoContract(assumptions, guarantees, inputvars, outputvars)
-
 
     def merge(self, other: IoContract) -> IoContract:
         """Compute the merging operation for two contracts.
@@ -480,4 +477,3 @@ class IoContract:
         assumptions = self.a | other.a
         guarantees = self.g | other.g
         return IoContract(assumptions, guarantees, self.inputvars, self.outputvars)
-
