@@ -19,9 +19,9 @@ dependencies = [
 requires-python = ">=3.10,<3.11"
 
 [project.scripts]
-main-script = "gear.cli:main_script"
-gear = "gear.cli:gear"
+gear = "gear.gear:main"
 
+[project.optional-dependencies]
 [tool.pdm]
 version = {source = "scm"}
 package-dir = "src"
@@ -52,6 +52,7 @@ format = [
 ]
 maintain = [
     "git-changelog>=0.4",
+    "urlopen>=1.0.0",
 ]
 quality = [
     "darglint>=1.8",
@@ -81,6 +82,9 @@ typing = [
     "types-toml>=0.10",
 ]
 security = ["safety>=2"]
+dev = [
+    "certifi>=2022.9.24",
+]
 
 [tool.black]
 line-length = 120
