@@ -49,7 +49,6 @@ def readInputFile(inputfilename,outputfilename):
     data = {'contract_comp':data}
     with open(outputfilename, 'w') as f:
         json.dump(data, f)
-    
 
 def main():
     FORMAT = "[%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
