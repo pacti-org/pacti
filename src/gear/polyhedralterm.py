@@ -321,6 +321,8 @@ class PolyhedralTerm(iocontract.Term):
         for key in keys:
             if key == 1:
                 constant = -expression_coefficients[key]
+            elif key == 0:
+                pass
             else:
                 var = iocontract.Var(str(key))
                 variable_dict[var] = expression_coefficients[key]
