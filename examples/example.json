@@ -19,7 +19,7 @@
             {"coefficients":{"i":-1,"o":1},
             "constant":0},
             {"coefficients":{"i":1,"o":-2},
-            "constant":5}
+            "constant":2}
         ]
     },
     "contract2":{
@@ -31,7 +31,7 @@
         ],
         "assumptions":
         [
-            {"coefficients":{"o":3},
+            {"coefficients":{"o":5},
             "constant":1},
             {"coefficients":{"o":-1},
             "constant":1}
