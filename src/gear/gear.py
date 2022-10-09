@@ -10,8 +10,8 @@ import gear.iocontract as iocontract
 import gear.polyhedralterm as polyhedralterm
 
 
-def getVarset(aList):
-    return set([iocontract.Var(varstr) for varstr in aList])
+def getVarlist(aList):
+    return list([iocontract.Var(varstr) for varstr in aList])
 
 
 @click.command()
@@ -28,10 +28,10 @@ def readInputFile(inputfilename, outputfilename):
         for key in ["assumptions", "guarantees"]:
             reqs.append([polyhedralterm.PolyhedralTerm(term["coefficients"], term["constant"]) for term in c[key]])
         cont = iocontract.IoContract(
-            inputVars=getVarset(c["InputVars"]),
-            outputVars=getVarset(c["OutputVars"]),
-            assumptions=polyhedralterm.PolyhedralTermSet(set(reqs[0])),
-            guarantees=polyhedralterm.PolyhedralTermSet(set(reqs[1])),
+            inputVars=getVarlist(c["InputVars"]),
+            outputVars=getVarlist(c["OutputVars"]),
+            assumptions=polyhedralterm.PolyhedralTermList(list(reqs[0])),
+            guarantees=polyhedralterm.PolyhedralTermList(list(reqs[1])),
         )
         contracts.append(cont)
     print("Contract1:\n" + str(contracts[0]))
