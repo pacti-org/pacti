@@ -2,7 +2,7 @@ import json
 
 import gear.iocontract as iocontract
 import gear.polyhedralterm as polyhedralterm
-from gear.gear import getVarset
+from gear.gear import getVarlist
 
 
 def readContract(contract):
@@ -25,10 +25,10 @@ def readContract(contract):
         for key in ["assumptions", "guarantees"]:
             reqs.append([polyhedralterm.PolyhedralTerm(term["coefficients"], term["constant"]) for term in c[key]])
         iocont = iocontract.IoContract(
-            inputVars=getVarset(c["InputVars"]),
-            outputVars=getVarset(c["OutputVars"]),
-            assumptions=polyhedralterm.PolyhedralTermSet(set(reqs[0])),
-            guarantees=polyhedralterm.PolyhedralTermSet(set(reqs[1])),
+            inputVars=getVarlist(c["InputVars"]),
+            outputVars=getVarlist(c["OutputVars"]),
+            assumptions=polyhedralterm.PolyhedralTermList(list(reqs[0])),
+            guarantees=polyhedralterm.PolyhedralTermList(list(reqs[1])),
         )
         list_iocontracts.append(iocont)
     if len(list_iocontracts) == 1:

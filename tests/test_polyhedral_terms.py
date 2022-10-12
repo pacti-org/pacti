@@ -3,7 +3,7 @@ import sympy as sympy
 from sympy.parsing.sympy_parser import parse_expr
 
 from gear.iocontract import Var
-from gear.polyhedralterm import PolyhedralTerm, PolyhedralTermSet
+from gear.polyhedralterm import PolyhedralTerm, PolyhedralTermList
 
 
 def to_pt(str_rep):
@@ -31,7 +31,7 @@ def to_pt(str_rep):
 
 def to_pts(str_rep_list):
     terms = [to_pt(str_rep) for str_rep in str_rep_list]
-    return PolyhedralTermSet(set(terms))
+    return PolyhedralTermList(terms)
 
 
 def test_polyhedral_abduce_1():
