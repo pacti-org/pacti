@@ -44,6 +44,10 @@ def readInputFile(inputfilename, outputfilename):
         data = {"contract_quotient"}
         result = contracts[0].quotient(contracts[1])
         print("Contract quotient:\n" + str(result))
+    elif data["operation"] == "merge":
+        data = {"contract_merge"}
+        result = contracts[0].merge(contracts[1])
+        print("Merged contract:\n" + str(result))
     else:
         print("Operation not supported")
     # now store the result in the provided file
