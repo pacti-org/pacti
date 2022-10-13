@@ -37,13 +37,14 @@ def readInputFile(inputfilename, outputfilename):
     print("Contract1:\n" + str(contracts[0]))
     print("Contract2:\n" + str(contracts[1]))
     if data["operation"] == "composition":
-        data = {"contract_composition"}
         result = contracts[0].compose(contracts[1])
         print("Composed contract:\n" + str(result))
     elif data["operation"] == "quotient":
-        data = {"contract_quotient"}
         result = contracts[0].quotient(contracts[1])
         print("Contract quotient:\n" + str(result))
+    elif data["operation"] == "merge":
+        result = contracts[0].merge(contracts[1])
+        print("Merged contract:\n" + str(result))
     else:
         print("Operation not supported")
     # now store the result in the provided file
