@@ -52,7 +52,6 @@ Links
 >   "python.analysis.extraPaths": ["__pypackages__/3.10/lib"]
 > }
 > ```
-> > To configure PyCharm to support PEP 582, mark the following folders as `source`:
-* `__pypackages__/3.10/lib`
-* `__pypackages__/3.10/lib`
-> ```
+> To configure PyCharm to support PEP 582, mark the following folders as `source`:
+> * `__pypackages__/3.10/lib`
+> * `__pypackages__/3.10/lib`
