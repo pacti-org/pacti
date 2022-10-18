@@ -1,9 +1,9 @@
 import pytest
 import sympy as sympy
+from gear.iocontract import Var
+from gear.terms.polyhedra import PolyhedralTerm, PolyhedralTermList
 from sympy.parsing.sympy_parser import parse_expr
 
-from gear.iocontract import Var
-from gear.polyhedralterm import PolyhedralTerm, PolyhedralTermList
 
 
 def to_pt(str_rep):

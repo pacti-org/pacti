@@ -20,6 +20,7 @@ import logging
 from abc import ABC, abstractmethod
 from typing import List
 from gear.utils import *
+from gear.utils.lists import list_intersection, list_diff, list_union
 
 
 class Var:

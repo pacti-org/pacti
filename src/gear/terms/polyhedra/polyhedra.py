@@ -12,11 +12,11 @@ import numpy as np
 import sympy
 from scipy.optimize import linprog
 
-import gear.iocontract as iocontract
-from gear.utils import *
+from gear.iocontract import Term, Var, TermList
+from gear.utils.lists import list_diff, list_union, list_intersection
 
 
-class PolyhedralTerm(iocontract.Term):
+class PolyhedralTerm(Term):
     """
     Polyhedral terms are linear inequalities over a list of variables.
 
@@ -47,7 +47,7 @@ class PolyhedralTerm(iocontract.Term):
         for key, val in variables.items():
             if val != 0:
                 if isinstance(key, str):
-                    variable_dict[iocontract.Var(key)] = val
+                    variable_dict[Var(key)] = val
                 else:
                     variable_dict[key] = val
         self.variables = variable_dict
@@ -315,7 +315,7 @@ class PolyhedralTerm(iocontract.Term):
             if key == 1:
                 constant = -expression_coefficients[key]
             else:
-                var = iocontract.Var(str(key))
+                var = Var(str(key))
                 variable_dict[var] = expression_coefficients[key]
         return PolyhedralTerm(variable_dict, constant)
 
@@ -393,12 +393,12 @@ class PolyhedralTerm(iocontract.Term):
         sols = sympy.solve(exprs, *vars_to_solve_symb)
         logging.debug(sols)
         if len(sols) > 0:
-            return {iocontract.Var(str(key)): PolyhedralTerm.to_term(sols[key]) for key in sols.keys()}
+            return {Var(str(key)): PolyhedralTerm.to_term(sols[key]) for key in sols.keys()}
         else:
             return {}
 
 
-class PolyhedralTermList(iocontract.TermList):
+class PolyhedralTermList(TermList):
     """
     A TermList of PolyhedralTerm instances.
     """
@@ -406,7 +406,7 @@ class PolyhedralTermList(iocontract.TermList):
     # This routine accepts a term that will be adbuced with the help of other
     # terms The abduction aims to eliminate from the term appearances of the
     # variables contained in vars_to_elim
-    def _transform2(self, context: iocontract.TermList, vars_to_elim: list, polarity):
+    def _transform2(self, context: TermList, vars_to_elim: list, polarity):
         logging.debug("Context terms: %s", context)
         logging.debug("Variables to eliminate: %s", vars_to_elim)
         helpers = context | self
@@ -457,7 +457,7 @@ class PolyhedralTermList(iocontract.TermList):
         logging.debug("Ending transformation with simplification")
         self.simplify(context)
 
-    def _transform(self, context: iocontract.TermList, vars_to_elim: list, abduce: bool):
+    def _transform(self, context: TermList, vars_to_elim: list, abduce: bool):
         logging.debug("Transforming: %s", self)
         logging.debug("Context terms: %s", context)
         logging.debug("Variables to eliminate: %s", vars_to_elim)
@@ -477,7 +477,7 @@ class PolyhedralTermList(iocontract.TermList):
         logging.debug("Ending transformation with simplification")
         self.simplify(context)
 
-    def abduce_with_context(self, context: iocontract.TermList, vars_to_elim: list) -> iocontract.TermList:
+    def abduce_with_context(self, context: TermList, vars_to_elim: list) -> TermList:
         """
         Obtain a list of PolyhedralTerm instances lacking the indicated variables
         and implying the given TermList in the given context.
@@ -522,7 +522,7 @@ class PolyhedralTermList(iocontract.TermList):
             ) from e
         return termlist
 
-    def deduce_with_context(self, context: iocontract.TermList, vars_to_elim: list) -> iocontract.TermList:
+    def deduce_with_context(self, context: TermList, vars_to_elim: list) -> TermList:
         """
         Obtain a list of PolyhedralTerm instances lacking the indicated variables
         and implied by the given TermList in the given context.
@@ -675,7 +675,7 @@ class PolyhedralTermList(iocontract.TermList):
         return variables, a, b, a_h, b_h
 
     @staticmethod
-    def polytope_to_termlist(matrix, vector, variables: list[iocontract.Var]) -> PolyhedralTermList:
+    def polytope_to_termlist(matrix, vector, variables: list[Var]) -> PolyhedralTermList:
         """
         Transforms a matrix-vector pair into a PolyhedralTermList, assuming that
         the variable coefficients in the matrix are ordered as specified.

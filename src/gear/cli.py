@@ -5,13 +5,9 @@ import logging
 import os
 
 import click
-
-import gear.iocontract as iocontract
-import gear.polyhedralterm as polyhedralterm
-
-
-def getVarlist(aList):
-    return list([iocontract.Var(varstr) for varstr in aList])
+from gear.iocontract import IoContract
+from gear.iocontract.utils import getVarlist
+from gear.terms.polyhedra import PolyhedralTermList, PolyhedralTerm
 
 
 @click.command()
@@ -26,12 +22,12 @@ def readInputFile(inputfilename, outputfilename):
         c = data[contKey]
         reqs = []
         for key in ["assumptions", "guarantees"]:
-            reqs.append([polyhedralterm.PolyhedralTerm(term["coefficients"], term["constant"]) for term in c[key]])
-        cont = iocontract.IoContract(
+            reqs.append([PolyhedralTerm(term["coefficients"], term["constant"]) for term in c[key]])
+        cont = IoContract(
             inputVars=getVarlist(c["InputVars"]),
             outputVars=getVarlist(c["OutputVars"]),
-            assumptions=polyhedralterm.PolyhedralTermList(list(reqs[0])),
-            guarantees=polyhedralterm.PolyhedralTermList(list(reqs[1])),
+            assumptions=PolyhedralTermList(list(reqs[0])),
+            guarantees=PolyhedralTermList(list(reqs[1])),
         )
         contracts.append(cont)
     print("Contract1:\n" + str(contracts[0]))
@@ -68,7 +64,7 @@ def main():
     FORMAT = "[%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
     FORMAT1 = "[%(levelname)s:%(funcName)s()] %(message)s"
     FORMAT2 = "%(asctime)s:%(levelname)s:%(name)s:%(message)s"
-    logging.basicConfig(filename="gear.log", filemode="w", level=logging.INFO, format=FORMAT2)
+    logging.basicConfig(filename="../gear.log", filemode="w", level=logging.INFO, format=FORMAT2)
     readInputFile()
 
 

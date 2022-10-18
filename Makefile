@@ -16,7 +16,7 @@ SHELL := bash
 
 DUTY = $(shell [ -n "${VIRTUAL_ENV}" ] || echo pdm run) duty
 
-args = $(foreach a,$($(subst -,_,$1)_args),$(if $(value $a),$a="$($a)"))
+args = $(foreach a,$($(subst -,_,$1)_args),$(if $(value $a),$a="$($a))
 check_quality_args = files
 docs_serve_args = host port
 release_args = version
@@ -52,6 +52,23 @@ lock:
 check:
 	@bash scripts/multirun.sh duty check-quality check-types check-docs
 	@$(DUTY) check-dependencies
+
+.PHONY: uninstall
+uninstall:
+	rm -rf .coverage*
+	rm -rf .mypy_cache
+	rm -rf .pytest_cache
+	rm -rf tests/.pytest_cache
+	rm -rf build
+	rm -rf dist
+	rm -rf htmlcov
+	rm -rf pip-wheel-metadata
+	rm -rf site
+	find . -type d -name __pycache__ | xargs rm -rf
+	find . -name '*.rej' -delete
+	rm -rf __pypackages__
+	rm -f pdm.lock .pdm.toml gear.log
+
 
 .PHONY: $(BASIC_DUTIES)
 $(BASIC_DUTIES):
