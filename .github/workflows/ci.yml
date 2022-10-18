@@ -21,6 +21,6 @@ jobs:
       - name: Install dependencies
         run: pdm install
       - name: Format code
-          run: make format
+        run: make format
       - name: Test code
-          run: make test
+        run: make test
