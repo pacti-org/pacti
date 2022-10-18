@@ -16,7 +16,7 @@ jobs:
         name: Setup PDM
         with:
           python-version: ${{ matrix.python-version }}
-          architecture: ["x86", "x64"]
+          architecture: x64
           enable-pep582: true
       - name: Install dependencies
         run: pdm install
