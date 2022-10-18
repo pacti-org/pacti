@@ -1,5 +1,4 @@
-Gear
-====
+# Gear
 
 Gear is a Python package for carrying out compositional system analysis and design. Gear represents components in a
 system using assume-guarantee specifications, or contracts. Gear's capabilities include the following:
@@ -29,11 +28,26 @@ The installation will provide access to the command-line tool `gear` and to the 
 To launch the command tool run:
 
 ```bash
-pdm run gear
+pdm run gear examples/example.json output.json
 ```
 
-Links
------
+Or via python script
+
+```bash
+pdm run python src/gear/cli.py ./examples/example.json ./output.json
+```
+
+
+## Examples
+
+You can run examples via command line:
+
+```bash
+pdm run gear exampl
+```
+
+
+## Links
 
 - Documentation: ``
 - Source Code: ``
@@ -42,11 +56,19 @@ Links
 
 ### Working With Apple Silicon
 
-Some packages do not fully support Apple Silicon (i.e. `scipy`, `numpy`). We reccomend installing them via pip as:
+Some packages do not fully support Apple Silicon (i.e. `scipy`, `numpy`). 
+We recommend installing them at system level via pip as:
 
 ```bash
 pip install --pre -i https://pypi.anaconda.org/scipy-wheels-nightly/simple scipy
 ```
+
+Or via brew:
+
+```bash
+brew install scipy
+```
+
 
 ### Working with PEP 582
 
@@ -70,5 +92,5 @@ following entries:
 
 To configure PyCharm to support PEP 582, mark the following folders as 'Sources Root':
 
-* `__pypackages__/3.10/lib`
-* `src`
+- `__pypackages__/3.10/lib`
+- `src`
