@@ -12,8 +12,8 @@ import numpy as np
 import sympy
 from scipy.optimize import linprog
 
-from gear.iocontract import Term, Var, TermList
-from gear.utils.lists import list_diff, list_union, list_intersection
+from gear.iocontract import Term, TermList, Var
+from gear.utils.lists import list_diff, list_intersection, list_union
 
 
 class PolyhedralTerm(Term):
@@ -649,7 +649,7 @@ class PolyhedralTermList(TermList):
             A tuple :code:`variables, A, b, a_h, b_h` consisting of the variable
             order and the matrix-vector pairs for the terms and the context.
         """
-        variables = list(list_union(terms.vars,context.vars))
+        variables = list(list_union(terms.vars, context.vars))
         a = []
         b = []
         for term in terms.terms:
@@ -917,7 +917,9 @@ class PolyhedralTermList(TermList):
                         logging.debug("Failed third matrix-vector verification")
                         break
                 if not term_is_invalid:
-                    matrix_contains_others = matrix_contains_others or len(list_diff(context_term.vars, forbidden_vars)) > 0
+                    matrix_contains_others = (
+                        matrix_contains_others or len(list_diff(context_term.vars, forbidden_vars)) > 0
+                    )
                     row_found = True
                     for j in range(n):
                         partial_sums[j] += residuals[j]

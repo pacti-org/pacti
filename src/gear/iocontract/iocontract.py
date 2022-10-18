@@ -19,8 +19,8 @@ import copy
 import logging
 from abc import ABC, abstractmethod
 from typing import List
-from gear.utils import *
-from gear.utils.lists import list_intersection, list_diff, list_union
+
+from gear.utils.lists import list_diff, list_intersection, list_union
 
 
 class Var:
@@ -242,7 +242,9 @@ class IoContract:
         g(TermList): Contract guarantees.
     """
 
-    def __init__(self, assumptions: TermList, guarantees: TermList, inputVars: List[Var], outputVars: List[Var]) -> None:
+    def __init__(
+        self, assumptions: TermList, guarantees: TermList, inputVars: List[Var], outputVars: List[Var]
+    ) -> None:
         # make sure the input & output variables are disjoint
         assert len(list_intersection(inputVars, outputVars)) == 0
         # make sure the assumptions only contain input variables
@@ -313,7 +315,7 @@ class IoContract:
         # make sure the top level ouputs not contained in outputs of the
         # existing component do not intersect with the inputs of the existing
         # component
-        return len(list_intersection(list_diff(self.outputvars,other.outputvars), other.inputvars)) == 0
+        return len(list_intersection(list_diff(self.outputvars, other.outputvars), other.inputvars)) == 0
 
     def shares_io_with(self, other: IoContract) -> bool:
         """
@@ -352,13 +354,18 @@ class IoContract:
             The abstracted composition of the two contracts.
         """
         logging.debug("Composing contracts \n%s and \n%s", self, other)
-        intvars = list_union(list_intersection(self.outputvars, other.inputvars), list_intersection(self.inputvars, other.outputvars))
+        intvars = list_union(
+            list_intersection(self.outputvars, other.inputvars), list_intersection(self.inputvars, other.outputvars)
+        )
         inputvars = list_diff(list_union(self.inputvars, other.inputvars), intvars)
         outputvars = list_diff(list_union(self.outputvars, other.outputvars), intvars)
 
         selfinputconst = self.a.vars
         otherinputconst = other.a.vars
-        cycle_present = len(list_intersection(self.inputvars, other.outputvars)) > 0 and len(list_intersection(other.inputvars, self.outputvars)) > 0
+        cycle_present = (
+            len(list_intersection(self.inputvars, other.outputvars)) > 0
+            and len(list_intersection(other.inputvars, self.outputvars)) > 0
+        )
 
         assumptions_forbidden_vars = list_union(intvars, outputvars)
         assert self.can_compose_with(other)
@@ -430,9 +437,13 @@ class IoContract:
             The refined quotient self/other.
         """
         assert self.can_quotient_by(other)
-        outputvars = list_union(list_diff(self.outputvars, other.outputvars), list_diff(other.inputvars, self.inputvars))
+        outputvars = list_union(
+            list_diff(self.outputvars, other.outputvars), list_diff(other.inputvars, self.inputvars)
+        )
         inputvars = list_union(list_diff(self.inputvars, other.inputvars), list_diff(other.outputvars, self.outputvars))
-        intvars = list_union(list_intersection(self.outputvars, other.outputvars), list_intersection(self.inputvars, other.inputvars))
+        intvars = list_union(
+            list_intersection(self.outputvars, other.outputvars), list_intersection(self.inputvars, other.inputvars)
+        )
 
         # get assumptions
         logging.debug("Computing quotient assumptions")

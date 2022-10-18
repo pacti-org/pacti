@@ -5,9 +5,10 @@ import logging
 import os
 
 import click
+
 from gear.iocontract import IoContract
 from gear.iocontract.utils import getVarlist
-from gear.terms.polyhedra import PolyhedralTermList, PolyhedralTerm
+from gear.terms.polyhedra import PolyhedralTerm, PolyhedralTermList
 
 
 @click.command()

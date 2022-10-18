@@ -1,6 +1,3 @@
-
-
-
 def list_intersection(list1, list2):
     return [el for el in list1 if el in list2]
 
