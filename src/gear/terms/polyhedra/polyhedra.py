@@ -4,17 +4,20 @@ the constraints are of the form $\\sum_{i} a_i x_i \\le c$, where the
 $x_i$ are variables and the $a_i$ and $c$ are constants.
 """
 from __future__ import annotations
+
 import logging
-import sympy
+
 import numpy as np
+import sympy
 from scipy.optimize import linprog
-import gear.iocontract as iocontract
+
+from gear.iocontract import Term, TermList, Var
+from gear.utils.lists import list_diff, list_intersection, list_union
 
 
-
-class PolyhedralTerm(iocontract.Term):
+class PolyhedralTerm(Term):
     """
-    Polyhedral terms are linear inequalities over a set of variables.
+    Polyhedral terms are linear inequalities over a list of variables.
 
     Usage:
         Polyhedral terms are initialized as follows:
@@ -39,7 +42,7 @@ class PolyhedralTerm(iocontract.Term):
         for key, val in variables.items():
             if val != 0:
                 if isinstance(key, str):
-                    variable_dict[iocontract.Var(key)] = val
+                    variable_dict[Var(key)] = val
                 else:
                     variable_dict[key] = val
         self.variables = variable_dict
@@ -48,15 +51,14 @@ class PolyhedralTerm(iocontract.Term):
     def __eq__(self, other):
         match = self.variables.keys() == other.variables.keys()
         if match:
-            for k,v in self.variables.items():
+            for k, v in self.variables.items():
                 match = match and (v == other.variables[k])
         return match and self.constant == other.constant
 
     def __str__(self) -> str:
         varlist = list(self.variables.items())
-        varlist.sort(key = lambda x: str(x[0]))
-        res = " + ".join([str(coeff)+"*"+var.name
-                          for var, coeff in varlist])
+        varlist.sort(key=lambda x: str(x[0]))
+        res = " + ".join([str(coeff) + "*" + var.name for var, coeff in varlist])
         res += " <= " + str(self.constant)
         return res
 
@@ -67,11 +69,10 @@ class PolyhedralTerm(iocontract.Term):
         return "<Term {0}>".format(self)
 
     def __add__(self, other):
-        varlist = list(self.vars | other.vars)
+        varlist = list_union(self.vars, other.vars)
         variables = {}
         for var in varlist:
-            variables[var] = self.get_coefficient(var) + \
-                other.get_coefficient(var)
+            variables[var] = self.get_coefficient(var) + other.get_coefficient(var)
         return PolyhedralTerm(variables, self.constant + other.constant)
 
     def copy(self):
@@ -84,11 +85,11 @@ class PolyhedralTerm(iocontract.Term):
 
         Example:
             For the term $ax + by \\le c$ with variables $x$ and
-            $y$, this function returns the set $\\{x, y\\}$ if
+            $y$, this function returns the list $\\{x, y\\}$ if
             $a$ and $b$ are nonzero.
         """
         varlist = self.variables.keys()
-        return set(varlist)
+        return list(varlist)
 
     def contains_var(self, var):
         """
@@ -114,7 +115,6 @@ class PolyhedralTerm(iocontract.Term):
             return self.variables[var]
         else:
             return 0
-
 
     def get_polarity(self, var, polarity=True):
         """
@@ -166,10 +166,9 @@ class PolyhedralTerm(iocontract.Term):
         else:
             return -1
 
-
     def get_matching_vars(self, variable_polarity):
         """
-        Returns the set of variables whose polarities match the polarities
+        Returns the list of variables whose polarities match the polarities
         requested.
 
         Example:
@@ -197,19 +196,17 @@ class PolyhedralTerm(iocontract.Term):
         Returns:
             If all variables in the term match the polarities specified in the
             argument, the routine returns the matching variables.  Otherwise,
-            it returns an empty set.
+            it returns an empty list.
         """
-        variable_set = set()
+        variable_list = list()
         for var in variable_polarity.keys():
             if self.contains_var(var):
-                if (self.get_polarity(var, True) == variable_polarity[var]) or \
-                    (self.get_coefficient(var) == 0):
-                    variable_set.add(var)
+                if (self.get_polarity(var, True) == variable_polarity[var]) or (self.get_coefficient(var) == 0):
+                    variable_list.add(var)
                 else:
-                    variable_set = set()
+                    variable_list = list()
                     break
-        return variable_set
-
+        return variable_list
 
     def remove_variable(self, var):
         """
@@ -235,9 +232,8 @@ class PolyhedralTerm(iocontract.Term):
             A new term which is the result of the given term multiplied by
             `factor`.
         """
-        variables = {key:factor*val for key, val in self.variables.items()}
-        return PolyhedralTerm(variables, factor*self.constant)
-
+        variables = {key: factor * val for key, val in self.variables.items()}
+        return PolyhedralTerm(variables, factor * self.constant)
 
     def substitute_variable(self, var, subst_with_term):
         """
@@ -265,8 +261,6 @@ class PolyhedralTerm(iocontract.Term):
             return self + term
         else:
             return self.copy()
-
-
 
     @staticmethod
     def to_symbolic(term):
@@ -296,7 +290,6 @@ class PolyhedralTerm(iocontract.Term):
             ex += sv * term.get_coefficient(var)
         return ex
 
-
     @staticmethod
     def to_term(expression):
         """
@@ -317,7 +310,7 @@ class PolyhedralTerm(iocontract.Term):
             if key == 1:
                 constant = -expression_coefficients[key]
             else:
-                var = iocontract.Var(str(key))
+                var = Var(str(key))
                 variable_dict[var] = expression_coefficients[key]
         return PolyhedralTerm(variable_dict, constant)
 
@@ -365,20 +358,19 @@ class PolyhedralTerm(iocontract.Term):
             variable_dict[var] = poly[i]
         return PolyhedralTerm(variable_dict, const)
 
-
     @staticmethod
     def solve_for_variables(context, vars_to_elim):
         """
-        Interpret a set of terms as equalities and solve the system of equations
+        Interpret a list of terms as equalities and solve the system of equations
         for the given variables.
 
         Args:
             context:
-                The set of terms to be solved. Each term will be interpreted as
+                The list of terms to be solved. Each term will be interpreted as
                 an equality.
 
             vars_to_elim:
-                The set of variables whose solutions will be sought.
+                The list of variables whose solutions will be sought.
 
         Assumptions: the number of equations matches the number of vars_to_elim
         contained in the terms.
@@ -388,7 +380,7 @@ class PolyhedralTerm(iocontract.Term):
             expressed as PolyhedralTerm instances.
         """
         logging.debug("GetVals: %s Vars: %s", context, vars_to_elim)
-        vars_to_solve = context.vars & vars_to_elim
+        vars_to_solve = list_intersection(context.vars, vars_to_elim)
         assert len(context.terms) == len(vars_to_solve)
         exprs = [PolyhedralTerm.to_symbolic(term) for term in context.terms]
         logging.debug("Solving %s", exprs)
@@ -396,25 +388,20 @@ class PolyhedralTerm(iocontract.Term):
         sols = sympy.solve(exprs, *vars_to_solve_symb)
         logging.debug(sols)
         if len(sols) > 0:
-            return {iocontract.Var(str(key)):
-                    PolyhedralTerm.to_term(sols[key]) for
-                    key in sols.keys()}
+            return {Var(str(key)): PolyhedralTerm.to_term(sols[key]) for key in sols.keys()}
         else:
             return {}
 
 
-
-class PolyhedralTermSet(iocontract.TermSet):
+class PolyhedralTermList(TermList):
     """
-    A TermSet of PolyhedralTerm instances.
+    A TermList of PolyhedralTerm instances.
     """
-
 
     # This routine accepts a term that will be adbuced with the help of other
     # terms The abduction aims to eliminate from the term appearances of the
     # variables contained in vars_to_elim
-    def _transform2(self, context: iocontract.TermSet,
-                   vars_to_elim: set, polarity):
+    def _transform2(self, context: TermList, vars_to_elim: list, polarity):
         logging.debug("Context terms: %s", context)
         logging.debug("Variables to eliminate: %s", vars_to_elim)
         helpers = context | self
@@ -425,8 +412,8 @@ class PolyhedralTermSet(iocontract.TermSet):
             for var in term.vars & vars_to_elim:
                 vars_elim[var] = term.get_polarity(var, polarity)
             logging.debug("Vars to elim: %s", vars_elim)
-            vars_to_cover = set(vars_elim.keys())
-            terms_to_use = PolyhedralTermSet(set())
+            vars_to_cover = list(vars_elim.keys())
+            terms_to_use = PolyhedralTermList(list())
 
             # now we have to choose from the helpers any terms that we can use
             # to eliminate these variables
@@ -445,15 +432,13 @@ class PolyhedralTermSet(iocontract.TermSet):
             # as long as we have more "to_elim" variables than terms, we seek
             # additional terms. For now, we throw an error if we don't have
             # enough terms
-            assert len(terms_to_use.terms) == \
-                len(terms_to_use.vars & vars_to_elim)
+            assert len(terms_to_use.terms) == len(terms_to_use.vars & vars_to_elim)
 
             if len(term.vars - vars_to_elim) == 0 and len(terms_to_use.vars - vars_to_elim) == 0:
                 term_list[i] = term
                 continue
 
-            sols = PolyhedralTerm.solve_for_variables(terms_to_use,
-                                                      vars_to_elim)
+            sols = PolyhedralTerm.solve_for_variables(terms_to_use, vars_to_elim)
             logging.debug(sols)
             for var in sols.keys():
                 term = term.substitute_variable(var, sols[var])
@@ -461,210 +446,197 @@ class PolyhedralTermSet(iocontract.TermSet):
 
             logging.debug("After subst: %s", term)
 
-        self.terms = set(term_list)
+        self.terms = list(term_list)
 
         # the last step needs to be a simplification
         logging.debug("Ending transformation with simplification")
         self.simplify(context)
 
-    def _transform(self, context: iocontract.TermSet,
-                   vars_to_elim: set, abduce:bool):
+    def _transform(self, context: TermList, vars_to_elim: list, abduce: bool):
         logging.debug("Transforming: %s", self)
         logging.debug("Context terms: %s", context)
         logging.debug("Variables to eliminate: %s", vars_to_elim)
         term_list = list(self.terms)
         new_terms = list()
         for term in term_list:
-            helpers = (context | self) - PolyhedralTermSet({term})
+            helpers = (context | self) - PolyhedralTermList({term})
             try:
-                new_term = PolyhedralTermSet.transform_term(term, helpers, vars_to_elim, abduce)
+                new_term = PolyhedralTermList.transform_term(term, helpers, vars_to_elim, abduce)
             except ValueError as e:
                 new_term = term
             new_terms.append(new_term)
 
-        self.terms = set(new_terms)
+        self.terms = list(new_terms)
 
         # the last step needs to be a simplification
         logging.debug("Ending transformation with simplification")
         self.simplify(context)
 
-
-    def abduce_with_context(self, context: iocontract.TermSet,
-                            vars_to_elim: set) -> iocontract.TermSet:
+    def abduce_with_context(self, context: TermList, vars_to_elim: list) -> TermList:
         """
-        Obtain a set of PolyhedralTerm instances lacking the indicated variables
-        and implying the given TermSet in the given context.
+        Obtain a list of PolyhedralTerm instances lacking the indicated variables
+        and implying the given TermList in the given context.
 
         Example:
-            Suppose the current set of terms is $\\{x + y \\le 6\\}$, the
+            Suppose the current list of terms is $\\{x + y \\le 6\\}$, the
             context is $\\{y \\le 5\\}$, and the abduced terms should not
-            contain variable $y$. Then the current TermSet could be
+            contain variable $y$. Then the current TermList could be
             abduced to $\\{x \\le 1\\}$ because $x \\le 1
             \\;\\land\\; y \\le 5 \\Rightarrow x + y \\le 6$.
 
         Args:
             context:
-                The TermSet providing the context for the abduction.
+                The TermList providing the context for the abduction.
 
             vars_to_elim:
                 Variables that should not appear in the abduced term.
 
         Returns:
-            A set of terms not containing any variables in `vars_to_elim`
+            A list of terms not containing any variables in `vars_to_elim`
             and which, in the context provided, imply the terms contained in the
-            calling termset.
+            calling termlist.
         """
-        termset = self.copy()
+        termlist = self.copy()
         logging.debug("Abducing from terms: %s", self)
         logging.debug("Context: %s", context)
         logging.debug("Vars to elim: %s", vars_to_elim)
         try:
-            termset.simplify(context)
+            termlist.simplify(context)
         except ValueError as e:
-            raise ValueError("Provided constraints \n{}\n".format(self) + 
-                             "are unsatisfiable in context \n{}".format(context)) \
-                            from e
+            raise ValueError(
+                "Provided constraints \n{}\n".format(self) + "are unsatisfiable in context \n{}".format(context)
+            ) from e
         try:
-            termset._transform(context, vars_to_elim, True)
+            termlist._transform(context, vars_to_elim, True)
         except ValueError as e:
-            raise ValueError("The elimination of variables \n{}\n".format(vars_to_elim)+
-                             "by abducing terms \n{}\n".format(self)+
-                             "in context \n{}\n".format(context)+
-                             "was not possible") from e
-        return termset
+            raise ValueError(
+                "The elimination of variables \n{}\n".format(vars_to_elim)
+                + "by abducing terms \n{}\n".format(self)
+                + "in context \n{}\n".format(context)
+                + "was not possible"
+            ) from e
+        return termlist
 
-    def deduce_with_context(self, context: iocontract.TermSet,
-                            vars_to_elim: set) -> iocontract.TermSet:
+    def deduce_with_context(self, context: TermList, vars_to_elim: list) -> TermList:
         """
-        Obtain a set of PolyhedralTerm instances lacking the indicated variables
-        and implied by the given TermSet in the given context.
+        Obtain a list of PolyhedralTerm instances lacking the indicated variables
+        and implied by the given TermList in the given context.
 
         Example:
-            Suppose the current set of terms is $\\{x - y \\le 6\\}$, the
+            Suppose the current list of terms is $\\{x - y \\le 6\\}$, the
             context is $\\{y \\le 5\\}$, and the deduced terms should not
-            contain variable $y$. Then the current TermSet could be
+            contain variable $y$. Then the current TermList could be
             deduced to $\\{x \\le 11\\}$ because $x - y \\le 6
             \\;\\land\\; y \\le 5 \\Rightarrow x \\le 11$.
 
         Args:
             context:
-                The TermSet providing the context for the deduction.
+                The TermList providing the context for the deduction.
 
             vars_to_elim:
                 Variables that should not appear in the deduced term.
 
         Returns:
-            A set of terms not containing any variables in `vars_to_elim`
+            A list of terms not containing any variables in `vars_to_elim`
             and which, in the context provided, are implied by the terms
-            contained in the calling termset.
+            contained in the calling termlist.
         """
-        termset = self.copy()
+        termlist = self.copy()
         logging.debug("Deducing from term %s", self)
         logging.debug("Context: %s", context)
         logging.debug("Vars to elim: %s", vars_to_elim)
         try:
-            termset.simplify(context)
+            termlist.simplify(context)
         except ValueError as e:
-            raise ValueError("Provided constraints \n{}\n".format(self) + 
-                             "are unsatisfiable in context \n{}".format(context)) \
-                            from e
+            raise ValueError(
+                "Provided constraints \n{}\n".format(self) + "are unsatisfiable in context \n{}".format(context)
+            ) from e
         try:
-            termset._transform(context, vars_to_elim, False)
+            termlist._transform(context, vars_to_elim, False)
         except ValueError as e:
-            raise ValueError("The elimination of variables \n{}\n".format(vars_to_elim)+
-                             "by deducing terms \n{}\n".format(self)+
-                             "in context \n{}\n".format(context)+
-                             "was not possible") from e
+            raise ValueError(
+                "The elimination of variables \n{}\n".format(vars_to_elim)
+                + "by deducing terms \n{}\n".format(self)
+                + "in context \n{}\n".format(context)
+                + "was not possible"
+            ) from e
         # eliminate terms containing the variables to be eliminated
-        terms_to_elim = termset.get_terms_with_vars(vars_to_elim)
-        termset.terms = termset.terms - terms_to_elim.terms
-        return termset
+        terms_to_elim = termlist.get_terms_with_vars(vars_to_elim)
+        termlist.terms = list_diff(termlist.terms, terms_to_elim.terms)
+        return termlist
 
-
-    def simplify(self, context=set()) -> None:
+    def simplify(self, context=list()) -> None:
         """
-        Remove redundant terms in the PolyhedralTermSet using the provided
+        Remove redundant terms in the PolyhedralTermList using the provided
         context.
 
         Example:
-            Suppose the TermSet is $\\{x - 2y \\le 5, x - y \\le 0\\}$ and
-            the context is $\\{x + y \\le 0\\}$. Then the TermSet could be
+            Suppose the TermList is $\\{x - 2y \\le 5, x - y \\le 0\\}$ and
+            the context is $\\{x + y \\le 0\\}$. Then the TermList could be
             simplified to $\\{x - y \\le 0\\}$.
 
         Args:
             context:
-                The TermSet providing the context for the simplification.
+                The TermList providing the context for the simplification.
         """
         logging.debug("Starting simplification procedure")
         logging.debug("Simplifying terms: %s", self)
         logging.debug("Context: %s", context)
-        if isinstance(context, set):
-            variables, self_mat, self_cons, ctx_mat, ctx_cons = \
-                PolyhedralTermSet.\
-                    termset_to_polytope(self, PolyhedralTermSet(context))
+        if isinstance(context, list):
+            variables, self_mat, self_cons, ctx_mat, ctx_cons = PolyhedralTermList.termlist_to_polytope(
+                self, PolyhedralTermList(context)
+            )
         else:
-            variables, self_mat, self_cons, ctx_mat, ctx_cons = \
-                PolyhedralTermSet.termset_to_polytope(self, context)
+            variables, self_mat, self_cons, ctx_mat, ctx_cons = PolyhedralTermList.termlist_to_polytope(self, context)
         logging.debug("Polytope is \n%s", self_mat)
         try:
-            a_red, b_red = PolyhedralTermSet.reduce_polytope(self_mat,
-                                                             self_cons,
-                                                             ctx_mat, ctx_cons)
+            a_red, b_red = PolyhedralTermList.reduce_polytope(self_mat, self_cons, ctx_mat, ctx_cons)
         except ValueError as e:
-            raise ValueError("The constraints \n{}\n".format(self) +
-                             "are unsatisfiable in context \n{}".format(context)) \
-                            from e
+            raise ValueError(
+                "The constraints \n{}\n".format(self) + "are unsatisfiable in context \n{}".format(context)
+            ) from e
         logging.debug("Reduction: \n%s", a_red)
-        self.terms = PolyhedralTermSet.polytope_to_termset(a_red, b_red,
-                                                           variables).terms
+        self.terms = PolyhedralTermList.polytope_to_termlist(a_red, b_red, variables).terms
         logging.debug("Back to terms: \n%s", self)
 
-
-    def refines(self, other:PolyhedralTermSet) -> bool:
+    def refines(self, other: PolyhedralTermList) -> bool:
         """
         Tells whether the argument is a larger specification, i.e., compute self
         <= other.
 
         Args:
             other:
-                TermSet against which we are comparing self.
+                TermList against which we are comparing self.
         """
         logging.debug("Verifying refinement")
         logging.debug("LH term: %s", self)
         logging.debug("RH term: %s", other)
-        variables, self_mat, self_cons, ctx_mat, ctx_cons = \
-            PolyhedralTermSet.termset_to_polytope(self, other)
+        variables, self_mat, self_cons, ctx_mat, ctx_cons = PolyhedralTermList.termlist_to_polytope(self, other)
         logging.debug("Polytope is \n%s", self_mat)
-        result = PolyhedralTermSet.verify_polytope_containment(self_mat,
-                                                               self_cons,
-                                                               ctx_mat,
-                                                               ctx_cons)
+        result = PolyhedralTermList.verify_polytope_containment(self_mat, self_cons, ctx_mat, ctx_cons)
         return result
 
-
-
     @staticmethod
-    def termset_to_polytope(terms: PolyhedralTermSet,
-                            context: PolyhedralTermSet):
+    def termlist_to_polytope(terms: PolyhedralTermList, context: PolyhedralTermList):
         """
-        Converts a set of terms with its context into matrix-vector pairs.
+        Converts a list of terms with its context into matrix-vector pairs.
 
         Example:
-            Suppose the set of terms is $\\{x+y \\le 1, x - y \\le 4\\}$
+            Suppose the list of terms is $\\{x+y \\le 1, x - y \\le 4\\}$
             and the context is $\\{x + 4w \\le 5\\}$. The routine extracts
             all variables and generates an order for them, say, $[x, w,
             y]$. Then the routine returns matrix-vector pairs for both the terms
-            TermSet and the context. It returns $A = \\left(
+            TermList and the context. It returns $A = \\left(
             \\begin{smallmatrix} 1 & 0 & 1 \\\\ 1 &0 &-1
             \\end{smallmatrix}\\right)$ and $b = \\left(
             \\begin{smallmatrix} 1 \\\\ 4 \\end{smallmatrix}\\right)$ for the
-            current TermSet and $A_{c} = \\left( \\begin{smallmatrix} 1 &
+            current TermList and $A_{c} = \\left( \\begin{smallmatrix} 1 &
             4 & 0 \\end{smallmatrix}\\right)$ and $b_c = \\left(
             \\begin{smallmatrix} 5 \\end{smallmatrix}\\right)$ for the context.
 
         Args:
             terms:
-                Set of terms to convert to matrix-vector form.
+                list of terms to convert to matrix-vector form.
             context:
                 Context terms to convert to matrix-vector form.
 
@@ -672,7 +644,7 @@ class PolyhedralTermSet(iocontract.TermSet):
             A tuple `variables, A, b, a_h, b_h` consisting of the variable
             order and the matrix-vector pairs for the terms and the context.
         """
-        variables = list(terms.vars | context.vars)
+        variables = list(list_union(terms.vars, context.vars))
         a = []
         b = []
         for term in terms.terms:
@@ -698,11 +670,9 @@ class PolyhedralTermSet(iocontract.TermSet):
         return variables, a, b, a_h, b_h
 
     @staticmethod
-    def polytope_to_termset(matrix, vector,
-                            variables: list[iocontract.Var]) -> \
-                                PolyhedralTermSet:
+    def polytope_to_termlist(matrix, vector, variables: list[Var]) -> PolyhedralTermList:
         """
-        Transforms a matrix-vector pair into a PolyhedralTermSet, assuming that
+        Transforms a matrix-vector pair into a PolyhedralTermList, assuming that
         the variable coefficients in the matrix are ordered as specified.
 
         Args:
@@ -715,11 +685,11 @@ class PolyhedralTermSet(iocontract.TermSet):
                 of the matrix.
 
         Returns:
-            The PolyhedralTermSet corresponding to the given data.
+            The PolyhedralTermList corresponding to the given data.
         """
         term_list = []
         logging.debug("&&&&&&&&&&")
-        #logging.debug("Poly is " + str(polytope))
+        # logging.debug("Poly is " + str(polytope))
         logging.debug("matrix is %s", matrix)
         if len(matrix.shape) > 1:
             n, m = matrix.shape
@@ -732,13 +702,10 @@ class PolyhedralTermSet(iocontract.TermSet):
             const = vector[i]
             term = PolyhedralTerm.polytope_to_term(row, const, variables)
             term_list.append(term)
-        return PolyhedralTermSet(set(term_list))
-
+        return PolyhedralTermList(list(term_list))
 
     @staticmethod
-    def reduce_polytope(a: np.array, b: np.array,
-                        a_help: np.array = np.array([[]]),
-                        b_help: np.array = np.array([])):
+    def reduce_polytope(a: np.array, b: np.array, a_help: np.array = np.array([[]]), b_help: np.array = np.array([])):
         """
         Eliminate redundant constraints from the H-representation of a given
         polytope using as context a given polytope.
@@ -759,7 +726,7 @@ class PolyhedralTermSet(iocontract.TermSet):
             n = a.shape[0]
             m = 0
         n_h, m_h = a_help.shape
-        helper_present = n_h*m_h > 0
+        helper_present = n_h * m_h > 0
         assert n == len(b), "n is {} and b is {}".format(n, b)
         if helper_present:
             assert n_h == len(b_help)
@@ -789,14 +756,12 @@ class PolyhedralTermSet(iocontract.TermSet):
             else:
                 a_opt = a_temp
                 b_opt = b_temp
-            res = linprog(c=objective,
-                          A_ub=a_opt,
-                          b_ub=b_opt,
-                          bounds=(None, None))#,options={'tol':0.000001})
+            res = linprog(c=objective, A_ub=a_opt, b_ub=b_opt, bounds=(None, None))  # ,options={'tol':0.000001})
             b_temp[i] -= 1
-            logging.debug("Optimal value: %s", -res["fun"])
+            if res["fun"]:
+                logging.debug("Optimal value: %s", -res["fun"])
             logging.debug("Results: %s", res)
-            #if res["success"] and -res["fun"] <= b_temp[i]:
+            # if res["success"] and -res["fun"] <= b_temp[i]:
             if res["status"] != 2 and -res["fun"] <= b_temp[i]:
                 logging.debug("Can remove")
                 a_temp = np.delete(a_temp, i, 0)
@@ -809,11 +774,10 @@ class PolyhedralTermSet(iocontract.TermSet):
 
         return a_temp, b_temp
 
-
     @staticmethod
-    def verify_polytope_containment(a_l: np.array, b_l: np.array,
-                                    a_r: np.array = np.array([[]]),
-                                    b_r: np.array = np.array([])) -> bool:
+    def verify_polytope_containment(
+        a_l: np.array, b_l: np.array, a_r: np.array = np.array([[]]), b_r: np.array = np.array([])
+    ) -> bool:
         """
         Say whether a polytope is contained in another. Both are given in their
         H-representation.
@@ -829,10 +793,10 @@ class PolyhedralTermSet(iocontract.TermSet):
                 Vector of H-representation of polytope on RHS of inequality.
         """
         # If the LHS is empty, it is a refinement
-        if PolyhedralTermSet.is_polytope_empty(a_l, b_l):
+        if PolyhedralTermList.is_polytope_empty(a_l, b_l):
             return True
         # If the RHS is empty, but not the LHS, not a refinement
-        if PolyhedralTermSet.is_polytope_empty(a_r, b_r):
+        if PolyhedralTermList.is_polytope_empty(a_r, b_r):
             return False
         # If no side is empty, check whether the RHS terms are included in the
         # LHS
@@ -841,10 +805,10 @@ class PolyhedralTermSet(iocontract.TermSet):
         assert m_l == m_r
         assert n_l == len(b_l)
         assert n_r == len(b_r)
-        
+
         is_refinement = True
         for i in range(n_r):
-            constraint = a_r[[i], :] 
+            constraint = a_r[[i], :]
             objective = constraint * -1
             b_temp = b_r[i] + 1
             logging.debug("Optimization objective: \n%s", objective)
@@ -852,25 +816,21 @@ class PolyhedralTermSet(iocontract.TermSet):
             logging.debug("a_r is \n%s", a_r)
             logging.debug("b_l is \n%s", b_l)
             logging.debug("b_r is \n%s", b_r)
-            
+
             a_opt = np.concatenate((a_l, constraint), axis=0)
             b_opt = np.concatenate((b_l, [b_temp]))
-            
-            res = linprog(c=objective,
-                          A_ub=a_opt,
-                          b_ub=b_opt,
-                          bounds=(None, None))#,options={'tol':0.000001})
+
+            res = linprog(c=objective, A_ub=a_opt, b_ub=b_opt, bounds=(None, None))  # ,options={'tol':0.000001})
             b_temp -= 1
             logging.debug("Optimal value: %s", -res["fun"])
             logging.debug("Results: %s", res)
-            #if res["success"] and -res["fun"] <= b_temp[i]:
+            # if res["success"] and -res["fun"] <= b_temp[i]:
             if res["status"] != 2 and -res["fun"] <= b_temp:
                 logging.debug("Redundant constraint")
             else:
                 is_refinement = False
                 break
         return is_refinement
-
 
     @staticmethod
     def is_polytope_empty(a: np.array, b: np.array) -> bool:
@@ -885,23 +845,19 @@ class PolyhedralTermSet(iocontract.TermSet):
         """
         n, m = a.shape
         assert n == len(b)
-        if n*m == 0:
+        if n * m == 0:
             return True
-        objective = np.zeros((1,m))
-        res = linprog(c=objective,
-                      A_ub=a,
-                      b_ub=b,
-                      bounds=(None, None))#,options={'tol':0.000001})
+        objective = np.zeros((1, m))
+        res = linprog(c=objective, A_ub=a, b_ub=b, bounds=(None, None))  # ,options={'tol':0.000001})
         if res["status"] != 2:
             return False
         else:
             return True
-    
+
     @staticmethod
-    def get_kaykobad_context(term:PolyhedralTerm, context:PolyhedralTermSet,
-                             vars_to_elim:set, abduce:bool):
-        forbidden_vars = list(vars_to_elim & term.vars)
-        other_forbibben_vars = vars_to_elim - term.vars
+    def get_kaykobad_context(term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, abduce: bool):
+        forbidden_vars = list_intersection(vars_to_elim, term.vars)
+        other_forbibben_vars = list_diff(vars_to_elim, term.vars)
         n = len(forbidden_vars)
         matrix_row_terms = list()
         partial_sums = [0.0] * n
@@ -913,7 +869,7 @@ class PolyhedralTermSet(iocontract.TermSet):
         for i, i_var in enumerate(forbidden_vars):
             row_found = False
             logging.debug("Iterating for variable %s", i_var)
-            for context_term in context.terms - set(matrix_row_terms):
+            for context_term in list_diff(context.terms, matrix_row_terms):
                 logging.debug("Analyzing context term %s", context_term)
                 if context_term == term:
                     next
@@ -928,7 +884,9 @@ class PolyhedralTermSet(iocontract.TermSet):
                     continue
                 # 1. Verify Kaykobad pair: sign of nonzero matrix terms
                 for var in forbidden_vars:
-                    if context_term.get_coefficient(var) != 0 and transform_coeff * context_term.get_sign(var) != term.get_sign(var):
+                    if context_term.get_coefficient(var) != 0 and transform_coeff * context_term.get_sign(
+                        var
+                    ) != term.get_sign(var):
                         term_is_invalid = True
                         logging.debug("Failed first matrix-vector verification")
                         break
@@ -941,7 +899,12 @@ class PolyhedralTermSet(iocontract.TermSet):
                 for j, j_var in enumerate(forbidden_vars):
                     logging.debug("Verifying third condition on variable %s", j_var)
                     if j != i:
-                        residuals[j] = term.get_sign(j_var) * context_term.get_coefficient(j_var) * term.get_coefficient(i_var) / context_term.get_coefficient(i_var)
+                        residuals[j] = (
+                            term.get_sign(j_var)
+                            * context_term.get_coefficient(j_var)
+                            * term.get_coefficient(i_var)
+                            / context_term.get_coefficient(i_var)
+                        )
                     if np.abs(term.get_coefficient(j_var)) <= partial_sums[j] + residuals[j]:
                         logging.debug("q coefficient: %s", term.get_coefficient(j_var))
                         logging.debug("RHS: %s", partial_sums[j] + residuals[j])
@@ -949,38 +912,39 @@ class PolyhedralTermSet(iocontract.TermSet):
                         logging.debug("Failed third matrix-vector verification")
                         break
                 if not term_is_invalid:
-                    matrix_contains_others = matrix_contains_others or len(context_term.vars - set(forbidden_vars)) > 0
+                    matrix_contains_others = (
+                        matrix_contains_others or len(list_diff(context_term.vars, forbidden_vars)) > 0
+                    )
                     row_found = True
                     for j in range(n):
                         partial_sums[j] += residuals[j]
                     matrix_row_terms.append(context_term)
                     break
             if not row_found:
-                logging.debug("Hola")
                 raise ValueError("Could not find the {}th row of matrix".format(i))
-        if (not matrix_contains_others) and len(term.vars - vars_to_elim) == 0:
+        if (not matrix_contains_others) and len(list_diff(term.vars, vars_to_elim)) == 0:
             logging.debug("Hola2")
             raise ValueError("Found context will produce empty transformation")
         logging.debug("Matrix row terms %s", matrix_row_terms)
         return matrix_row_terms, forbidden_vars
 
     @staticmethod
-    def transform_term(term:PolyhedralTerm, context:PolyhedralTermSet,
-                       vars_to_elim:set, abduce:bool):
+    def transform_term(term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, abduce: bool):
         logging.debug("Transforming term: %s", term)
         logging.debug("Context: %s", context)
         try:
-            matrix_row_terms, forbidden_vars = PolyhedralTermSet.get_kaykobad_context(term, context, vars_to_elim, abduce)
+            matrix_row_terms, forbidden_vars = PolyhedralTermList.get_kaykobad_context(
+                term, context, vars_to_elim, abduce
+            )
         except ValueError as e:
             logging.debug("Could not transform %s", term)
             raise ValueError("Could not transform term {}".format(term)) from e
-        matrix_row_terms = PolyhedralTermSet(set(matrix_row_terms))
-        sols = PolyhedralTerm.solve_for_variables(matrix_row_terms, set(forbidden_vars))
-        
+        matrix_row_terms = PolyhedralTermList(list(matrix_row_terms))
+        sols = PolyhedralTerm.solve_for_variables(matrix_row_terms, list(forbidden_vars))
+
         result = term.copy()
         for var in sols.keys():
             result = result.substitute_variable(var, sols[var])
         logging.debug("Term %s transformed to %s", term, result)
-        
+
         return result
-        

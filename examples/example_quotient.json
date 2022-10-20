@@ -10,12 +10,16 @@
         "assumptions":
         [
             {"coefficients":{"i":1},
+            "constant":1},
+            {"coefficients":{"i":-1},
             "constant":1}
         ],
         "guarantees":
         [
             {"coefficients":{"i":-2,"o_p":1},
-            "constant":1}
+            "constant":1},
+            {"coefficients":{"i":2,"o_p":-1},
+            "constant":-1}
         ]
     },
     "contract2":{
@@ -28,11 +32,15 @@
         "assumptions":
         [
             {"coefficients":{"i":1},
+            "constant":2},
+            {"coefficients":{"i":-1},
             "constant":2}
         ],
         "guarantees":
         [
             {"coefficients":{"o":1,"i":-2},
+            "constant":0},
+            {"coefficients":{"o":-1,"i":2},
             "constant":0}
         ]
     },

@@ -1,24 +1,26 @@
 """
-IoContracts contains Gear's basic definitions: Var, Term, TemSet, and
+IoContracts contains Gear's basic definitions: Var, Term, TemList, and
 IoContract. Var creates variables; Term is an abstract class representing
-constraints; a TermSet (also an abstract class) is a collection of terms
+constraints; a TermList (also an abstract class) is a collection of terms
 semantically equivalent to the term which is the conjunction of all terms
-contained in the TermSet; IoContract is an assume-guarantee specification
+contained in the TermList; IoContract is an assume-guarantee specification
 consisting of assumptions, guarantees, and input and output variables. The
-assumptions and guarantees are given by TermSets. Assumptions make predicates
+assumptions and guarantees are given by TermLists. Assumptions make predicates
 only on inputs, and guarantees on both input and outputs (and no other
 variable).
 
 This module implements all supported contract operations and relations. In order
 to instantiate contracts and perform this operations, it is necessary to extend
-Term and TermSet with specific constraint formalisms.
+Term and TermList with specific constraint formalisms.
 """
 from __future__ import annotations
-from typing import Set
-import logging
+
 import copy
-import sys
+import logging
 from abc import ABC, abstractmethod
+from typing import List
+
+from gear.utils.lists import list_diff, list_intersection, list_union
 
 
 class Var:
@@ -27,6 +29,7 @@ class Var:
 
     Variables allow us to name an entity for which we want to write constraints.
     """
+
     def __init__(self, val):
         self._name = str(val)
 
@@ -60,7 +63,6 @@ class Term(ABC):
     @abstractmethod
     def vars(self):
         """Variables contained in the syntax of the term."""
-        pass
 
     @abstractmethod
     def contains_var(self, var: Var):
@@ -70,7 +72,6 @@ class Term(ABC):
         Args:
             var: The variable that we are seeking in the current term.
         """
-        pass
 
     @abstractmethod
     def __eq__(self, other):
@@ -93,28 +94,25 @@ class Term(ABC):
         pass
 
 
-
-
-class TermSet(ABC):
+class TermList(ABC):
     """
     A collection of terms, or constraints.
 
-    A TermSet is semantically equivalent to a single term which is the
-    conjunction of all terms contained in the TermSet. TermSet is an abstract
+    A TermList is semantically equivalent to a single term which is the
+    conjunction of all terms contained in the TermList. TermList is an abstract
     class that must be extended to support a specific constraint formalism.
     """
-    def __init__(self, termSet: set):
-        self.terms = termSet.copy()
+
+    def __init__(self, termList: List):
+        self.terms = termList.copy()
 
     @property
     def vars(self):
-        """The set of variables contained in this set of terms."""
-        varset = set()
+        """The list of variables contained in this list of terms."""
+        varlist = list()
         for t in self.terms:
-            varset = varset | t.vars
-        return varset
-
-
+            varlist = list_union(varlist, t.vars)
+        return varlist
 
     def __str__(self) -> str:
         if len(self.terms) > 0:
@@ -126,30 +124,27 @@ class TermSet(ABC):
     def __eq__(self, other):
         return self.terms == other.terms
 
-
-
-    def get_terms_with_vars(self, variable_set: Set[Var]):
+    def get_terms_with_vars(self, variable_list: List[Var]):
         """
-        Returns the set of terms which contain any of the variables indicated.
+        Returns the list of terms which contain any of the variables indicated.
 
         Args:
-            varSet: a set of variables being sought in current TermSet.
+            varList: a list of variables being sought in current TermList.
         """
-        terms = set()
+        terms = list()
         for t in self.terms:
-            if len(t.vars & variable_set) > 0:
-                terms.add(t)
+            if len(list_intersection(t.vars, variable_list)) > 0:
+                terms.append(t)
         return type(self)(terms)
 
-
     def __and__(self, other):
-        return type(self)(self.terms & other.terms)
+        return type(self)(list_intersection(self.terms, other.terms))
 
     def __or__(self, other):
-        return type(self)(self.terms | other.terms)
+        return type(self)(list_union(self.terms, other.terms))
 
     def __sub__(self, other):
-        return type(self)(self.terms - other.terms)
+        return type(self)(list_union(self.terms, other.terms))
 
     def __le__(self, other):
         return self.refines(other)
@@ -157,85 +152,77 @@ class TermSet(ABC):
     def copy(self):
         return type(self)(copy.copy(self.terms))
 
-
     @abstractmethod
-    def abduce_with_context(self, context: TermSet, vars_to_elim: Set[Var]) -> TermSet:
+    def abduce_with_context(self, context: TermList, vars_to_elim: List[Var]) -> TermList:
         """
         Abduce terms containing variables to be eliminated using a user-provided
         context.
 
-        Given a context $\\Gamma$, and the set of terms contained in self,
-        $s$, this routine identifies a TermSet $x$ lacking variables
+        Given a context $\\Gamma$, and the list of terms contained in self,
+        $s$, this routine identifies a TermList $x$ lacking variables
         vars_to_elim such that $\\frac{\\Gamma\\colon \\; x}{\\Gamma: \\;
         s}$.
 
         Args:
             context:
-                Set of context terms that will be used to abduce the TermSet.
+                List of context terms that will be used to abduce the TermList.
             vars_to_elim:
-                Variables that cannot be present in TermSet after abduction.
-        
+                Variables that cannot be present in TermList after abduction.
+
         Returns:
-            A set of terms not containing any variables in `vars_to_elim`
+            A list of terms not containing any variables in `vars_to_elim`
             and which, in the context provided, imply the terms contained in the
-            calling termset. 
+            calling termlist.
         """
-        pass
 
     @abstractmethod
-    def deduce_with_context(self, context: TermSet, vars_to_elim: Set[Var]) -> TermSet:
+    def deduce_with_context(self, context: TermList, vars_to_elim: List[Var]) -> TermList:
         """
         Deduce terms containing variables to be eliminated using a user-provided
         context.
 
-        Given a context $\\Gamma$, and the set of terms contained in self,
+        Given a context $\\Gamma$, and the list of terms contained in self,
         $s$, this routine identifies a formula $x$ lacking variables
         vars_to_elim such that $\\frac{\\Gamma\\colon \\; s}{\\Gamma: \\;
         x}$.
 
         Args:
             context:
-                Set of context terms that will be used to abstract the TermSet.
+                List of context terms that will be used to abstract the TermList.
             vars_to_elim:
-                Variables that cannot be present in TermSet after deduction.
+                Variables that cannot be present in TermList after deduction.
 
         Returns:
-            A set of terms not containing any variables in `vars_to_elim`
+            A list of terms not containing any variables in `vars_to_elim`
             and which, in the context provided, are implied by the terms
-            contained in the calling termset.
+            contained in the calling termlist.
         """
-        pass
 
     @abstractmethod
-    def simplify(self, context=set()):
-        """Remove redundant terms in TermSet.
+    def simplify(self, context=list()):
+        """Remove redundant terms in TermList.
 
-        Let $S$ be this TermSet and suppose $T \\subseteq S$. Let
+        Let $S$ be this TermList and suppose $T \\subseteq S$. Let
         $S_T = S \\setminus T$. Simplify will remove from $S$ a
         maximal subset $T$ such that $\\frac{\\Gamma, S_T\\colon \\;
         \\top}{\\Gamma, S_T\\colon \\; \\wedge_{t \\in T} t}$.
 
         Args:
             context:
-                Set of context terms that will be used to remove redundancies in
-                the TermSet.
+                List of context terms that will be used to remove redundancies in
+                the TermList.
         """
-        pass
 
     @abstractmethod
-    def refines(self, other: TermSet) -> bool:
+    def refines(self, other: TermList) -> bool:
         """
         Tell whether the argument is a larger specification, i.e., compute self
         <= other.
 
         Args:
             other:
-                TermSet against which we are comparing self.
+                TermList against which we are comparing self.
         """
-        pass
-
-
-
 
 
 class IoContract:
@@ -250,22 +237,31 @@ class IoContract:
         outputvars:
             Variables which are outputs of the implementations of the contract.
 
-        a(TermSet): Contract assumptions.
+        a(TermList): Contract assumptions.
 
-        g(TermSet): Contract guarantees.
+        g(TermList): Contract guarantees.
     """
-    def __init__(self, assumptions: TermSet, guarantees: TermSet,
-                 inputVars: Set[Var], outputVars: Set[Var]) -> None:
+
+    def __init__(
+        self, assumptions: TermList, guarantees: TermList, inputVars: List[Var], outputVars: List[Var]
+    ) -> None:
         # make sure the input & output variables are disjoint
-        assert len(inputVars & outputVars) == 0
+        assert len(list_intersection(inputVars, outputVars)) == 0
         # make sure the assumptions only contain input variables
-        assert len(assumptions.vars - inputVars) == 0, \
-            print("A: " + str(assumptions.vars) +
-                  " Input vars: " + str(inputVars))
+        assert len(list_diff(assumptions.vars, inputVars)) == 0, print(
+            "A: " + str(assumptions.vars) + " Input vars: " + str(inputVars)
+        )
         # make sure the guaranteees only contain input or output variables
-        assert len(guarantees.vars - inputVars - outputVars) == 0, \
-            print("G: " + str(guarantees) + " G Vars: "+ str(guarantees.vars) +
-                  " Input: " + str(inputVars) + " Output: " + str(outputVars))
+        assert len(list_diff(guarantees.vars, list_union(inputVars, outputVars))) == 0, print(
+            "G: "
+            + str(guarantees)
+            + " G Vars: "
+            + str(guarantees.vars)
+            + " Input: "
+            + str(inputVars)
+            + " Output: "
+            + str(outputVars)
+        )
         self.a = assumptions.copy()
         self.g = guarantees.copy()
         self.inputvars = inputVars.copy()
@@ -276,15 +272,23 @@ class IoContract:
     @property
     def vars(self):
         """
-        The set of variables contained in the assumptions and guarantees of the
+        The list of variables contained in the assumptions and guarantees of the
         contract.
         """
         return self.a.vars | self.g.vars
 
     def __str__(self):
-        return "InVars: " + str(self.inputvars) + "\nOutVars:" + \
-                str(self.outputvars) + "\nA: " + str(self.a) + \
-                "\n" + "G: " + str(self.g)
+        return (
+            "InVars: "
+            + str(self.inputvars)
+            + "\nOutVars:"
+            + str(self.outputvars)
+            + "\nA: "
+            + str(self.a)
+            + "\n"
+            + "G: "
+            + str(self.g)
+        )
 
     def __le__(self, other):
         return self.refines(other)
@@ -298,8 +302,8 @@ class IoContract:
                 Contract whose possibility to compose with self we are
                 verifying.
         """
-        # make sure sets of output variables don't intersect
-        return len(self.outputvars & other.outputvars) == 0
+        # make sure lists of output variables don't intersect
+        return len(list_intersection(self.outputvars, other.outputvars)) == 0
 
     def can_quotient_by(self, other: IoContract) -> bool:
         """
@@ -311,8 +315,7 @@ class IoContract:
         # make sure the top level ouputs not contained in outputs of the
         # existing component do not intersect with the inputs of the existing
         # component
-        return len((self.outputvars - other.outputvars) & other.inputvars) == 0
-
+        return len(list_intersection(list_diff(self.outputvars, other.outputvars), other.inputvars)) == 0
 
     def shares_io_with(self, other: IoContract) -> bool:
         """
@@ -321,9 +324,7 @@ class IoContract:
         Args:
             other: contract whose IO signature is compared with self.
         """
-        return (self.inputvars == other.inputvars) & \
-            (self.outputvars == other.outputvars)
-
+        return (self.inputvars == other.inputvars) & (self.outputvars == other.outputvars)
 
     def refines(self, other: IoContract) -> bool:
         """
@@ -335,9 +336,7 @@ class IoContract:
             other: contract being compared with self.
         """
         assert self.shares_io_with(other)
-        return (other.a <= self.a) and \
-            ((self.g | other.a) <= (other.g | other.a))
-
+        return (other.a <= self.a) and ((self.g | other.a) <= (other.g | other.a))
 
     def compose(self, other: IoContract) -> IoContract:
         """Compose IO contracts.
@@ -355,40 +354,48 @@ class IoContract:
             The abstracted composition of the two contracts.
         """
         logging.debug("Composing contracts \n%s and \n%s", self, other)
-        intvars = (self.outputvars & other.inputvars) | \
-            (self.inputvars & other.outputvars)
-        inputvars = (self.inputvars | other.inputvars) - intvars
-        outputvars = (self.outputvars | other.outputvars) - intvars
+        intvars = list_union(
+            list_intersection(self.outputvars, other.inputvars), list_intersection(self.inputvars, other.outputvars)
+        )
+        inputvars = list_diff(list_union(self.inputvars, other.inputvars), intvars)
+        outputvars = list_diff(list_union(self.outputvars, other.outputvars), intvars)
 
         selfinputconst = self.a.vars
         otherinputconst = other.a.vars
-        cycle_present = len(self.inputvars & other.outputvars) > 0 and len(other.inputvars & self.outputvars) > 0
+        cycle_present = (
+            len(list_intersection(self.inputvars, other.outputvars)) > 0
+            and len(list_intersection(other.inputvars, self.outputvars)) > 0
+        )
 
-        assumptions_forbidden_vars = intvars | outputvars
+        assumptions_forbidden_vars = list_union(intvars, outputvars)
         assert self.can_compose_with(other)
-        other_helps_self = len(other.outputvars & self.inputvars) > 0
-        self_helps_other = len(other.inputvars & self.outputvars) > 0
+        other_helps_self = len(list_intersection(other.outputvars, self.inputvars)) > 0
+        self_helps_other = len(list_intersection(other.inputvars, self.outputvars)) > 0
         #
-        other_drives_const_inputs = len(other.outputvars & selfinputconst) > 0
-        self_drives_const_inputs = len(self.outputvars & otherinputconst) > 0
+        other_drives_const_inputs = len(list_intersection(other.outputvars, selfinputconst)) > 0
+        self_drives_const_inputs = len(list_intersection(self.outputvars, otherinputconst)) > 0
         # process assumptions
         if cycle_present and (other_drives_const_inputs or self_drives_const_inputs):
             assert False, "Cannot compose due to feedback"
         elif self_helps_other and not other_helps_self:
             logging.debug("Assumption computation: self provides context for other")
             new_a = other.a.abduce_with_context(self.a | self.g, assumptions_forbidden_vars)
-            if len(new_a.vars & assumptions_forbidden_vars) > 0:
-                raise ValueError("The guarantees \n{}\n".format(self.g) +
-                                 "were insufficient to abduce the assumptions \n{}\n".format(other.a) +
-                                 "by eliminating the variables \n{}".format(assumptions_forbidden_vars))
+            if len(list_intersection(new_a.vars, assumptions_forbidden_vars)) > 0:
+                raise ValueError(
+                    "The guarantees \n{}\n".format(self.g)
+                    + "were insufficient to abduce the assumptions \n{}\n".format(other.a)
+                    + "by eliminating the variables \n{}".format(assumptions_forbidden_vars)
+                )
             assumptions = new_a | self.a
         elif other_helps_self and not self_helps_other:
             logging.debug("Assumption computation: other provides context for self")
             new_a = self.a.abduce_with_context(other.a | other.g, assumptions_forbidden_vars)
             if len(new_a.vars & assumptions_forbidden_vars) > 0:
-                raise ValueError("The guarantees \n{}\n".format(other.g) +
-                                 "were insufficient to abduce the assumptions \n{}\n".format(self.a) +
-                                 "by eliminating the variables \n{}".format(assumptions_forbidden_vars))
+                raise ValueError(
+                    "The guarantees \n{}\n".format(other.g)
+                    + "were insufficient to abduce the assumptions \n{}\n".format(self.a)
+                    + "by eliminating the variables \n{}".format(assumptions_forbidden_vars)
+                )
             assumptions = new_a | other.a
         # contracts can't help each other
         else:
@@ -430,38 +437,41 @@ class IoContract:
             The refined quotient self/other.
         """
         assert self.can_quotient_by(other)
-        outputvars = (self.outputvars - other.outputvars) | \
-            (other.inputvars - self.inputvars)
-        inputvars = (self.inputvars - other.inputvars) | \
-            (other.outputvars - self.outputvars)
-        intvars = (self.outputvars & other.outputvars) | \
-            (self.inputvars & other.inputvars)
+        outputvars = list_union(
+            list_diff(self.outputvars, other.outputvars), list_diff(other.inputvars, self.inputvars)
+        )
+        inputvars = list_union(list_diff(self.inputvars, other.inputvars), list_diff(other.outputvars, self.outputvars))
+        intvars = list_union(
+            list_intersection(self.outputvars, other.outputvars), list_intersection(self.inputvars, other.inputvars)
+        )
 
         # get assumptions
         logging.debug("Computing quotient assumptions")
         assumptions = copy.deepcopy(self.a)
-        empty_context = type(assumptions)(set())
+        empty_context = type(assumptions)(list())
         if assumptions.refines(other.a):
             assumptions = assumptions | other.g
-        assumptions = assumptions.deduce_with_context(empty_context,intvars | outputvars)
+        assumptions = assumptions.deduce_with_context(empty_context, list_union(intvars, outputvars))
         logging.debug("Assumptions after processing: %s", assumptions)
 
         # get guarantees
         logging.debug("Computing quotient guarantees")
         guarantees = self.g
-        logging.debug("""
+        logging.debug(
+            """
         Using existing guarantees to aid system-level guarantees
-        """)
-        guarantees = guarantees.abduce_with_context(other.a | other.g, intvars)
-        logging.debug("""
-        Using system-level assumptions to aid quotient guarantees""")
+        """
+        )
+        guarantees = guarantees.abduce_with_context(other.g | other.a, intvars)
+        logging.debug(
+            """
+        Using system-level assumptions to aid quotient guarantees"""
+        )
         guarantees = guarantees | other.a
         guarantees = guarantees.abduce_with_context(self.a, intvars)
         logging.debug("Guarantees after processing: %s", guarantees)
 
-
         return IoContract(assumptions, guarantees, inputvars, outputvars)
-
 
     def merge(self, other: IoContract) -> IoContract:
         """Compute the merging operation for two contracts.
@@ -480,4 +490,3 @@ class IoContract:
         assumptions = self.a | other.a
         guarantees = self.g | other.g
         return IoContract(assumptions, guarantees, self.inputvars, self.outputvars)
-
