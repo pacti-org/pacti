@@ -53,10 +53,27 @@ check:
 	@bash scripts/multirun.sh duty check-quality check-types check-docs
 	@$(DUTY) check-dependencies
 
+.PHONY: uninstall
+uninstall:
+	rm -rf .coverage*
+	rm -rf .mypy_cache
+	rm -rf .pytest_cache
+	rm -rf tests/.pytest_cache
+	rm -rf build
+	rm -rf dist
+	rm -rf htmlcov
+	rm -rf pip-wheel-metadata
+	rm -rf site
+	find . -type d -name __pycache__ | xargs rm -rf
+	find . -name '*.rej' -delete
+	rm -rf __pypackages__
+	rm -f pdm.lock .pdm.toml gear.log
+
+
 .PHONY: $(BASIC_DUTIES)
 $(BASIC_DUTIES):
 	@$(DUTY) $@ $(call args,$@)
 
 .PHONY: $(QUALITY_DUTIES)
 $(QUALITY_DUTIES):
-	@bash scripts/multirun.sh duty $@ $(call args,$@)
+	pdm run duty $@ $(call args,$@)
