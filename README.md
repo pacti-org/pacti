@@ -11,7 +11,7 @@ system using assume-guarantee specifications, or contracts. Gear's capabilities 
 
 ## System requirements
 
-[pdm](https://github.com/pdm-project/pdm)
+[pdm](https://github.com/pdm-project/pdm) (Make sure you run pdm version larger than 2.1.4)
 
 [scipy](https://scipy.org/install/)
 
