@@ -25,7 +25,13 @@ pdm install
 
 The installation will provide access to the command-line tool `gear` and to the Python package of the same name.
 
-To launch the command tool run:
+To launch the command-line tool run `pdm run gear`
+
+
+## Examples
+
+You can run examples via command line:
+
 
 ```bash
 pdm run gear examples/example.json output.json
@@ -35,15 +41,6 @@ Or via python script
 
 ```bash
 pdm run python src/gear/cli.py ./examples/example.json ./output.json
-```
-
-
-## Examples
-
-You can run examples via command line:
-
-```bash
-pdm run gear exampl
 ```
 
 
