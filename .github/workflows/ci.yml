@@ -18,9 +18,9 @@ jobs:
           python-version: ${{ matrix.python-version }}
           architecture: x64
           enable-pep582: true
-      - name: Install dependencies
-        run: pdm install
-      - name: Format code
-        run: make format
-      - name: Test code
-        run: make test
+#      - name: Install dependencies
+#        run: pdm install
+#      - name: Format code
+#        run: make format
+#      - name: Test code
+#        run: make test
