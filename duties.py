@@ -283,7 +283,7 @@ def format(ctx):
         ctx: The context instance (passed automatically).
     """
     ctx.run(
-        f"autoflake -ir --exclude tests/fixtures --remove-all-unused-imports {PY_SRC}",
+        f"autoflake -ir --exclude tests/fixtures --ignore-init-module-imports --remove-all-unused-imports {PY_SRC}",
         title="Removing unused imports",
         pty=PTY,
     )
