@@ -1,28 +1,73 @@
-"""Module that contains the command line application."""
+#!python
 
-import argparse
+import json
+import logging
+import os
 
-from gear.gear import main
+import click
 
-
-def get_parser() -> argparse.ArgumentParser:
-    """
-    Return the CLI argument parser.
-
-    Returns:
-        An argparse parser.
-    """
-    return argparse.ArgumentParser(prog="gear")
+from gear.iocontract import IoContract
+from gear.iocontract.utils import getVarlist
+from gear.terms.polyhedra import PolyhedralTerm, PolyhedralTermList
 
 
-def main_script() -> int:
-    parser = get_parser()
-    opts = parser.parse_args()
-    print(f"script called with arguments: {opts}")
-    return 0
+@click.command()
+@click.argument("inputfilename")
+@click.argument("outputfilename")
+def readInputFile(inputfilename, outputfilename):
+    assert os.path.isfile(inputfilename)
+    with open(inputfilename) as f:
+        data = json.load(f)
+    contracts = []
+    for contKey in ["contract1", "contract2"]:
+        c = data[contKey]
+        reqs = []
+        for key in ["assumptions", "guarantees"]:
+            reqs.append([PolyhedralTerm(term["coefficients"], term["constant"]) for term in c[key]])
+        cont = IoContract(
+            inputVars=getVarlist(c["InputVars"]),
+            outputVars=getVarlist(c["OutputVars"]),
+            assumptions=PolyhedralTermList(list(reqs[0])),
+            guarantees=PolyhedralTermList(list(reqs[1])),
+        )
+        contracts.append(cont)
+    print("Contract1:\n" + str(contracts[0]))
+    print("Contract2:\n" + str(contracts[1]))
+    if data["operation"] == "composition":
+        result = contracts[0].compose(contracts[1])
+        print("Composed contract:\n" + str(result))
+    elif data["operation"] == "quotient":
+        result = contracts[0].quotient(contracts[1])
+        print("Contract quotient:\n" + str(result))
+    elif data["operation"] == "merge":
+        result = contracts[0].merge(contracts[1])
+        print("Merged contract:\n" + str(result))
+    else:
+        print("Operation not supported")
+    # now store the result in the provided file
+    data = {}
+    data["InputVars"] = [str(var) for var in result.inputvars]
+    data["OutputVars"] = [str(var) for var in result.outputvars]
+    data["assumptions"] = [
+        {"constant": str(term.constant), "coefficients": {str(k): str(v) for k, v in term.variables.items()}}
+        for term in result.a.terms
+    ]
+    data["guarantees"] = [
+        {"constant": str(term.constant), "coefficients": {str(k): str(v) for k, v in term.variables.items()}}
+        for term in result.g.terms
+    ]
+    data = {"contract_comp": data}
+    with open(outputfilename, "w") as f:
+        json.dump(data, f)
 
 
-def gear() -> int:
+def main():
+    FORMAT = "[%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
+    FORMAT1 = "[%(levelname)s:%(funcName)s()] %(message)s"
+    FORMAT2 = "%(asctime)s:%(levelname)s:%(name)s:%(message)s"
+    logging.basicConfig(filename="../gear.log", filemode="w", level=logging.INFO, format=FORMAT2)
+    readInputFile()
+
+
+if __name__ == "__main__":
     main()
-    return 0
-

@@ -1,13 +1,32 @@
-"""Development tasks."""
+"""
+ISC License
+
+Copyright (c) 2019, Timothée Mazzucotelli
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+"""
 
 import importlib
 import os
 import re
+import ssl
 import sys
 from io import StringIO
 from pathlib import Path
 from typing import List, Optional, Pattern
 from urllib.request import urlopen
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 from duty import duty
 
@@ -169,6 +188,8 @@ def check_dependencies(ctx):
         )
         if vulns:
             print(output_report)
+            return False
+        return True
 
     ctx.run(safety, title="Checking dependencies")
 
@@ -262,7 +283,7 @@ def format(ctx):
         ctx: The context instance (passed automatically).
     """
     ctx.run(
-        f"autoflake -ir --exclude tests/fixtures --remove-all-unused-imports {PY_SRC}",
+        f"autoflake -ir --exclude tests/fixtures --ignore-init-module-imports --remove-all-unused-imports {PY_SRC}",
         title="Removing unused imports",
         pty=PTY,
     )
