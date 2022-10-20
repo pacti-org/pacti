@@ -487,6 +487,6 @@ class IoContract:
             The result of merging.
         """
         assert self.shares_io_with(other)
-        assumptions = list_union(self.a, other.a)
-        guarantees = list_union(self.g, other.g)
+        assumptions = self.a | other.a
+        guarantees = self.g | other.g
         return IoContract(assumptions, guarantees, self.inputvars, self.outputvars)
