@@ -7,16 +7,6 @@ system using assume-guarantee specifications, or contracts. Gear's capabilities 
 - Computing specifications of elements that need to be added to a design in order to meet an objective.
 - Verifying whether a component meets a specification.
 
-# Installing
-
-## System requirements
-
-[pdm](https://github.com/pdm-project/pdm) (Make sure you run pdm version larger than 2.1.4)
-
-[scipy](https://scipy.org/install/)
-
-The installation will provide access to the command-line tool `gear` and to the the Python package of the same name. Any updates to the dev folder `src/gear` will immediately be available in the system.
-
 Examples
 --------
 
@@ -62,6 +52,18 @@ And gear outputs
    A: 1/2*o <= 1
    G: -1*o + 1*o_p <= 1
 ```
+
+# Installing
+
+## System requirements
+
+[pdm](https://github.com/pdm-project/pdm) (Make sure you run pdm version larger than 2.1.4)
+
+[scipy](https://scipy.org/install/)
+
+The installation will provide access to the command-line tool `gear` and to the the Python package of the same name. Any updates to the dev folder `src/gear` will immediately be available in the system.
+
+
 ## Install Dependencies
 
 As Gear is in development, we use pdm manage the dependencies. To install run:
