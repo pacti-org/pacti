@@ -1,8 +1,8 @@
 import json
 
-import gear.iocontract as iocontract
-import gear.polyhedralterm as polyhedralterm
-from gear.gear import getVarlist
+from gear.iocontract import IoContract
+from gear.iocontract.utils import getVarlist
+from gear.terms.polyhedra import PolyhedralTerm, PolyhedralTermList
 
 
 def readContract(contract):
@@ -13,7 +13,7 @@ def readContract(contract):
         * contract (dict, list): A JSON dict describing the contract in the Gear syntax.
                                  May be a list of such dictionaries.
     Returns:
-        * iocontract (gear.iocontract.IoContract): An input-output Gear contract object
+        * iocontract (gear.IoContract): An input-output Gear contract object
     """
     if type(contract) is not list:
         contract = [contract]
@@ -23,12 +23,12 @@ def readContract(contract):
             raise ValueError("A dict type contract is expected.")
         reqs = []
         for key in ["assumptions", "guarantees"]:
-            reqs.append([polyhedralterm.PolyhedralTerm(term["coefficients"], term["constant"]) for term in c[key]])
-        iocont = iocontract.IoContract(
+            reqs.append([PolyhedralTerm(term["coefficients"], term["constant"]) for term in c[key]])
+        iocont = IoContract(
             inputVars=getVarlist(c["InputVars"]),
             outputVars=getVarlist(c["OutputVars"]),
-            assumptions=polyhedralterm.PolyhedralTermList(list(reqs[0])),
-            guarantees=polyhedralterm.PolyhedralTermList(list(reqs[1])),
+            assumptions=PolyhedralTermList(list(reqs[0])),
+            guarantees=PolyhedralTermList(list(reqs[1])),
         )
         list_iocontracts.append(iocont)
     if len(list_iocontracts) == 1:
@@ -39,22 +39,22 @@ def readContract(contract):
 
 def writeContract(contract, filename: str=None):
     """
-    Converts a gear.iocontract.IoContract to a dictionary. If a list of iocontracts is passed,
+    Converts a gear.IoContract to a dictionary. If a list of iocontracts is passed,
     then a list of dicts is returned.
     If a filename is provided, a JSON file is written, otherwise only dictionaries are returned.
     Arguments:
-        * contract (gear.iocontract.IoContract, list): Contract input of type iocontract.IoContract
+        * contract (gear.IoContract, list): Contract input of type IoContract
                                                        or list of IoContracts.
         * filename (str, optional): Name of file to write the output contract, defaults to None in which case,
                                     no file is written.
     Returns:
         * contract_dict (dict): A dictionary for the given IoContract
     """
-    if type(contract) is iocontract.IoContract:
+    if type(contract) is IoContract:
         contract = [contract]
     contract_list = []
     for c in contract:
-        if not isinstance(c, iocontract.IoContract):
+        if not isinstance(c, IoContract):
             return ValueError("A IoContract is expected.")
         contract_dict = {}
         contract_dict["InputVars"] = [str(var) for var in c.inputvars]

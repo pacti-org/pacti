@@ -1,7 +1,26 @@
 import gear.iocontract as iocontract
-from gear.loaders import readContract, writeContract
-from test_iocontract import validate_iocontract, create_contracts
-import pytest
+from gear.terms.polyhedra.loaders import readContract, writeContract
+from test_iocontract import validate_iocontract
+
+
+def create_contracts(num=1):
+    """
+    Creates `num` number of contracts and returns a list of dicts
+    """
+    contracts = []
+    for i in range(num):
+        c = {
+            "InputVars": ["u" + str(i)],
+            "OutputVars": ["x" + str(i)],
+            "assumptions": [{"coefficients": {"u" + str(i): 1}, "constant": i}],
+            "guarantees": [{"coefficients": {"x" + str(i): 1}, "constant": 1}],
+        }
+        contracts.append(c)
+    if num == 1:
+        return contracts[0]
+    else:
+        return contracts
+
 
 def test_read_contract():
     # Create 1 contract and read it
