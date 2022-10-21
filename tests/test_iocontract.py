@@ -1,5 +1,5 @@
 import gear.iocontract as iocontract
-from gear.loaders import readContract
+from gear.terms.polyhedra.loaders import readContract
 
 def validate_iocontract(contract):
     return isinstance(contract, iocontract.IoContract)

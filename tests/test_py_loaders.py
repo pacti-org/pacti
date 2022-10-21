@@ -1,7 +1,7 @@
 import gear.iocontract as iocontract
 from gear.terms.polyhedra.loaders import readContract, writeContract
 from test_iocontract import validate_iocontract
-
+import pytest
 
 def create_contracts(num=1):
     """
