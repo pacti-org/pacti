@@ -13,7 +13,9 @@ nav:
   - Credits: credits.md
   - License: license.md
 # defer to gen-files + literate-nav
-- Code Reference: reference/
+- Code Reference: #reference/
+  - IoContract: iocontract.md
+  - PolyhedralTerms : Polyhedral.md
 - Development:
   - Contributing: contributing.md
   - Coverage report: coverage.md
