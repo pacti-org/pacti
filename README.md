@@ -7,8 +7,8 @@ system using assume-guarantee specifications, or contracts. Gear's capabilities 
 - Computing specifications of elements that need to be added to a design in order to meet an objective.
 - Verifying whether a component meets a specification.
 
-Examples
---------
+## Examples
+
 
 ### Composition
 
@@ -73,22 +73,19 @@ pdm install
 ```
 
 The installation will provide access to the command-line tool `gear` and to the Python package of the same name.
-
-- Documentation: `docs/_build/html/index.html`
-- Source Code: https://github.com/iincer/contractTool
 To launch the command-line tool run `pdm run gear`
 
 
 ## Examples
 
-You can run examples via command line:
+You can run examples via the command line:
 
 
 ```bash
 pdm run gear examples/example.json output.json
 ```
 
-Or via python script
+Or via python a script
 
 ```bash
 pdm run python src/gear/cli.py ./examples/example.json ./output.json
@@ -97,14 +94,14 @@ pdm run python src/gear/cli.py ./examples/example.json ./output.json
 
 ## Links
 
-- Documentation: ``
-- Source Code: ``
+- Documentation: `docs/_build/html/index.html`
+- Source Code: https://github.com/iincer/contractTool
 
 ## Troubleshooting
 
 ### Working With Apple Silicon
 
-Some packages do not fully support Apple Silicon (i.e. `scipy`, `numpy`). 
+Some packages do not fully support recent Apple ICs (i.e., `scipy`, `numpy`). 
 We recommend installing them at system level via pip as:
 
 ```bash
