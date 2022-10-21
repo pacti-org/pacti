@@ -1,8 +1,7 @@
 """
 PolyhedralTerm provides support for linear inequalities as constraints, i.e.,
 the constraints are of the form $\\sum_{i} a_i x_i \\le c$, where the
-:math:`x_i` are variables and the :math:`a_i` and :math:`c` are constants.
-$\operatorname{ker} f=\{g\in G:f(g)=e_{H}\}{\mbox{.}}$
+$x_i$ are variables and the $a_i$ and $c$ are constants.
 """
 from __future__ import annotations
 
@@ -23,19 +22,15 @@ class PolyhedralTerm(Term):
     Usage:
         Polyhedral terms are initialized as follows:
 
-        .. highlight:: python
-        .. code-block:: python
-
+        ```
             variables = {Var('x'):2, Var('y'):3}
             constant = 3
             term = PolyhedralTerm(variables, constant)
+        ```
 
-        :code:`variables` is a dictionary whose keys are :code:`Var` instances,
-        and :code:`constant` is a number. Thus, our example represents the
-        expression :math:`2x + 3y \\le 3`.
-        $$
-        \operatorname{ker} f=\{g\in G:f(g)=e_{H}\}{\mbox{.}}
-        $$
+        `variables` is a dictionary whose keys are `Var` instances,
+        and `constant` is a number. Thus, our example represents the
+        expression $2x + 3y \\le 3$.
     """
 
     # Constructor: get (i) a dictionary whose keys are variables and whose
@@ -89,9 +84,9 @@ class PolyhedralTerm(Term):
         Variables appearing in term with a nonzero coefficient.
 
         Example:
-            For the term :math:`ax + by \\le c` with variables :math:`x` and
-            :math:`y`, this function returns the list :math:`\\{x, y\\}` if
-            :math:`a` and :math:`b` are nonzero.
+            For the term $ax + by \\le c$ with variables $x$ and
+            $y$, this function returns the list $\\{x, y\\}$ if
+            $a$ and $b$ are nonzero.
         """
         varlist = self.variables.keys()
         return list(varlist)
@@ -104,8 +99,8 @@ class PolyhedralTerm(Term):
             var: The variable that we are seeking in the current term.
 
         Returns:
-            :code:`True` if the syntax of the term refers to the given variable;
-            :code:`False` otherwise.
+            `True` if the syntax of the term refers to the given variable;
+            `False` otherwise.
         """
         return var in self.vars
 
@@ -127,8 +122,8 @@ class PolyhedralTerm(Term):
         given polarity.
 
         The polarity of a variable in a term is defined as the polarity of the
-        coefficient that multiplies it in a term, e.g., the variables :math:`x`
-        and :math:`y` in the term :math:`-2x + y \\le 3` have negative and
+        coefficient that multiplies it in a term, e.g., the variables $x$
+        and $y$ in the term $-2x + y \\le 3$ have negative and
         positive polarities respectively.
 
         Args:
@@ -137,9 +132,9 @@ class PolyhedralTerm(Term):
             polarity.
 
         Returns:
-            :code:`True` if the variable's polarity matches :code:`polarity` and
-            :code:`False` otherwise. If the variable's coefficient in the term
-            is zero, return :code:`True`.
+            `True` if the variable's polarity matches `polarity` and
+            `False` otherwise. If the variable's coefficient in the term
+            is zero, return `True`.
         """
         if polarity:
             return self.variables[var] >= 0
@@ -152,8 +147,8 @@ class PolyhedralTerm(Term):
         given polarity.
 
         The polarity of a variable in a term is defined as the polarity of the
-        coefficient that multiplies it in a term, e.g., the variables :math:`x`
-        and :math:`y` in the term :math:`-2x + y \\le 3` have negative and
+        coefficient that multiplies it in a term, e.g., the variables $x$
+        and $y$ in the term $-2x + y \\le 3$ have negative and
         positive polarities respectively.
 
         Args:
@@ -162,9 +157,9 @@ class PolyhedralTerm(Term):
             polarity.
 
         Returns:
-            :code:`True` if the variable's polarity matches :code:`polarity` and
-            :code:`False` otherwise. If the variable's coefficient in the term
-            is zero, return :code:`True`.
+            `True` if the variable's polarity matches `polarity` and
+            `False` otherwise. If the variable's coefficient in the term
+            is zero, return `True`.
         """
         if self.get_polarity(var, True):
             return 1
@@ -178,8 +173,7 @@ class PolyhedralTerm(Term):
 
         Example:
 
-        .. code-block:: python
-
+        ```
             x = Var('x')
             y = Var('y')
             z = Var('z')
@@ -188,8 +182,9 @@ class PolyhedralTerm(Term):
             term = PolyhedralTerm(variables, constant)
             polarities = {y:True}
             term.get_matching_vars(polarities)
+        ```
 
-        The last call returns :code:`{y, z}` because the variable y matches the
+        The last call returns `{y, z}` because the variable y matches the
         requested polarity in the term, and the variable z has a zero
         coefficient.
 
@@ -227,15 +222,15 @@ class PolyhedralTerm(Term):
     def multiply(self, factor):
         """Multiplies a term by a constant factor.
 
-        For example, multiplying the term :math:`2x + 3y \\le 4` by the factor 2
-        yields :math:`4x + 6y \\le 8`.
+        For example, multiplying the term $2x + 3y \\le 4$ by the factor 2
+        yields $4x + 6y \\le 8$.
 
         Args:
             factor: element by which the term is multiplied.
 
         Returns:
             A new term which is the result of the given term multiplied by
-            :code:`factor`.
+            `factor`.
         """
         variables = {key: factor * val for key, val in self.variables.items()}
         return PolyhedralTerm(variables, factor * self.constant)
@@ -245,8 +240,8 @@ class PolyhedralTerm(Term):
         Substitutes a specified variable in a term with a given term.
 
         Example:
-            In the term :math:`2x - y \\le 6`, substituting y by the term
-            :math:`x + z \\le 5` yields :math:`x - z \\le 1`. Observe that the
+            In the term $2x - y \\le 6$, substituting y by the term
+            $x + z \\le 5$ yields $x - z \\le 1$. Observe that the
             substituting term is understood as an equality.
 
         Args:
@@ -276,13 +271,13 @@ class PolyhedralTerm(Term):
         Example:
             The code
 
-            .. code-block:: python
-
+            ```
                 x = Var('x') y = Var('y') variables = {x:-2, y:3} constant  = 4
                 term = PolyhedralTerm(variables, constant) expression =
                 PolyhedralTerm.to_symbolic(term)
+            ```
 
-            yields the expression :math:`-2x + 3y`.
+            yields the expression $-2x + 3y$.
 
         Args:
             term(PolyhedralTerm):
@@ -301,8 +296,8 @@ class PolyhedralTerm(Term):
         Translates a sympy expression into a PolyhedralTerm.
 
         Example:
-            The expression :math:`2x + 3y - 1` is translated into
-            :code:`PolyhedralTerm(variables={x:2, y:3}, constant=1)`.
+            The expression $2x + 3y - 1$ is translated into
+            `PolyhedralTerm(variables={x:2, y:3}, constant=1)`.
 
         Args:
             expression: The symbolic expression to be translated.
@@ -325,8 +320,8 @@ class PolyhedralTerm(Term):
         Transform a term into a vector according to the given order.
 
         Example:
-            The term :math:`3x + 5y -2z \\le 7` with :code:`variable_list = [y,
-            x, w, z]` yields the tuple :code:`[5, 3, 0, -2], 7`.
+            The term $3x + 5y -2z \\le 7$ with `variable_list = [y,
+            x, w, z]` yields the tuple `[5, 3, 0, -2], 7`.
 
         Args:
             term: The term to be transformed.
@@ -483,11 +478,11 @@ class PolyhedralTermList(TermList):
         and implying the given TermList in the given context.
 
         Example:
-            Suppose the current list of terms is :math:`\\{x + y \\le 6\\}`, the
-            context is :math:`\\{y \\le 5\\}`, and the abduced terms should not
-            contain variable :math:`y`. Then the current TermList could be
-            abduced to :math:`\\{x \\le 1\\}` because :math:`x \\le 1
-            \\;\\land\\; y \\le 5 \\Rightarrow x + y \\le 6`.
+            Suppose the current list of terms is $\\{x + y \\le 6\\}$, the
+            context is $\\{y \\le 5\\}$, and the abduced terms should not
+            contain variable $y$. Then the current TermList could be
+            abduced to $\\{x \\le 1\\}$ because $x \\le 1
+            \\;\\land\\; y \\le 5 \\Rightarrow x + y \\le 6$.
 
         Args:
             context:
@@ -497,7 +492,7 @@ class PolyhedralTermList(TermList):
                 Variables that should not appear in the abduced term.
 
         Returns:
-            A list of terms not containing any variables in :code:`vars_to_elim`
+            A list of terms not containing any variables in `vars_to_elim`
             and which, in the context provided, imply the terms contained in the
             calling termlist.
         """
@@ -528,11 +523,11 @@ class PolyhedralTermList(TermList):
         and implied by the given TermList in the given context.
 
         Example:
-            Suppose the current list of terms is :math:`\\{x - y \\le 6\\}`, the
-            context is :math:`\\{y \\le 5\\}`, and the deduced terms should not
-            contain variable :math:`y`. Then the current TermList could be
-            deduced to :math:`\\{x \\le 11\\}` because :math:`x - y \\le 6
-            \\;\\land\\; y \\le 5 \\Rightarrow x \\le 11`.
+            Suppose the current list of terms is $\\{x - y \\le 6\\}$, the
+            context is $\\{y \\le 5\\}$, and the deduced terms should not
+            contain variable $y$. Then the current TermList could be
+            deduced to $\\{x \\le 11\\}$ because $x - y \\le 6
+            \\;\\land\\; y \\le 5 \\Rightarrow x \\le 11$.
 
         Args:
             context:
@@ -542,7 +537,7 @@ class PolyhedralTermList(TermList):
                 Variables that should not appear in the deduced term.
 
         Returns:
-            A list of terms not containing any variables in :code:`vars_to_elim`
+            A list of terms not containing any variables in `vars_to_elim`
             and which, in the context provided, are implied by the terms
             contained in the calling termlist.
         """
@@ -576,9 +571,9 @@ class PolyhedralTermList(TermList):
         context.
 
         Example:
-            Suppose the TermList is :math:`\\{x - 2y \\le 5, x - y \\le 0\\}` and
-            the context is :math:`\\{x + y \\le 0\\}`. Then the TermList could be
-            simplified to :math:`\\{x - y \\le 0\\}`.
+            Suppose the TermList is $\\{x - 2y \\le 5, x - y \\le 0\\}$ and
+            the context is $\\{x + y \\le 0\\}$. Then the TermList could be
+            simplified to $\\{x - y \\le 0\\}$.
 
         Args:
             context:
@@ -627,17 +622,17 @@ class PolyhedralTermList(TermList):
         Converts a list of terms with its context into matrix-vector pairs.
 
         Example:
-            Suppose the list of terms is :math:`\\{x+y \\le 1, x - y \\le 4\\}`
-            and the context is :math:`\\{x + 4w \\le 5\\}`. The routine extracts
-            all variables and generates an order for them, say, :math:`[x, w,
-            y]`. Then the routine returns matrix-vector pairs for both the terms
-            TermList and the context. It returns :math:`A = \\left(
+            Suppose the list of terms is $\\{x+y \\le 1, x - y \\le 4\\}$
+            and the context is $\\{x + 4w \\le 5\\}$. The routine extracts
+            all variables and generates an order for them, say, $[x, w,
+            y]$. Then the routine returns matrix-vector pairs for both the terms
+            TermList and the context. It returns $A = \\left(
             \\begin{smallmatrix} 1 & 0 & 1 \\\\ 1 &0 &-1
-            \\end{smallmatrix}\\right)` and :math:`b = \\left(
-            \\begin{smallmatrix} 1 \\\\ 4 \\end{smallmatrix}\\right)` for the
-            current TermList and :math:`A_{c} = \\left( \\begin{smallmatrix} 1 &
-            4 & 0 \\end{smallmatrix}\\right)` and :math:`b_c = \\left(
-            \\begin{smallmatrix} 5 \\end{smallmatrix}\\right)` for the context.
+            \\end{smallmatrix}\\right)$ and $b = \\left(
+            \\begin{smallmatrix} 1 \\\\ 4 \\end{smallmatrix}\\right)$ for the
+            current TermList and $A_{c} = \\left( \\begin{smallmatrix} 1 &
+            4 & 0 \\end{smallmatrix}\\right)$ and $b_c = \\left(
+            \\begin{smallmatrix} 5 \\end{smallmatrix}\\right)$ for the context.
 
         Args:
             terms:
@@ -646,7 +641,7 @@ class PolyhedralTermList(TermList):
                 Context terms to convert to matrix-vector form.
 
         Returns:
-            A tuple :code:`variables, A, b, a_h, b_h` consisting of the variable
+            A tuple `variables, A, b, a_h, b_h` consisting of the variable
             order and the matrix-vector pairs for the terms and the context.
         """
         variables = list(list_union(terms.vars, context.vars))

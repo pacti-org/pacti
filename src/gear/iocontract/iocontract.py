@@ -158,10 +158,10 @@ class TermList(ABC):
         Abduce terms containing variables to be eliminated using a user-provided
         context.
 
-        Given a context :math:`\\Gamma`, and the list of terms contained in self,
-        :math:`s`, this routine identifies a TermList :math:`x` lacking variables
-        vars_to_elim such that :math:`\\frac{\\Gamma\\colon \\; x}{\\Gamma: \\;
-        s}`.
+        Given a context $\\Gamma$, and the list of terms contained in self,
+        $s$, this routine identifies a TermList $x$ lacking variables
+        vars_to_elim such that $\\frac{\\Gamma\\colon \\; x}{\\Gamma: \\;
+        s}$.
 
         Args:
             context:
@@ -170,7 +170,7 @@ class TermList(ABC):
                 Variables that cannot be present in TermList after abduction.
 
         Returns:
-            A list of terms not containing any variables in :code:`vars_to_elim`
+            A list of terms not containing any variables in `vars_to_elim`
             and which, in the context provided, imply the terms contained in the
             calling termlist.
         """
@@ -181,10 +181,10 @@ class TermList(ABC):
         Deduce terms containing variables to be eliminated using a user-provided
         context.
 
-        Given a context :math:`\\Gamma`, and the list of terms contained in self,
-        :math:`s`, this routine identifies a formula :math:`x` lacking variables
-        vars_to_elim such that :math:`\\frac{\\Gamma\\colon \\; s}{\\Gamma: \\;
-        x}`.
+        Given a context $\\Gamma$, and the list of terms contained in self,
+        $s$, this routine identifies a formula $x$ lacking variables
+        vars_to_elim such that $\\frac{\\Gamma\\colon \\; s}{\\Gamma: \\;
+        x}$.
 
         Args:
             context:
@@ -193,7 +193,7 @@ class TermList(ABC):
                 Variables that cannot be present in TermList after deduction.
 
         Returns:
-            A list of terms not containing any variables in :code:`vars_to_elim`
+            A list of terms not containing any variables in `vars_to_elim`
             and which, in the context provided, are implied by the terms
             contained in the calling termlist.
         """
@@ -202,10 +202,10 @@ class TermList(ABC):
     def simplify(self, context=list()):
         """Remove redundant terms in TermList.
 
-        Let :math:`S` be this TermList and suppose :math:`T \\subseteq S`. Let
-        :math:`S_T = S \\setminus T`. Simplify will remove from :math:`S` a
-        maximal subset :math:`T` such that :math:`\\frac{\\Gamma, S_T\\colon \\;
-        \\top}{\\Gamma, S_T\\colon \\; \\wedge_{t \\in T} t}`.
+        Let $S$ be this TermList and suppose $T \\subseteq S$. Let
+        $S_T = S \\setminus T$. Simplify will remove from $S$ a
+        maximal subset $T$ such that $\\frac{\\Gamma, S_T\\colon \\;
+        \\top}{\\Gamma, S_T\\colon \\; \\wedge_{t \\in T} t}$.
 
         Args:
             context:
