@@ -37,6 +37,10 @@ for path in sorted(Path("src").rglob("*.py")):
         full_doc_path = full_doc_path.with_name("index.md")
     elif parts[-1] == "__main__":
         continue
+    elif parts[-1] == "utils":
+        continue
+    elif parts[-1] == "cli":
+        continue
 
     nav[parts] = doc_path.as_posix()
 
