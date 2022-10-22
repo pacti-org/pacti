@@ -20,7 +20,7 @@ import logging
 from abc import ABC, abstractmethod
 from typing import List
 
-from gear.utils.lists import list_diff, list_intersection, list_union
+from gear.utils.lists import list_diff, list_intersection, list_union, lists_equal
 
 
 class Var:
@@ -324,7 +324,7 @@ class IoContract:
         Args:
             other: contract whose IO signature is compared with self.
         """
-        return (self.inputvars == other.inputvars) & (self.outputvars == other.outputvars)
+        return lists_equal(self.inputvars, other.inputvars) & lists_equal(self.outputvars, other.outputvars)
 
     def refines(self, other: IoContract) -> bool:
         """
