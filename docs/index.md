@@ -53,4 +53,3 @@ And gear outputs
    G: -1*o + 1*o_p <= 1
 ```
 
-
