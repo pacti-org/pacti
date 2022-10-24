@@ -1,7 +1,7 @@
 site_name: "gear"
 site_description: "Compositional system analysis and design using contracts."
-site_url: "https://iincer.github.io/gear"
-repo_url: "https://github.com/iincer/gear.git"
+site_url: "https://FormalSystems.github.io/gear"
+repo_url: "https://github.com/FormalSystems/gear"
 repo_name: "gear"
 site_dir: "site"
 watch: [README.md, CONTRIBUTING.md, CHANGELOG.md, src/gear]
@@ -9,14 +9,23 @@ watch: [README.md, CONTRIBUTING.md, CHANGELOG.md, src/gear]
 nav:
 - Home:
   - Overview: index.md
+  - Getting started: getting_started.md
   - Changelog: changelog.md
   - Credits: credits.md
   - License: license.md
 # defer to gen-files + literate-nav
-- Code Reference: reference/
+- Case Studies:
+  - Autonomous Systems: case_studies/autonomous.md
+  - Multi-agent Coordination: case_studies/multi_agent.md
+  - Signal Processing in Digital ICs: case_studies/signal_processing_ic.md
+  - Synthetic Biology: case_studies/synthbio.md
+- Documentation: #reference/
+  - IoContract: iocontract.md
+  - PolyhedralTerms : Polyhedral.md
 - Development:
   - Contributing: contributing.md
   - Coverage report: coverage.md
+
 
 theme:
   name: material
@@ -24,9 +33,20 @@ theme:
   - navigation.tabs
   - navigation.tabs.sticky
   - navigation.top
+  - toc.integrate
+  font:
+    #text: Eczar
+    #text: Alegreya Sans
+    #text: Roboto Slab
+    #text: Inknut Antiqua
+    text: Libre Baskerville
+    #text: Cardo
+    code: Roboto Mono
+    #text: Merriweather
+    #code: Inconsolata
   palette:
     scheme: default
-    primary: teal
+    primary: white
     accent: purple
 #  - media: "(prefers-color-scheme: light)"
 #    scheme: default
