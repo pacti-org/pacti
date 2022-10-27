@@ -6,7 +6,6 @@ build-backend = "pdm.pep517.api"
 name = "gear"
 description = "gear-description"
 authors = [{name = "gear-authors-name", email = "gear-authors-email"}]
-license-expression = "MIT"
 readme = "README.md"
 keywords = []
 dynamic = ["version"]
