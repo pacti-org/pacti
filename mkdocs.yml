@@ -15,10 +15,11 @@ nav:
   - License: license.md
 # defer to gen-files + literate-nav
 - Case Studies:
-  - Autonomous Systems: case_studies/autonomous.md
-  - Multi-agent Coordination: case_studies/multi_agent.md
-  - Signal Processing in Digital ICs: case_studies/signal_processing_ic.md
-  - Synthetic Biology: case_studies/synthbio.md
+  - Autonomous Systems: 
+    - Simple script: case_studies/evaluating_perception/simple_script.ipynb
+  #- Multi-agent Coordination: case_studies/multi_agent.md
+  #- Signal Processing in Digital ICs: case_studies/signal_processing_ic.md
+  #- Synthetic Biology: case_studies/synthbio.md
 - Documentation: #reference/
   - IoContract: iocontract.md
   - PolyhedralTerms : Polyhedral.md
@@ -90,6 +91,8 @@ extra_javascript:
 
 plugins:
 - search
+- mkdocs-jupyter:
+#    execute: False
 - markdown-exec
 - gen-files:
     scripts:

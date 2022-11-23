@@ -260,6 +260,8 @@ def docs_serve(ctx, host="127.0.0.1", port=8000):
         host: The host to serve the docs from.
         port: The port to serve the docs on.
     """
+    ctx.run("rm -f docs/case_studies")
+    ctx.run("ln -sf ../case_studies docs/case_studies")
     ctx.run(f"mkdocs serve -a {host}:{port}", title="Serving documentation", capture=False)
 
 
