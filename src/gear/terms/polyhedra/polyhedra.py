@@ -10,7 +10,7 @@ import logging
 import numpy as np
 import sympy
 from scipy.optimize import linprog
-
+from sympy.parsing.sympy_parser import parse_expr
 from gear.iocontract import Term, TermList, Var
 from gear.utils.lists import list_diff, list_intersection, list_union
 
@@ -47,6 +47,29 @@ class PolyhedralTerm(Term):
                     variable_dict[key] = val
         self.variables = variable_dict
         self.constant = constant
+
+    @classmethod
+    def from_string(cls, str_rep: str) -> PolyhedralTerm:
+        expr = parse_expr(str_rep)
+        assert isinstance(expr, sympy.core.relational.LessThan)
+        constant = expr.args[1]
+        print(type(constant))
+        variables = {}
+        for k, v in expr.args[0].as_coefficients_dict().items():
+            if k == 1:
+                pass
+            elif isinstance(k, sympy.core.symbol.Symbol):
+                variables[str(k)] = v
+            elif isinstance(k, sympy.core.mul.Mul):
+                if isinstance(k.args[1], k, sympy.core.symbol.Symbol):
+                    print(k.args[0])
+                    variables[str(k.args[1])] = k.args[0]
+                elif isinstance(k.args[0], k, sympy.core.symbol.Symbol):
+                    print(k.args[1])
+                    variables[str(k.args[0])] = k.args[1]
+            else:
+                raise ValueError
+        return cls(variables, constant)
 
     def __eq__(self, other):
         match = self.variables.keys() == other.variables.keys()
@@ -397,6 +420,11 @@ class PolyhedralTermList(TermList):
     """
     A TermList of PolyhedralTerm instances.
     """
+
+    @classmethod
+    def from_str(cls, str_rep_list: list[str]):
+        terms = [PolyhedralTerm.from_string(str_rep) for str_rep in str_rep_list]
+        return cls(terms)
 
     # This routine accepts a term that will be adbuced with the help of other
     # terms The abduction aims to eliminate from the term appearances of the
@@ -776,7 +804,7 @@ class PolyhedralTermList(TermList):
 
     @staticmethod
     def verify_polytope_containment(
-        a_l: np.array, b_l: np.array, a_r: np.array = np.array([[]]), b_r: np.array = np.array([])
+            a_l: np.array, b_l: np.array, a_r: np.array = np.array([[]]), b_r: np.array = np.array([])
     ) -> bool:
         """
         Say whether a polytope is contained in another. Both are given in their
@@ -885,7 +913,7 @@ class PolyhedralTermList(TermList):
                 # 1. Verify Kaykobad pair: sign of nonzero matrix terms
                 for var in forbidden_vars:
                     if context_term.get_coefficient(var) != 0 and transform_coeff * context_term.get_sign(
-                        var
+                            var
                     ) != term.get_sign(var):
                         term_is_invalid = True
                         logging.debug("Failed first matrix-vector verification")
@@ -900,10 +928,10 @@ class PolyhedralTermList(TermList):
                     logging.debug("Verifying third condition on variable %s", j_var)
                     if j != i:
                         residuals[j] = (
-                            term.get_sign(j_var)
-                            * context_term.get_coefficient(j_var)
-                            * term.get_coefficient(i_var)
-                            / context_term.get_coefficient(i_var)
+                                term.get_sign(j_var)
+                                * context_term.get_coefficient(j_var)
+                                * term.get_coefficient(i_var)
+                                / context_term.get_coefficient(i_var)
                         )
                     if np.abs(term.get_coefficient(j_var)) <= partial_sums[j] + residuals[j]:
                         logging.debug("q coefficient: %s", term.get_coefficient(j_var))
@@ -913,7 +941,7 @@ class PolyhedralTermList(TermList):
                         break
                 if not term_is_invalid:
                     matrix_contains_others = (
-                        matrix_contains_others or len(list_diff(context_term.vars, forbidden_vars)) > 0
+                            matrix_contains_others or len(list_diff(context_term.vars, forbidden_vars)) > 0
                     )
                     row_found = True
                     for j in range(n):
