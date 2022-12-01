@@ -15,7 +15,8 @@ from gear.terms.polyhedra import PolyhedralTerm, PolyhedralTermList
 @click.argument("inputfilename")
 @click.argument("outputfilename")
 def readInputFile(inputfilename, outputfilename):
-    assert os.path.isfile(inputfilename)
+    if not os.path.isfile(inputfilename):
+        raise Exception(f"The path {inputfilename} is not a file.")
     with open(inputfilename) as f:
         data = json.load(f)
     contracts = []
