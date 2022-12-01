@@ -16,7 +16,7 @@ nav:
 # defer to gen-files + literate-nav
 - Case Studies:
   - Autonomous Systems:
-    - Simple script: case_studies/evaluating_perception/simple_script.ipynb
+    - Simple script: _case_studies/evaluating_perception/simple_script.ipynb
   #- Multi-agent Coordination: case_studies/multi_agent.md
   #- Signal Processing in Digital ICs: case_studies/signal_processing_ic.md
   #- Synthetic Biology: case_studies/synthbio.md

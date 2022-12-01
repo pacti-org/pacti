@@ -38,6 +38,7 @@ gear.egg-info
 *.rst.txt
 .venv
 .vscode
+*_case_studies*
 
 
 .idea/
