@@ -1,0 +1,77 @@
+{
+    "contract1": {
+        "InputVars": [
+            "p1_a",
+            "p1_e",
+            "p2_a",
+            "p2_e"
+        ],
+        "OutputVars": [
+            "p3_a",
+            "p3_e"
+        ],
+        "assumptions": [
+            {
+                "coefficients": {
+                    "p1_a": 1,
+                    "p2_a": 1
+                },
+                "constant": 8
+            }
+        ],
+        "guarantees": [
+            {
+                "coefficients": {
+                    "p1_e": -1,
+                    "p2_e": -1,
+                    "p3_e": 1
+                },
+                "constant": 0.125
+            },
+            {
+                "coefficients": {
+                    "p3_a": 1
+                },
+                "constant": 7.75
+            }
+        ]
+    },
+    "contract2": {
+        "InputVars": [
+            "p3_a",
+            "p3_e",
+            "p4_a",
+            "p4_e"
+        ],
+        "OutputVars": [
+            "p5_a",
+            "p5_e"
+        ],
+        "assumptions": [
+            {
+                "coefficients": {
+                    "p3_a": 1,
+                    "p4_a": 1
+                },
+                "constant": 8
+            }
+        ],
+        "guarantees": [
+            {
+                "coefficients": {
+                    "p3_e": -1,
+                    "p4_e": -1,
+                    "p5_e": 1
+                },
+                "constant": 0.0625
+            },
+            {
+                "coefficients": {
+                    "p5_a": 1
+                },
+                "constant": 7.875
+            }
+        ]
+    },
+    "operation": "composition"
+}
