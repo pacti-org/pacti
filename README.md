@@ -59,7 +59,6 @@ And gear outputs
 
 [pdm](https://github.com/pdm-project/pdm) (Make sure you run pdm version larger than 2.1.4)
 
-[scipy](https://scipy.org/install/)
 
 The installation will provide access to the command-line tool `gear` and to the the Python package of the same name. Any updates to the dev folder `src/gear` will immediately be available in the system.
 
@@ -98,21 +97,6 @@ pdm run python src/gear/cli.py ./examples/example.json ./output.json
 - Source Code: https://github.com/iincer/contractTool
 
 ## Troubleshooting
-
-### Working With Apple ICs
-
-Some packages do not fully support recent Apple ICs (i.e., `scipy`, `numpy`). 
-We recommend installing them at system level via pip as:
-
-```bash
-pip install --pre -i https://pypi.anaconda.org/scipy-wheels-nightly/simple scipy
-```
-
-Or via brew:
-
-```bash
-brew install scipy
-```
 
 
 ### Working with PEP 582
