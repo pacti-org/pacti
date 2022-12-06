@@ -900,7 +900,7 @@ class PolyhedralTermList(TermList):
             for context_term in list_diff(context.terms, matrix_row_terms):
                 logging.debug("Analyzing context term %s", context_term)
                 if context_term == term:
-                    next
+                    continue
                 term_is_invalid = False
                 # make sure the term does not include other forbidden variables
                 for var in other_forbibben_vars:
