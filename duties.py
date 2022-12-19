@@ -260,9 +260,9 @@ def docs_serve(ctx, host="127.0.0.1", port=8000):
         host: The host to serve the docs from.
         port: The port to serve the docs on.
     """
-    if os.path.exists("docs/case_studies"):
-        ctx.run("rm -f docs/case_studies")
-    ctx.run("ln -sf ../case_studies docs/case_studies")
+    if os.path.exists("docs/_case_studies"):
+        ctx.run("rm -f docs/_case_studies")
+    ctx.run("ln -sf ../case_studies docs/_case_studies")
     ctx.run(f"mkdocs serve -a {host}:{port}", title="Serving documentation", capture=False)
 
 
@@ -274,9 +274,9 @@ def docs_deploy(ctx):
     Arguments:
         ctx: The context instance (passed automatically).
     """
-    if os.path.exists("docs/case_studies"):
-        ctx.run("rm -f docs/case_studies")
-    ctx.run("ln -sf ../case_studies docs/case_studies")
+    if os.path.exists("docs/_case_studies"):
+        ctx.run("rm -f docs/_case_studies")
+    ctx.run("ln -sf ../case_studies docs/_case_studies")
     ctx.run("mkdocs gh-deploy", title="Deploying documentation")
 
 
