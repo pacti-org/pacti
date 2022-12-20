@@ -3,7 +3,6 @@ Consists of loader functions that can read a JSON dictionary contract
 or write a IOContract to a JSON file.
 """
 import json
-
 from gear.iocontract import IoContract
 from gear.iocontract.utils import getVarlist
 from gear.terms.polyhedra import PolyhedralTerm, PolyhedralTermList
@@ -28,7 +27,7 @@ def read_contract(contract):
         reqs = []
         for key in ["assumptions", "guarantees"]:
             reqs.append([PolyhedralTerm(term["coefficients"], \
-                        term["constant"]) for term in c_i[key]])
+                        float(term["constant"])) for term in c_i[key]])
         iocont = IoContract(
             inputVars=getVarlist(c_i["InputVars"]),
             outputVars=getVarlist(c_i["OutputVars"]),
@@ -66,24 +65,28 @@ def write_contract(contract, filename: str=None):
         contract_dict["InputVars"] = [str(var) for var in c_i.inputvars]
         contract_dict["OutputVars"] = [str(var) for var in c_i.outputvars]
         contract_dict["assumptions"] = [
-            {"constant":term.constant, \
-             "coefficients": {str(k): v for k, v in term.variables.items()}}
+            {"constant":float(term.constant), \
+             "coefficients": {str(k): float(v) for k, v in term.variables.items()}}
             for term in c_i.a.terms
         ]
         contract_dict["guarantees"] = [
-            {"constant": term.constant, \
-             "coefficients": {str(k): v for k, v in term.variables.items()}}
+            {"constant":float(term.constant), \
+             "coefficients": {str(k): float(v) for k, v in term.variables.items()}}
             for term in c_i.g.terms
         ]
         contract_list.append(contract_dict)
     if filename:
         with open(filename, "w+", encoding='utf-8') as f_i:
             count = 0
+            f_i.write("{\n")
             for c_dict in contract_list:
-                f_i.write('"contract' + str(count) + '"' + "=")
-                json.dump(c_dict, f_i)
-                f_i.write("\n")
+                data = json.dumps(c_dict)
+                f_i.write('"contract' + str(count) + '"' + ":")
+                f_i.write(data)
+                if c_dict != contract_list[-1]:
+                    f_i.write(",\n")
                 count += 1
+            f_i.write("\n}")
     if len(contract_list) == 1:
         return contract_list[0]
     else:

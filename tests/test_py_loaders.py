@@ -1,5 +1,5 @@
 import gear.iocontract as iocontract
-from gear.terms.polyhedra.loaders import readContract, writeContract
+from gear.terms.polyhedra.loaders import read_contract, write_contract
 from test_iocontract import validate_iocontract
 import pytest
 
@@ -9,13 +9,13 @@ def create_contracts(num=1):
     """
     contracts = []
     for i in range(num):
-        c = {
+        c_i = {
             "InputVars": ["u" + str(i)],
             "OutputVars": ["x" + str(i)],
             "assumptions": [{"coefficients": {"u" + str(i): 1}, "constant": i}],
             "guarantees": [{"coefficients": {"x" + str(i): 1}, "constant": 1}],
         }
-        contracts.append(c)
+        contracts.append(c_i)
     if num == 1:
         return contracts[0]
     else:
@@ -23,25 +23,31 @@ def create_contracts(num=1):
 
 
 def test_read_contract():
+    """
+    Test read_contract
+    """
     # Create 1 contract and read it
-    c = create_contracts(1)
-    validate_iocontract(readContract(c))
-    # Create 5 contracts and read 
-    c = create_contracts(5)
-    io_contracts = readContract(c)
+    c_i = create_contracts(1)
+    validate_iocontract(read_contract(c_i))
+    # Create 5 contracts and read
+    c_i = create_contracts(5)
+    io_contracts = read_contract(c_i)
     assert len(io_contracts) == 5
     for io_c in io_contracts:
         assert isinstance(io_c, iocontract.IoContract)
         assert validate_iocontract(io_c)
     # Ensure that all contracts are dictionaries
-    c = [("InputVars", "u"), ("OutputVars", "x")]
+    c_i = [("InputVars", "u"), ("OutputVars", "x")]
     with pytest.raises(ValueError, match="A dict type contract is expected."):
-        readContract(c)
+        read_contract(c_i)
 
 def test_write_contract():
-    c = create_contracts(1)
-    io_c = readContract(c)
-    assert c == writeContract(io_c)
+    """
+    Test write_contract
+    """
+    c_i = create_contracts(1)
+    io_c = read_contract(c_i)
+    assert c_i == write_contract(io_c)
     all_contracts = create_contracts(5)
-    io_contracts = readContract(all_contracts)
-    assert all_contracts == writeContract(io_contracts)
+    io_contracts = read_contract(all_contracts)
+    assert all_contracts == write_contract(io_contracts)
