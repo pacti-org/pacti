@@ -1,3 +1,7 @@
+"""
+Consists of loader functions that can read a JSON dictionary contract
+or write a IOContract to a JSON file.
+"""
 import json
 
 from gear.iocontract import IoContract
@@ -5,7 +9,7 @@ from gear.iocontract.utils import getVarlist
 from gear.terms.polyhedra import PolyhedralTerm, PolyhedralTermList
 
 
-def readContract(contract):
+def read_contract(contract):
     """
     Converts a contract written as JSON dictionary to gear.iocontract type.
     If a list of JSON contracts are passed, a corresponding list of iocontracts is returned.
@@ -15,18 +19,19 @@ def readContract(contract):
     Returns:
         * iocontract (gear.IoContract): An input-output Gear contract object
     """
-    if type(contract) is not list:
+    if not isinstance(contract, list):
         contract = [contract]
     list_iocontracts = []
-    for c in contract:
-        if type(c) is not dict:
+    for c_i in contract:
+        if not isinstance(c_i, dict):
             raise ValueError("A dict type contract is expected.")
         reqs = []
         for key in ["assumptions", "guarantees"]:
-            reqs.append([PolyhedralTerm(term["coefficients"], term["constant"]) for term in c[key]])
+            reqs.append([PolyhedralTerm(term["coefficients"], \
+                        term["constant"]) for term in c_i[key]])
         iocont = IoContract(
-            inputVars=getVarlist(c["InputVars"]),
-            outputVars=getVarlist(c["OutputVars"]),
+            inputVars=getVarlist(c_i["InputVars"]),
+            outputVars=getVarlist(c_i["OutputVars"]),
             assumptions=PolyhedralTermList(list(reqs[0])),
             guarantees=PolyhedralTermList(list(reqs[1])),
         )
@@ -37,7 +42,7 @@ def readContract(contract):
         return list_iocontracts
 
 
-def writeContract(contract, filename: str=None):
+def write_contract(contract, filename: str=None):
     """
     Converts a gear.IoContract to a dictionary. If a list of iocontracts is passed,
     then a list of dicts is returned.
@@ -45,36 +50,39 @@ def writeContract(contract, filename: str=None):
     Arguments:
         * contract (gear.IoContract, list): Contract input of type IoContract
                                                        or list of IoContracts.
-        * filename (str, optional): Name of file to write the output contract, defaults to None in which case,
+        * filename (str, optional): Name of file to write the output contract,
+                                    defaults to None in which case,
                                     no file is written.
     Returns:
         * contract_dict (dict): A dictionary for the given IoContract
     """
-    if type(contract) is IoContract:
+    if isinstance(contract, IoContract):
         contract = [contract]
     contract_list = []
-    for c in contract:
-        if not isinstance(c, IoContract):
+    for c_i in contract:
+        if not isinstance(c_i, IoContract):
             return ValueError("A IoContract is expected.")
         contract_dict = {}
-        contract_dict["InputVars"] = [str(var) for var in c.inputvars]
-        contract_dict["OutputVars"] = [str(var) for var in c.outputvars]
+        contract_dict["InputVars"] = [str(var) for var in c_i.inputvars]
+        contract_dict["OutputVars"] = [str(var) for var in c_i.outputvars]
         contract_dict["assumptions"] = [
-            {"constant":term.constant, "coefficients": {str(k): v for k, v in term.variables.items()}}
-            for term in c.a.terms
+            {"constant":term.constant, \
+             "coefficients": {str(k): v for k, v in term.variables.items()}}
+            for term in c_i.a.terms
         ]
         contract_dict["guarantees"] = [
-            {"constant": term.constant, "coefficients": {str(k): v for k, v in term.variables.items()}}
-            for term in c.g.terms
+            {"constant": term.constant, \
+             "coefficients": {str(k): v for k, v in term.variables.items()}}
+            for term in c_i.g.terms
         ]
         contract_list.append(contract_dict)
     if filename:
-        with open(filename, "w+") as f:
+        with open(filename, "w+", encoding='utf-8') as f_i:
             count = 0
             for c_dict in contract_list:
-                f.write('"contract' + str(count) + '"' + "=")
-                json.dump(c_dict, f)
-                f.write("\n")
+                f_i.write('"contract' + str(count) + '"' + "=")
+                json.dump(c_dict, f_i)
+                f_i.write("\n")
                 count += 1
     if len(contract_list) == 1:
         return contract_list[0]
