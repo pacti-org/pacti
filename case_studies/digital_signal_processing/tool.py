@@ -3,12 +3,16 @@ import copy
 DEBUG = True
 
 class PortWordLength(object):
-    def __init__(self, n: int = 0, p: int = 0, e: float = None, a: float = None, name: str = ""):
+    def __init__(self, n: int = 0, p: int = 0, e: float = None, a: float = None, name: str = "", value = None):
         self._n = n
         self._p = p
         self._e = e
         self._a = a
         self._name = name
+        if value is not None:
+            assert(isinstance(value, str))
+            assert(len(value) == n)
+        self._value = value
     @property
     def n(self):
         return self._n
@@ -29,6 +33,13 @@ class PortWordLength(object):
     def name(self):
         return self._name
 
+    @property
+    def value(self):
+        return self._value
+
+    def set_value(self, value: str):
+        self._value = value
+
     def set_e(self, e: float):
         self._e = e
 
@@ -40,6 +51,9 @@ class PortWordLength(object):
 
     def to_string(self):
         return f"Port: {self.name}, (n, p) = ({self.n}, {self.p}), e = {self.e}, a = {self.a}"
+
+    def value_num(self):
+        return int(self.value, base=2) * 2 ** (- (self.n - self.p))
 
 
 def get_actual_possible_value(in_port: PortWordLength):
