@@ -21,6 +21,7 @@ from abc import ABC, abstractmethod
 from typing import List
 
 from gear.utils.lists import list_diff, list_intersection, list_union, lists_equal
+from gear.utils.string_contract import StrContract
 
 
 class Var:
@@ -72,6 +73,11 @@ class Term(ABC):
         Args:
             var: The variable that we are seeking in the current term.
         """
+
+    @classmethod
+    @abstractmethod
+    def from_string(cls, str_rep: str) -> Term:
+        pass
 
     @abstractmethod
     def __eq__(self, other):
@@ -243,7 +249,7 @@ class IoContract:
     """
 
     def __init__(
-        self, assumptions: TermList, guarantees: TermList, inputVars: List[Var], outputVars: List[Var]
+            self, assumptions: TermList, guarantees: TermList, inputVars: List[Var], outputVars: List[Var]
     ) -> None:
         # make sure the input & output variables are disjoint
         assert len(list_intersection(inputVars, outputVars)) == 0
@@ -279,15 +285,15 @@ class IoContract:
 
     def __str__(self):
         return (
-            "InVars: "
-            + str(self.inputvars)
-            + "\nOutVars:"
-            + str(self.outputvars)
-            + "\nA: "
-            + str(self.a)
-            + "\n"
-            + "G: "
-            + str(self.g)
+                "InVars: "
+                + str(self.inputvars)
+                + "\nOutVars:"
+                + str(self.outputvars)
+                + "\nA: "
+                + str(self.a)
+                + "\n"
+                + "G: "
+                + str(self.g)
         )
 
     def __le__(self, other):
@@ -363,8 +369,8 @@ class IoContract:
         selfinputconst = self.a.vars
         otherinputconst = other.a.vars
         cycle_present = (
-            len(list_intersection(self.inputvars, other.outputvars)) > 0
-            and len(list_intersection(other.inputvars, self.outputvars)) > 0
+                len(list_intersection(self.inputvars, other.outputvars)) > 0
+                and len(list_intersection(other.inputvars, self.outputvars)) > 0
         )
 
         assumptions_forbidden_vars = list_union(intvars, outputvars)
@@ -405,10 +411,10 @@ class IoContract:
         assumptions.simplify()
 
         # process guarantees
-        g1 = self.g.copy()
-        g2 = other.g.copy()
-        g1 = g1.deduce_with_context(g2, intvars)
-        g2 = g2.deduce_with_context(g1, intvars)
+        g1_t = self.g.copy()
+        g2_t = other.g.copy()
+        g1 = g1_t.deduce_with_context(g2_t, intvars)
+        g2 = g2_t.deduce_with_context(g1_t, intvars)
         allguarantees = g1 | g2
         allguarantees = allguarantees.deduce_with_context(assumptions, intvars)
 
