@@ -570,7 +570,8 @@ class PolyhedralTermList(TermList):
             contained in the calling termlist.
         """
         termlist = self.copy()
-        logging.debug("Deducing from term %s", self)
+        logging.debug("Deduce with context")
+        logging.debug("Deducing from terms %s", self)
         logging.debug("Context: %s", context)
         logging.debug("Vars to elim: %s", vars_to_elim)
         try:
