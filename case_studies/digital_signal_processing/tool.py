@@ -3,7 +3,7 @@ import copy
 DEBUG = True
 
 class PortWordLength(object):
-    def __init__(self, n: int = 0, p: int = 0, e: float = None, a: float = None, name: str = "", value = None):
+    def __init__(self, n: int = 0, p: int = 0, e: float = 0, a: float = None, name: str = "", value = None):
         self._n = n
         self._p = p
         self._e = e
@@ -19,7 +19,10 @@ class PortWordLength(object):
 
     @property
     def a(self):
-        return self._a
+        if self._value is None:
+            return get_actual_possible_value(self)
+        else:
+            return self.value_num()
     
     @property
     def p(self):
