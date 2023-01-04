@@ -51,7 +51,7 @@ class PolyhedralTerm(Term):
     @classmethod
     def from_string(cls, str_rep: str) -> PolyhedralTerm:
         expr = parse_expr(str_rep)
-        assert isinstance(expr, sympy.core.relational.LessThan)
+        # assert isinstance(expr, sympy.core.relational.LessThan)
         constant = expr.args[1]
         print(type(constant))
         variables = {}
@@ -570,7 +570,8 @@ class PolyhedralTermList(TermList):
             contained in the calling termlist.
         """
         termlist = self.copy()
-        logging.debug("Deducing from term %s", self)
+        logging.debug("Deduce with context")
+        logging.debug("Deducing from terms %s", self)
         logging.debug("Context: %s", context)
         logging.debug("Vars to elim: %s", vars_to_elim)
         try:
