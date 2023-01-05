@@ -21,7 +21,6 @@ from abc import ABC, abstractmethod
 from typing import List
 
 from gear.utils.lists import list_diff, list_intersection, list_union, lists_equal
-from gear.utils.string_contract import StrContract
 
 
 class Var:

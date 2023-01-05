@@ -50,8 +50,11 @@ class PolyhedralTerm(Term):
 
     @classmethod
     def from_string(cls, str_rep: str) -> PolyhedralTerm:
+        print(str_rep)
         expr = parse_expr(str_rep)
         # assert isinstance(expr, sympy.core.relational.LessThan)
+        print(str_rep)
+        print(expr)
         constant = expr.args[1]
         print(type(constant))
         variables = {}

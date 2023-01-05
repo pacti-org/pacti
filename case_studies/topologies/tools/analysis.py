@@ -1,6 +1,6 @@
 from collections import Counter
 
-from case_studies.topologies.grammar import Grammar
+# from case_studies.topologies.grammar import Grammar
 
 
 def get_clusters_consecutive_integers(list_of_integers: list[int]) -> list[tuple[int]]:
@@ -22,7 +22,7 @@ def get_clusters_consecutive_integers(list_of_integers: list[int]) -> list[tuple
     return clusters
 
 
-def get_best_direction_assignment(grammar: Grammar) -> dict[str, int]:
+def get_best_direction_assignment(grammar) -> dict[str, int]:
     direction_set_stats = Counter()
     direction_single_stats = Counter()
     for rule in grammar.rules:

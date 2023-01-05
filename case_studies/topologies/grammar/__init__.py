@@ -7,8 +7,10 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from aenum import Enum
-from matplotlib.figure import Figure
 
+from gear.utils.string_contract import StrContract
+from matplotlib.figure import Figure
+from .figures import DirectionsGrid
 from .symbols import (
     Connector,
     Empty,
@@ -20,6 +22,7 @@ from .symbols import (
     Wing,
     symbols_short,
 )
+from ..tools.analysis import get_clusters_consecutive_integers
 
 
 class Direction(Enum):
@@ -97,6 +100,29 @@ class Rule:
 
         return Rule(conditions=cs, production=pr, name=name)
 
+    def to_str_contract(self, assignment: dict):
+        constraints = []
+        input_symbols = set()
+        for symbol in self.conditions.get_all_symbol_types():
+            all_directions = self.conditions.get_all_directions_where_is_symbol(symbol)
+            all_directions_ints = list(map(lambda x: assignment[x], all_directions))
+            clusters = get_clusters_consecutive_integers(all_directions_ints)
+            input_symbol = f"{symbols_short[symbol]}in"
+            for cluster in clusters:
+                if cluster[0] != 0:
+                    constraints.append(f"-1 * {input_symbol} <= {cluster[0]}")
+                    input_symbols.add(input_symbol)
+                constraints.append(f"{input_symbol} <= {cluster[1]}")
+                input_symbols.add(input_symbol)
+            if self.production.connection is None:
+                dir_connection = "-1"
+            else:
+                dir_connection = assignment[self.production.connection.name]
+        output_symbol = f"{symbols_short[self.production.ego.symbol_type]}o"
+        guarantees = [f"{output_symbol} <= {dir_connection}",
+                      f"- {output_symbol} <= - {dir_connection}"]
+
+        return StrContract(assumptions=constraints, guarantees=guarantees, inputs=list(input_symbols), outputs=[output_symbol])
 
 @dataclass
 class ConditionSet:
