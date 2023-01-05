@@ -37,7 +37,7 @@ def readContract(contract):
         return list_iocontracts
 
 
-def writeContract(contract, filename: str=None):
+def writeContract(contract, filename: str = None):
     """
     Converts a gear.IoContract to a dictionary. If a list of iocontracts is passed,
     then a list of dicts is returned.
@@ -60,7 +60,7 @@ def writeContract(contract, filename: str=None):
         contract_dict["InputVars"] = [str(var) for var in c.inputvars]
         contract_dict["OutputVars"] = [str(var) for var in c.outputvars]
         contract_dict["assumptions"] = [
-            {"constant":term.constant, "coefficients": {str(k): v for k, v in term.variables.items()}}
+            {"constant": term.constant, "coefficients": {str(k): v for k, v in term.variables.items()}}
             for term in c.a.terms
         ]
         contract_dict["guarantees"] = [
