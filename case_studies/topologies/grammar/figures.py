@@ -60,7 +60,6 @@ def plot_3d_grid(
     color_xyz: np.array,
     edge_xyz: np.array = None,
 ) -> Figure:
-
     # Create the 3D figure
     fig = plt.figure()
     ax = fig.add_subplot(111, projection="3d")
@@ -86,7 +85,6 @@ def plot_3d_grid(
     fig.tight_layout()
     # fig.show()
     return fig
-
 
 
 fig = generate_empty_grid(2)

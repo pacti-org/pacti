@@ -18,7 +18,7 @@ DATA_INDENT = 1
 
 
 def parse_contracts(
-        file_path: Path,
+    file_path: Path,
 ) -> list[StrContract]:
     """Returns: assumptions, guarantees, inputs, outputs"""
 
@@ -41,12 +41,9 @@ def parse_contracts(
 
             if line == END_CONTRACT:
                 current_header = ""
-                contracts.append(StrContract(
-                    assumptions=assumptions,
-                    guarantees=guarantees,
-                    inputs=inputs,
-                    outputs=outputs
-                ))
+                contracts.append(
+                    StrContract(assumptions=assumptions, guarantees=guarantees, inputs=inputs, outputs=outputs)
+                )
                 assumptions = []
                 guarantees = []
                 inputs = []

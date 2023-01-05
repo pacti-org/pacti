@@ -7,22 +7,13 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from aenum import Enum
+from matplotlib.figure import Figure
 
 from gear.utils.string_contract import StrContract
-from matplotlib.figure import Figure
-from .figures import DirectionsGrid
-from .symbols import (
-    Connector,
-    Empty,
-    Fuselage,
-    Rotor,
-    Symbol,
-    SymbolType,
-    Unoccupied,
-    Wing,
-    symbols_short,
-)
+
 from ..tools.analysis import get_clusters_consecutive_integers
+from .figures import DirectionsGrid
+from .symbols import Connector, Empty, Fuselage, Rotor, Symbol, SymbolType, Unoccupied, Wing, symbols_short
 
 
 class Direction(Enum):
@@ -119,10 +110,12 @@ class Rule:
             else:
                 dir_connection = assignment[self.production.connection.name]
         output_symbol = f"{symbols_short[self.production.ego.symbol_type]}o"
-        guarantees = [f"{output_symbol} <= {dir_connection}",
-                      f"- {output_symbol} <= - {dir_connection}"]
+        guarantees = [f"{output_symbol} <= {dir_connection}", f"- {output_symbol} <= - {dir_connection}"]
 
-        return StrContract(assumptions=constraints, guarantees=guarantees, inputs=list(input_symbols), outputs=[output_symbol])
+        return StrContract(
+            assumptions=constraints, guarantees=guarantees, inputs=list(input_symbols), outputs=[output_symbol]
+        )
+
 
 @dataclass
 class ConditionSet:
@@ -133,7 +126,6 @@ class ConditionSet:
     top: set[SymbolType]
     rear: set[SymbolType]
     ego: SymbolType = SymbolType.UNOCCUPIED
-
 
     def get_all_symbol_types(self) -> set[SymbolType]:
         set_symbols = set()
@@ -170,13 +162,13 @@ class ConditionSet:
 
     def matches(self, state: LocalState):
         return (
-                state.ego.symbol_type in self.ego
-                and state.front.symbol_type in self.front
-                and state.bottom.symbol_type in self.bottom
-                and state.left.symbol_type in self.left
-                and state.right.symbol_type in self.right
-                and state.top.symbol_type in self.top
-                and state.rear.symbol_type in self.rear
+            state.ego.symbol_type in self.ego
+            and state.front.symbol_type in self.front
+            and state.bottom.symbol_type in self.bottom
+            and state.left.symbol_type in self.left
+            and state.right.symbol_type in self.right
+            and state.top.symbol_type in self.top
+            and state.rear.symbol_type in self.rear
         )
 
     def draw_condition(self):
@@ -196,9 +188,8 @@ class ConditionSet:
         )
         for elem in res:
             print(elem)
-        for (f, b, l, ri, t, re) in itertools.product(
-                *[list(self.front), list(self.bottom), list(self.left), list(self.right), list(self.top),
-                  list(self.rear)]
+        for f, b, l, ri, t, re in itertools.product(
+            *[list(self.front), list(self.bottom), list(self.left), list(self.right), list(self.top), list(self.rear)]
         ):
             conditions.append(Condition(f, b, l, ri, t, re))
         return conditions
@@ -255,5 +246,3 @@ class Production:
             connection = SymbolConnection(self.ego, getattr(state, self.connection.name))
             state.connections.add(connection)
         return state
-
-

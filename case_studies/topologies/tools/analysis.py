@@ -48,7 +48,7 @@ def get_best_direction_assignment(grammar) -> dict[str, int]:
     return best_assignment
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     get_clusters_consecutive_integers([0, 1, 2, 3, 4, 5])
     get_clusters_consecutive_integers([0, 1, 2, 4, 5])
     get_clusters_consecutive_integers([1, 2, 4, 5])

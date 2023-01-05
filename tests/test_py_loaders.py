@@ -1,7 +1,9 @@
+import pytest
+from test_iocontract import validate_iocontract
+
 import gear.iocontract as iocontract
 from gear.terms.polyhedra.loaders import readContract, writeContract
-from test_iocontract import validate_iocontract
-import pytest
+
 
 def create_contracts(num=1):
     """
@@ -26,7 +28,7 @@ def test_read_contract():
     # Create 1 contract and read it
     c = create_contracts(1)
     validate_iocontract(readContract(c))
-    # Create 5 contracts and read 
+    # Create 5 contracts and read
     c = create_contracts(5)
     io_contracts = readContract(c)
     assert len(io_contracts) == 5
@@ -37,6 +39,7 @@ def test_read_contract():
     c = [("InputVars", "u"), ("OutputVars", "x")]
     with pytest.raises(ValueError, match="A dict type contract is expected."):
         readContract(c)
+
 
 def test_write_contract():
     c = create_contracts(1)
