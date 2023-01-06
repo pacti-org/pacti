@@ -162,14 +162,25 @@ contract1 = readContract(c1)
 print(str(contract1))
 
 
-# p4 = PortWordLength(n=7, p=3, name="p4")
-# p5 = PortWordLength(n=5, p=2, e=0.03, value="11011", name="p5") # const
-# p6 = PortWordLength(n=5, p=3, name="p6")
-# c2 = form_contract_mult_const(in_port1=p4, in_port_const=p5, out_port=p6)
-# contract2 = readContract(c2)
-# print(str(contract2))
+p4 = PortWordLength(n=7, p=3, name="p4")
+p5 = PortWordLength(n=5, p=2, e=0.03, value="11011", name="p5") # const
+p6 = PortWordLength(n=5, p=3, name="p6")
+c2 = form_contract_mult_const(in_port1=p4, in_port_const=p5, out_port=p6)
+contract2 = readContract(c2)
+print(str(contract2))
 
 # exp
+
+c1 = {'InputVars': ['p1_a', 'p1_e', 'p2_a', 'p2_e'], 'OutputVars': ['p3_a', 'p3_e'], 'assumptions': [{'coefficients': {'p1_a': 1, 'p2_a': 1}, 'constant': 8}], 'guarantees': [{'coefficients': {'p1_e': -1, 'p2_e': -1, 'p3_e': 1}, 'constant': 0.125}, {'coefficients': {'p3_a': 1}, 'constant': 7.75}, {'coefficients': {'p3_a': 1}, 'constant': 11.625}, {'coefficients': {'p3_a': 1, 'p1_a': -1, 'p2_a': -1}, 'constant': 0}]}
+c2 = {'InputVars': ['p3_a', 'p3_e', 'p4_a', 'p4_e'], 'OutputVars': ['p5_a', 'p5_e'], 'assumptions': [{'coefficients': {'p3_a': 1, 'p4_a': 1}, 'constant': 8}], 'guarantees': [{'coefficients': {'p3_e': -1, 'p4_e': -1, 'p5_e': 1}, 'constant': 0.0625}, {'coefficients': {'p5_a': 1}, 'constant': 7.875}, {'coefficients': {'p5_a': 1}, 'constant': 15.6875}, {'coefficients': {'p5_a': 1, 'p3_a': -1, 'p4_a': -1}, 'constant': 0}]}
+contract1 = readContract(c1)
+contract2 = readContract(c2)
+print(c1)
+print(c2)
+print("Contract 1:\n" + str(contract1))
+print("Contract 2:\n" + str(contract2))
+contract_sys = contract1.compose(contract2)
+print("Contract Sys:\n" + str(contract_sys))
 # exp
 c1 = {'InputVars': [], 
 'OutputVars': ['t1', 't2'], 
