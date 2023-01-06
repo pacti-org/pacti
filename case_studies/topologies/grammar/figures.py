@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 import numpy as np
+from numpy.typing import NDArray
 from matplotlib import pyplot as plt
 from matplotlib.figure import Figure
 
@@ -56,10 +57,17 @@ def generate_empty_grid(size: int):
 
 
 def plot_3d_grid(
-    node_xyz: np.array,
-    color_xyz: np.array,
-    edge_xyz: np.array = None,
+        node_xyz: list | NDArray,
+        color_xyz: list | NDArray,
+        edge_xyz: list | NDArray = None,
 ) -> Figure:
+    if isinstance(node_xyz, list):
+        node_xyz = np.array(node_xyz)
+    if isinstance(color_xyz, list):
+        color_xyz = np.array(color_xyz)
+    if isinstance(edge_xyz, list):
+        edge_xyz = np.array(edge_xyz)
+
     # Create the 3D figure
     fig = plt.figure()
     ax = fig.add_subplot(111, projection="3d")
@@ -88,9 +96,9 @@ def plot_3d_grid(
 
 
 fig = generate_empty_grid(2)
-fig.savefig(f"grid4.pdf", transparent=True)
-
-g = DirectionsGrid()
-fig = g.plot
-
-fig.savefig(f"direction.pdf", transparent=True)
+# fig.savefig(f"grid4.pdf", transparent=True)
+#
+# g = DirectionsGrid()
+# fig = g.plot
+#
+# fig.savefig(f"direction.pdf", transparent=True)
