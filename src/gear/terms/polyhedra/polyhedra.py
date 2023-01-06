@@ -330,15 +330,16 @@ class PolyhedralTerm(Term):
             expression: The symbolic expression to be translated.
         """
         expression_coefficients = expression.as_coefficients_dict()
+        logging.debug(expression_coefficients)
         keys = list(expression_coefficients.keys())
         variable_dict = {}
         constant = 0
         for key in keys:
-            if key == 1:
-                constant = -expression_coefficients[key]
-            else:
+            if isinstance(key, str):
                 var = Var(str(key))
                 variable_dict[var] = expression_coefficients[key]
+            else:
+                constant = constant -expression_coefficients[key]*key
         return PolyhedralTerm(variable_dict, constant)
 
     @staticmethod
@@ -974,8 +975,10 @@ class PolyhedralTermList(TermList):
             raise ValueError("Could not transform term {}".format(term)) from e
         matrix_row_terms = PolyhedralTermList(list(matrix_row_terms))
         sols = PolyhedralTerm.solve_for_variables(matrix_row_terms, list(forbidden_vars))
+        logging.debug("Sols %s", sols)
 
         result = term.copy()
+        logging.debug("Result is %s", result)
         for var in sols.keys():
             result = result.substitute_variable(var, sols[var])
         logging.debug("Term %s transformed to %s", term, result)
