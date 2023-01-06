@@ -13,7 +13,8 @@ from gear.utils.string_contract import StrContract
 
 from ..tools.analysis import get_clusters_consecutive_integers
 from .figures import DirectionsGrid
-from .symbols import Connector, Empty, Fuselage, Rotor, Symbol, SymbolType, Unoccupied, Wing, symbols_short
+from .symbols import Connector, Empty, Fuselage, Rotor, Symbol, SymbolType, Unoccupied, Wing, symbols_short, \
+    symbols_colors, symbols_short_in, symbols_short_out
 
 
 class Direction(Enum):
@@ -91,14 +92,14 @@ class Rule:
 
         return Rule(conditions=cs, production=pr, name=name)
 
-    def to_str_contract(self, assignment: dict):
+    def to_str_contract(self, assignment: dict) -> StrContract:
         constraints = []
         input_symbols = set()
         for symbol in self.conditions.get_all_symbol_types():
             all_directions = self.conditions.get_all_directions_where_is_symbol(symbol)
             all_directions_ints = list(map(lambda x: assignment[x], all_directions))
             clusters = get_clusters_consecutive_integers(all_directions_ints)
-            input_symbol = f"{symbols_short[symbol]}in"
+            input_symbol = f"{symbols_short_in(symbol)}"
             for cluster in clusters:
                 if cluster[0] != 0:
                     constraints.append(f"-1 * {input_symbol} <= {cluster[0]}")
@@ -109,7 +110,7 @@ class Rule:
                 dir_connection = "-1"
             else:
                 dir_connection = assignment[self.production.connection.name]
-        output_symbol = f"{symbols_short[self.production.ego.symbol_type]}o"
+        output_symbol = f"{symbols_short_out(self.production.ego.symbol_type)}"
         guarantees = [f"{output_symbol} <= {dir_connection}", f"- {output_symbol} <= - {dir_connection}"]
 
         return StrContract(
@@ -208,12 +209,12 @@ class Condition:
     @property
     def plot(self) -> Figure:
         local_grid = DirectionsGrid(
-            front=symbols_short[self.front],
-            bottom=symbols_short[self.bottom],
-            left=symbols_short[self.left],
-            right=symbols_short[self.right],
-            top=symbols_short[self.top],
-            rear=symbols_short[self.rear],
+            front=symbols_colors[self.front],
+            bottom=symbols_colors[self.bottom],
+            left=symbols_colors[self.left],
+            right=symbols_colors[self.right],
+            top=symbols_colors[self.top],
+            rear=symbols_colors[self.rear],
         )
         return local_grid.plot
 
@@ -233,6 +234,35 @@ class LocalState:
     right: Symbol
     top: Symbol
     rear: Symbol
+
+    @property
+    def plot(self) -> Figure:
+        local_grid = DirectionsGrid(
+            ego=symbols_colors[self.front.symbol_type],
+            front=symbols_colors[self.front.symbol_type],
+            bottom=symbols_colors[self.bottom.symbol_type],
+            left=symbols_colors[self.left.symbol_type],
+            right=symbols_colors[self.right.symbol_type],
+            top=symbols_colors[self.top.symbol_type],
+            rear=symbols_colors[self.rear.symbol_type],
+        )
+        return local_grid.plot
+
+    def to_str_contract(self, assignment: dict) -> StrContract:
+        constraints = []
+        inputs = []
+        for direction, symbol in vars(self).items():
+            if direction == "ego":
+                continue
+            sym = symbols_short_in(symbol.symbol_type)
+            dir = assignment[direction]
+            constraints.append(f"{sym} <= {dir}")
+            constraints.append(f"-1 * {sym} <= -1 * {dir}")
+            inputs.append(sym)
+
+        return StrContract(assumptions=constraints, inputs=inputs)
+
+
 
 
 @dataclass

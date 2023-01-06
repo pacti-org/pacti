@@ -1,7 +1,5 @@
 from collections import Counter
 
-# from case_studies.topologies.grammar import Grammar
-
 
 def get_clusters_consecutive_integers(list_of_integers: list[int]) -> list[tuple[int]]:
     low_bound = sorted(list_of_integers)[0]
@@ -43,13 +41,5 @@ def get_best_direction_assignment(grammar) -> dict[str, int]:
 
     for i, (key, occurrences) in enumerate(direction_single_stats_ordered):
         best_assignment[key] = i
-        # print(f"{key}\t{occurrences}")
 
     return best_assignment
-
-
-if __name__ == "__main__":
-    get_clusters_consecutive_integers([0, 1, 2, 3, 4, 5])
-    get_clusters_consecutive_integers([0, 1, 2, 4, 5])
-    get_clusters_consecutive_integers([1, 2, 4, 5])
-    get_clusters_consecutive_integers([5])

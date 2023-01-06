@@ -26,6 +26,19 @@ symbols_short: dict = {
     SymbolType.WING: "W",
 }
 
+symbols_short_in = lambda x: f"{symbols_short[x]}in"
+symbols_short_out = lambda x: f"{symbols_short[x]}out"
+
+
+symbols_colors: dict = {
+    SymbolType.ANY: "white",
+    SymbolType.UNOCCUPIED: "white",
+    SymbolType.FUSELAGE: "red",
+    SymbolType.EMPTY: "black",
+    SymbolType.ROTOR: "green",
+    SymbolType.CONNECTOR: "grey",
+    SymbolType.WING: "blue",
+}
 
 @dataclass(frozen=True)
 class Symbol:
@@ -87,3 +100,6 @@ class Connector(TSymbol):
 @dataclass(frozen=True)
 class Empty(TSymbol):
     symbol_type = SymbolType.EMPTY
+
+
+
