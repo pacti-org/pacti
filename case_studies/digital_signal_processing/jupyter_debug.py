@@ -168,3 +168,24 @@ print(str(contract1))
 # c2 = form_contract_mult_const(in_port1=p4, in_port_const=p5, out_port=p6)
 # contract2 = readContract(c2)
 # print(str(contract2))
+
+# exp
+# exp
+c1 = {'InputVars': [], 
+'OutputVars': ['t1', 't2'], 
+'assumptions': [], 
+'guarantees': [ {'coefficients': {'t1': 1}, 'constant': 0.1}, 
+                {'coefficients': {'t1': -1}, 'constant': 0.},
+                {'coefficients': {'t2': 1}, 'constant': 0.2}, 
+                {'coefficients': {'t2': -1}, 'constant': 0.}
+              ]}
+
+c2 = {'InputVars': ['t1', 't2'], 
+'OutputVars': ['o1'], 
+'assumptions': [], 
+'guarantees': [{'coefficients': {'o1': 1, 't1': 1, 't2':-1}, 'constant': 10}]}
+
+contract1 = readContract(c1)
+contract2 = readContract(c2)
+system = contract1.compose(contract2)
+print(str(system))
