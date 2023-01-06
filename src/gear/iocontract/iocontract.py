@@ -21,7 +21,6 @@ from abc import ABC, abstractmethod
 from typing import List
 
 from gear.utils.lists import list_diff, list_intersection, list_union, lists_equal
-from gear.utils.string_contract import StrContract
 
 
 class Var:
@@ -249,7 +248,7 @@ class IoContract:
     """
 
     def __init__(
-            self, assumptions: TermList, guarantees: TermList, inputVars: List[Var], outputVars: List[Var]
+        self, assumptions: TermList, guarantees: TermList, inputVars: List[Var], outputVars: List[Var]
     ) -> None:
         # make sure the input & output variables are disjoint
         assert len(list_intersection(inputVars, outputVars)) == 0
@@ -285,15 +284,15 @@ class IoContract:
 
     def __str__(self):
         return (
-                "InVars: "
-                + str(self.inputvars)
-                + "\nOutVars:"
-                + str(self.outputvars)
-                + "\nA: "
-                + str(self.a)
-                + "\n"
-                + "G: "
-                + str(self.g)
+            "InVars: "
+            + str(self.inputvars)
+            + "\nOutVars:"
+            + str(self.outputvars)
+            + "\nA: "
+            + str(self.a)
+            + "\n"
+            + "G: "
+            + str(self.g)
         )
 
     def __le__(self, other):
@@ -369,8 +368,8 @@ class IoContract:
         selfinputconst = self.a.vars
         otherinputconst = other.a.vars
         cycle_present = (
-                len(list_intersection(self.inputvars, other.outputvars)) > 0
-                and len(list_intersection(other.inputvars, self.outputvars)) > 0
+            len(list_intersection(self.inputvars, other.outputvars)) > 0
+            and len(list_intersection(other.inputvars, self.outputvars)) > 0
         )
 
         assumptions_forbidden_vars = list_union(intvars, outputvars)
