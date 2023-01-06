@@ -1,8 +1,9 @@
 import json
 
-from gear.iocontract import IoContract
+from gear.iocontract import IoContract, Var
 from gear.iocontract.utils import getVarlist
-from gear.terms.polyhedra import PolyhedralTerm, PolyhedralTermList
+from gear.terms.polyhedra.polyhedra import PolyhedralTerm, PolyhedralTermList
+from gear.utils.string_contract import StrContract
 
 
 def readContract(contract):
@@ -80,3 +81,25 @@ def writeContract(contract, filename: str = None):
         return contract_list[0]
     else:
         return contract_list
+
+
+def string_to_polyhedra_contract(contract: StrContract) -> IoContract:
+    """
+        Converts a StrContract to a gear.iocontract type.
+        Arguments:
+            * contract (StrContract): a StrContract object
+        Returns:
+            * iocontract (gear.IoContract): An input-output Gear contract object
+        """
+    assumptions: list[PolyhedralTerm] = list(map(lambda x: PolyhedralTerm.from_string(x), contract.assumptions))
+    guarantees: list[PolyhedralTerm] = list(map(lambda x: PolyhedralTerm.from_string(x), contract.guarantees))
+    inputs: list[Var] = [Var(x) for x in contract.inputs]
+    outputs: list[Var] = [Var(x) for x in contract.outputs]
+
+    io_contract = IoContract(
+        assumptions=PolyhedralTermList(assumptions),
+        guarantees=PolyhedralTermList(guarantees),
+        inputVars=inputs,
+        outputVars=outputs,
+    )
+    return io_contract
