@@ -2,19 +2,18 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from . import Direction, Grammar, Rule, symbols_short
 from ..tools.analysis import get_clusters_consecutive_integers
+from . import Rule, symbols_short
 
 
 @dataclass
-class StrContract:
+class RuleContract:
     assumptions: list[str]
-    guarantees: str
+    guarantees: list[str]
     name: str = ""
 
     @classmethod
-    def from_rule(cls, rule: Rule, assignment: dict[str, int]) -> StrContract:
-
+    def from_rule(cls, rule: Rule, assignment: dict[str, int]) -> RuleContract:
         for symbol in rule.conditions.get_all_symbol_types():
             all_directions = rule.conditions.get_all_directions_where_is_symbol(symbol)
             all_directions_ints = list(map(lambda x: assignment[x], all_directions))
@@ -28,7 +27,9 @@ class StrContract:
                 dir_connection = "-1"
             else:
                 dir_connection = assignment[rule.production.connection.name]
-            guarantee = f"{symbols_short[rule.production.ego.symbol_type]}; {dir_connection};"
+            guarantees = [
+                f"{symbols_short[rule.production.ego.symbol_type]} <= {dir_connection}",
+                f"- {symbols_short[rule.production.ego.symbol_type]} <= - {dir_connection}",
+            ]
 
-            return cls(assumptions=constraints, guarantees=guarantee, name=rule.name)
-
+            return cls(assumptions=constraints, guarantees=guarantees, name=rule.name)

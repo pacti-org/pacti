@@ -1,8 +1,10 @@
 import gear.iocontract as iocontract
 from gear.terms.polyhedra.loaders import readContract
 
+
 def validate_iocontract(contract):
     return isinstance(contract, iocontract.IoContract)
+
 
 def create_contracts(num=1):
     """
@@ -21,7 +23,8 @@ def create_contracts(num=1):
         return contracts[0]
     else:
         return contracts
-    
+
+
 def test_validate_iocontract():
     c1, c2 = readContract(create_contracts(num=2))
     print(type(c1))
