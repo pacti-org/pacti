@@ -335,7 +335,8 @@ class PolyhedralTerm(Term):
         variable_dict = {}
         constant = 0
         for key in keys:
-            if isinstance(key, str):
+            logging.debug(type(key))
+            if isinstance(key, str) or isinstance(key, sympy.core.symbol.Symbol):
                 var = Var(str(key))
                 variable_dict[var] = expression_coefficients[key]
             else:
