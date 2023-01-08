@@ -93,28 +93,25 @@ class Rule:
         return Rule(conditions=cs, production=pr, name=name)
 
     def to_str_contract(self, assignment: dict) -> StrContract:
-        constraints = []
+        assumptions = []
+        guarantees = []
         input_symbols = set()
         for symbol in self.conditions.get_all_symbol_types():
             all_directions = self.conditions.get_all_directions_where_is_symbol(symbol)
             all_directions_ints = list(map(lambda x: assignment[x], all_directions))
             clusters = get_clusters_consecutive_integers(all_directions_ints)
             input_symbol = f"{symbols_short_in(symbol)}"
+            input_symbols.add(input_symbol)
             for cluster in clusters:
-                if cluster[0] != 0:
-                    constraints.append(f"-1 * {input_symbol} <= {cluster[0]}")
-                    input_symbols.add(input_symbol)
-                constraints.append(f"{input_symbol} <= {cluster[1]}")
-                input_symbols.add(input_symbol)
-            if self.production.connection is None:
-                dir_connection = "-1"
-            else:
-                dir_connection = assignment[self.production.connection.name]
-        output_symbol = f"{symbols_short_out(self.production.ego.symbol_type)}"
-        guarantees = [f"{output_symbol} <= {dir_connection}", f"- {output_symbol} <= - {dir_connection}"]
+                assumptions.extend(constraint_str_between_integers(input_symbol, cluster))
 
+        dir_connection = assignment["ego"]
+        if self.production.connection is not None:
+            dir_connection = assignment[self.production.connection.name]
+        output_symbol = f"{symbols_short_out(self.production.ego.symbol_type)}"
+        guarantees.extend(constraint_str_between_integers(output_symbol, (dir_connection, dir_connection)))
         return StrContract(
-            assumptions=constraints, guarantees=guarantees, inputs=list(input_symbols), outputs=[output_symbol]
+            assumptions=assumptions, guarantees=guarantees, inputs=list(input_symbols), outputs=[output_symbol]
         )
 
 
@@ -163,13 +160,13 @@ class ConditionSet:
 
     def matches(self, state: LocalState):
         return (
-            state.ego.symbol_type in self.ego
-            and state.front.symbol_type in self.front
-            and state.bottom.symbol_type in self.bottom
-            and state.left.symbol_type in self.left
-            and state.right.symbol_type in self.right
-            and state.top.symbol_type in self.top
-            and state.rear.symbol_type in self.rear
+                state.ego.symbol_type in self.ego
+                and state.front.symbol_type in self.front
+                and state.bottom.symbol_type in self.bottom
+                and state.left.symbol_type in self.left
+                and state.right.symbol_type in self.right
+                and state.top.symbol_type in self.top
+                and state.rear.symbol_type in self.rear
         )
 
     def draw_condition(self):
@@ -190,7 +187,8 @@ class ConditionSet:
         for elem in res:
             print(elem)
         for f, b, l, ri, t, re in itertools.product(
-            *[list(self.front), list(self.bottom), list(self.left), list(self.right), list(self.top), list(self.rear)]
+                *[list(self.front), list(self.bottom), list(self.left), list(self.right), list(self.top),
+                  list(self.rear)]
         ):
             conditions.append(Condition(f, b, l, ri, t, re))
         return conditions
@@ -225,6 +223,14 @@ class SymbolConnection:
     symbol_b: Symbol
 
 
+def constraint_str_between_integers(symbol: str, cluster: tuple[int, int]):
+    constraints = []
+    if cluster[0] != 0:
+        constraints.append(f"-1 * {symbol} <= -1 * {cluster[0]}")
+    constraints.append(f"{symbol} <= {cluster[1]}")
+    return constraints
+
+
 @dataclass
 class LocalState:
     ego: Symbol
@@ -234,6 +240,15 @@ class LocalState:
     right: Symbol
     top: Symbol
     rear: Symbol
+
+    def get_all_symbol_types_and_directions(self) -> dict[SymbolType, set[str]]:
+        ret = {}
+        for direction, symbol in self.__dict__.items():
+            if symbol.symbol_type not in ret.keys():
+                ret[symbol.symbol_type] = {direction}
+            else:
+                ret[symbol.symbol_type].add(direction)
+        return ret
 
     @property
     def plot(self) -> Figure:
@@ -250,19 +265,16 @@ class LocalState:
 
     def to_str_contract(self, assignment: dict) -> StrContract:
         constraints = []
-        inputs = []
-        for direction, symbol in vars(self).items():
-            if direction == "ego":
-                continue
-            sym = symbols_short_in(symbol.symbol_type)
-            dir = assignment[direction]
-            constraints.append(f"{sym} <= {dir}")
-            constraints.append(f"-1 * {sym} <= -1 * {dir}")
-            inputs.append(sym)
+        inputs = set()
+        for symbol, directions in self.get_all_symbol_types_and_directions().items():
+            all_directions_ints = list(map(lambda x: assignment[x], directions))
+            clusters = get_clusters_consecutive_integers(all_directions_ints)
+            input_symbol = f"{symbols_short_in(symbol)}"
+            inputs.add(input_symbol)
+            for cluster in clusters:
+                constraints.extend(constraint_str_between_integers(input_symbol, cluster))
 
-        return StrContract(assumptions=constraints, inputs=inputs)
-
-
+        return StrContract(assumptions=constraints, inputs=list(inputs))
 
 
 @dataclass
