@@ -50,8 +50,7 @@ lock:
 
 .PHONY: check
 check:
-	@bash scripts/multirun.sh duty check-quality check-types check-docs
-	@$(DUTY) check-dependencies
+	@$(DUTY) check-quality check-types check-docs check-dependencies
 
 .PHONY: uninstall
 uninstall:
