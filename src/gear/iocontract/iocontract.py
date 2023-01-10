@@ -73,6 +73,11 @@ class Term(ABC):
             var: The variable that we are seeking in the current term.
         """
 
+    @classmethod
+    @abstractmethod
+    def from_string(cls, str_rep: str) -> Term:
+        pass
+
     @abstractmethod
     def __eq__(self, other):
         pass
@@ -405,10 +410,10 @@ class IoContract:
         assumptions.simplify()
 
         # process guarantees
-        g1 = self.g.copy()
-        g2 = other.g.copy()
-        g1 = g1.deduce_with_context(g2, intvars)
-        g2 = g2.deduce_with_context(g1, intvars)
+        g1_t = self.g.copy()
+        g2_t = other.g.copy()
+        g1 = g1_t.deduce_with_context(g2_t, intvars)
+        g2 = g2_t.deduce_with_context(g1_t, intvars)
         allguarantees = g1 | g2
         allguarantees = allguarantees.deduce_with_context(assumptions, intvars)
 
