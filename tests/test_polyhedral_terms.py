@@ -115,7 +115,7 @@ def test_polyhedral_deduce_7():
     assert reference.terms == expected.terms
 
 
-#def test_polyhedral_abduce_8():
+# def test_polyhedral_abduce_8():
 #    # a term that can be simplified with one element of the context
 #    y = Var("y")
 #    z = Var("z")

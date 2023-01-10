@@ -1,8 +1,10 @@
 import gear.iocontract as iocontract
 from gear.terms.polyhedra.loaders import read_contract
 
+
 def validate_iocontract(contract):
     return isinstance(contract, iocontract.IoContract)
+
 
 def create_contracts(num=1):
     """
