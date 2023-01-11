@@ -1,7 +1,7 @@
-# Gear
+# Pacti
 
-Gear is a Python package for carrying out compositional system analysis and design. Gear represents components in a
-system using assume-guarantee specifications, or contracts. Gear's capabilities include the following:
+Pacti is a Python package for carrying out compositional system analysis and design. Pacti represents components in a
+system using assume-guarantee specifications, or contracts. Pacti's capabilities include the following:
 
 - Obtaining sensible system specifications from the specifications of the constituent subsystems.
 - Computing specifications of subsystems that need to be added to a design in order to meet an objective.
@@ -22,7 +22,7 @@ Components $M$ and $M'$ obey, respectively, contracts $C = (|i| \le 2, o \le i \
 
 `pacti examples/example.json result.json`
 
-Gear places the result of composition in the file result.json. The output is
+Pacti places the result of composition in the file result.json. The output is
 
 ```
    Composed contract:
@@ -65,7 +65,7 @@ The installation will provide access to the command-line tool `pacti` and to the
 
 ## Install Dependencies
 
-As Gear is in development, we use pdm manage the dependencies. To install run:
+As Pacti is in development, we use pdm manage the dependencies. To install run:
 
 ```bash
 pdm install

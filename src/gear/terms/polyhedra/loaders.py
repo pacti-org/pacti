@@ -11,10 +11,10 @@ def readContract(contract):
     Converts a contract written as JSON dictionary to pacti.iocontract type.
     If a list of JSON contracts are passed, a corresponding list of iocontracts is returned.
     Arguments:
-        * contract (dict, list): A JSON dict describing the contract in the Gear syntax.
+        * contract (dict, list): A JSON dict describing the contract in the Pacti syntax.
                                  May be a list of such dictionaries.
     Returns:
-        * iocontract (pacti.IoContract): An input-output Gear contract object
+        * iocontract (pacti.IoContract): An input-output Pacti contract object
     """
     if type(contract) is not list:
         contract = [contract]
@@ -89,7 +89,7 @@ def string_to_polyhedra_contract(contract: StrContract) -> IoContract:
         Arguments:
             * contract (StrContract): a StrContract object
         Returns:
-            * iocontract (pacti.IoContract): An input-output Gear contract object
+            * iocontract (pacti.IoContract): An input-output Pacti contract object
         """
     assumptions: list[PolyhedralTerm] = list(map(lambda x: PolyhedralTerm.from_string(x), contract.assumptions))
     guarantees: list[PolyhedralTerm] = list(map(lambda x: PolyhedralTerm.from_string(x), contract.guarantees))

@@ -12,7 +12,7 @@ The installation will provide access to the command-line tool `pacti` and to the
 
 ### Install Dependencies
 
-As Gear is in development, we use pdm manage the dependencies. To install run:
+As Pacti is in development, we use pdm manage the dependencies. To install run:
 
 ```bash
 pdm install
