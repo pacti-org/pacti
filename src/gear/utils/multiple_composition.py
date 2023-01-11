@@ -77,6 +77,9 @@ def composing_multiple_contracts(contracts: list[IoContract]) -> IoContract:
     dependency_tree.print_tree()
     while dependency_tree is not None:
         leaf = dependency_tree.get_leafs().pop()
+        print(main_contract)
+        print("composing with")
+        print(contracts_dict[leaf.data])
         main_contract.compose(contracts_dict[leaf.data])
         dependency_tree.remove_node(leaf)
 
