@@ -6,9 +6,9 @@ import os
 
 import click
 
-from gear.iocontract import IoContract
-from gear.iocontract.utils import getVarlist
-from gear.terms.polyhedra import PolyhedralTerm, PolyhedralTermList
+from pacti.iocontract import IoContract
+from pacti.iocontract.utils import getVarlist
+from pacti.terms.polyhedra import PolyhedralTerm, PolyhedralTermList
 
 
 class FileDataFormatException(Exception):
@@ -122,7 +122,7 @@ def main():
     FORMAT = "[%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
     FORMAT1 = "[%(levelname)s:%(funcName)s()] %(message)s"
     FORMAT2 = "%(asctime)s:%(levelname)s:%(name)s:%(message)s"
-    logging.basicConfig(filename="../gear.log", filemode="w", level=logging.INFO, format=FORMAT2)
+    logging.basicConfig(filename="../pacti.log", filemode="w", level=logging.INFO, format=FORMAT2)
     readInputFile()
 
 

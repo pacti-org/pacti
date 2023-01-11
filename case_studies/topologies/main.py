@@ -6,7 +6,7 @@ from case_studies.topologies.grammar.contracts import ContractsAlternatives
 from case_studies.topologies.grammar.grid import GridBuilder
 from case_studies.topologies.tools.analysis import get_best_direction_assignment
 from case_studies.topologies.tools.refinement_checking import find_refinements
-from gear.terms.polyhedra import string_to_polyhedra_contract
+from pacti.terms.polyhedra import string_to_polyhedra_contract
 
 grammar_rules_processed_path = Path(os.path.dirname(__file__)) / "grammar" / "grammar_rules.json"
 

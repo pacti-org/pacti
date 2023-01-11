@@ -8,7 +8,7 @@ from ipdb import set_trace as st
 from IPython.display import HTML
 from matplotlib.patches import Circle, Rectangle
 
-from gear.terms.polyhedra.loaders import readContract
+from pacti.terms.polyhedra.loaders import readContract
 
 # from copy import deepcopy
 

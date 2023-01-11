@@ -1,5 +1,5 @@
-import gear.iocontract as iocontract
-from gear.terms.polyhedra.loaders import readContract
+import pacti.iocontract as iocontract
+from pacti.terms.polyhedra.loaders import readContract
 
 
 def validate_iocontract(contract):

@@ -9,7 +9,7 @@ from pathlib import Path
 from aenum import Enum
 from matplotlib.figure import Figure
 
-from gear.utils.string_contract import StrContract
+from pacti.utils.string_contract import StrContract
 
 from ..tools.analysis import get_clusters_consecutive_integers
 from .figures import DirectionsGrid

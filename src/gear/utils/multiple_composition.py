@@ -1,7 +1,7 @@
 from __future__ import annotations
-from gear.iocontract import IoContract
-from gear.terms.polyhedra import string_to_polyhedra_contract
-from gear.utils.string_contract import StrContract
+from pacti.iocontract import IoContract
+from pacti.terms.polyhedra import string_to_polyhedra_contract
+from pacti.utils.string_contract import StrContract
 
 
 class Tree:

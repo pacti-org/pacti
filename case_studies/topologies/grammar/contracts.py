@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 
-from gear.iocontract import IoContract
+from pacti.iocontract import IoContract
 
 
 @dataclass

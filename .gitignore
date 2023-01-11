@@ -29,7 +29,7 @@ _minted-paper
 *.bcf
 *.vscode
 *.pyc
-gear.egg-info
+pacti.egg-info
 3.7
 *.doctree
 *.pickle

@@ -20,7 +20,7 @@ import logging
 from abc import ABC, abstractmethod
 from typing import List
 
-from gear.utils.lists import list_diff, list_intersection, list_union, lists_equal
+from pacti.utils.lists import list_diff, list_intersection, list_union, lists_equal
 
 
 class Var:
