@@ -551,6 +551,13 @@ class PolyhedralTermList(TermList):
             ) from e
         return termlist
 
+
+    def lacks_constraints(self):
+        """
+        Tell whether TermList is empty.
+        """
+        return len(self.terms) == 0
+
     def deduce_with_context(self, context: TermList, vars_to_elim: list) -> TermList:
         """
         Obtain a list of PolyhedralTerm instances lacking the indicated variables
@@ -646,6 +653,8 @@ class PolyhedralTermList(TermList):
         logging.debug("Verifying refinement")
         logging.debug("LH term: %s", self)
         logging.debug("RH term: %s", other)
+        if other.lacks_constraints():
+            return True
         variables, self_mat, self_cons, ctx_mat, ctx_cons = PolyhedralTermList.termlist_to_polytope(self, other)
         logging.debug("Polytope is \n%s", self_mat)
         result = PolyhedralTermList.verify_polytope_containment(self_mat, self_cons, ctx_mat, ctx_cons)
@@ -811,7 +820,7 @@ class PolyhedralTermList(TermList):
 
     @staticmethod
     def verify_polytope_containment(
-        a_l: np.array, b_l: np.array, a_r: np.array = np.array([[]]), b_r: np.array = np.array([])
+        a_l: np.array = np.array([[]]), b_l: np.array = np.array([]), a_r: np.array = np.array([[]]), b_r: np.array = np.array([])
     ) -> bool:
         """
         Say whether a polytope is contained in another. Both are given in their
@@ -878,10 +887,13 @@ class PolyhedralTermList(TermList):
             b:
                 Vector of H-representation of polytope to verify.
         """
+        logging.debug("Verifying polytope emptyness: a is %s ashape is %s, b is %s", a, a.shape, b)   
+        if len(a) == 0:
+            return False
         n, m = a.shape
+        if n*m == 0:
+            return False
         assert n == len(b)
-        if n * m == 0:
-            return True
         objective = np.zeros((1, m))
         res = linprog(c=objective, A_ub=a, b_ub=b, bounds=(None, None))  # ,options={'tol':0.000001})
         if res["status"] != 2:

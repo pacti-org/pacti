@@ -1,8 +1,8 @@
 from pathlib import Path
 import os
 
+from gear.terms.polyhedra import string_to_polyhedra_contract
 from gear.utils.parser import parse_contracts
-from gear.utils.polyhedra_contracts import create_polyhedrea_contarct
 
 contract_txt_path = Path(os.path.dirname(__file__)) / "contracts_example.txt"
 
@@ -12,6 +12,6 @@ io_contracts = []
 
 for c in string_contracts:
 
-    io_contract = create_polyhedrea_contarct(c)
+    io_contract = string_to_polyhedra_contract(c)
 
     print(io_contract)
