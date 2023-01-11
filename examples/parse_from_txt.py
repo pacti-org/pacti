@@ -1,8 +1,8 @@
 from pathlib import Path
 import os
 
-from gear.terms.polyhedra import string_to_polyhedra_contract
-from gear.utils.parser import parse_contracts
+from pacti.terms.polyhedra import string_to_polyhedra_contract
+from pacti.utils.parser import parse_contracts
 
 contract_txt_path = Path(os.path.dirname(__file__)) / "contracts_example.txt"
 

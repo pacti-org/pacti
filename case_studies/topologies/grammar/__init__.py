@@ -9,7 +9,7 @@ from pathlib import Path
 from aenum import Enum
 from matplotlib.figure import Figure
 
-from gear.utils.string_contract import StrContract
+from pacti.utils.string_contract import StrContract
 
 from .figures import DirectionsGrid
 from .symbols import Connector, Empty, Fuselage, Rotor, Symbol, SymbolType, Unoccupied, Wing, symbols_short, \

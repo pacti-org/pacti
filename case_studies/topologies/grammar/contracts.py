@@ -2,7 +2,7 @@ from __future__ import annotations
 import itertools
 from dataclasses import dataclass, field
 
-from gear.iocontract import IoContract
+from pacti.iocontract import IoContract
 
 
 @dataclass

@@ -1,5 +1,5 @@
 from case_studies.topologies.grammar.contracts import ContractsAlternatives
-from gear.iocontract import IoContract
+from pacti.iocontract import IoContract
 
 
 def find_refinements(state_contracts: ContractsAlternatives,
