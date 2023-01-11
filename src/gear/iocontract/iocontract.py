@@ -373,7 +373,7 @@ class IoContract:
         )
 
         assumptions_forbidden_vars = list_union(intvars, outputvars)
-        assert self.can_compose_with(other)
+        assert self.can_compose_with(other), "Cannot compose the following contracts due to incompatible IO profiles:\n %s \n %s" % (self, other)
         other_helps_self = len(list_intersection(other.outputvars, self.inputvars)) > 0
         self_helps_other = len(list_intersection(other.inputvars, self.outputvars)) > 0
         #
@@ -395,7 +395,7 @@ class IoContract:
         elif other_helps_self and not self_helps_other:
             logging.debug("Assumption computation: other provides context for self")
             new_a = self.a.abduce_with_context(other.a | other.g, assumptions_forbidden_vars)
-            if len(new_a.vars & assumptions_forbidden_vars) > 0:
+            if len(list_intersection(new_a.vars, assumptions_forbidden_vars)) > 0:
                 raise ValueError(
                     "The guarantees \n{}\n".format(other.g)
                     + "were insufficient to abduce the assumptions \n{}\n".format(self.a)
