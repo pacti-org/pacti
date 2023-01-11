@@ -17,7 +17,7 @@ if __name__ == "__main__":
     directions_assignment = get_best_direction_assignment(grammar)
     print(directions_assignment)
 
-    contracts: dict[str, ContractsAlternatives()] = {}
+    rule_contracts: dict[str, ContractsAlternatives()] = {}
 
     for rule in grammar.rules:
         str_contracts = rule.to_str_contract(directions_assignment)
@@ -25,7 +25,7 @@ if __name__ == "__main__":
         for contract in str_contracts:
             io_contract = string_to_polyhedra_contract(contract)
             contract_alternatives.contracts.add(io_contract)
-        contracts[rule.name] = contract_alternatives
+        rule_contracts[rule.name] = contract_alternatives
 
     grid = GridBuilder.generate(half_size=3)
     grid.plot.show()
@@ -34,8 +34,11 @@ if __name__ == "__main__":
 
     while not grid.symbol(grid.current_point).is_terminal:
         current_state = grid.local_state()
-        str_contract = current_state.to_str_contract(directions_assignment)
-        io_contract = string_to_polyhedra_contract(str_contract)
-        rules = find_refinements(io_contract, contracts)
+        str_contracts = current_state.to_str_contract(directions_assignment)
+        state_contracts = ContractsAlternatives()
+        for contract in str_contracts:
+            io_contract = string_to_polyhedra_contract(contract)
+            state_contracts.contracts.add(io_contract)
+        rules = find_refinements(state_contracts, rule_contracts)
         for refinement in rules:
             print(refinement)
