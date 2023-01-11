@@ -1,10 +1,10 @@
-site_name: "gear"
+site_name: "pacti"
 site_description: "Compositional system analysis and design using contracts."
-site_url: "https://FormalSystems.github.io/gear"
-repo_url: "https://github.com/FormalSystems/gear"
-repo_name: "gear"
+site_url: "https://FormalSystems.github.io/pacti"
+repo_url: "https://github.com/FormalSystems/pacti"
+repo_name: "pacti"
 site_dir: "site"
-watch: [README.md, CONTRIBUTING.md, CHANGELOG.md, src/gear]
+watch: [README.md, CONTRIBUTING.md, CHANGELOG.md, src/pacti]
 
 nav:
 - Home:

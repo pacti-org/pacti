@@ -1,5 +1,5 @@
 """
-IoContracts contains Gear's basic definitions: Var, Term, TemList, and
+IoContracts contains Pacti's basic definitions: Var, Term, TemList, and
 IoContract. Var creates variables; Term is an abstract class representing
 constraints; a TermList (also an abstract class) is a collection of terms
 semantically equivalent to the term which is the conjunction of all terms
@@ -20,7 +20,7 @@ import logging
 from abc import ABC, abstractmethod
 from typing import List
 
-from gear.utils.lists import list_diff, list_intersection, list_union, lists_equal
+from pacti.utils.lists import list_diff, list_intersection, list_union, lists_equal
 
 
 class Var:
