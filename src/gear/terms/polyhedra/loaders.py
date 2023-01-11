@@ -29,6 +29,8 @@ def read_contract(contract):
         for key in ["assumptions", "guarantees"]:
             reqs.append([PolyhedralTerm(term["coefficients"], \
                         float(term["constant"])) for term in c_i[key]])
+        print("ip",getVarlist(c_i["InputVars"]))
+        print("op",getVarlist(c_i["OutputVars"]))
         iocont = IoContract(
             inputVars=getVarlist(c_i["InputVars"]),
             outputVars=getVarlist(c_i["OutputVars"]),
