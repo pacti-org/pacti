@@ -92,27 +92,44 @@ class Rule:
 
         return Rule(conditions=cs, production=pr, name=name)
 
-    def to_str_contract(self, assignment: dict) -> StrContract:
-        assumptions = []
+    def to_str_contract(self, assignment: dict) -> list[StrContract]:
+        assumptions: list[list[list[[str]]]] = []
         guarantees = []
         input_symbols = set()
         for symbol in self.conditions.get_all_symbol_types():
+            a_symbol = []
             all_directions = self.conditions.get_all_directions_where_is_symbol(symbol)
             all_directions_ints = list(map(lambda x: assignment[x], all_directions))
             clusters = get_clusters_consecutive_integers(all_directions_ints)
             input_symbol = f"{symbols_short_in(symbol)}"
             input_symbols.add(input_symbol)
             for cluster in clusters:
-                assumptions.extend(constraint_str_between_integers(input_symbol, cluster))
+                new_a = constraint_str_between_integers(input_symbol, cluster)
+                a_symbol.append(constraint_str_between_integers(input_symbol, cluster))
+            assumptions.append(a_symbol)
 
+        or_assumptions = list(itertools.product(*assumptions))
+        new_assumptions_or: list[list[str]] = []
+        for a in or_assumptions:
+            new_assumptions = []
+            for elem_list in a:
+                new_assumptions.extend(elem_list)
+            new_assumptions_or.append(new_assumptions)
         dir_connection = assignment["ego"]
         if self.production.connection is not None:
             dir_connection = assignment[self.production.connection.name]
         output_symbol = f"{symbols_short_out(self.production.ego.symbol_type)}"
         guarantees.extend(constraint_str_between_integers(output_symbol, (dir_connection, dir_connection)))
-        return StrContract(
-            assumptions=assumptions, guarantees=guarantees, inputs=list(input_symbols), outputs=[output_symbol]
-        )
+
+        """Creating Contracts"""
+        str_contracts_or = []
+        for or_assumption in new_assumptions_or:
+            new_c = StrContract(
+                assumptions=or_assumption, guarantees=guarantees, inputs=list(input_symbols), outputs=[output_symbol]
+            )
+            str_contracts_or.append(new_c)
+
+        return str_contracts_or
 
 
 @dataclass
@@ -223,7 +240,7 @@ class SymbolConnection:
     symbol_b: Symbol
 
 
-def constraint_str_between_integers(symbol: str, cluster: tuple[int, int]):
+def constraint_str_between_integers(symbol: str, cluster: tuple[int, int]) -> list[str]:
     constraints = []
     if cluster[0] != 0:
         constraints.append(f"-1 * {symbol} <= -1 * {cluster[0]}")
