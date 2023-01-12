@@ -1,0 +1,41 @@
+{
+    "contract1":{
+        "InputVars":[
+            "u1"
+        ],
+        "OutputVars":[
+            "y"
+        ],
+        "assumptions":
+        [
+            {"coefficients":{"u1":1},
+            "constant":2}
+        ],
+        "guarantees":
+        [
+            {"coefficients":{"y":1, "u1":-2},
+            "constant":0}
+        ]
+    },
+    "contract2":{
+        "InputVars":[
+            "u1", "u2"
+        ],
+        "OutputVars":[
+            "y"
+        ],
+        "assumptions":
+        [
+            {"coefficients":{"u1":1},
+            "constant":10},
+             {"coefficients":{"u1":-1},
+            "constant":10}
+        ],
+        "guarantees":
+        [
+            {"coefficients":{"y":1, "u1":-10, "u2":10},
+            "constant":0}
+        ]
+    },
+    "operation":"quotient"
+}
