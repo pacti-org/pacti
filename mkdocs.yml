@@ -20,7 +20,7 @@ nav:
     - Simple script: _case_studies/evaluating_perception/simple_script.ipynb
   - Multiagent Path Planning:
     - Multi-agent Coordination: _case_studies/multiagent_coordination/multiagent.ipynb
-  #- Signal Processing in Digital ICs: case_studies/signal_processing_ic.md
+  - Signal Processing in Digital ICs: _case_studies/digital_signal_processing/dsp_wl.ipynb
   #- Synthetic Biology: case_studies/synthbio.md
 - Documentation: #reference/
   - IoContract: iocontract.md
