@@ -12,8 +12,8 @@ import sympy
 from scipy.optimize import linprog
 from sympy.parsing.sympy_parser import parse_expr
 
-from gear.iocontract import Term, TermList, Var
-from gear.utils.lists import list_diff, list_intersection, list_union
+from pacti.iocontract import Term, TermList, Var
+from pacti.utils.lists import list_diff, list_intersection, list_union
 
 
 class PolyhedralTerm(Term):

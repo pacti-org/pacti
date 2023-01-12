@@ -1,7 +1,7 @@
 from __future__ import annotations
-from gear.iocontract import IoContract
-from gear.terms.polyhedra import string_to_polyhedra_contract
-from gear.utils.string_contract import StrContract
+from pacti.iocontract import IoContract
+from pacti.terms.polyhedra import string_to_polyhedra_contract
+from pacti.utils.string_contract import StrContract
 
 
 class Tree:
@@ -88,32 +88,32 @@ def composing_multiple_contracts(contracts: list[IoContract]) -> IoContract:
 
 if __name__ == '__main__':
     c1 = StrContract(
-        assumptions=["x < 1"],
-        guarantees=["y > 0"],
+        assumptions=["x <= 1"],
+        guarantees=["y <= 0"],
         inputs=["x"],
         outputs=["y"]
     )
     c2 = StrContract(
-        assumptions=["y > 0"],
-        guarantees=["z > 0"],
+        assumptions=["y <= 0"],
+        guarantees=["z <= 0"],
         inputs=["y"],
         outputs=["z"]
     )
     c3 = StrContract(
-        assumptions=["y > 0"],
-        guarantees=["q > 0"],
+        assumptions=["y <= 0"],
+        guarantees=["q <= 0"],
         inputs=["y"],
         outputs=["q"]
     )
     c4 = StrContract(
-        assumptions=["q > 0"],
-        guarantees=["v > 0"],
+        assumptions=["q <= 0"],
+        guarantees=["v <= 0"],
         inputs=["q"],
         outputs=["v"]
     )
     c5 = StrContract(
-        assumptions=["y > 0"],
-        guarantees=["v > 0"],
+        assumptions=["y <= 0"],
+        guarantees=["v <= 0"],
         inputs=["y"],
         outputs=["v"]
     )

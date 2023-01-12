@@ -1,20 +1,20 @@
 import json
 
-from gear.iocontract import IoContract, Var
-from gear.iocontract.utils import getVarlist
-from gear.terms.polyhedra.polyhedra import PolyhedralTerm, PolyhedralTermList
-from gear.utils.string_contract import StrContract
+from pacti.iocontract import IoContract, Var
+from pacti.iocontract.utils import getVarlist
+from pacti.terms.polyhedra.polyhedra import PolyhedralTerm, PolyhedralTermList
+from pacti.utils.string_contract import StrContract
 
 
 def readContract(contract):
     """
-    Converts a contract written as JSON dictionary to gear.iocontract type.
+    Converts a contract written as JSON dictionary to pacti.iocontract type.
     If a list of JSON contracts are passed, a corresponding list of iocontracts is returned.
     Arguments:
-        * contract (dict, list): A JSON dict describing the contract in the Gear syntax.
+        * contract (dict, list): A JSON dict describing the contract in the Pacti syntax.
                                  May be a list of such dictionaries.
     Returns:
-        * iocontract (gear.IoContract): An input-output Gear contract object
+        * iocontract (pacti.IoContract): An input-output Pacti contract object
     """
     if type(contract) is not list:
         contract = [contract]
@@ -40,11 +40,11 @@ def readContract(contract):
 
 def writeContract(contract, filename: str = None):
     """
-    Converts a gear.IoContract to a dictionary. If a list of iocontracts is passed,
+    Converts a pacti.IoContract to a dictionary. If a list of iocontracts is passed,
     then a list of dicts is returned.
     If a filename is provided, a JSON file is written, otherwise only dictionaries are returned.
     Arguments:
-        * contract (gear.IoContract, list): Contract input of type IoContract
+        * contract (pacti.IoContract, list): Contract input of type IoContract
                                                        or list of IoContracts.
         * filename (str, optional): Name of file to write the output contract, defaults to None in which case,
                                     no file is written.
@@ -85,11 +85,11 @@ def writeContract(contract, filename: str = None):
 
 def string_to_polyhedra_contract(contract: StrContract) -> IoContract:
     """
-        Converts a StrContract to a gear.iocontract type.
+        Converts a StrContract to a pacti.iocontract type.
         Arguments:
             * contract (StrContract): a StrContract object
         Returns:
-            * iocontract (gear.IoContract): An input-output Gear contract object
+            * iocontract (pacti.IoContract): An input-output Pacti contract object
         """
     assumptions: list[PolyhedralTerm] = list(map(lambda x: PolyhedralTerm.from_string(x), contract.assumptions))
     guarantees: list[PolyhedralTerm] = list(map(lambda x: PolyhedralTerm.from_string(x), contract.guarantees))

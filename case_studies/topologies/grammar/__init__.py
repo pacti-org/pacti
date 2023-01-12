@@ -9,9 +9,8 @@ from pathlib import Path
 from aenum import Enum
 from matplotlib.figure import Figure
 
-from gear.utils.string_contract import StrContract
+from pacti.utils.string_contract import StrContract
 
-from ..tools.analysis import get_clusters_consecutive_integers
 from .figures import DirectionsGrid
 from .symbols import Connector, Empty, Fuselage, Rotor, Symbol, SymbolType, Unoccupied, Wing, symbols_short, \
     symbols_colors, symbols_short_in, symbols_short_out
@@ -92,27 +91,28 @@ class Rule:
 
         return Rule(conditions=cs, production=pr, name=name)
 
-    def to_str_contract(self, assignment: dict) -> StrContract:
-        assumptions = []
+    def to_str_contract(self, assignment: dict) -> list[StrContract]:
         guarantees = []
-        input_symbols = set()
-        for symbol in self.conditions.get_all_symbol_types():
-            all_directions = self.conditions.get_all_directions_where_is_symbol(symbol)
-            all_directions_ints = list(map(lambda x: assignment[x], all_directions))
-            clusters = get_clusters_consecutive_integers(all_directions_ints)
-            input_symbol = f"{symbols_short_in(symbol)}"
-            input_symbols.add(input_symbol)
-            for cluster in clusters:
-                assumptions.extend(constraint_str_between_integers(input_symbol, cluster))
+
+        from case_studies.topologies.tools.alternative_assumptions import get_alternative_assumptions
+        new_assumptions_or, input_symbols = get_alternative_assumptions(assignment,
+                                                                        self.conditions.get_all_symbol_types_and_directions())
 
         dir_connection = assignment["ego"]
         if self.production.connection is not None:
             dir_connection = assignment[self.production.connection.name]
         output_symbol = f"{symbols_short_out(self.production.ego.symbol_type)}"
         guarantees.extend(constraint_str_between_integers(output_symbol, (dir_connection, dir_connection)))
-        return StrContract(
-            assumptions=assumptions, guarantees=guarantees, inputs=list(input_symbols), outputs=[output_symbol]
-        )
+
+        """Creating Contracts"""
+        str_contracts_or = []
+        for or_assumption in new_assumptions_or:
+            new_c = StrContract(
+                assumptions=or_assumption, guarantees=guarantees, inputs=list(input_symbols), outputs=[output_symbol]
+            )
+            str_contracts_or.append(new_c)
+
+        return str_contracts_or
 
 
 @dataclass
@@ -139,6 +139,13 @@ class ConditionSet:
                 if symbol in symbol_types:
                     directions.add(direction)
         return directions
+
+    def get_all_symbol_types_and_directions(self) -> dict[SymbolType, set[str]]:
+        ret = {}
+        all_sym = self.get_all_symbol_types()
+        for sym in all_sym:
+            ret[sym] = self.get_all_directions_where_is_symbol(sym)
+        return ret
 
     @classmethod
     def from_dict(cls, conditions):
@@ -223,7 +230,7 @@ class SymbolConnection:
     symbol_b: Symbol
 
 
-def constraint_str_between_integers(symbol: str, cluster: tuple[int, int]):
+def constraint_str_between_integers(symbol: str, cluster: tuple[int, int]) -> list[str]:
     constraints = []
     if cluster[0] != 0:
         constraints.append(f"-1 * {symbol} <= -1 * {cluster[0]}")
@@ -244,6 +251,8 @@ class LocalState:
     def get_all_symbol_types_and_directions(self) -> dict[SymbolType, set[str]]:
         ret = {}
         for direction, symbol in self.__dict__.items():
+            if direction == "ego":
+                continue
             if symbol.symbol_type not in ret.keys():
                 ret[symbol.symbol_type] = {direction}
             else:
@@ -263,18 +272,21 @@ class LocalState:
         )
         return local_grid.plot
 
-    def to_str_contract(self, assignment: dict) -> StrContract:
-        constraints = []
-        inputs = set()
-        for symbol, directions in self.get_all_symbol_types_and_directions().items():
-            all_directions_ints = list(map(lambda x: assignment[x], directions))
-            clusters = get_clusters_consecutive_integers(all_directions_ints)
-            input_symbol = f"{symbols_short_in(symbol)}"
-            inputs.add(input_symbol)
-            for cluster in clusters:
-                constraints.extend(constraint_str_between_integers(input_symbol, cluster))
+    def to_str_contract(self, assignment: dict) -> list[StrContract]:
+        from case_studies.topologies.tools.alternative_assumptions import get_alternative_assumptions
 
-        return StrContract(assumptions=constraints, inputs=list(inputs))
+        new_assumptions_or, input_symbols = get_alternative_assumptions(assignment,
+                                                                        self.get_all_symbol_types_and_directions())
+
+        """Creating Contracts"""
+        str_contracts_or = []
+        for or_assumption in new_assumptions_or:
+            new_c = StrContract(
+                assumptions=or_assumption, inputs=list(input_symbols)
+            )
+            str_contracts_or.append(new_c)
+
+        return str_contracts_or
 
 
 @dataclass
