@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from gear.utils.string_contract import StrContract
+from pacti.utils.string_contract import StrContract
 
 # match_LTL_no_spaces = r"((?<=[G|F|X])(?=[^\s]))|((?<=[U])(?=[a-z]))|(?=[U])+(?<=[a-z])"
 # #  LTL to LateX
