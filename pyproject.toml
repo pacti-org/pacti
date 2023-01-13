@@ -22,7 +22,7 @@ dependencies = [
     "numpy>=1.24.1",
     "matplotlib>=3.6.2",
 ]
-requires-python = ">=3.10, <=3.11.1"
+requires-python = ">=3.8, <=3.11.1"
 
 [project.scripts]
 pacti = "pacti.cli:main"
@@ -91,6 +91,7 @@ typing = [
 security = ["safety>=2"]
 dev = [
     "certifi>=2022.9.24",
+    "tox-pdm>=0.6.1",
 ]
 
 [tool.black]
