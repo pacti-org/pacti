@@ -10,7 +10,6 @@ import logging
 import numpy as np
 import sympy
 from scipy.optimize import linprog
-from sympy.parsing.sympy_parser import parse_expr
 
 from pacti.iocontract import Term, TermList, Var
 from pacti.utils.lists import list_diff, list_intersection, list_union
@@ -48,27 +47,6 @@ class PolyhedralTerm(Term):
                     variable_dict[key] = val
         self.variables = variable_dict
         self.constant = constant
-
-    @classmethod
-    def from_string(cls, str_rep: str) -> PolyhedralTerm:
-        expr = parse_expr(str_rep)
-        constant = expr.args[1]
-        variables = {}
-        for k, v in expr.args[0].as_coefficients_dict().items():
-            if k == 1:
-                pass
-            elif isinstance(k, sympy.core.symbol.Symbol):
-                variables[str(k)] = v
-            elif isinstance(k, sympy.core.mul.Mul):
-                if isinstance(k.args[1], k, sympy.core.symbol.Symbol):
-                    print(k.args[0])
-                    variables[str(k.args[1])] = k.args[0]
-                elif isinstance(k.args[0], k, sympy.core.symbol.Symbol):
-                    print(k.args[1])
-                    variables[str(k.args[0])] = k.args[1]
-            else:
-                raise ValueError
-        return cls(variables, constant)
 
     def __eq__(self, other):
         match = self.variables.keys() == other.variables.keys()
@@ -422,65 +400,6 @@ class PolyhedralTermList(TermList):
     A TermList of PolyhedralTerm instances.
     """
 
-    @classmethod
-    def from_str(cls, str_rep_list: list[str]):
-        terms = [PolyhedralTerm.from_string(str_rep) for str_rep in str_rep_list]
-        return cls(terms)
-
-    # This routine accepts a term that will be adbuced with the help of other
-    # terms The abduction aims to eliminate from the term appearances of the
-    # variables contained in vars_to_elim
-    def _transform2(self, context: TermList, vars_to_elim: list, polarity):
-        logging.debug("Context terms: %s", context)
-        logging.debug("Variables to eliminate: %s", vars_to_elim)
-        helpers = context | self
-        term_list = list(self.terms)
-        for i, term in enumerate(term_list):
-            logging.debug("Transforming %s", term)
-            vars_elim = {}
-            for var in term.vars & vars_to_elim:
-                vars_elim[var] = term.get_polarity(var, polarity)
-            logging.debug("Vars to elim: %s", vars_elim)
-            vars_to_cover = list(vars_elim.keys())
-            terms_to_use = PolyhedralTermList(list())
-
-            # now we have to choose from the helpers any terms that we can use
-            # to eliminate these variables
-            for helper in helpers.terms:
-                if helper != term:
-                    matching_vars = helper.get_matching_vars(vars_elim)
-                    if len(matching_vars & vars_to_cover) > 0 and len(helper.vars & (vars_to_elim - term.vars)) == 0:
-                        vars_to_cover = vars_to_cover - matching_vars
-                        terms_to_use.terms.add(helper)
-                        helpers.terms.remove(helper)
-                        if len(vars_to_cover) == 0:
-                            break
-
-            logging.debug("TermsToUse: %s", terms_to_use)
-
-            # as long as we have more "to_elim" variables than terms, we seek
-            # additional terms. For now, we throw an error if we don't have
-            # enough terms
-            assert len(terms_to_use.terms) == len(terms_to_use.vars & vars_to_elim)
-
-            if len(term.vars - vars_to_elim) == 0 and len(terms_to_use.vars - vars_to_elim) == 0:
-                term_list[i] = term
-                continue
-
-            sols = PolyhedralTerm.solve_for_variables(terms_to_use, vars_to_elim)
-            logging.debug(sols)
-            for var in sols.keys():
-                term = term.substitute_variable(var, sols[var])
-            term_list[i] = term
-
-            logging.debug("After subst: %s", term)
-
-        self.terms = list(term_list)
-
-        # the last step needs to be a simplification
-        logging.debug("Ending transformation with simplification")
-        self.simplify(context)
-
     def _transform(self, context: TermList, vars_to_elim: list, abduce: bool):
         logging.debug("Transforming: %s", self)
         logging.debug("Context terms: %s", context)
@@ -488,7 +407,7 @@ class PolyhedralTermList(TermList):
         term_list = list(self.terms)
         new_terms = list()
         for term in term_list:
-            helpers = (context | self) - PolyhedralTermList({term})
+            helpers = (context | self) - PolyhedralTermList([term])
             try:
                 new_term = PolyhedralTermList.transform_term(term, helpers, vars_to_elim, abduce)
             except ValueError as e:
@@ -635,7 +554,7 @@ class PolyhedralTermList(TermList):
         self.terms = PolyhedralTermList.polytope_to_termlist(a_red, b_red, variables).terms
         logging.debug("Back to terms: \n%s", self)
 
-    def refines(self, other: PolyhedralTermList) -> bool:
+    def refines(self, other: PolyhedralTermList) -> bool:  # type: ignore[override]
         """
         Tells whether the argument is a larger specification, i.e., compute self
         <= other.
@@ -697,15 +616,12 @@ class PolyhedralTermList(TermList):
             a_h.append(pol)
             b_h.append(coeff)
 
-        a = np.array(a)
-        b = np.array(b)
         if len(context.terms) == 0:
-            a_h = np.array([[]])
+            a_h_ret = np.array([[]])
         else:
-            a_h = np.array(a_h)
-        b_h = np.array(b_h)
+            a_h_ret = np.array(a_h)
         logging.debug("a is \n%s", a)
-        return variables, a, b, a_h, b_h
+        return variables, np.array(a), np.array(b), a_h_ret, np.array(b_h)
 
     @staticmethod
     def polytope_to_termlist(matrix, vector, variables: list[Var]) -> PolyhedralTermList:
@@ -743,7 +659,9 @@ class PolyhedralTermList(TermList):
         return PolyhedralTermList(list(term_list))
 
     @staticmethod
-    def reduce_polytope(a: np.array, b: np.array, a_help: np.array = np.array([[]]), b_help: np.array = np.array([])):
+    def reduce_polytope(
+        a: np.ndarray, b: np.ndarray, a_help: np.ndarray = np.array([[]]), b_help: np.ndarray = np.array([])
+    ):
         """
         Eliminate redundant constraints from the H-representation of a given
         polytope using as context a given polytope.
@@ -814,10 +732,10 @@ class PolyhedralTermList(TermList):
 
     @staticmethod
     def verify_polytope_containment(
-        a_l: np.array = np.array([[]]),
-        b_l: np.array = np.array([]),
-        a_r: np.array = np.array([[]]),
-        b_r: np.array = np.array([]),
+        a_l: np.ndarray = np.array([[]]),
+        b_l: np.ndarray = np.array([]),
+        a_r: np.ndarray = np.array([[]]),
+        b_r: np.ndarray = np.array([]),
     ) -> bool:
         """
         Say whether a polytope is contained in another. Both are given in their
@@ -859,7 +777,7 @@ class PolyhedralTermList(TermList):
             logging.debug("b_r is \n%s", b_r)
 
             a_opt = np.concatenate((a_l, constraint), axis=0)
-            b_opt = np.concatenate((b_l, [b_temp]))
+            b_opt = np.concatenate((b_l, np.array([b_temp])))
 
             res = linprog(c=objective, A_ub=a_opt, b_ub=b_opt, bounds=(None, None))  # ,options={'tol':0.000001})
             b_temp -= 1
@@ -874,7 +792,7 @@ class PolyhedralTermList(TermList):
         return is_refinement
 
     @staticmethod
-    def is_polytope_empty(a: np.array, b: np.array) -> bool:
+    def is_polytope_empty(a: np.ndarray, b: np.ndarray) -> bool:
         """
         Say whether a polytope is empty.
 
@@ -903,7 +821,7 @@ class PolyhedralTermList(TermList):
         forbidden_vars = list_intersection(vars_to_elim, term.vars)
         other_forbibben_vars = list_diff(vars_to_elim, term.vars)
         n = len(forbidden_vars)
-        matrix_row_terms = list()
+        matrix_row_terms = []  # type: list[PolyhedralTerm]
         partial_sums = [0.0] * n
         transform_coeff = -1
         if abduce:

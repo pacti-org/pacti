@@ -73,11 +73,6 @@ class Term(ABC):
             var: The variable that we are seeking in the current term.
         """
 
-    @classmethod
-    @abstractmethod
-    def from_string(cls, str_rep: str) -> Term:
-        pass
-
     @abstractmethod
     def __eq__(self, other):
         pass

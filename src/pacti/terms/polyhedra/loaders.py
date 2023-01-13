@@ -1,5 +1,8 @@
 import json
 
+import sympy
+from sympy.parsing.sympy_parser import parse_expr
+
 from pacti.iocontract import IoContract, Var
 from pacti.iocontract.utils import getVarlist
 from pacti.terms.polyhedra.polyhedra import PolyhedralTerm, PolyhedralTermList
@@ -38,7 +41,7 @@ def readContract(contract):
         return list_iocontracts
 
 
-def writeContract(contract, filename: str = None):
+def writeContract(contract: IoContract, filename: str = None):
     """
     Converts a pacti.IoContract to a dictionary. If a list of iocontracts is passed,
     then a list of dicts is returned.
@@ -83,6 +86,32 @@ def writeContract(contract, filename: str = None):
         return contract_list
 
 
+def pt_from_string(str_rep: str) -> PolyhedralTerm:
+    # print(str_rep)
+    expr = parse_expr(str_rep)
+    # assert isinstance(expr, sympy.core.relational.LessThan)
+    # print(str_rep)
+    # print(expr)
+    constant = expr.args[1]
+    # print(type(constant))
+    variables = {}
+    for k, v in expr.args[0].as_coefficients_dict().items():
+        if k == 1:
+            pass
+        elif isinstance(k, sympy.core.symbol.Symbol):
+            variables[str(k)] = v
+        elif isinstance(k, sympy.core.mul.Mul):
+            if isinstance(k.args[1], k, sympy.core.symbol.Symbol):
+                print(k.args[0])
+                variables[str(k.args[1])] = k.args[0]
+            elif isinstance(k.args[0], k, sympy.core.symbol.Symbol):
+                print(k.args[1])
+                variables[str(k.args[0])] = k.args[1]
+        else:
+            raise ValueError
+    return PolyhedralTerm(variables, constant)
+
+
 def string_to_polyhedra_contract(contract: StrContract) -> IoContract:
     """
     Converts a StrContract to a pacti.iocontract type.
@@ -91,8 +120,8 @@ def string_to_polyhedra_contract(contract: StrContract) -> IoContract:
     Returns:
         * iocontract (pacti.IoContract): An input-output Pacti contract object
     """
-    assumptions: list[PolyhedralTerm] = list(map(lambda x: PolyhedralTerm.from_string(x), contract.assumptions))
-    guarantees: list[PolyhedralTerm] = list(map(lambda x: PolyhedralTerm.from_string(x), contract.guarantees))
+    assumptions: list[PolyhedralTerm] = list(map(lambda x: pt_from_string(x), contract.assumptions))
+    guarantees: list[PolyhedralTerm] = list(map(lambda x: pt_from_string(x), contract.guarantees))
     inputs: list[Var] = [Var(x) for x in contract.inputs]
     outputs: list[Var] = [Var(x) for x in contract.outputs]
 
