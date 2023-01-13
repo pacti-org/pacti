@@ -147,6 +147,17 @@ def check_quality(ctx, files=PY_SRC):
 
 
 @duty
+def tox(ctx):
+    """
+    Run tox
+
+    Arguments:
+        ctx: The context instance (passed automatically).
+    """
+    ctx.run(f"tox run", title="Running tox", pty=PTY, capture=False)
+
+
+@duty
 def check_dependencies(ctx):
     """
     Check for vulnerabilities in dependencies.
