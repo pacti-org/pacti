@@ -1,2 +1,2 @@
-from .loaders import readContract, writeContract, string_to_polyhedra_contract
+from .loaders import readContract, string_to_polyhedra_contract, writeContract
 from .polyhedra import PolyhedralTerm, PolyhedralTermList
