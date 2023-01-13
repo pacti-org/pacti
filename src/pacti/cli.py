@@ -122,10 +122,8 @@ def readInputFile(inputfilename, outputfilename):
 
 
 def main():
-    FORMAT = "[%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
-    FORMAT1 = "[%(levelname)s:%(funcName)s()] %(message)s"
-    FORMAT2 = "%(asctime)s:%(levelname)s:%(name)s:%(message)s"
-    logging.basicConfig(filename="../pacti.log", filemode="w", level=logging.INFO, format=FORMAT2)
+    FORMAT = "%(asctime)s:%(levelname)s:%(name)s:%(message)s"
+    logging.basicConfig(filename="../pacti.log", filemode="w", level=logging.INFO, format=FORMAT)
     readInputFile()
 
 
