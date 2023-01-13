@@ -73,11 +73,6 @@ class Term(ABC):
             var: The variable that we are seeking in the current term.
         """
 
-    @classmethod
-    @abstractmethod
-    def from_string(cls, str_rep: str) -> Term:
-        pass
-
     @abstractmethod
     def __eq__(self, other):
         pass
@@ -373,7 +368,9 @@ class IoContract:
         )
 
         assumptions_forbidden_vars = list_union(intvars, outputvars)
-        assert self.can_compose_with(other), "Cannot compose the following contracts due to incompatible IO profiles:\n %s \n %s" % (self, other)
+        assert self.can_compose_with(
+            other
+        ), "Cannot compose the following contracts due to incompatible IO profiles:\n %s \n %s" % (self, other)
         other_helps_self = len(list_intersection(other.outputvars, self.inputvars)) > 0
         self_helps_other = len(list_intersection(other.inputvars, self.outputvars)) > 0
         #
