@@ -69,7 +69,7 @@ class PolyhedralTerm(Term):
         return "<Term {0}>".format(self)
 
     def __add__(self, other):
-        varlist = list_union(self.variables, other.variables)
+        varlist = list_union(self.vars, other.vars)
         variables = {}
         for var in varlist:
             variables[var] = self.get_coefficient(var) + other.get_coefficient(var)
@@ -79,7 +79,7 @@ class PolyhedralTerm(Term):
         return PolyhedralTerm(self.variables, self.constant)
 
     @property
-    def variables(self):
+    def vars(self):
         """
         Variables appearing in term with a nonzero coefficient.
 
@@ -91,7 +91,7 @@ class PolyhedralTerm(Term):
         varlist = self.variables.keys()
         return list(varlist)
 
-    def contains_var(self, variable_to_seek):
+    def contains_var(self, var):
         """
         Tell whether term contains a given variable.
 
@@ -102,7 +102,7 @@ class PolyhedralTerm(Term):
             `True` if the syntax of the term refers to the given variable;
             `False` otherwise.
         """
-        return variable_to_seek in self.variables
+        return var in self.vars
 
     def get_coefficient(self, var):
         """
@@ -285,7 +285,7 @@ class PolyhedralTerm(Term):
                 to sympy's data structure.
         """
         ex = -term.constant
-        for var in term.variables:
+        for var in term.vars:
             sv = sympy.symbols(var.name)
             ex += sv * term.get_coefficient(var)
         return ex
@@ -381,8 +381,8 @@ class PolyhedralTerm(Term):
             A dictionary mapping variables to their solutions. The solutions are
             expressed as PolyhedralTerm instances.
         """
-        logging.debug("GetVals: %s Variables: %s", context, vars_to_elim)
-        vars_to_solve = list_intersection(context.variables, vars_to_elim)
+        logging.debug("GetVals: %s Vars: %s", context, vars_to_elim)
+        vars_to_solve = list_intersection(context.vars, vars_to_elim)
         assert len(context.terms) == len(vars_to_solve)
         exprs = [PolyhedralTerm.to_symbolic(term) for term in context.terms]
         logging.debug("Solving %s", exprs)
@@ -447,7 +447,7 @@ class PolyhedralTermList(TermList):
         termlist = self.copy()
         logging.debug("Abducing from terms: %s", self)
         logging.debug("Context: %s", context)
-        logging.debug("Variables to elim: %s", vars_to_elim)
+        logging.debug("Vars to elim: %s", vars_to_elim)
         try:
             termlist.simplify(context)
         except ValueError as e:
@@ -499,7 +499,7 @@ class PolyhedralTermList(TermList):
         logging.debug("Deduce with context")
         logging.debug("Deducing from terms %s", self)
         logging.debug("Context: %s", context)
-        logging.debug("Variables to elim: %s", vars_to_elim)
+        logging.debug("Vars to elim: %s", vars_to_elim)
         try:
             termlist.simplify(context)
         except ValueError as e:
@@ -601,7 +601,7 @@ class PolyhedralTermList(TermList):
             A tuple `variables, A, b, a_h, b_h` consisting of the variable
             order and the matrix-vector pairs for the terms and the context.
         """
-        variables = list(list_union(terms.variables, context.variables))
+        variables = list(list_union(terms.vars, context.vars))
         a = []
         b = []
         for term in terms.terms:
@@ -818,8 +818,8 @@ class PolyhedralTermList(TermList):
 
     @staticmethod
     def get_kaykobad_context(term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, abduce: bool):
-        forbidden_vars = list_intersection(vars_to_elim, term.variables)
-        other_forbibben_vars = list_diff(vars_to_elim, term.variables)
+        forbidden_vars = list_intersection(vars_to_elim, term.vars)
+        other_forbibben_vars = list_diff(vars_to_elim, term.vars)
         n = len(forbidden_vars)
         matrix_row_terms = []  # type: list[PolyhedralTerm]
         partial_sums = [0.0] * n
@@ -840,7 +840,7 @@ class PolyhedralTermList(TermList):
                 for var in other_forbibben_vars:
                     if context_term.get_coefficient(var) != 0:
                         term_is_invalid = True
-                        logging.debug("Term contains other forbidden variables")
+                        logging.debug("Term contains other forbidden vars")
                         break
                 if term_is_invalid:
                     continue
@@ -875,7 +875,7 @@ class PolyhedralTermList(TermList):
                         break
                 if not term_is_invalid:
                     matrix_contains_others = (
-                        matrix_contains_others or len(list_diff(context_term.variables, forbidden_vars)) > 0
+                        matrix_contains_others or len(list_diff(context_term.vars, forbidden_vars)) > 0
                     )
                     row_found = True
                     for j in range(n):
@@ -884,7 +884,7 @@ class PolyhedralTermList(TermList):
                     break
             if not row_found:
                 raise ValueError("Could not find the {}th row of matrix".format(i))
-        if (not matrix_contains_others) and len(list_diff(term.variables, vars_to_elim)) == 0:
+        if (not matrix_contains_others) and len(list_diff(term.vars, vars_to_elim)) == 0:
             logging.debug("Hola2")
             raise ValueError("Found context will produce empty transformation")
         logging.debug("Matrix row terms %s", matrix_row_terms)
