@@ -251,22 +251,23 @@ class IoContract:
         self, assumptions: TermList, guarantees: TermList, inputVars: List[Var], outputVars: List[Var]
     ) -> None:
         # make sure the input & output variables are disjoint
-        assert len(list_intersection(inputVars, outputVars)) == 0
+        if len(list_intersection(inputVars, outputVars)) != 0:
+            raise ValueError(
+                "The following variables appear in inputs and outputs: %s" % (list_intersection(inputVars, outputVars))
+            )
         # make sure the assumptions only contain input variables
-        assert len(list_diff(assumptions.vars, inputVars)) == 0, print(
-            "A: " + str(assumptions.vars) + " Input vars: " + str(inputVars)
-        )
-        # make sure the guaranteees only contain input or output variables
-        assert len(list_diff(guarantees.vars, list_union(inputVars, outputVars))) == 0, print(
-            "G: "
-            + str(guarantees)
-            + " G Vars: "
-            + str(guarantees.vars)
-            + " Input: "
-            + str(inputVars)
-            + " Output: "
-            + str(outputVars)
-        )
+        if len(list_diff(assumptions.vars, inputVars)) != 0:
+            raise ValueError(
+                "The following variables appear in the assumptions but are not inputs: %s"
+                % (list_diff(assumptions.vars, inputVars))
+            )
+        # make sure the guarantees only contain input or output variables
+        if len(list_diff(guarantees.vars, list_union(inputVars, outputVars))) != 0:
+            raise ValueError(
+                "The guarantees contain the following variables which are neither inputs nor outputs: %s. Inputs: %s. Outputs: %s. Guarantees: %s"
+                % (list_diff(guarantees.vars, list_union(inputVars, outputVars)), inputVars, outputVars, guarantees)
+            )
+
         self.a = assumptions.copy()
         self.g = guarantees.copy()
         self.inputvars = inputVars.copy()
@@ -317,7 +318,7 @@ class IoContract:
         Args:
             other: potential quotient by which self would be quotiented.
         """
-        # make sure the top level ouputs not contained in outputs of the
+        # make sure the top level outputs not contained in outputs of the
         # existing component do not intersect with the inputs of the existing
         # component
         return len(list_intersection(list_diff(self.outputvars, other.outputvars), other.inputvars)) == 0
@@ -340,7 +341,8 @@ class IoContract:
         Args:
             other: contract being compared with self.
         """
-        assert self.shares_io_with(other)
+        if not self.shares_io_with(other):
+            raise ValueError("Contracts do not share IO")
         return (other.a <= self.a) and ((self.g | other.a) <= (other.g | other.a))
 
     def compose(self, other: IoContract) -> IoContract:
@@ -373,7 +375,10 @@ class IoContract:
         )
 
         assumptions_forbidden_vars = list_union(intvars, outputvars)
-        assert self.can_compose_with(other), "Cannot compose the following contracts due to incompatible IO profiles:\n %s \n %s" % (self, other)
+        if not self.can_compose_with(other):
+            raise ValueError(
+                "Cannot compose the following contracts due to incompatible IO profiles:\n %s \n %s" % (self, other)
+            )
         other_helps_self = len(list_intersection(other.outputvars, self.inputvars)) > 0
         self_helps_other = len(list_intersection(other.inputvars, self.outputvars)) > 0
         #
@@ -381,7 +386,7 @@ class IoContract:
         self_drives_const_inputs = len(list_intersection(self.outputvars, otherinputconst)) > 0
         # process assumptions
         if cycle_present and (other_drives_const_inputs or self_drives_const_inputs):
-            assert False, "Cannot compose due to feedback"
+            raise ValueError("Cannot compose contracts due to feedback")
         elif self_helps_other and not other_helps_self:
             logging.debug("Assumption computation: self provides context for other")
             new_a = other.a.abduce_with_context(self.a | self.g, assumptions_forbidden_vars)
@@ -426,7 +431,7 @@ class IoContract:
 
         return result
 
-    def quotient(self, other: IoContract) -> IoContract:
+    def quotient(self, other: IoContract, additionalInputs: List[Var] = []) -> IoContract:
         """Compute the contract quotient.
 
         Compute the quotient self/other of the two given contracts and refine
@@ -441,14 +446,22 @@ class IoContract:
         Returns:
             The refined quotient self/other.
         """
-        assert self.can_quotient_by(other)
+        if not self.can_quotient_by(other):
+            raise ValueError("Contracts cannot be quotiented due to incompatible IO")
+        if len(list_diff(additionalInputs, list_union(other.outputvars, self.inputvars))) > 0:
+            raise ValueError(
+                "The additional inputs %s are neither top level inputs nor existing component outputs"
+                % (list_diff(additionalInputs, list_union(other.outputvars, self.inputvars)))
+            )
         outputvars = list_union(
             list_diff(self.outputvars, other.outputvars), list_diff(other.inputvars, self.inputvars)
         )
         inputvars = list_union(list_diff(self.inputvars, other.inputvars), list_diff(other.outputvars, self.outputvars))
+        inputvars = list_union(inputvars, additionalInputs)
         intvars = list_union(
             list_intersection(self.outputvars, other.outputvars), list_intersection(self.inputvars, other.inputvars)
         )
+        intvars = list_diff(intvars, additionalInputs)
 
         # get assumptions
         logging.debug("Computing quotient assumptions")
@@ -491,7 +504,8 @@ class IoContract:
         Returns:
             The result of merging.
         """
-        assert self.shares_io_with(other)
+        if not self.shares_io_with(other):
+            raise ValueError("Contracts cannot be merged due to incompatible IO")
         assumptions = self.a | other.a
         guarantees = self.g | other.g
         return IoContract(assumptions, guarantees, self.inputvars, self.outputvars)

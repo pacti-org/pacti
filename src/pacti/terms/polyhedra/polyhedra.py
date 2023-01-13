@@ -51,13 +51,8 @@ class PolyhedralTerm(Term):
 
     @classmethod
     def from_string(cls, str_rep: str) -> PolyhedralTerm:
-        # print(str_rep)
         expr = parse_expr(str_rep)
-        # assert isinstance(expr, sympy.core.relational.LessThan)
-        # print(str_rep)
-        # print(expr)
         constant = expr.args[1]
-        # print(type(constant))
         variables = {}
         for k, v in expr.args[0].as_coefficients_dict().items():
             if k == 1:
@@ -340,7 +335,7 @@ class PolyhedralTerm(Term):
                 var = Var(str(key))
                 variable_dict[var] = expression_coefficients[key]
             else:
-                constant = constant -expression_coefficients[key]*key
+                constant = constant - expression_coefficients[key] * key
         return PolyhedralTerm(variable_dict, constant)
 
     @staticmethod
@@ -550,7 +545,6 @@ class PolyhedralTermList(TermList):
                 + "was not possible"
             ) from e
         return termlist
-
 
     def lacks_constraints(self):
         """
@@ -820,7 +814,10 @@ class PolyhedralTermList(TermList):
 
     @staticmethod
     def verify_polytope_containment(
-        a_l: np.array = np.array([[]]), b_l: np.array = np.array([]), a_r: np.array = np.array([[]]), b_r: np.array = np.array([])
+        a_l: np.array = np.array([[]]),
+        b_l: np.array = np.array([]),
+        a_r: np.array = np.array([[]]),
+        b_r: np.array = np.array([]),
     ) -> bool:
         """
         Say whether a polytope is contained in another. Both are given in their
@@ -887,11 +884,11 @@ class PolyhedralTermList(TermList):
             b:
                 Vector of H-representation of polytope to verify.
         """
-        logging.debug("Verifying polytope emptyness: a is %s ashape is %s, b is %s", a, a.shape, b)   
+        logging.debug("Verifying polytope emptyness: a is %s ashape is %s, b is %s", a, a.shape, b)
         if len(a) == 0:
             return False
         n, m = a.shape
-        if n*m == 0:
+        if n * m == 0:
             return False
         assert n == len(b)
         objective = np.zeros((1, m))
