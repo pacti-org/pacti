@@ -261,7 +261,7 @@ class IoContract:
                 "The following variables appear in the assumptions but are not inputs: %s"
                 % (list_diff(assumptions.vars, inputVars))
             )
-        # make sure the guaranteees only contain input or output variables
+        # make sure the guarantees only contain input or output variables
         if len(list_diff(guarantees.vars, list_union(inputVars, outputVars))) != 0:
             raise ValueError(
                 "The guarantees contain the following variables which are neither inputs nor outputs: %s. Inputs: %s. Outputs: %s"
@@ -318,7 +318,7 @@ class IoContract:
         Args:
             other: potential quotient by which self would be quotiented.
         """
-        # make sure the top level ouputs not contained in outputs of the
+        # make sure the top level outputs not contained in outputs of the
         # existing component do not intersect with the inputs of the existing
         # component
         return len(list_intersection(list_diff(self.outputvars, other.outputvars), other.inputvars)) == 0
