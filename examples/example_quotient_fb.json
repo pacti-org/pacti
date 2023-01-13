@@ -9,7 +9,9 @@
         "assumptions":
         [
             {"coefficients":{"u1":1},
-            "constant":2}
+            "constant":5},
+            {"coefficients":{"u1":-1},
+            "constant":5}
         ],
         "guarantees":
         [
@@ -37,5 +39,6 @@
             "constant":0}
         ]
     },
-    "operation":"quotient"
+    "operation":"quotient",
+    "additionalInputs":["y"]
 }

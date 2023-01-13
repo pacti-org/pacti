@@ -264,8 +264,8 @@ class IoContract:
         # make sure the guarantees only contain input or output variables
         if len(list_diff(guarantees.vars, list_union(inputVars, outputVars))) != 0:
             raise ValueError(
-                "The guarantees contain the following variables which are neither inputs nor outputs: %s. Inputs: %s. Outputs: %s"
-                % (list_diff(guarantees.vars, list_union(inputVars, outputVars)), inputVars, outputVars)
+                "The guarantees contain the following variables which are neither inputs nor outputs: %s. Inputs: %s. Outputs: %s. Guarantees: %s"
+                % (list_diff(guarantees.vars, list_union(inputVars, outputVars)), inputVars, outputVars, guarantees)
             )
 
         self.a = assumptions.copy()
@@ -431,7 +431,7 @@ class IoContract:
 
         return result
 
-    def quotient(self, other: IoContract) -> IoContract:
+    def quotient(self, other: IoContract, additionalInputs: List[Var] = []) -> IoContract:
         """Compute the contract quotient.
 
         Compute the quotient self/other of the two given contracts and refine
@@ -448,10 +448,16 @@ class IoContract:
         """
         if not self.can_quotient_by(other):
             raise ValueError("Contracts cannot be quotiented due to incompatible IO")
+        if len(list_diff(additionalInputs, list_union(other.outputvars, self.inputvars))) > 0:
+            raise ValueError(
+                "The additional inputs %s are neither top level inputs nor existing component outputs"
+                % (list_diff(additionalInputs, list_union(other.outputvars, self.inputvars)))
+            )
         outputvars = list_union(
             list_diff(self.outputvars, other.outputvars), list_diff(other.inputvars, self.inputvars)
         )
         inputvars = list_union(list_diff(self.inputvars, other.inputvars), list_diff(other.outputvars, self.outputvars))
+        inputvars = list_union(inputvars, additionalInputs)
         intvars = list_union(
             list_intersection(self.outputvars, other.outputvars), list_intersection(self.inputvars, other.inputvars)
         )

@@ -94,7 +94,10 @@ def readInputFile(inputfilename, outputfilename):
         result = contracts[0].compose(contracts[1])
         print("Composed contract:\n" + str(result))
     elif data["operation"] == "quotient":
-        result = contracts[0].quotient(contracts[1])
+        additionalVars = []
+        if "additionalInputs" in data.keys():
+            additionalVars = getVarlist(data["additionalInputs"])
+        result = contracts[0].quotient(contracts[1], additionalVars)
         print("Contract quotient:\n" + str(result))
     elif data["operation"] == "merge":
         result = contracts[0].merge(contracts[1])
