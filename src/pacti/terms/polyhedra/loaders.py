@@ -85,12 +85,12 @@ def writeContract(contract, filename: str = None):
 
 def string_to_polyhedra_contract(contract: StrContract) -> IoContract:
     """
-        Converts a StrContract to a pacti.iocontract type.
-        Arguments:
-            * contract (StrContract): a StrContract object
-        Returns:
-            * iocontract (pacti.IoContract): An input-output Pacti contract object
-        """
+    Converts a StrContract to a pacti.iocontract type.
+    Arguments:
+        * contract (StrContract): a StrContract object
+    Returns:
+        * iocontract (pacti.IoContract): An input-output Pacti contract object
+    """
     assumptions: list[PolyhedralTerm] = list(map(lambda x: PolyhedralTerm.from_string(x), contract.assumptions))
     guarantees: list[PolyhedralTerm] = list(map(lambda x: PolyhedralTerm.from_string(x), contract.guarantees))
     inputs: list[Var] = [Var(x) for x in contract.inputs]
