@@ -143,7 +143,7 @@ def check_quality(ctx, files=PY_SRC):
         files: The files to check.
     """
     """Latest Flake8 cause problems with dependencies. Suppress for now."""
-    # ctx.run(f"flake8 --config=config/flake8.ini {files}", title="Checking code quality", pty=PTY)
+    ctx.run(f"flake8 --config=config/flake8.ini {files}", title="Checking code quality", pty=PTY)
 
 
 @duty

@@ -30,8 +30,8 @@ class Var:
     Variables allow us to name an entity for which we want to write constraints.
     """
 
-    def __init__(self, val):
-        self._name = str(val)
+    def __init__(self, varname):
+        self._name = str(varname)
 
     @property
     def name(self) -> str:
@@ -61,11 +61,11 @@ class Term(ABC):
 
     @property
     @abstractmethod
-    def vars(self):
+    def variables(self):
         """Variables contained in the syntax of the term."""
 
     @abstractmethod
-    def contains_var(self, var: Var):
+    def contains_var(self, variable_to_seek: Var):
         """
         Tell whether term contains a given variable.
 
@@ -107,11 +107,11 @@ class TermList(ABC):
         self.terms = termList.copy()
 
     @property
-    def vars(self):
+    def variables(self):
         """The list of variables contained in this list of terms."""
         varlist = list()
         for t in self.terms:
-            varlist = list_union(varlist, t.vars)
+            varlist = list_union(varlist, t.variables)
         return varlist
 
     def __str__(self) -> str:
@@ -133,7 +133,7 @@ class TermList(ABC):
         """
         terms = list()
         for t in self.terms:
-            if len(list_intersection(t.vars, variable_list)) > 0:
+            if len(list_intersection(t.variables, variable_list)) > 0:
                 terms.append(t)
         return type(self)(terms)
 
@@ -228,7 +228,7 @@ class TermList(ABC):
 class IoContract:
     """
     Basic type for an IO contract, a structure consisting of assumptions,
-    guarantees, and input and output vars.
+    guarantees, and input and output variables.
 
     Attributes:
         inputvars:
@@ -251,16 +251,16 @@ class IoContract:
                 "The following variables appear in inputs and outputs: %s" % (list_intersection(inputVars, outputVars))
             )
         # make sure the assumptions only contain input variables
-        if len(list_diff(assumptions.vars, inputVars)) != 0:
+        if len(list_diff(assumptions.variables, inputVars)) != 0:
             raise ValueError(
                 "The following variables appear in the assumptions but are not inputs: %s"
-                % (list_diff(assumptions.vars, inputVars))
+                % (list_diff(assumptions.variables, inputVars))
             )
         # make sure the guarantees only contain input or output variables
-        if len(list_diff(guarantees.vars, list_union(inputVars, outputVars))) != 0:
+        if len(list_diff(guarantees.variables, list_union(inputVars, outputVars))) != 0:
             raise ValueError(
                 "The guarantees contain the following variables which are neither inputs nor outputs: %s. Inputs: %s. Outputs: %s. Guarantees: %s"
-                % (list_diff(guarantees.vars, list_union(inputVars, outputVars)), inputVars, outputVars, guarantees)
+                % (list_diff(guarantees.variables, list_union(inputVars, outputVars)), inputVars, outputVars, guarantees)
             )
 
         self.a = assumptions.copy()
@@ -271,12 +271,12 @@ class IoContract:
         self.g.simplify(self.a)
 
     @property
-    def vars(self):
+    def variables(self):
         """
         The list of variables contained in the assumptions and guarantees of the
         contract.
         """
-        return self.a.vars | self.g.vars
+        return self.a.variables | self.g.variables
 
     def __str__(self):
         return (
@@ -362,8 +362,8 @@ class IoContract:
         inputvars = list_diff(list_union(self.inputvars, other.inputvars), intvars)
         outputvars = list_diff(list_union(self.outputvars, other.outputvars), intvars)
 
-        selfinputconst = self.a.vars
-        otherinputconst = other.a.vars
+        selfinputconst = self.a.variables
+        otherinputconst = other.a.variables
         cycle_present = (
             len(list_intersection(self.inputvars, other.outputvars)) > 0
             and len(list_intersection(other.inputvars, self.outputvars)) > 0
@@ -385,7 +385,7 @@ class IoContract:
         elif self_helps_other and not other_helps_self:
             logging.debug("Assumption computation: self provides context for other")
             new_a = other.a.abduce_with_context(self.a | self.g, assumptions_forbidden_vars)
-            if len(list_intersection(new_a.vars, assumptions_forbidden_vars)) > 0:
+            if len(list_intersection(new_a.variables, assumptions_forbidden_vars)) > 0:
                 raise ValueError(
                     "The guarantees \n{}\n".format(self.g)
                     + "were insufficient to abduce the assumptions \n{}\n".format(other.a)
@@ -395,7 +395,7 @@ class IoContract:
         elif other_helps_self and not self_helps_other:
             logging.debug("Assumption computation: other provides context for self")
             new_a = self.a.abduce_with_context(other.a | other.g, assumptions_forbidden_vars)
-            if len(list_intersection(new_a.vars, assumptions_forbidden_vars)) > 0:
+            if len(list_intersection(new_a.variables, assumptions_forbidden_vars)) > 0:
                 raise ValueError(
                     "The guarantees \n{}\n".format(other.g)
                     + "were insufficient to abduce the assumptions \n{}\n".format(self.a)
@@ -417,7 +417,7 @@ class IoContract:
         allguarantees = g1 | g2
         allguarantees = allguarantees.deduce_with_context(assumptions, intvars)
 
-        # eliminate terms with forbidden vars
+        # eliminate terms with forbidden variables
         terms_to_elim = allguarantees.get_terms_with_vars(intvars)
         allguarantees = allguarantees - terms_to_elim
 
