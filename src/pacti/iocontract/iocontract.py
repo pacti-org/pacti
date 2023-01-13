@@ -461,6 +461,7 @@ class IoContract:
         intvars = list_union(
             list_intersection(self.outputvars, other.outputvars), list_intersection(self.inputvars, other.inputvars)
         )
+        intvars = list_diff(intvars, additionalInputs)
 
         # get assumptions
         logging.debug("Computing quotient assumptions")
