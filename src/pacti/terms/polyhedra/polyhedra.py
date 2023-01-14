@@ -39,12 +39,12 @@ class PolyhedralTerm(Term):
     # constant <= 0
     def __init__(self, variables, constant):
         variable_dict = {}
-        for key, val in variables.items():
-            if val != 0:
+        for key, value in variables.items():
+            if value != 0:
                 if isinstance(key, str):
-                    variable_dict[Var(key)] = val
+                    variable_dict[Var(key)] = value
                 else:
-                    variable_dict[key] = val
+                    variable_dict[key] = value
         self.variables = variable_dict
         self.constant = constant
 
@@ -71,7 +71,7 @@ class PolyhedralTerm(Term):
     def __add__(self, other):
         varlist = list_union(self.vars, other.vars)
         variables = {}
-        for var in varlist:
+        for var in varlist:  # noqa: VNE002
             variables[var] = self.get_coefficient(var) + other.get_coefficient(var)
         return PolyhedralTerm(variables, self.constant + other.constant)
 
@@ -79,7 +79,7 @@ class PolyhedralTerm(Term):
         return PolyhedralTerm(self.variables, self.constant)
 
     @property
-    def vars(self):
+    def vars(self):  # noqa: A003
         """
         Variables appearing in term with a nonzero coefficient.
 
@@ -104,7 +104,7 @@ class PolyhedralTerm(Term):
         """
         return var_to_seek in self.vars
 
-    def get_coefficient(self, var):
+    def get_coefficient(self, var):  # noqa: VNE002
         """
         Output the coefficient multiplying the given variable in the term.
 
@@ -113,10 +113,9 @@ class PolyhedralTerm(Term):
         """
         if self.contains_var(var):
             return self.variables[var]
-        else:
-            return 0
+        return 0
 
-    def get_polarity(self, var, polarity=True):
+    def get_polarity(self, var, polarity=True):  # noqa: VNE002
         """
         Tells whether the polarity of a given variable in the term matches the
         given polarity.
@@ -141,7 +140,7 @@ class PolyhedralTerm(Term):
         else:
             return self.variables[var] <= 0
 
-    def get_sign(self, var):
+    def get_sign(self, var):  # noqa: VNE002
         """
         Tells whether the polarity of a given variable in the term matches the
         given polarity.
@@ -199,7 +198,7 @@ class PolyhedralTerm(Term):
             it returns an empty list.
         """
         variable_list = list()
-        for var in variable_polarity.keys():
+        for var in variable_polarity.keys():  # noqa: VNE002
             if self.contains_var(var):
                 if (self.get_polarity(var, True) == variable_polarity[var]) or (self.get_coefficient(var) == 0):
                     variable_list.add(var)
@@ -208,7 +207,7 @@ class PolyhedralTerm(Term):
                     break
         return variable_list
 
-    def remove_variable(self, var):
+    def remove_variable(self, var):  # noqa: VNE002
         """
         Eliminates a variable from a term. This is equivalent to setting its
         coefficient to zero.
@@ -235,7 +234,7 @@ class PolyhedralTerm(Term):
         variables = {key: factor * val for key, val in self.variables.items()}
         return PolyhedralTerm(variables, factor * self.constant)
 
-    def substitute_variable(self, var, subst_with_term):
+    def substitute_variable(self, var, subst_with_term):  # noqa: VNE002
         """
         Substitutes a specified variable in a term with a given term.
 
@@ -285,7 +284,7 @@ class PolyhedralTerm(Term):
                 to sympy's data structure.
         """
         ex = -term.constant
-        for var in term.vars:
+        for var in term.vars:  # noqa: VNE002
             sv = sympy.symbols(var.name)
             ex += sv * term.get_coefficient(var)
         return ex
@@ -310,7 +309,7 @@ class PolyhedralTerm(Term):
         for key in keys:
             logging.debug(type(key))
             if isinstance(key, str) or isinstance(key, sympy.core.symbol.Symbol):
-                var = Var(str(key))
+                var = Var(str(key))  # noqa: VNE002
                 variable_dict[var] = expression_coefficients[key]
             else:
                 constant = constant - expression_coefficients[key] * key
@@ -337,7 +336,7 @@ class PolyhedralTerm(Term):
             the term's constant.
         """
         coeffs = []
-        for var in variable_list:
+        for var in variable_list:  # noqa: VNE002
             coeffs.append(term.get_coefficient(var))
         return coeffs, term.constant
 
@@ -356,7 +355,7 @@ class PolyhedralTerm(Term):
         """
         assert len(poly) == len(variables)
         variable_dict = {}
-        for i, var in enumerate(variables):
+        for i, var in enumerate(variables):  # noqa: VNE002
             variable_dict[var] = poly[i]
         return PolyhedralTerm(variable_dict, const)
 
@@ -486,7 +485,6 @@ class PolyhedralTermList(TermList):
         Args:
             context:
                 The TermList providing the context for the deduction.
-
             vars_to_elim:
                 Variables that should not appear in the deduced term.
 
@@ -494,6 +492,9 @@ class PolyhedralTermList(TermList):
             A list of terms not containing any variables in `vars_to_elim`
             and which, in the context provided, are implied by the terms
             contained in the calling termlist.
+
+        Raises:
+            ValueError: Constraints have empty intersection with context.
         """
         termlist = self.copy()
         logging.debug("Deduce with context")
@@ -533,6 +534,9 @@ class PolyhedralTermList(TermList):
         Args:
             context:
                 The TermList providing the context for the simplification.
+
+        Raises:
+            ValueError: The intersection of self and context is empty.
         """
         logging.debug("Starting simplification procedure")
         logging.debug("Simplifying terms: %s", self)
@@ -562,6 +566,9 @@ class PolyhedralTermList(TermList):
         Args:
             other:
                 TermList against which we are comparing self.
+
+        Returns:
+            self <= other
         """
         logging.debug("Verifying refinement")
         logging.debug("LH term: %s", self)
@@ -660,7 +667,7 @@ class PolyhedralTermList(TermList):
 
     @staticmethod
     def reduce_polytope(
-        a: np.ndarray, b: np.ndarray, a_help: np.ndarray = np.array([[]]), b_help: np.ndarray = np.array([])
+        a: np.ndarray, b: np.ndarray, a_help: np.ndarray | None = None, b_help: np.ndarray | None = None
     ):
         """
         Eliminate redundant constraints from the H-representation of a given
@@ -675,7 +682,18 @@ class PolyhedralTermList(TermList):
                 Matrix of H-representation of context polytope.
             b_help:
                 Vector of H-representation of context polytope.
+
+        Raises:
+            ValueError: The intersection of given polytope with its context is empty.
+
+        Returns:
+            a_temp: Matrix of H-representation of reduced polytope.
+            b_temp: Vector of H-representation of reduced polytope.
         """
+        if not isinstance(a_help, np.ndarray):
+            a_help = np.array([[]])
+        if not isinstance(b_help, np.ndarray):
+            b_help = np.array([])
         if len(a.shape) > 1:
             n, m = a.shape
         else:
@@ -732,10 +750,10 @@ class PolyhedralTermList(TermList):
 
     @staticmethod
     def verify_polytope_containment(
-        a_l: np.ndarray = np.array([[]]),
-        b_l: np.ndarray = np.array([]),
-        a_r: np.ndarray = np.array([[]]),
-        b_r: np.ndarray = np.array([]),
+        a_l: np.ndarray | None = None,
+        b_l: np.ndarray | None = None,
+        a_r: np.ndarray | None = None,
+        b_r: np.ndarray | None = None
     ) -> bool:
         """
         Say whether a polytope is contained in another. Both are given in their
@@ -750,7 +768,18 @@ class PolyhedralTermList(TermList):
                 Matrix of H-representation of polytope on RHS of inequality.
             b_r:
                 Vector of H-representation of polytope on RHS of inequality.
+
+        Returns:
+            True if left polytope is contained in right polytope. False otherwise.
         """
+        if not isinstance(a_l,np.ndarray):
+            a_l = np.array([[]])
+        if not isinstance(a_r,np.ndarray):
+            a_r = np.array([[]])
+        if not isinstance(b_l,np.ndarray):
+            b_l = np.array([])
+        if not isinstance(b_r,np.ndarray):
+            b_r = np.array([])
         # If the LHS is empty, it is a refinement
         if PolyhedralTermList.is_polytope_empty(a_l, b_l):
             return True
@@ -801,6 +830,9 @@ class PolyhedralTermList(TermList):
                 Matrix of H-representation of polytope to verify.
             b:
                 Vector of H-representation of polytope to verify.
+
+        Returns:
+            True if empty. False otherwise.
         """
         logging.debug("Verifying polytope emptyness: a is %s ashape is %s, b is %s", a, a.shape, b)
         if len(a) == 0:
@@ -811,10 +843,7 @@ class PolyhedralTermList(TermList):
         assert n == len(b)
         objective = np.zeros((1, m))
         res = linprog(c=objective, A_ub=a, b_ub=b, bounds=(None, None))  # ,options={'tol':0.000001})
-        if res["status"] != 2:
-            return False
-        else:
-            return True
+        return res["status"] == 2
 
     @staticmethod
     def get_kaykobad_context(term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, abduce: bool):
@@ -837,7 +866,7 @@ class PolyhedralTermList(TermList):
                     continue
                 term_is_invalid = False
                 # make sure the term does not include other forbidden variables
-                for var in other_forbibben_vars:
+                for var in other_forbibben_vars:  # noqa: VNE002
                     if context_term.get_coefficient(var) != 0:
                         term_is_invalid = True
                         logging.debug("Term contains other forbidden vars")
@@ -845,7 +874,7 @@ class PolyhedralTermList(TermList):
                 if term_is_invalid:
                     continue
                 # 1. Verify Kaykobad pair: sign of nonzero matrix terms
-                for var in forbidden_vars:
+                for var in forbidden_vars:  # noqa: VNE002
                     if context_term.get_coefficient(var) != 0 and transform_coeff * context_term.get_sign(
                         var
                     ) != term.get_sign(var):
@@ -907,7 +936,7 @@ class PolyhedralTermList(TermList):
 
         result = term.copy()
         logging.debug("Result is %s", result)
-        for var in sols.keys():
+        for var in sols.keys():  # noqa: VNE002
             result = result.substitute_variable(var, sols[var])
         logging.debug("Term %s transformed to %s", term, result)
 
