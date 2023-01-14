@@ -1,4 +1,6 @@
 """
+IoContracts definitions.
+
 IoContracts contains Pacti's basic definitions: Var, Term, TemList, and
 IoContract. Var creates variables; Term is an abstract class representing
 constraints; a TermList (also an abstract class) is a collection of terms
@@ -372,7 +374,7 @@ class IoContract:
             raise ValueError("Contracts do not share IO")
         return (other.a <= self.a) and ((self.g | other.a) <= (other.g | other.a))
 
-    def compose(self, other: IoContract) -> IoContract:
+    def compose(self, other: IoContract) -> IoContract:  # noqa: WPS231, WPS238
         """Compose IO contracts.
 
         Compute the composition of the two given contracts and abstract the
@@ -477,8 +479,7 @@ class IoContract:
             The refined quotient self/other.
 
         Raises:
-            ValueError: the arguments provided are incompatible with the
-            computation of the quotient.
+            ValueError: Arguments provided are incompatible with computation of the quotient.
         """
         if not additional_inputs:
             additional_inputs = []
