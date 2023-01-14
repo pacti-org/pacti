@@ -201,7 +201,7 @@ class PolyhedralTerm(Term):
                 if (self.get_polarity(var=var, polarity=True) == variable_polarity[var]) or (  # noqa: WPS337
                     self.get_coefficient(var) == 0
                 ):
-                    variable_list.add(var)
+                    variable_list.append(var)
                 else:
                     variable_list = []
                     break
