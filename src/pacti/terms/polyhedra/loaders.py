@@ -128,7 +128,7 @@ def string_to_polyhedra_contract(contract: StrContract) -> IoContract:
     io_contract = IoContract(
         assumptions=PolyhedralTermList(assumptions),
         guarantees=PolyhedralTermList(guarantees),
-        inputVars=inputs,
-        outputVars=outputs,
+        input_vars=inputs,
+        output_vars=outputs,
     )
     return io_contract
