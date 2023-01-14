@@ -107,8 +107,11 @@ class TermList(ABC):
     class that must be extended to support a specific constraint formalism.
     """
 
-    def __init__(self, term_list: List):
-        self.terms = term_list.copy()
+    def __init__(self, term_list: List | None=None):
+        if term_list:
+            self.terms = term_list.copy()
+        else:
+            self.terms = []
 
     @property
     def vars(self):
@@ -207,7 +210,7 @@ class TermList(ABC):
         """
 
     @abstractmethod
-    def simplify(self, context=list()):
+    def simplify(self, context: TermList | None=None):
         """Remove redundant terms in TermList.
 
         Let $S$ be this TermList and suppose $T \\subseteq S$. Let
@@ -449,11 +452,11 @@ class IoContract:
 
         # eliminate terms with forbidden vars
         terms_to_elim = allguarantees.get_terms_with_vars(intvars)
-        allguarantees = allguarantees - terms_to_elim
+        allguarantees -= terms_to_elim
 
         return IoContract(assumptions, allguarantees, inputvars, outputvars)
 
-    def quotient(self, other: IoContract, additional_inputs: List[Var] = None) -> IoContract:
+    def quotient(self, other: IoContract, additional_inputs: List[Var] | None = None) -> IoContract:
         """Compute the contract quotient.
 
         Compute the quotient self/other of the two given contracts and refine
@@ -476,6 +479,8 @@ class IoContract:
             ValueError: the arguments provided are incompatible with the
             computation of the quotient.
         """
+        if not additional_inputs:
+            additional_inputs = []
         if not self.can_quotient_by(other):
             raise ValueError("Contracts cannot be quotiented due to incompatible IO")
         if list_diff(additional_inputs, list_union(other.outputvars, self.inputvars)):
