@@ -249,6 +249,7 @@ def clean(ctx):
     ctx.run("rm -rf site")
     ctx.run("find . -type d -name __pycache__ | xargs rm -rf")
     ctx.run("find . -name '*.rej' -delete")
+    ctx.run("rm -rf docs/_case_studies")
 
 
 @duty
