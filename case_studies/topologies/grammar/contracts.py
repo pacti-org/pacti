@@ -34,9 +34,9 @@ class ContractsAlternatives:
             print(c)
             print(other)
             if c <= other:
-                seed = random.choice(string.ascii_letters)
-                writeContract(c, f"C{seed}_lhs")
-                writeContract(other, f"C{seed}_rhs")
+                # seed = random.choice(string.ascii_letters)
+                # writeContract(c, f"C{seed}_lhs")
+                # writeContract(other, f"C{seed}_rhs")
                 return True
         return False
 

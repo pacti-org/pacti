@@ -59,7 +59,7 @@ class Point:
 @dataclass
 class GridBuilder:
     grid: dict[Point, Symbol]
-    connections: set[SymbolConnection] = field(default_factory=set)
+    connections: list[SymbolConnection] = field(default_factory=list)
     name: str = ""
     current_point: Point | None = None
     dimension: int = 0
@@ -108,7 +108,7 @@ class GridBuilder:
         self.grid[self.current_point] = production.ego
         if production.connection is not None:
             connection = SymbolConnection(production.ego, getattr(self.local_state(), production.connection.name))
-            self.connections.add(connection)
+            self.connections.append(connection)
 
     def local_state(self, point: Point | None = None) -> LocalState:
         if point is None:
