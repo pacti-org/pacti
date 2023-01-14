@@ -14,8 +14,6 @@ from scipy.optimize import linprog
 from pacti.iocontract import Term, TermList, Var
 from pacti.utils.lists import list_diff, list_intersection, list_union
 
-from typing import List
-
 
 class PolyhedralTerm(Term):
     """
@@ -93,18 +91,18 @@ class PolyhedralTerm(Term):
         varlist = self.variables.keys()
         return list(varlist)
 
-    def contains_var(self, var):
+    def contains_var(self, var_to_seek):
         """
         Tell whether term contains a given variable.
 
         Args:
-            var: The variable that we are seeking in the current term.
+            var_to_seek: The variable that we are seeking in the current term.
 
         Returns:
             `True` if the syntax of the term refers to the given variable;
             `False` otherwise.
         """
-        return var in self.vars
+        return var_to_seek in self.vars
 
     def get_coefficient(self, var):
         """
@@ -522,7 +520,7 @@ class PolyhedralTermList(TermList):
         termlist.terms = list_diff(termlist.terms, terms_to_elim.terms)
         return termlist
 
-    def simplify(self, context:PolyhedralTermList | None=None) -> None: # type: ignore[override]
+    def simplify(self, context: PolyhedralTermList | None = None) -> None:  # type: ignore[override]
         """
         Remove redundant terms in the PolyhedralTermList using the provided
         context.
