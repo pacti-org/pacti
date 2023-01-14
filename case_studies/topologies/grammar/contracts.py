@@ -1,8 +1,11 @@
 from __future__ import annotations
 import itertools
+import random
+import string
 from dataclasses import dataclass, field
 
 from pacti.iocontract import IoContract
+from pacti.terms.polyhedra import writeContract
 
 
 @dataclass
@@ -28,7 +31,12 @@ class ContractsAlternatives:
             c.outputvars = outs_eq
             other.inputvars = ins_eq
             other.outputvars = outs_eq
+            print(c)
+            print(other)
             if c <= other:
+                seed = random.choice(string.ascii_letters)
+                writeContract(c, f"C{seed}_lhs")
+                writeContract(other, f"C{seed}_rhs")
                 return True
         return False
 

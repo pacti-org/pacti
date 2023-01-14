@@ -1,5 +1,4 @@
 from case_studies.topologies.grammar.contracts import ContractsAlternatives
-from pacti.iocontract import IoContract
 
 
 def find_refinements(state_contracts: ContractsAlternatives,
@@ -7,8 +6,8 @@ def find_refinements(state_contracts: ContractsAlternatives,
     """Returns a set of rules that refine contract_a"""
 
     ret = set()
-    for rule, contract_alternatives in rules_contract.items():
-        if contract_alternatives <= state_contracts:
+    for rule, rules_contrats in rules_contract.items():
+        if state_contracts <= rules_contrats:
             ret.add(rule)
 
     return ret

@@ -3,7 +3,7 @@ from __future__ import annotations
 import random
 from dataclasses import dataclass, field
 
-from case_studies.topologies.grammar import Symbol, SymbolConnection, Unoccupied, LocalState
+from case_studies.topologies.grammar import Symbol, SymbolConnection, Unoccupied, LocalState, Production
 from case_studies.topologies.grammar.figures import plot_3d_grid
 from matplotlib.figure import Figure
 
@@ -26,6 +26,10 @@ class Point:
 
     def __hash__(self):
         return hash(self.__str__())
+
+    @property
+    def all_directions(self) -> list[Point]:
+        return [self.front, self.rear, self.top, self.bottom, self.left, self.right]
 
     @property
     def front(self) -> Point:
@@ -93,6 +97,18 @@ class GridBuilder:
         if point is None:
             point = self.current_point
         return self.grid[point]
+
+    def update_current_point(self):
+        """choose an 'unoccupied' point around the current_point"""
+        unoccupied_points = list(
+            filter(lambda x: isinstance(self.grid[x], Unoccupied), [p for p in self.current_point.all_directions]))
+        self.current_point = random.choice(unoccupied_points)
+
+    def apply_rule(self, production: Production):
+        self.grid[self.current_point] = production.ego
+        if production.connection is not None:
+            connection = SymbolConnection(production.ego, getattr(self.local_state(), production.connection.name))
+            self.connections.add(connection)
 
     def local_state(self, point: Point | None = None) -> LocalState:
         if point is None:

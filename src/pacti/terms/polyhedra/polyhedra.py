@@ -566,11 +566,15 @@ class PolyhedralTermList(TermList):
         logging.debug("Verifying refinement")
         logging.debug("LH term: %s", self)
         logging.debug("RH term: %s", other)
+        print("Verifying refinement")
+        print("LH term: %s", self)
+        print("RH term: %s", other)
         if other.lacks_constraints():
             return True
         variables, self_mat, self_cons, ctx_mat, ctx_cons = PolyhedralTermList.termlist_to_polytope(self, other)
         logging.debug("Polytope is \n%s", self_mat)
         result = PolyhedralTermList.verify_polytope_containment(self_mat, self_cons, ctx_mat, ctx_cons)
+        print(result)
         return result
 
     @staticmethod

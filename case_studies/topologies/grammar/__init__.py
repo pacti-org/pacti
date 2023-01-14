@@ -28,7 +28,7 @@ class Direction(Enum):
 
 @dataclass
 class Grammar:
-    rules: list[Rule]
+    rules: dict[str, Rule]
 
     """TODO"""
 
@@ -38,11 +38,10 @@ class Grammar:
 
     @classmethod
     def from_dict(cls, rules_dict: dict) -> Grammar:
-        """ "TODO"""
-        rules = []
+        rules: dict[str, Rule] = {}
         """"e.g.."""
         for rule_id, elements in rules_dict.items():
-            rules.append(Rule.from_dict(elements, name=rule_id))
+            rules[rule_id] = Rule.from_dict(elements, name=rule_id)
 
         return cls(rules=rules)
 
@@ -104,6 +103,7 @@ class Rule:
         output_symbol = f"{symbols_short_out(self.production.ego.symbol_type)}"
         guarantees.extend(constraint_str_between_integers(output_symbol, (dir_connection, dir_connection)))
 
+        guarantees = []
         """Creating Contracts"""
         str_contracts_or = []
         for or_assumption in new_assumptions_or:
@@ -294,9 +294,9 @@ class Production:
     ego: Symbol
     connection: Direction | None
 
-    def apply(self, state: LocalState) -> LocalState:
+    def apply(self, state: LocalState) -> SymbolConnection | None:
         state.ego = self.ego
         if self.connection is not None:
             connection = SymbolConnection(self.ego, getattr(state, self.connection.name))
-            state.connections.add(connection)
-        return state
+            return connection
+        return None
