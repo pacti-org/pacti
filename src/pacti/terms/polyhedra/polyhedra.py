@@ -1,5 +1,7 @@
 """
-PolyhedralTerm provides support for linear inequalities as constraints, i.e.,
+Support for linear inequality constraints, i.e., polyhedra.
+
+Module provides support for linear inequalities as constraints, i.e.,
 the constraints are of the form $\\sum_{i} a_i x_i \\le c$, where the
 $x_i$ are variables and the $a_i$ and $c$ are constants.
 """
@@ -87,6 +89,9 @@ class PolyhedralTerm(Term):
             For the term $ax + by \\le c$ with variables $x$ and
             $y$, this function returns the list $\\{x, y\\}$ if
             $a$ and $b$ are nonzero.
+
+        Returns:
+            List of variables referenced in term.
         """
         varlist = self.variables.keys()
         return list(varlist)
@@ -110,6 +115,9 @@ class PolyhedralTerm(Term):
 
         Args:
             var: The variable whose coefficient we are seeking.
+
+        Returns:
+            The coefficient corresponding to variable in the term.
         """
         if self.contains_var(var):
             return self.variables[var]
@@ -117,8 +125,7 @@ class PolyhedralTerm(Term):
 
     def get_polarity(self, var, polarity=True):  # noqa: VNE002
         """
-        Tells whether the polarity of a given variable in the term matches the
-        given polarity.
+        Check if variable matches given polarity
 
         The polarity of a variable in a term is defined as the polarity of the
         coefficient that multiplies it in a term, e.g., the variables $x$
@@ -137,38 +144,30 @@ class PolyhedralTerm(Term):
         """
         if polarity:
             return self.variables[var] >= 0
-        else:
-            return self.variables[var] <= 0
+        return self.variables[var] <= 0
 
-    def get_sign(self, var):  # noqa: VNE002
+    def get_sign(self, var) -> int:  # noqa: VNE002
         """
-        Tells whether the polarity of a given variable in the term matches the
-        given polarity.
+        Get the sign of the variable in term.
 
-        The polarity of a variable in a term is defined as the polarity of the
+        The sign of a variable in a term is defined as the sign of the
         coefficient that multiplies it in a term, e.g., the variables $x$
-        and $y$ in the term $-2x + y \\le 3$ have negative and
-        positive polarities respectively.
+        and $y$ in the term $-2x + y \\le 3$ have $-1$ and
+        $+1$ polarities respectively. $0$ has $+1$ sign.
 
         Args:
             var: The variable whose polarity in the term we are seeking.
-            polarity: The polarity that we are comparing against the variable's
-            polarity.
 
         Returns:
-            `True` if the variable's polarity matches `polarity` and
-            `False` otherwise. If the variable's coefficient in the term
-            is zero, return `True`.
+            The sign of the variable in the term.
         """
-        if self.get_polarity(var, True):
+        if self.get_polarity(var=var, polarity=True):
             return 1
-        else:
-            return -1
+        return -1
 
     def get_matching_vars(self, variable_polarity):
         """
-        Returns the list of variables whose polarities match the polarities
-        requested.
+        Get list of variables whose polarities match the polarities requested.
 
         Example:
 
@@ -187,7 +186,6 @@ class PolyhedralTerm(Term):
         requested polarity in the term, and the variable z has a zero
         coefficient.
 
-
         Args:
             variable_polarity: A dictionary mapping Var instances to Boolean
             values indicating the polarity of the given variable.
@@ -197,20 +195,21 @@ class PolyhedralTerm(Term):
             argument, the routine returns the matching variables.  Otherwise,
             it returns an empty list.
         """
-        variable_list = list()
+        variable_list = []
         for var in variable_polarity.keys():  # noqa: VNE002
             if self.contains_var(var):
-                if (self.get_polarity(var, True) == variable_polarity[var]) or (self.get_coefficient(var) == 0):
+                if (self.get_polarity(var=var, polarity=True) == variable_polarity[var]) or (  # noqa: WPS337
+                    self.get_coefficient(var) == 0
+                ):
                     variable_list.add(var)
                 else:
-                    variable_list = list()
+                    variable_list = []
                     break
         return variable_list
 
     def remove_variable(self, var):  # noqa: VNE002
         """
-        Eliminates a variable from a term. This is equivalent to setting its
-        coefficient to zero.
+        Eliminates a variable from a term.
 
         Args:
             var: variable to be eliminated.
@@ -245,7 +244,6 @@ class PolyhedralTerm(Term):
 
         Args:
             var: The term variable to be substituted.
-
             subst_with_term: The term used to replace var.
 
         Returns:
@@ -258,14 +256,12 @@ class PolyhedralTerm(Term):
             self.remove_variable(var)
             logging.debug(self)
             return self + term
-        else:
-            return self.copy()
+        return self.copy()
 
     @staticmethod
     def to_symbolic(term):
         """
-        Translates the variable terms of a PolyhedralTerm into a sympy
-        expression.
+        Translates the variable terms of a PolyhedralTerm into a sympy expression.
 
         Example:
             The code
@@ -282,6 +278,9 @@ class PolyhedralTerm(Term):
             term(PolyhedralTerm):
                 The term whose coefficients and variables are to be translated
                 to sympy's data structure.
+
+        Returns:
+            Sympy expression corresponding to PolyhedralTerm.
         """
         ex = -term.constant
         for var in term.vars:  # noqa: VNE002
@@ -300,6 +299,9 @@ class PolyhedralTerm(Term):
 
         Args:
             expression: The symbolic expression to be translated.
+
+        Returns:
+            PolyhedralTerm corresponding to sympy expression.
         """
         expression_coefficients = expression.as_coefficients_dict()
         logging.debug(expression_coefficients)
@@ -308,7 +310,7 @@ class PolyhedralTerm(Term):
         constant = 0
         for key in keys:
             logging.debug(type(key))
-            if isinstance(key, str) or isinstance(key, sympy.core.symbol.Symbol):
+            if isinstance(key, (str, sympy.core.symbol.Symbol)):
                 var = Var(str(key))  # noqa: VNE002
                 variable_dict[var] = expression_coefficients[key]
             else:
@@ -326,7 +328,6 @@ class PolyhedralTerm(Term):
 
         Args:
             term: The term to be transformed.
-
             variable_list:
                 A list of variables indicating the order of appearance of
                 variable coefficients.
@@ -347,11 +348,14 @@ class PolyhedralTerm(Term):
 
         Args:
             poly: An ordered list of coefficients.
-
             const: The term's coefficient.
+            variables: The variables corresponding to the list of coefficients.
 
             variables:
                 An ordered list of variables corresponding to the coefficients.
+
+        Returns:
+            A PolyhedralTerm corresponding to the provided data.
         """
         assert len(poly) == len(variables)
         variable_dict = {}
@@ -362,14 +366,12 @@ class PolyhedralTerm(Term):
     @staticmethod
     def solve_for_variables(context, vars_to_elim):
         """
-        Interpret a list of terms as equalities and solve the system of equations
-        for the given variables.
+        Interpret termlist as equality and solve system of equations.
 
         Args:
             context:
                 The list of terms to be solved. Each term will be interpreted as
                 an equality.
-
             vars_to_elim:
                 The list of variables whose solutions will be sought.
 
@@ -390,39 +392,15 @@ class PolyhedralTerm(Term):
         logging.debug(sols)
         if len(sols) > 0:
             return {Var(str(key)): PolyhedralTerm.to_term(sols[key]) for key in sols.keys()}
-        else:
-            return {}
+        return {}
 
 
 class PolyhedralTermList(TermList):
-    """
-    A TermList of PolyhedralTerm instances.
-    """
-
-    def _transform(self, context: PolyhedralTermList, vars_to_elim: list, abduce: bool):
-        logging.debug("Transforming: %s", self)
-        logging.debug("Context terms: %s", context)
-        logging.debug("Variables to eliminate: %s", vars_to_elim)
-        term_list = list(self.terms)
-        new_terms = list()
-        for term in term_list:
-            helpers = (context | self) - PolyhedralTermList([term])
-            try:
-                new_term = PolyhedralTermList.transform_term(term, helpers, vars_to_elim, abduce)
-            except ValueError as e:
-                new_term = term
-            new_terms.append(new_term)
-
-        self.terms = list(new_terms)
-
-        # the last step needs to be a simplification
-        logging.debug("Ending transformation with simplification")
-        self.simplify(context)
+    """A TermList of PolyhedralTerm instances."""
 
     def abduce_with_context(self, context: TermList, vars_to_elim: list) -> TermList:
         """
-        Obtain a list of PolyhedralTerm instances lacking the indicated variables
-        and implying the given TermList in the given context.
+        Eliminate variables from PolyhedralTermList by refining it in context.
 
         Example:
             Suppose the current list of terms is $\\{x + y \\le 6\\}$, the
@@ -434,7 +412,6 @@ class PolyhedralTermList(TermList):
         Args:
             context:
                 The TermList providing the context for the abduction.
-
             vars_to_elim:
                 Variables that should not appear in the abduced term.
 
@@ -442,6 +419,9 @@ class PolyhedralTermList(TermList):
             A list of terms not containing any variables in `vars_to_elim`
             and which, in the context provided, imply the terms contained in the
             calling termlist.
+
+        Raises:
+            ValueError: Self has empty intersection with its context.
         """
         termlist = self.copy()
         logging.debug("Abducing from terms: %s", self)
@@ -454,7 +434,7 @@ class PolyhedralTermList(TermList):
                 "Provided constraints \n{}\n".format(self) + "are unsatisfiable in context \n{}".format(context)
             ) from e
         try:
-            termlist._transform(context, vars_to_elim, True)
+            termlist._transform(context=context, vars_to_elim=vars_to_elim, abduce=True)
         except ValueError as e:
             raise ValueError(
                 "The elimination of variables \n{}\n".format(vars_to_elim)
@@ -467,13 +447,15 @@ class PolyhedralTermList(TermList):
     def lacks_constraints(self):
         """
         Tell whether TermList is empty.
+
+        Returns:
+            True if empty. False otherwise.
         """
         return len(self.terms) == 0
 
     def deduce_with_context(self, context: TermList, vars_to_elim: list) -> TermList:
         """
-        Obtain a list of PolyhedralTerm instances lacking the indicated variables
-        and implied by the given TermList in the given context.
+        Eliminate variables from PolyhedralTermList by abstracting it in context.
 
         Example:
             Suppose the current list of terms is $\\{x - y \\le 6\\}$, the
@@ -508,7 +490,7 @@ class PolyhedralTermList(TermList):
                 "Provided constraints \n{}\n".format(self) + "are unsatisfiable in context \n{}".format(context)
             ) from e
         try:
-            termlist._transform(context, vars_to_elim, False)
+            termlist._transform(context=context, vars_to_elim=vars_to_elim, abduce=False)
         except ValueError as e:
             raise ValueError(
                 "The elimination of variables \n{}\n".format(vars_to_elim)
@@ -523,8 +505,7 @@ class PolyhedralTermList(TermList):
 
     def simplify(self, context: PolyhedralTermList | None = None) -> None:  # type: ignore[override]
         """
-        Remove redundant terms in the PolyhedralTermList using the provided
-        context.
+        Remove redundant terms in the PolyhedralTermList using the provided context.
 
         Example:
             Suppose the TermList is $\\{x - 2y \\le 5, x - y \\le 0\\}$ and
@@ -541,12 +522,16 @@ class PolyhedralTermList(TermList):
         logging.debug("Starting simplification procedure")
         logging.debug("Simplifying terms: %s", self)
         logging.debug("Context: %s", context)
-        if not context:
-            variables, self_mat, self_cons, ctx_mat, ctx_cons = PolyhedralTermList.termlist_to_polytope(
-                self, PolyhedralTermList()
-            )
+        if context:
+            result = PolyhedralTermList.termlist_to_polytope(self, context)
         else:
-            variables, self_mat, self_cons, ctx_mat, ctx_cons = PolyhedralTermList.termlist_to_polytope(self, context)
+            result = PolyhedralTermList.termlist_to_polytope(self, PolyhedralTermList())
+
+        variables = result[0]
+        self_mat = result[1]
+        self_cons = result[2]
+        ctx_mat = result[3]
+        ctx_cons = result[4]
         logging.debug("Polytope is \n%s", self_mat)
         try:
             a_red, b_red = PolyhedralTermList.reduce_polytope(self_mat, self_cons, ctx_mat, ctx_cons)
@@ -560,8 +545,7 @@ class PolyhedralTermList(TermList):
 
     def refines(self, other: PolyhedralTermList) -> bool:  # type: ignore[override]
         """
-        Tells whether the argument is a larger specification, i.e., compute self
-        <= other.
+        Tells whether the argument is a larger specification.
 
         Args:
             other:
@@ -575,10 +559,31 @@ class PolyhedralTermList(TermList):
         logging.debug("RH term: %s", other)
         if other.lacks_constraints():
             return True
-        variables, self_mat, self_cons, ctx_mat, ctx_cons = PolyhedralTermList.termlist_to_polytope(self, other)
+        variables, self_mat, self_cons, ctx_mat, ctx_cons = PolyhedralTermList.termlist_to_polytope(  # noqa: WPS236
+            self, other
+        )
         logging.debug("Polytope is \n%s", self_mat)
-        result = PolyhedralTermList.verify_polytope_containment(self_mat, self_cons, ctx_mat, ctx_cons)
-        return result
+        return PolyhedralTermList.verify_polytope_containment(self_mat, self_cons, ctx_mat, ctx_cons)
+
+    def _transform(self, context: PolyhedralTermList, vars_to_elim: list, abduce: bool):
+        logging.debug("Transforming: %s", self)
+        logging.debug("Context terms: %s", context)
+        logging.debug("Variables to eliminate: %s", vars_to_elim)
+        term_list = list(self.terms)
+        new_terms = []
+        for term in term_list:
+            helpers = (context | self) - PolyhedralTermList([term])
+            try:
+                new_term = PolyhedralTermList.transform_term(term, helpers, vars_to_elim, abduce)
+            except ValueError:
+                new_term = term
+            new_terms.append(new_term)
+
+        self.terms = list(new_terms)
+
+        # the last step needs to be a simplification
+        logging.debug("Ending transformation with simplification")
+        self.simplify(context)
 
     @staticmethod
     def termlist_to_polytope(terms: PolyhedralTermList, context: PolyhedralTermList):
@@ -633,8 +638,7 @@ class PolyhedralTermList(TermList):
     @staticmethod
     def polytope_to_termlist(matrix, vector, variables: list[Var]) -> PolyhedralTermList:
         """
-        Transforms a matrix-vector pair into a PolyhedralTermList, assuming that
-        the variable coefficients in the matrix are ordered as specified.
+        Transforms a matrix-vector pair into a PolyhedralTermList.
 
         Args:
             matrix:
@@ -670,8 +674,7 @@ class PolyhedralTermList(TermList):
         a: np.ndarray, b: np.ndarray, a_help: np.ndarray | None = None, b_help: np.ndarray | None = None
     ):
         """
-        Eliminate redundant constraints from the H-representation of a given
-        polytope using as context a given polytope.
+        Eliminate redundant constraints from a given polytope.
 
         Args:
             a:
@@ -736,7 +739,7 @@ class PolyhedralTermList(TermList):
                 logging.debug("Optimal value: %s", -res["fun"])
             logging.debug("Results: %s", res)
             # if res["success"] and -res["fun"] <= b_temp[i]:
-            if res["status"] != 2 and -res["fun"] <= b_temp[i]:
+            if res["status"] != 2 and -res["fun"] <= b_temp[i]:  # noqa: WPS309
                 logging.debug("Can remove")
                 a_temp = np.delete(a_temp, i, 0)
                 b_temp = np.delete(b_temp, i)
@@ -753,11 +756,10 @@ class PolyhedralTermList(TermList):
         a_l: np.ndarray | None = None,
         b_l: np.ndarray | None = None,
         a_r: np.ndarray | None = None,
-        b_r: np.ndarray | None = None
+        b_r: np.ndarray | None = None,
     ) -> bool:
         """
-        Say whether a polytope is contained in another. Both are given in their
-        H-representation.
+        Tell whether a polytope is contained in another.
 
         Args:
             a_l:
@@ -772,13 +774,13 @@ class PolyhedralTermList(TermList):
         Returns:
             True if left polytope is contained in right polytope. False otherwise.
         """
-        if not isinstance(a_l,np.ndarray):
+        if not isinstance(a_l, np.ndarray):
             a_l = np.array([[]])
-        if not isinstance(a_r,np.ndarray):
+        if not isinstance(a_r, np.ndarray):
             a_r = np.array([[]])
-        if not isinstance(b_l,np.ndarray):
+        if not isinstance(b_l, np.ndarray):
             b_l = np.array([])
-        if not isinstance(b_r,np.ndarray):
+        if not isinstance(b_r, np.ndarray):
             b_r = np.array([])
         # If the LHS is empty, it is a refinement
         if PolyhedralTermList.is_polytope_empty(a_l, b_l):
@@ -813,7 +815,7 @@ class PolyhedralTermList(TermList):
             logging.debug("Optimal value: %s", -res["fun"])
             logging.debug("Results: %s", res)
             # if res["success"] and -res["fun"] <= b_temp[i]:
-            if res["status"] != 2 and -res["fun"] <= b_temp:
+            if res["status"] != 2 and -res["fun"] <= b_temp:  # noqa: WPS309
                 logging.debug("Redundant constraint")
             else:
                 is_refinement = False
