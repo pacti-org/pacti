@@ -115,7 +115,7 @@ class TermList(ABC):
         return varlist
 
     def __str__(self) -> str:
-        if len(self.terms) > 0:
+        if self.terms:
             res = [str(el) for el in self.terms]
             return ", ".join(res)
         else:
@@ -133,7 +133,7 @@ class TermList(ABC):
         """
         terms = list()
         for t in self.terms:
-            if len(list_intersection(t.vars, variable_list)) > 0:
+            if list_intersection(t.vars, variable_list):
                 terms.append(t)
         return type(self)(terms)
 
@@ -246,18 +246,18 @@ class IoContract:
         self, assumptions: TermList, guarantees: TermList, inputVars: List[Var], outputVars: List[Var]
     ) -> None:
         # make sure the input & output variables are disjoint
-        if len(list_intersection(inputVars, outputVars)) != 0:
+        if list_intersection(inputVars, outputVars):
             raise ValueError(
                 "The following variables appear in inputs and outputs: %s" % (list_intersection(inputVars, outputVars))
             )
         # make sure the assumptions only contain input variables
-        if len(list_diff(assumptions.vars, inputVars)) != 0:
+        if list_diff(assumptions.vars, inputVars):
             raise ValueError(
                 "The following variables appear in the assumptions but are not inputs: %s"
                 % (list_diff(assumptions.vars, inputVars))
             )
         # make sure the guarantees only contain input or output variables
-        if len(list_diff(guarantees.vars, list_union(inputVars, outputVars))) != 0:
+        if list_diff(guarantees.vars, list_union(inputVars, outputVars)):
             raise ValueError(
                 "The guarantees contain the following variables which are neither inputs nor outputs: %s. Inputs: %s. Outputs: %s. Guarantees: %s"
                 % (list_diff(guarantees.vars, list_union(inputVars, outputVars)), inputVars, outputVars, guarantees)
@@ -385,7 +385,7 @@ class IoContract:
         elif self_helps_other and not other_helps_self:
             logging.debug("Assumption computation: self provides context for other")
             new_a = other.a.abduce_with_context(self.a | self.g, assumptions_forbidden_vars)
-            if len(list_intersection(new_a.vars, assumptions_forbidden_vars)) > 0:
+            if list_intersection(new_a.vars, assumptions_forbidden_vars):
                 raise ValueError(
                     "The guarantees \n{}\n".format(self.g)
                     + "were insufficient to abduce the assumptions \n{}\n".format(other.a)
@@ -395,7 +395,7 @@ class IoContract:
         elif other_helps_self and not self_helps_other:
             logging.debug("Assumption computation: other provides context for self")
             new_a = self.a.abduce_with_context(other.a | other.g, assumptions_forbidden_vars)
-            if len(list_intersection(new_a.vars, assumptions_forbidden_vars)) > 0:
+            if list_intersection(new_a.vars, assumptions_forbidden_vars):
                 raise ValueError(
                     "The guarantees \n{}\n".format(other.g)
                     + "were insufficient to abduce the assumptions \n{}\n".format(self.a)
@@ -443,7 +443,7 @@ class IoContract:
         """
         if not self.can_quotient_by(other):
             raise ValueError("Contracts cannot be quotiented due to incompatible IO")
-        if len(list_diff(additionalInputs, list_union(other.outputvars, self.inputvars))) > 0:
+        if list_diff(additionalInputs, list_union(other.outputvars, self.inputvars)):
             raise ValueError(
                 "The additional inputs %s are neither top level inputs nor existing component outputs"
                 % (list_diff(additionalInputs, list_union(other.outputvars, self.inputvars)))
