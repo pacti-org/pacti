@@ -30,12 +30,16 @@ class Var:
     Variables allow us to name an entity for which we want to write constraints.
     """
 
-    def __init__(self, val):
-        self._name = str(val)
+    def __init__(self, varname):
+        self._name = str(varname)
 
     @property
     def name(self) -> str:
-        """The name of the variable."""
+        """The name of the variable.
+
+        Returns:
+            The name of the variable.
+        """
         return self._name
 
     def __eq__(self, other):
@@ -103,13 +107,17 @@ class TermList(ABC):
     class that must be extended to support a specific constraint formalism.
     """
 
-    def __init__(self, termList: List):
-        self.terms = termList.copy()
+    def __init__(self, term_list: List):
+        self.terms = term_list.copy()
 
     @property
     def vars(self):
-        """The list of variables contained in this list of terms."""
-        varlist = list()
+        """The list of variables contained in this list of terms.
+
+        Returns:
+            List of variables referenced in the term.
+        """
+        varlist = []
         for t in self.terms:
             varlist = list_union(varlist, t.vars)
         return varlist
@@ -118,8 +126,7 @@ class TermList(ABC):
         if self.terms:
             res = [str(el) for el in self.terms]
             return ", ".join(res)
-        else:
-            return "true"
+        return "true"
 
     def __eq__(self, other):
         return self.terms == other.terms
@@ -129,9 +136,12 @@ class TermList(ABC):
         Returns the list of terms which contain any of the variables indicated.
 
         Args:
-            varList: a list of variables being sought in current TermList.
+            variable_list: a list of variables being sought in current TermList.
+
+        Returns:
+            The list of terms which contain any of the variables indicated.
         """
-        terms = list()
+        terms = []
         for t in self.terms:
             if list_intersection(t.vars, variable_list):
                 terms.append(t)
@@ -155,8 +165,7 @@ class TermList(ABC):
     @abstractmethod
     def abduce_with_context(self, context: TermList, vars_to_elim: List[Var]) -> TermList:
         """
-        Abduce terms containing variables to be eliminated using a user-provided
-        context.
+        Abduce terms containing variables to be eliminated using a user-provided context.
 
         Given a context $\\Gamma$, and the list of terms contained in self,
         $s$, this routine identifies a TermList $x$ lacking variables
@@ -178,8 +187,7 @@ class TermList(ABC):
     @abstractmethod
     def deduce_with_context(self, context: TermList, vars_to_elim: List[Var]) -> TermList:
         """
-        Deduce terms containing variables to be eliminated using a user-provided
-        context.
+        Deduce terms containing variables to be eliminated using a user-provided context.
 
         Given a context $\\Gamma$, and the list of terms contained in self,
         $s$, this routine identifies a formula $x$ lacking variables
@@ -216,19 +224,20 @@ class TermList(ABC):
     @abstractmethod
     def refines(self, other: TermList) -> bool:
         """
-        Tell whether the argument is a larger specification, i.e., compute self
-        <= other.
+        Tell whether the argument is a larger specification.
 
         Args:
             other:
                 TermList against which we are comparing self.
+
+        Returns:
+            self <= other.
         """
 
 
 class IoContract:
     """
-    Basic type for an IO contract, a structure consisting of assumptions,
-    guarantees, and input and output vars.
+    Basic type for an IO contract.
 
     Attributes:
         inputvars:
@@ -243,38 +252,41 @@ class IoContract:
     """
 
     def __init__(
-        self, assumptions: TermList, guarantees: TermList, inputVars: List[Var], outputVars: List[Var]
+        self, assumptions: TermList, guarantees: TermList, input_vars: List[Var], output_vars: List[Var]
     ) -> None:
         # make sure the input & output variables are disjoint
-        if list_intersection(inputVars, outputVars):
+        if list_intersection(input_vars, output_vars):
             raise ValueError(
-                "The following variables appear in inputs and outputs: %s" % (list_intersection(inputVars, outputVars))
+                "The following variables appear in inputs and outputs: %s"
+                % (list_intersection(input_vars, output_vars))
             )
         # make sure the assumptions only contain input variables
-        if list_diff(assumptions.vars, inputVars):
+        if list_diff(assumptions.vars, input_vars):
             raise ValueError(
                 "The following variables appear in the assumptions but are not inputs: %s"
-                % (list_diff(assumptions.vars, inputVars))
+                % (list_diff(assumptions.vars, input_vars))
             )
         # make sure the guarantees only contain input or output variables
-        if list_diff(guarantees.vars, list_union(inputVars, outputVars)):
+        if list_diff(guarantees.vars, list_union(input_vars, output_vars)):
             raise ValueError(
                 "The guarantees contain the following variables which are neither inputs nor outputs: %s. Inputs: %s. Outputs: %s. Guarantees: %s"
-                % (list_diff(guarantees.vars, list_union(inputVars, outputVars)), inputVars, outputVars, guarantees)
+                % (list_diff(guarantees.vars, list_union(input_vars, output_vars)), input_vars, output_vars, guarantees)
             )
 
         self.a = assumptions.copy()
         self.g = guarantees.copy()
-        self.inputvars = inputVars.copy()
-        self.outputvars = outputVars.copy()
+        self.inputvars = input_vars.copy()
+        self.outputvars = output_vars.copy()
         # simplify the guarantees with the assumptions
         self.g.simplify(self.a)
 
     @property
     def vars(self):
         """
-        The list of variables contained in the assumptions and guarantees of the
-        contract.
+        The list of variables used referenced by contract.
+
+        Returns:
+            Variables referenced in the assumptions and guarantees.
         """
         return self.a.vars | self.g.vars
 
@@ -302,6 +314,9 @@ class IoContract:
             other:
                 Contract whose possibility to compose with self we are
                 verifying.
+
+        Returns:
+            True if the contracts can be composed. False otherwise.
         """
         # make sure lists of output variables don't intersect
         return len(list_intersection(self.outputvars, other.outputvars)) == 0
@@ -312,6 +327,10 @@ class IoContract:
 
         Args:
             other: potential quotient by which self would be quotiented.
+
+        Returns:
+            True if the IO profiles of the contracts allow the quotient to
+            exist. False otherwise.
         """
         # make sure the top level outputs not contained in outputs of the
         # existing component do not intersect with the inputs of the existing
@@ -324,6 +343,9 @@ class IoContract:
 
         Args:
             other: contract whose IO signature is compared with self.
+
+        Returns:
+            True if the contracts have the same IO profile.
         """
         return lists_equal(self.inputvars, other.inputvars) & lists_equal(self.outputvars, other.outputvars)
 
@@ -335,6 +357,12 @@ class IoContract:
 
         Args:
             other: contract being compared with self.
+
+        Returns:
+            True if the calling contract refines the argument.
+
+        Raises:
+            ValueError: Refinement cannot be computed.
         """
         if not self.shares_io_with(other):
             raise ValueError("Contracts do not share IO")
@@ -354,6 +382,9 @@ class IoContract:
 
         Returns:
             The abstracted composition of the two contracts.
+
+        Raises:
+            ValueError: An error occurred during composition.
         """
         logging.debug("Composing contracts \n%s and \n%s", self, other)
         intvars = list_union(
@@ -376,7 +407,6 @@ class IoContract:
             )
         other_helps_self = len(list_intersection(other.outputvars, self.inputvars)) > 0
         self_helps_other = len(list_intersection(other.inputvars, self.outputvars)) > 0
-        #
         other_drives_const_inputs = len(list_intersection(other.outputvars, selfinputconst)) > 0
         self_drives_const_inputs = len(list_intersection(self.outputvars, otherinputconst)) > 0
         # process assumptions
@@ -421,12 +451,9 @@ class IoContract:
         terms_to_elim = allguarantees.get_terms_with_vars(intvars)
         allguarantees = allguarantees - terms_to_elim
 
-        # build contract
-        result = IoContract(assumptions, allguarantees, inputvars, outputvars)
+        return IoContract(assumptions, allguarantees, inputvars, outputvars)
 
-        return result
-
-    def quotient(self, other: IoContract, additionalInputs: List[Var] = []) -> IoContract:
+    def quotient(self, other: IoContract, additional_inputs: List[Var] = None) -> IoContract:
         """Compute the contract quotient.
 
         Compute the quotient self/other of the two given contracts and refine
@@ -437,31 +464,39 @@ class IoContract:
         Args:
             other:
                 The contract by which we take the quotient.
+            additional_inputs:
+                Additional variables that the quotient is allowed to consider as
+                inputs. These variables can be either top level-inputs or
+                outputs of the other argument.
 
         Returns:
             The refined quotient self/other.
+
+        Raises:
+            ValueError: the arguments provided are incompatible with the
+            computation of the quotient.
         """
         if not self.can_quotient_by(other):
             raise ValueError("Contracts cannot be quotiented due to incompatible IO")
-        if list_diff(additionalInputs, list_union(other.outputvars, self.inputvars)):
+        if list_diff(additional_inputs, list_union(other.outputvars, self.inputvars)):
             raise ValueError(
                 "The additional inputs %s are neither top level inputs nor existing component outputs"
-                % (list_diff(additionalInputs, list_union(other.outputvars, self.inputvars)))
+                % (list_diff(additional_inputs, list_union(other.outputvars, self.inputvars)))
             )
         outputvars = list_union(
             list_diff(self.outputvars, other.outputvars), list_diff(other.inputvars, self.inputvars)
         )
         inputvars = list_union(list_diff(self.inputvars, other.inputvars), list_diff(other.outputvars, self.outputvars))
-        inputvars = list_union(inputvars, additionalInputs)
+        inputvars = list_union(inputvars, additional_inputs)
         intvars = list_union(
             list_intersection(self.outputvars, other.outputvars), list_intersection(self.inputvars, other.inputvars)
         )
-        intvars = list_diff(intvars, additionalInputs)
+        intvars = list_diff(intvars, additional_inputs)
 
         # get assumptions
         logging.debug("Computing quotient assumptions")
         assumptions = copy.deepcopy(self.a)
-        empty_context = type(assumptions)(list())
+        empty_context = type(assumptions)([])
         if assumptions.refines(other.a):
             assumptions = assumptions | other.g
         assumptions = assumptions.deduce_with_context(empty_context, list_union(intvars, outputvars))
@@ -470,16 +505,9 @@ class IoContract:
         # get guarantees
         logging.debug("Computing quotient guarantees")
         guarantees = self.g
-        logging.debug(
-            """
-        Using existing guarantees to aid system-level guarantees
-        """
-        )
+        logging.debug("Using existing guarantees to aid system-level guarantees")
         guarantees = guarantees.abduce_with_context(other.g | other.a, intvars)
-        logging.debug(
-            """
-        Using system-level assumptions to aid quotient guarantees"""
-        )
+        logging.debug("Using system-level assumptions to aid quotient guarantees")
         guarantees = guarantees | other.a
         guarantees = guarantees.abduce_with_context(self.a, intvars)
         logging.debug("Guarantees after processing: %s", guarantees)
@@ -498,6 +526,9 @@ class IoContract:
 
         Returns:
             The result of merging.
+
+        Raises:
+            ValueError: the IO profiles are incompatible with contract merging.
         """
         if not self.shares_io_with(other):
             raise ValueError("Contracts cannot be merged due to incompatible IO")
