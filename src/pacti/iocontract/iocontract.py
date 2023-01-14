@@ -65,16 +65,16 @@ class Term(ABC):
 
     @property
     @abstractmethod
-    def vars(self):
+    def vars(self):  # noqa: A003
         """Variables contained in the syntax of the term."""
 
     @abstractmethod
-    def contains_var(self, var: Var):
+    def contains_var(self, var_to_seek: Var):
         """
         Tell whether term contains a given variable.
 
         Args:
-            var: The variable that we are seeking in the current term.
+            var_to_seek: The variable that we are seeking in the current term.
         """
 
     @abstractmethod
@@ -107,14 +107,14 @@ class TermList(ABC):
     class that must be extended to support a specific constraint formalism.
     """
 
-    def __init__(self, term_list: List | None=None):
+    def __init__(self, term_list: List | None = None):
         if term_list:
             self.terms = term_list.copy()
         else:
             self.terms = []
 
     @property
-    def vars(self):
+    def vars(self):  # noqa: A003
         """The list of variables contained in this list of terms.
 
         Returns:
@@ -210,7 +210,7 @@ class TermList(ABC):
         """
 
     @abstractmethod
-    def simplify(self, context: TermList | None=None):
+    def simplify(self, context: TermList | None = None):
         """Remove redundant terms in TermList.
 
         Let $S$ be this TermList and suppose $T \\subseteq S$. Let
@@ -272,7 +272,8 @@ class IoContract:
         # make sure the guarantees only contain input or output variables
         if list_diff(guarantees.vars, list_union(input_vars, output_vars)):
             raise ValueError(
-                "The guarantees contain the following variables which are neither inputs nor outputs: %s. Inputs: %s. Outputs: %s. Guarantees: %s"
+                "The guarantees contain the following variables which are neither"
+                "inputs nor outputs: %s. Inputs: %s. Outputs: %s. Guarantees: %s"
                 % (list_diff(guarantees.vars, list_union(input_vars, output_vars)), input_vars, output_vars, guarantees)
             )
 
@@ -284,7 +285,7 @@ class IoContract:
         self.g.simplify(self.a)
 
     @property
-    def vars(self):
+    def vars(self):  # noqa: A003
         """
         The list of variables used referenced by contract.
 
