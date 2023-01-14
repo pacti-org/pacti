@@ -82,8 +82,8 @@ def readInputFile(inputfilename, outputfilename):
         for key in ["assumptions", "guarantees"]:
             reqs.append([PolyhedralTerm(term["coefficients"], term["constant"]) for term in c[key]])
         cont = IoContract(
-            inputVars=getVarlist(c["InputVars"]),
-            outputVars=getVarlist(c["OutputVars"]),
+            input_vars=getVarlist(c["InputVars"]),
+            output_vars=getVarlist(c["OutputVars"]),
             assumptions=PolyhedralTermList(list(reqs[0])),
             guarantees=PolyhedralTermList(list(reqs[1])),
         )

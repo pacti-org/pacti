@@ -14,6 +14,8 @@ from scipy.optimize import linprog
 from pacti.iocontract import Term, TermList, Var
 from pacti.utils.lists import list_diff, list_intersection, list_union
 
+from typing import List
+
 
 class PolyhedralTerm(Term):
     """
@@ -400,7 +402,7 @@ class PolyhedralTermList(TermList):
     A TermList of PolyhedralTerm instances.
     """
 
-    def _transform(self, context: TermList, vars_to_elim: list, abduce: bool):
+    def _transform(self, context: PolyhedralTermList, vars_to_elim: list, abduce: bool):
         logging.debug("Transforming: %s", self)
         logging.debug("Context terms: %s", context)
         logging.debug("Variables to eliminate: %s", vars_to_elim)
@@ -520,7 +522,7 @@ class PolyhedralTermList(TermList):
         termlist.terms = list_diff(termlist.terms, terms_to_elim.terms)
         return termlist
 
-    def simplify(self, context=list()) -> None:
+    def simplify(self, context:PolyhedralTermList | None=None) -> None: # type: ignore[override]
         """
         Remove redundant terms in the PolyhedralTermList using the provided
         context.
@@ -537,9 +539,9 @@ class PolyhedralTermList(TermList):
         logging.debug("Starting simplification procedure")
         logging.debug("Simplifying terms: %s", self)
         logging.debug("Context: %s", context)
-        if isinstance(context, list):
+        if not context:
             variables, self_mat, self_cons, ctx_mat, ctx_cons = PolyhedralTermList.termlist_to_polytope(
-                self, PolyhedralTermList(context)
+                self, PolyhedralTermList()
             )
         else:
             variables, self_mat, self_cons, ctx_mat, ctx_cons = PolyhedralTermList.termlist_to_polytope(self, context)
