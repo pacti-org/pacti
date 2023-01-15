@@ -8,6 +8,7 @@ $x_i$ are variables and the $a_i$ and $c$ are constants.
 from __future__ import annotations
 
 import logging
+from typing import Tuple
 
 import numpy as np
 import sympy
@@ -15,6 +16,8 @@ from scipy.optimize import linprog
 
 from pacti.iocontract import Term, TermList, Var
 from pacti.utils.lists import list_diff, list_intersection, list_union
+
+numeric = int | float
 
 
 class PolyhedralTerm(Term):
@@ -24,7 +27,7 @@ class PolyhedralTerm(Term):
     # values are the coefficients of those variables in the term, and (b) a
     # constant. The term is assumed to be in the form \Sigma_i a_i v_i +
     # constant <= 0
-    def __init__(self, variables, constant):
+    def __init__(self, variables: dict[Var, numeric], constant: numeric):
         """
         Constructor for PolyhedralTerm.
 
@@ -82,7 +85,7 @@ class PolyhedralTerm(Term):
             variables[var] = self.get_coefficient(var) + other.get_coefficient(var)
         return PolyhedralTerm(variables, self.constant + other.constant)
 
-    def copy(self):
+    def copy(self) -> PolyhedralTerm:
         """
         Generates copy of polyhedral term.
 
@@ -92,7 +95,7 @@ class PolyhedralTerm(Term):
         return PolyhedralTerm(self.variables, self.constant)
 
     @property
-    def vars(self):  # noqa: A003
+    def vars(self) -> list[Var]:  # noqa: A003
         """
         Variables appearing in term with a nonzero coefficient.
 
@@ -107,7 +110,7 @@ class PolyhedralTerm(Term):
         varlist = self.variables.keys()
         return list(varlist)
 
-    def contains_var(self, var_to_seek):
+    def contains_var(self, var_to_seek: Var) -> bool:
         """
         Tell whether term contains a given variable.
 
@@ -120,7 +123,7 @@ class PolyhedralTerm(Term):
         """
         return var_to_seek in self.vars
 
-    def get_coefficient(self, var):  # noqa: VNE002
+    def get_coefficient(self, var: Var) -> numeric:  # noqa: VNE002
         """
         Output the coefficient multiplying the given variable in the term.
 
@@ -134,7 +137,7 @@ class PolyhedralTerm(Term):
             return self.variables[var]
         return 0
 
-    def get_polarity(self, var, polarity=True):  # noqa: VNE002
+    def get_polarity(self, var: Var, polarity: bool = True) -> bool:  # noqa: VNE002
         """
         Check if variable matches given polarity
 
@@ -156,7 +159,7 @@ class PolyhedralTerm(Term):
             return self.variables[var] >= 0
         return self.variables[var] <= 0
 
-    def get_sign(self, var) -> int:  # noqa: VNE002
+    def get_sign(self, var: Var) -> int:  # noqa: VNE002
         """
         Get the sign of the variable in term.
 
@@ -175,7 +178,7 @@ class PolyhedralTerm(Term):
             return 1
         return -1
 
-    def get_matching_vars(self, variable_polarity):
+    def get_matching_vars(self, variable_polarity: dict[Var, bool]) -> list[Var]:
         """
         Get list of variables whose polarities match the polarities requested.
 
@@ -217,7 +220,7 @@ class PolyhedralTerm(Term):
                     break
         return variable_list
 
-    def remove_variable(self, var):  # noqa: VNE002
+    def remove_variable(self, var: Var):  # noqa: VNE002
         """
         Eliminates a variable from a term.
 
@@ -227,7 +230,7 @@ class PolyhedralTerm(Term):
         if self.contains_var(var):
             self.variables.pop(var)
 
-    def multiply(self, factor):
+    def multiply(self, factor: numeric) -> PolyhedralTerm:
         """Multiplies a term by a constant factor.
 
         For example, multiplying the term $2x + 3y \\le 4$ by the factor 2
@@ -243,7 +246,7 @@ class PolyhedralTerm(Term):
         variables = {key: factor * val for key, val in self.variables.items()}
         return PolyhedralTerm(variables, factor * self.constant)
 
-    def substitute_variable(self, var, subst_with_term):  # noqa: VNE002
+    def substitute_variable(self, var: Var, subst_with_term: PolyhedralTerm) -> PolyhedralTerm:  # noqa: VNE002
         """
         Substitutes a specified variable in a term with a given term.
 
@@ -269,7 +272,7 @@ class PolyhedralTerm(Term):
         return self.copy()
 
     @staticmethod
-    def to_symbolic(term):
+    def to_symbolic(term: PolyhedralTerm) -> sympy.core.basic.Basic:
         """
         Translates the variable terms of a PolyhedralTerm into a sympy expression.
 
@@ -285,21 +288,21 @@ class PolyhedralTerm(Term):
             yields the expression $-2x + 3y$.
 
         Args:
-            term(PolyhedralTerm):
+            term:
                 The term whose coefficients and variables are to be translated
                 to sympy's data structure.
 
         Returns:
             Sympy expression corresponding to PolyhedralTerm.
         """
-        ex = -term.constant
+        ex = sympy.core.expr.Expr(-term.constant)
         for var in term.vars:  # noqa: VNE002
             sv = sympy.symbols(var.name)
             ex += sv * term.get_coefficient(var)
         return ex
 
     @staticmethod
-    def to_term(expression):
+    def to_term(expression: sympy.core.expr.Expr) -> PolyhedralTerm:
         """
         Translates a sympy expression into a PolyhedralTerm.
 
@@ -328,7 +331,7 @@ class PolyhedralTerm(Term):
         return PolyhedralTerm(variable_dict, constant)
 
     @staticmethod
-    def term_to_polytope(term, variable_list):
+    def term_to_polytope(term: PolyhedralTerm, variable_list: list[Var]) -> Tuple[list[numeric], numeric]:
         """
         Transform a term into a vector according to the given order.
 
@@ -352,7 +355,7 @@ class PolyhedralTerm(Term):
         return coeffs, term.constant
 
     @staticmethod
-    def polytope_to_term(poly, const, variables):
+    def polytope_to_term(poly: list[numeric], const: numeric, variables: list[Var]) -> PolyhedralTerm:
         """
         Transform a list of coefficients and variables into a PolyhedralTerm.
 
@@ -360,9 +363,6 @@ class PolyhedralTerm(Term):
             poly: An ordered list of coefficients.
             const: The term's coefficient.
             variables: The variables corresponding to the list of coefficients.
-
-            variables:
-                An ordered list of variables corresponding to the coefficients.
 
         Returns:
             A PolyhedralTerm corresponding to the provided data.
@@ -374,7 +374,7 @@ class PolyhedralTerm(Term):
         return PolyhedralTerm(variable_dict, const)
 
     @staticmethod
-    def solve_for_variables(context, vars_to_elim):
+    def solve_for_variables(context: PolyhedralTermList, vars_to_elim: list[Var]) -> dict:
         """
         Interpret termlist as equality and solve system of equations.
 
@@ -408,7 +408,7 @@ class PolyhedralTerm(Term):
 class PolyhedralTermList(TermList):  # noqa: WPS338
     """A TermList of PolyhedralTerm instances."""
 
-    def abduce_with_context(self, context: TermList, vars_to_elim: list) -> TermList:
+    def abduce_with_context(self, context: PolyhedralTermList, vars_to_elim: list) -> PolyhedralTermList:
         """
         Eliminate variables from PolyhedralTermList by refining it in context.
 
@@ -454,7 +454,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
             ) from e
         return termlist
 
-    def lacks_constraints(self):
+    def lacks_constraints(self) -> bool:
         """
         Tell whether TermList is empty.
 
@@ -463,7 +463,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         """
         return len(self.terms) == 0
 
-    def deduce_with_context(self, context: TermList, vars_to_elim: list) -> TermList:
+    def deduce_with_context(self, context: PolyhedralTermList, vars_to_elim: list) -> PolyhedralTermList:
         """
         Eliminate variables from PolyhedralTermList by abstracting it in context.
 
@@ -513,7 +513,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         termlist.terms = list_diff(termlist.terms, terms_to_elim.terms)
         return termlist
 
-    def simplify(self, context: PolyhedralTermList | None = None) -> None:  # type: ignore[override]
+    def simplify(self, context: PolyhedralTermList | None = None) -> None:
         """
         Remove redundant terms in the PolyhedralTermList using the provided context.
 
@@ -553,7 +553,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         self.terms = PolyhedralTermList.polytope_to_termlist(a_red, b_red, variables).terms
         logging.debug("Back to terms: \n%s", self)
 
-    def refines(self, other: PolyhedralTermList) -> bool:  # type: ignore[override]
+    def refines(self, other: PolyhedralTermList) -> bool:
         """
         Tells whether the argument is a larger specification.
 
@@ -596,7 +596,9 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         self.simplify(context)
 
     @staticmethod
-    def termlist_to_polytope(terms: PolyhedralTermList, context: PolyhedralTermList):
+    def termlist_to_polytope(
+        terms: PolyhedralTermList, context: PolyhedralTermList
+    ) -> Tuple[list[Var], np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """
         Converts a list of terms with its context into matrix-vector pairs.
 
@@ -646,7 +648,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         return variables, np.array(a), np.array(b), a_h_ret, np.array(b_h)
 
     @staticmethod
-    def polytope_to_termlist(matrix, vector, variables: list[Var]) -> PolyhedralTermList:
+    def polytope_to_termlist(matrix: np.ndarray, vector: np.ndarray, variables: list[Var]) -> PolyhedralTermList:
         """
         Transforms a matrix-vector pair into a PolyhedralTermList.
 
@@ -682,7 +684,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
     @staticmethod
     def reduce_polytope(  # noqa: WPS231
         a: np.ndarray, b: np.ndarray, a_help: np.ndarray | None = None, b_help: np.ndarray | None = None
-    ):
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Eliminate redundant constraints from a given polytope.
 
