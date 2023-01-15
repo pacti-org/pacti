@@ -295,7 +295,7 @@ class PolyhedralTerm(Term):
         Returns:
             Sympy expression corresponding to PolyhedralTerm.
         """
-        ex = sympy.core.expr.Expr(-term.constant)
+        ex = -term.constant
         for var in term.vars:  # noqa: VNE002
             sv = sympy.symbols(var.name)
             ex += sv * term.get_coefficient(var)
