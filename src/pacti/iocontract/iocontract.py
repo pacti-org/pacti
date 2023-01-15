@@ -33,6 +33,12 @@ class Var:
     """
 
     def __init__(self, varname):
+        """
+        Constructor for Var.
+
+        Args:
+            varname: The name of the variable.
+        """
         self._name = str(varname)
 
     @property
@@ -97,6 +103,7 @@ class Term(ABC):
 
     @abstractmethod
     def copy(self):
+        """Returns a copy of term."""
         pass
 
 
@@ -110,6 +117,12 @@ class TermList(ABC):
     """
 
     def __init__(self, term_list: List | None = None):
+        """
+        Class constructor.
+
+        Args:
+            term_list: A list of terms contained by TermList.
+        """
         if term_list:
             self.terms = term_list.copy()
         else:
@@ -165,6 +178,12 @@ class TermList(ABC):
         return self.refines(other)
 
     def copy(self):
+        """
+        Makes copy of termlist.
+
+        Returns:
+            Copy of termlist.
+        """
         return type(self)(copy.copy(self.terms))
 
     @abstractmethod
@@ -259,6 +278,18 @@ class IoContract:
     def __init__(
         self, assumptions: TermList, guarantees: TermList, input_vars: List[Var], output_vars: List[Var]
     ) -> None:
+        """
+        Class constructor.
+
+        Args:
+            assumptions: The assumptions of the contract.
+            guarantees: The assumptions of the contract.
+            input_vars: The input variables of the contract.
+            output_vars: The output variables of the contract.
+
+        Raises:
+            ValueError: The provided does not produce a valid IO contract.
+        """
         # make sure the input & output variables are disjoint
         if list_intersection(input_vars, output_vars):
             raise ValueError(
