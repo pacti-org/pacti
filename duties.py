@@ -154,7 +154,7 @@ def tox(ctx):
     Arguments:
         ctx: The context instance (passed automatically).
     """
-    ctx.run(f"tox run", title="Running tox", pty=PTY, capture=False)
+    ctx.run(f"tox run -c config/tox.ini", title="Running tox", pty=PTY, capture=False)
 
 
 @duty
@@ -274,7 +274,7 @@ def docs_serve(ctx, host="127.0.0.1", port=8000):
         port: The port to serve the docs on.
     """
     if os.path.exists("docs/_case_studies"):
-        ctx.run("rm -f docs/_case_studies")
+        ctx.run("rm -rf docs/_case_studies")
     ctx.run("ln -sf ../case_studies docs/_case_studies")
     ctx.run(f"mkdocs serve -a {host}:{port}", title="Serving documentation", capture=False)
 
