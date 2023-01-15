@@ -104,7 +104,6 @@ class Term(ABC):
     @abstractmethod
     def copy(self):
         """Returns a copy of term."""
-        pass
 
 
 class TermList(ABC):

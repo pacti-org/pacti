@@ -18,28 +18,33 @@ from pacti.utils.lists import list_diff, list_intersection, list_union
 
 
 class PolyhedralTerm(Term):
-    """
-    Polyhedral terms are linear inequalities over a list of variables.
-
-    Usage:
-        Polyhedral terms are initialized as follows:
-
-        ```
-            variables = {Var('x'):2, Var('y'):3}
-            constant = 3
-            term = PolyhedralTerm(variables, constant)
-        ```
-
-        `variables` is a dictionary whose keys are `Var` instances,
-        and `constant` is a number. Thus, our example represents the
-        expression $2x + 3y \\le 3$.
-    """
+    """Polyhedral terms are linear inequalities over a list of variables."""
 
     # Constructor: get (i) a dictionary whose keys are variables and whose
     # values are the coefficients of those variables in the term, and (b) a
     # constant. The term is assumed to be in the form \Sigma_i a_i v_i +
     # constant <= 0
     def __init__(self, variables, constant):
+        """
+        Constructor for PolyhedralTerm.
+
+        Usage:
+            Polyhedral terms are initialized as follows:
+
+            ```
+                variables = {Var('x'):2, Var('y'):3}
+                constant = 3
+                term = PolyhedralTerm(variables, constant)
+            ```
+
+            `variables` is a dictionary whose keys are `Var` instances,
+            and `constant` is a number. Thus, our example represents the
+            expression $2x + 3y \\le 3$.
+
+        Args:
+            variables: A dictionary mapping Var keys to numeric values.
+            constant: A numeric value on the right of the inequality.
+        """
         variable_dict = {}
         for key, value in variables.items():
             if value != 0:
@@ -78,6 +83,12 @@ class PolyhedralTerm(Term):
         return PolyhedralTerm(variables, self.constant + other.constant)
 
     def copy(self):
+        """
+        Generates copy of polyhedral term.
+
+        Returns:
+            Copy of term.
+        """
         return PolyhedralTerm(self.variables, self.constant)
 
     @property
@@ -134,8 +145,7 @@ class PolyhedralTerm(Term):
 
         Args:
             var: The variable whose polarity in the term we are seeking.
-            polarity: The polarity that we are comparing against the variable's
-            polarity.
+            polarity: The polarity that we are comparing against the variable's polarity.
 
         Returns:
             `True` if the variable's polarity matches `polarity` and
@@ -188,7 +198,7 @@ class PolyhedralTerm(Term):
 
         Args:
             variable_polarity: A dictionary mapping Var instances to Boolean
-            values indicating the polarity of the given variable.
+                values indicating the polarity of the given variable.
 
         Returns:
             If all variables in the term match the polarities specified in the
@@ -395,7 +405,7 @@ class PolyhedralTerm(Term):
         return {}
 
 
-class PolyhedralTermList(TermList):
+class PolyhedralTermList(TermList):  # noqa: WPS338
     """A TermList of PolyhedralTerm instances."""
 
     def abduce_with_context(self, context: TermList, vars_to_elim: list) -> TermList:
@@ -574,7 +584,7 @@ class PolyhedralTermList(TermList):
         for term in term_list:
             helpers = (context | self) - PolyhedralTermList([term])
             try:
-                new_term = PolyhedralTermList.transform_term(term, helpers, vars_to_elim, abduce)
+                new_term = PolyhedralTermList._transform_term(term, helpers, vars_to_elim, abduce)
             except ValueError:
                 new_term = term
             new_terms.append(new_term)
@@ -670,7 +680,7 @@ class PolyhedralTermList(TermList):
         return PolyhedralTermList(list(term_list))
 
     @staticmethod
-    def reduce_polytope(
+    def reduce_polytope(  # noqa: WPS231
         a: np.ndarray, b: np.ndarray, a_help: np.ndarray | None = None, b_help: np.ndarray | None = None
     ):
         """
@@ -752,7 +762,7 @@ class PolyhedralTermList(TermList):
         return a_temp, b_temp
 
     @staticmethod
-    def verify_polytope_containment(
+    def verify_polytope_containment(  # noqa: WPS231
         a_l: np.ndarray | None = None,
         b_l: np.ndarray | None = None,
         a_r: np.ndarray | None = None,
@@ -848,12 +858,14 @@ class PolyhedralTermList(TermList):
         return res["status"] == 2
 
     @staticmethod
-    def get_kaykobad_context(term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, abduce: bool):
+    def _get_kaykobad_context(  # noqa: WPS231
+        term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, abduce: bool
+    ):
         forbidden_vars = list_intersection(vars_to_elim, term.vars)
         other_forbibben_vars = list_diff(vars_to_elim, term.vars)
         n = len(forbidden_vars)
         matrix_row_terms = []  # type: list[PolyhedralTerm]
-        partial_sums = [0.0] * n
+        partial_sums = [float(0) for i in range(n)]
         transform_coeff = -1
         if abduce:
             transform_coeff = 1
@@ -877,18 +889,17 @@ class PolyhedralTermList(TermList):
                     continue
                 # 1. Verify Kaykobad pair: sign of nonzero matrix terms
                 for var in forbidden_vars:  # noqa: VNE002
-                    if context_term.get_coefficient(var) != 0 and transform_coeff * context_term.get_sign(
-                        var
-                    ) != term.get_sign(var):
-                        term_is_invalid = True
-                        logging.debug("Failed first matrix-vector verification")
-                        break
+                    if context_term.get_coefficient(var) != 0:
+                        if transform_coeff * context_term.get_sign(var) != term.get_sign(var):
+                            term_is_invalid = True
+                            logging.debug("Failed first matrix-vector verification")
+                            break
                 # 2. Verify Kaykobad pair: matrix diagonal terms
                 if context_term.get_coefficient(i_var) == 0 or term_is_invalid:
                     logging.debug("Failed second matrix-vector verification")
                     continue
                 # 3. Verify Kaykobad pair: relation between matrix and vector
-                residuals = [0.0] * n
+                residuals = [float(0) for i in range(n)]
                 for j, j_var in enumerate(forbidden_vars):
                     logging.debug("Verifying third condition on variable %s", j_var)
                     if j != i:
@@ -922,11 +933,11 @@ class PolyhedralTermList(TermList):
         return matrix_row_terms, forbidden_vars
 
     @staticmethod
-    def transform_term(term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, abduce: bool):
+    def _transform_term(term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, abduce: bool):
         logging.debug("Transforming term: %s", term)
         logging.debug("Context: %s", context)
         try:
-            matrix_row_terms, forbidden_vars = PolyhedralTermList.get_kaykobad_context(
+            matrix_row_terms, forbidden_vars = PolyhedralTermList._get_kaykobad_context(
                 term, context, vars_to_elim, abduce
             )
         except ValueError as e:
