@@ -8,7 +8,7 @@ $x_i$ are variables and the $a_i$ and $c$ are constants.
 from __future__ import annotations
 
 import logging
-from typing import Tuple
+from typing import Tuple, Any
 
 import numpy as np
 import sympy
@@ -272,7 +272,7 @@ class PolyhedralTerm(Term):
         return self.copy()
 
     @staticmethod
-    def to_symbolic(term: PolyhedralTerm) -> sympy.core.basic.Basic:
+    def to_symbolic(term: PolyhedralTerm) -> Any:
         """
         Translates the variable terms of a PolyhedralTerm into a sympy expression.
 
