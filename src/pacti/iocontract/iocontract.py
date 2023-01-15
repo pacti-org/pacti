@@ -20,7 +20,7 @@ from __future__ import annotations
 import copy
 import logging
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, TypeVar
 
 from pacti.utils.lists import list_diff, list_intersection, list_union, lists_equal
 
@@ -32,7 +32,7 @@ class Var:
     Variables allow us to name an entity for which we want to write constraints.
     """
 
-    def __init__(self, varname):
+    def __init__(self, varname: str):
         """
         Constructor for Var.
 
@@ -106,6 +106,9 @@ class Term(ABC):
         """Returns a copy of term."""
 
 
+T = TypeVar("T", bound="TermList")
+
+
 class TermList(ABC):
     """
     A collection of terms, or constraints.
@@ -128,13 +131,13 @@ class TermList(ABC):
             self.terms = []
 
     @property
-    def vars(self):  # noqa: A003
+    def vars(self) -> list[Var]:  # noqa: A003
         """The list of variables contained in this list of terms.
 
         Returns:
             List of variables referenced in the term.
         """
-        varlist = []
+        varlist: list[Var] = []
         for t in self.terms:
             varlist = list_union(varlist, t.vars)
         return varlist
@@ -148,7 +151,7 @@ class TermList(ABC):
     def __eq__(self, other):
         return self.terms == other.terms
 
-    def get_terms_with_vars(self, variable_list: List[Var]):
+    def get_terms_with_vars(self: T, variable_list: List[Var]) -> T:
         """
         Returns the list of terms which contain any of the variables indicated.
 
@@ -176,7 +179,7 @@ class TermList(ABC):
     def __le__(self, other):
         return self.refines(other)
 
-    def copy(self):
+    def copy(self: T) -> T:
         """
         Makes copy of termlist.
 
@@ -186,7 +189,7 @@ class TermList(ABC):
         return type(self)(copy.copy(self.terms))
 
     @abstractmethod
-    def abduce_with_context(self, context: TermList, vars_to_elim: List[Var]) -> TermList:
+    def abduce_with_context(self: T, context: T, vars_to_elim: List[Var]) -> T:
         """
         Abduce terms containing variables to be eliminated using a user-provided context.
 
@@ -208,7 +211,7 @@ class TermList(ABC):
         """
 
     @abstractmethod
-    def deduce_with_context(self, context: TermList, vars_to_elim: List[Var]) -> TermList:
+    def deduce_with_context(self: T, context: T, vars_to_elim: List[Var]) -> T:
         """
         Deduce terms containing variables to be eliminated using a user-provided context.
 
@@ -230,7 +233,7 @@ class TermList(ABC):
         """
 
     @abstractmethod
-    def simplify(self, context: TermList | None = None):
+    def simplify(self: T, context: T | None = None):
         """Remove redundant terms in TermList.
 
         Let $S$ be this TermList and suppose $T \\subseteq S$. Let
@@ -245,7 +248,7 @@ class TermList(ABC):
         """
 
     @abstractmethod
-    def refines(self, other: TermList) -> bool:
+    def refines(self: T, other: T) -> bool:
         """
         Tell whether the argument is a larger specification.
 
@@ -317,14 +320,14 @@ class IoContract:
         self.g.simplify(self.a)
 
     @property
-    def vars(self):  # noqa: A003
+    def vars(self) -> list[Var]:  # noqa: A003
         """
         The list of variables used referenced by contract.
 
         Returns:
             Variables referenced in the assumptions and guarantees.
         """
-        return self.a.vars | self.g.vars
+        return list_union(self.a.vars, self.g.vars)
 
     def __str__(self):
         return (

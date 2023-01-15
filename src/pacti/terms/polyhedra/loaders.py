@@ -9,15 +9,17 @@ from pacti.terms.polyhedra.polyhedra import PolyhedralTerm, PolyhedralTermList
 from pacti.utils.string_contract import StrContract
 
 
-def readContract(contract):
+def readContract(contract: dict | list[dict]) -> list[IoContract]:
     """
     Converts a contract written as JSON dictionary to pacti.iocontract type.
     If a list of JSON contracts are passed, a corresponding list of iocontracts is returned.
-    Arguments:
-        * contract (dict, list): A JSON dict describing the contract in the Pacti syntax.
-                                 May be a list of such dictionaries.
+
+    Args:
+        contract: A JSON dict describing the contract in the Pacti syntax. 
+            May be a list of such dictionaries.
+
     Returns:
-        * iocontract (pacti.IoContract): An input-output Pacti contract object
+        list_iocontracts: A list of input-output Pacti contract objects
     """
     if type(contract) is not list:
         contract = [contract]
@@ -41,18 +43,16 @@ def readContract(contract):
         return list_iocontracts
 
 
-def writeContract(contract: IoContract, filename: str = None):
+def writeContract(contract: IoContract | list[IoContract], filename: str = None) -> list[dict]:
     """
     Converts a pacti.IoContract to a dictionary. If a list of iocontracts is passed,
     then a list of dicts is returned.
     If a filename is provided, a JSON file is written, otherwise only dictionaries are returned.
-    Arguments:
-        * contract (pacti.IoContract, list): Contract input of type IoContract
-                                                       or list of IoContracts.
-        * filename (str, optional): Name of file to write the output contract, defaults to None in which case,
-                                    no file is written.
+    Args:
+        contract: Contract input of type IoContract or list of IoContracts.
+        filename: Name of file to write the output contract, defaults to None in which case, no file is written.
     Returns:
-        * contract_dict (dict): A dictionary for the given IoContract
+        contract_dict: A dictionary for the given IoContract.
     """
     if type(contract) is IoContract:
         contract = [contract]
@@ -115,10 +115,10 @@ def pt_from_string(str_rep: str) -> PolyhedralTerm:
 def string_to_polyhedra_contract(contract: StrContract) -> IoContract:
     """
     Converts a StrContract to a pacti.iocontract type.
-    Arguments:
-        * contract (StrContract): a StrContract object
+    Args:
+        contract: a StrContract object
     Returns:
-        * iocontract (pacti.IoContract): An input-output Pacti contract object
+        io_contract: An input-output Pacti contract object
     """
     assumptions: list[PolyhedralTerm] = list(map(lambda x: pt_from_string(x), contract.assumptions))
     guarantees: list[PolyhedralTerm] = list(map(lambda x: pt_from_string(x), contract.guarantees))

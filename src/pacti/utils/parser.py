@@ -12,11 +12,7 @@ COMMENT_CHAR = "#"
 DATA_INDENT = 1
 
 
-def parse_contracts(
-    file_path: Path,
-) -> list[StrContract]:
-    """Returns: assumptions, guarantees, inputs, outputs"""
-
+def parse_contracts(file_path: Path) -> list[StrContract]:
     contracts: list[StrContract] = []
 
     assumptions: list[str] = []
