@@ -569,6 +569,8 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         logging.debug("RH term: %s", other)
         if other.lacks_constraints():
             return True
+        if self.lacks_constraints():
+            return False
         variables, self_mat, self_cons, ctx_mat, ctx_cons = PolyhedralTermList.termlist_to_polytope(  # noqa: WPS236
             self, other
         )
@@ -824,14 +826,17 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
 
             res = linprog(c=objective, A_ub=a_opt, b_ub=b_opt, bounds=(None, None))  # ,options={'tol':0.000001})
             b_temp -= 1
-            logging.debug("Optimal value: %s", -res["fun"])
-            logging.debug("Results: %s", res)
-            # if res["success"] and -res["fun"] <= b_temp[i]:
-            if res["status"] != 2 and -res["fun"] <= b_temp:  # noqa: WPS309
-                logging.debug("Redundant constraint")
-            else:
+            if res["status"] == 2:
                 is_refinement = False
                 break
+            else:
+                if -res["fun"] <= b_temp:
+                    logging.debug("Redundant constraint")
+                else:
+                    is_refinement = False
+                    break
+            logging.debug("Optimal value: %s", -res["fun"])
+            logging.debug("Results: %s", res)
         return is_refinement
 
     @staticmethod
