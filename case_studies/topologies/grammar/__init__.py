@@ -103,7 +103,6 @@ class Rule:
         output_symbol = f"{symbols_short_out(self.production.ego.symbol_type)}"
         guarantees.extend(constraint_str_between_integers(output_symbol, (dir_connection, dir_connection)))
 
-        guarantees = []
         """Creating Contracts"""
         str_contracts_or = []
         for or_assumption in new_assumptions_or:
