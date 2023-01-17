@@ -21,6 +21,7 @@ def find_refinements(state_contracts: ContractsAlternatives,
         #     print(cr)
         print("\n\t" + rule)
         # refine = state_contracts <= rule_alternatives
+
         refine = state_contracts <= rule_alternatives
         # print(refine)
 

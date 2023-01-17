@@ -29,8 +29,8 @@ class ContractsAlternatives:
             c.outputvars = outs_eq
             other.inputvars = ins_eq
             other.outputvars = outs_eq
-            # print(c)
-            # print(other)
+            print(c)
+            print(other)
             if not isinstance(c, IoContract):
                 raise AttributeError
             if not isinstance(other, IoContract):
