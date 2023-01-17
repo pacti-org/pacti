@@ -230,12 +230,24 @@ class SymbolConnection:
     symbol_b: Symbol
 
 
+
 def constraint_str_between_integers(symbol: str, cluster: tuple[int, int]) -> list[str]:
+    if cluster[1] < cluster[0]:
+        raise AttributeError("Not valid interval")
     constraints = []
-    if cluster[0] != 0:
-        constraints.append(f"-1 * {symbol} <= -1 * {cluster[0]}")
-    constraints.append(f"{symbol} <= {cluster[1]}")
+    if cluster[0] > 0:
+        constraints.append(constraint_str_greater_eq_than(symbol, cluster[0]))
+    constraints.append(constraint_str_less_eq_than(symbol, cluster[1]))
+
     return constraints
+
+
+def constraint_str_greater_eq_than(symbol: str, n: int) -> str:
+    return f"-1 * {symbol} <= -1 * {n}"
+
+
+def constraint_str_less_eq_than(symbol: str, n: int) -> str:
+    return f"{symbol} <= {n}"
 
 
 @dataclass
@@ -262,7 +274,7 @@ class LocalState:
     @property
     def plot(self) -> Figure:
         local_grid = DirectionsGrid(
-            ego=symbols_colors[self.front.symbol_type],
+            ego=symbols_colors[self.ego.symbol_type],
             front=symbols_colors[self.front.symbol_type],
             bottom=symbols_colors[self.bottom.symbol_type],
             left=symbols_colors[self.left.symbol_type],

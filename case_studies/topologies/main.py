@@ -2,7 +2,7 @@ import os
 import random
 from pathlib import Path
 
-from case_studies.topologies.grammar import Grammar
+from case_studies.topologies.grammar import Grammar, SymbolType
 from case_studies.topologies.grammar.contracts import ContractsAlternatives
 from case_studies.topologies.grammar.grid import GridBuilder
 from case_studies.topologies.tools.analysis import get_best_direction_assignment
@@ -18,7 +18,9 @@ if __name__ == "__main__":
     directions_assignment = get_best_direction_assignment(grammar)
     print(directions_assignment)
 
-    rule_contracts: dict[str, ContractsAlternatives()] = {}
+    rules_wings_contracts: dict[str, ContractsAlternatives()] = {}
+    rules_rotors_contracts: dict[str, ContractsAlternatives()] = {}
+    rules_other_contracts: dict[str, ContractsAlternatives()] = {}
 
     for rule_id, rule in grammar.rules.items():
         str_contracts = rule.to_str_contract(directions_assignment)
@@ -26,32 +28,65 @@ if __name__ == "__main__":
         for contract in str_contracts:
             io_contract = string_to_polyhedra_contract(contract)
             contract_alternatives.contracts.add(io_contract)
-        rule_contracts[rule.name] = contract_alternatives
 
-    grid = GridBuilder.generate(half_size=3)
-    grid.plot.show()
+        if rule.production.ego.symbol_type == SymbolType.WING:
+            rules_wings_contracts[rule.name] = contract_alternatives
+        elif rule.production.ego.symbol_type == SymbolType.ROTOR:
+            rules_rotors_contracts[rule.name] = contract_alternatives
+        else:
+            rules_other_contracts[rule.name] = contract_alternatives
+
+    grid = GridBuilder.generate(half_size=2)
+    # grid.plot.show()
     current_node_state = grid.local_state(grid.current_point)
-    current_node_state.plot.show()
+
+    grammar_string = ""
+
+    max_num_wings = 2
+    max_num_rotors = 4
 
     step = 0
-    while not grid.symbol(grid.current_point).is_terminal:
-        print(f"\n\n\nSTEP {step}")
+    grammar_string += str(grid.current_point)
+    """Fist Step Always Add Fuselage"""
+    grid.apply_rule(grammar.rules["r0"].production)
+
+    grammar_string += "[r0]"
+    """Keep track of the points to explore"""
+    grid.update_current_point()
+    # grid.plot.show()
+    step += 1
+    while len(grid.points_to_visit) > 0:
+        # print(f"\n\n\nSTEP {step}")
         current_state = grid.local_state()
-        current_state.plot.show()
+        grammar_string += str(grid.current_point)
+        # current_state.plot.show()
+        """Adding guarantees on the current number of Wings and Rotors"""
         str_contracts = current_state.to_str_contract(directions_assignment)
         state_contracts = ContractsAlternatives()
         for contract in str_contracts:
             io_contract = string_to_polyhedra_contract(contract)
             state_contracts.contracts.add(io_contract)
-        rule_ids = find_refinements(state_contracts, rule_contracts)
-        """Choose a rule to apply randomly"""
-        rule_id = random.choice(list(rule_ids))
+
+        rules_allowed = rules_other_contracts
+        if grid.n_wings < max_num_wings:
+            rules_allowed = rules_allowed | rules_wings_contracts
+        if grid.n_rotors < max_num_rotors:
+            rules_allowed = rules_allowed | rules_rotors_contracts
+        print(len(rules_allowed))
+        rule_ids = find_refinements(state_contracts, rules_allowed)
         # print(rule_ids)
+        """Choose a rule to apply randomly"""
+        if len(rule_ids) == 0:
+            break
+        rule_id = random.choice(list(rule_ids))
+        print(rule_id)
         grid.apply_rule(grammar.rules[rule_id].production)
+        grammar_string += str(f"[{rule_id}]")
         # print(grid.current_point)
         grid.update_current_point()
         # print(grid.current_point)
-        grid.plot.show()
+        grid.plot_with_edges.show()
         # print(grid.current_point)
         step += 1
-
+    print(grammar_string)
+    grid.plot_with_edges.show()

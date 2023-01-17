@@ -31,8 +31,8 @@ class ContractsAlternatives:
             c.outputvars = outs_eq
             other.inputvars = ins_eq
             other.outputvars = outs_eq
-            print(c)
-            print(other)
+            # print(c)
+            # print(other)
             if c <= other:
                 # seed = random.choice(string.ascii_letters)
                 # writeContract(c, f"C{seed}_lhs")
