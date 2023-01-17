@@ -8,6 +8,8 @@ def find_refinements(state_contracts: ContractsAlternatives,
 
     ret = set()
     for rule, rule_alternatives in rules_contract.items():
+        if rule == "r10":
+            print("wait")
         # print("\n\n\n\n")
         # print(rule)
         # print("STATE_CONTRACT:")
@@ -17,7 +19,8 @@ def find_refinements(state_contracts: ContractsAlternatives,
         # print("RULE_ALTERNATIVES:")
         # for cr in rule_alternatives.contracts:
         #     print(cr)
-        print("\n\n" + rule)
+        print("\n\t" + rule)
+        # refine = state_contracts <= rule_alternatives
         refine = state_contracts <= rule_alternatives
         # print(refine)
 

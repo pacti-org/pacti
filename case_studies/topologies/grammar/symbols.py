@@ -17,7 +17,6 @@ class SymbolType(Enum):
 
 
 all_symbols_types = {
-    SymbolType.UNOCCUPIED,
     SymbolType.FUSELAGE,
     SymbolType.EMPTY,
     SymbolType.ROTOR,
@@ -28,7 +27,6 @@ all_symbols_types = {
 
 symbols_short: dict = {
     SymbolType.ANY: "U",
-    SymbolType.UNOCCUPIED: "U",
     SymbolType.FUSELAGE: "F",
     SymbolType.EMPTY: "E",
     SymbolType.ROTOR: "R",

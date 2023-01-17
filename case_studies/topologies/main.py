@@ -4,7 +4,7 @@ from pathlib import Path
 
 from case_studies.topologies.grammar import Grammar, SymbolType
 from case_studies.topologies.grammar.contracts import ContractsAlternatives
-from case_studies.topologies.grammar.grid import GridBuilder
+from case_studies.topologies.grammar.grid import GridBuilder, Point
 from case_studies.topologies.tools.analysis import get_best_direction_assignment
 from case_studies.topologies.tools.refinement_checking import find_refinements
 from pacti.terms.polyhedra import string_to_polyhedra_contract
@@ -52,7 +52,8 @@ if __name__ == "__main__":
 
     grammar_string += "[r0]"
     """Keep track of the points to explore"""
-    grid.update_current_point()
+    # grid.update_current_point()
+    grid.current_point = grid.current_point.front
     # grid.plot.show()
     step += 1
     while len(grid.points_to_visit) > 0:
@@ -72,7 +73,7 @@ if __name__ == "__main__":
             rules_allowed = rules_allowed | rules_wings_contracts
         if grid.n_rotors < max_num_rotors:
             rules_allowed = rules_allowed | rules_rotors_contracts
-        print(len(rules_allowed))
+        # print(len(rules_allowed))
         rule_ids = find_refinements(state_contracts, rules_allowed)
         # print(rule_ids)
         """Choose a rule to apply randomly"""

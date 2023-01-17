@@ -129,7 +129,7 @@ class ConditionSet:
         set_symbols = set()
         for direction, symbol_types in self.__dict__.items():
             if isinstance(symbol_types, set):
-                set_symbols |= symbol_types
+                set_symbols |= set(filter(lambda x: x != SymbolType.UNOCCUPIED, symbol_types))
         return set_symbols
 
     def get_all_directions_where_is_symbol(self, symbol: SymbolType) -> set[str]:
@@ -263,6 +263,8 @@ class LocalState:
     def get_all_symbol_types_and_directions(self) -> dict[SymbolType, set[str]]:
         ret = {}
         for direction, symbol in self.__dict__.items():
+            if symbol.symbol_type == SymbolType.UNOCCUPIED:
+                continue
             if direction == "ego":
                 continue
             if symbol.symbol_type not in ret.keys():

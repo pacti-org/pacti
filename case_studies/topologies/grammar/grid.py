@@ -155,7 +155,6 @@ class GridBuilder:
         # print(unoccupied_points)
         self.points_to_visit |= unoccupied_points
         self.plot_with_edges.show()
-        print("ok")
 
     def local_state(self, point: Point | None = None) -> LocalState:
         if point is None:
@@ -168,7 +167,7 @@ class GridBuilder:
             left=self.grid[point.left],
             right=self.grid[point.right],
             top=self.grid[point.top],
-            rear=self.grid[point.bottom]
+            rear=self.grid[point.rear]
         )
 
 

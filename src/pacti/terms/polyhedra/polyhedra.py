@@ -575,9 +575,9 @@ class PolyhedralTermList(TermList):
         logging.debug("Polytope is \n%s", self_mat)
         result = PolyhedralTermList.verify_polytope_containment(self_mat, self_cons, ctx_mat, ctx_cons)
         # print(result)
-        if result:
-            print("LH term: %s", self)
-            print("RH term: %s", other)
+        # if result:
+        print("LH term: %s", self)
+        print("RH term: %s", other)
         return result
 
     @staticmethod
