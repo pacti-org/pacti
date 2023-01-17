@@ -1,8 +1,9 @@
 from __future__ import annotations
-import itertools
+
 from dataclasses import dataclass, field
 
 from pacti.iocontract import IoContract
+from pacti.terms.polyhedra import writeContract
 
 
 @dataclass
@@ -28,7 +29,27 @@ class ContractsAlternatives:
             c.outputvars = outs_eq
             other.inputvars = ins_eq
             other.outputvars = outs_eq
-            if c <= other:
+
+            print(c)
+            print("<=")
+            print(other)
+
+            if not isinstance(c, IoContract):
+                raise AttributeError
+            if not isinstance(other, IoContract):
+                raise AttributeError
+            try:
+                refine = c <= other
+            except Exception as e :
+                writeContract(c, f"C_exc_lhs")
+                writeContract(other, f"C_exc_rhs")
+                raise e
+            # if c <= other:
+            #     seed = random.choice(string.ascii_letters)
+            #     writeContract(c, f"C{seed}_lhs")
+            #     writeContract(other, f"C{seed}_rhs")
+            #     return True
+            if refine:
                 return True
         return False
 

@@ -24,7 +24,7 @@ def get_clusters_consecutive_integers(list_of_integers: list[int]) -> list[tuple
 def get_best_direction_assignment(grammar) -> dict[str, int]:
     direction_set_stats = Counter()
     direction_single_stats = Counter()
-    for rule in grammar.rules:
+    for rule_id, rule in grammar.rules.items():
         for symbol in rule.conditions.get_all_symbol_types():
             all_directions = rule.conditions.get_all_directions_where_is_symbol(symbol)
             direction_key = "-".join(sorted(list(all_directions)))
