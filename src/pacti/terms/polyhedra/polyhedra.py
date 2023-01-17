@@ -567,9 +567,6 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         logging.debug("Verifying refinement")
         logging.debug("LH term: %s", self)
         logging.debug("RH term: %s", other)
-        # print("\nVerifying refinement")
-        # print("LH term: %s", self)
-        # print("RH term: %s", other)
         if other.lacks_constraints():
             return True
         variables, self_mat, self_cons, ctx_mat, ctx_cons = PolyhedralTermList.termlist_to_polytope(  # noqa: WPS236
@@ -835,14 +832,6 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
             else:
                 is_refinement = False
                 break
-            else:
-                if -res["fun"] <= b_temp:
-                    logging.debug("Redundant constraint")
-                else:
-                    is_refinement = False
-                    break
-            logging.debug("Optimal value: %s", -res["fun"])
-            logging.debug("Results: %s", res)
         return is_refinement
 
     @staticmethod
