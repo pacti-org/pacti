@@ -82,8 +82,8 @@ def readInputFile(inputfilename, outputfilename):
         for key in ["assumptions", "guarantees"]:
             reqs.append([PolyhedralTerm(term["coefficients"], term["constant"]) for term in c[key]])
         cont = IoContract(
-            inputVars=getVarlist(c["InputVars"]),
-            outputVars=getVarlist(c["OutputVars"]),
+            input_vars=getVarlist(c["InputVars"]),
+            output_vars=getVarlist(c["OutputVars"]),
             assumptions=PolyhedralTermList(list(reqs[0])),
             guarantees=PolyhedralTermList(list(reqs[1])),
         )
@@ -94,7 +94,10 @@ def readInputFile(inputfilename, outputfilename):
         result = contracts[0].compose(contracts[1])
         print("Composed contract:\n" + str(result))
     elif data["operation"] == "quotient":
-        result = contracts[0].quotient(contracts[1])
+        additionalVars = []
+        if "additionalInputs" in data.keys():
+            additionalVars = getVarlist(data["additionalInputs"])
+        result = contracts[0].quotient(contracts[1], additionalVars)
         print("Contract quotient:\n" + str(result))
     elif data["operation"] == "merge":
         result = contracts[0].merge(contracts[1])
@@ -119,10 +122,8 @@ def readInputFile(inputfilename, outputfilename):
 
 
 def main():
-    FORMAT = "[%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
-    FORMAT1 = "[%(levelname)s:%(funcName)s()] %(message)s"
-    FORMAT2 = "%(asctime)s:%(levelname)s:%(name)s:%(message)s"
-    logging.basicConfig(filename="../pacti.log", filemode="w", level=logging.INFO, format=FORMAT2)
+    FORMAT = "%(asctime)s:%(levelname)s:%(name)s:%(message)s"
+    logging.basicConfig(filename="../pacti.log", filemode="w", level=logging.INFO, format=FORMAT)
     readInputFile()
 
 

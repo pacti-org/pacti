@@ -2,11 +2,6 @@ from pathlib import Path
 
 from pacti.utils.string_contract import StrContract
 
-# match_LTL_no_spaces = r"((?<=[G|F|X])(?=[^\s]))|((?<=[U])(?=[a-z]))|(?=[U])+(?<=[a-z])"
-# #  LTL to LateX
-# spot_f = spot.formula(str(formula))._repr_latex_()
-
-
 ASSUMPTIONS_HEADER = "ASSUMPTIONS"
 GUARANTEES_HEADER = "GUARANTEES"
 INS_HEADER = "INPUTS"
@@ -17,17 +12,13 @@ COMMENT_CHAR = "#"
 DATA_INDENT = 1
 
 
-def parse_contracts(
-    file_path: Path,
-) -> list[StrContract]:
-    """Returns: assumptions, guarantees, inputs, outputs"""
-
+def parse_contracts(file_path: Path) -> list[StrContract]:
     contracts: list[StrContract] = []
 
-    assumptions = []
-    guarantees = []
-    inputs = []
-    outputs = []
+    assumptions: list[str] = []
+    guarantees: list[str] = []
+    inputs: list[str] = []
+    outputs: list[str] = []
 
     with open(file_path) as ifile:
         current_header = ""
