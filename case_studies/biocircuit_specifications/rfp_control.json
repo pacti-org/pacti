@@ -1,0 +1,1 @@
+"contract0"={"InputVars": ["Sal"], "OutputVars": ["xRFP"], "assumptions": [{"constant": -1, "coefficients": {"Sal": -1}}], "guarantees": [{"constant": 
