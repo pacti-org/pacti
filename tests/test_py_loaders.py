@@ -1,10 +1,9 @@
 import pytest
 from test_iocontract import validate_iocontract
 
-import gear.iocontract as iocontract
-from gear.terms.polyhedra.loaders import read_contract, write_contract
-from test_iocontract import validate_iocontract
-import pytest
+import pacti.iocontract as iocontract
+from pacti.terms.polyhedra.loaders import read_contract, write_contract
+
 
 def create_contracts(num=1):
     """

@@ -1,10 +1,10 @@
-site_name: "gear"
+site_name: "pacti"
 site_description: "Compositional system analysis and design using contracts."
-site_url: "https://FormalSystems.github.io/gear"
-repo_url: "https://github.com/FormalSystems/gear"
-repo_name: "gear"
+site_url: "https://FormalSystems.github.io/pacti"
+repo_url: "https://github.com/FormalSystems/pacti"
+repo_name: "pacti"
 site_dir: "site"
-watch: [README.md, CONTRIBUTING.md, CHANGELOG.md, src/gear]
+watch: [README.md, CONTRIBUTING.md, CHANGELOG.md, src/pacti]
 
 nav:
 - Home:
@@ -20,7 +20,7 @@ nav:
     - Simple script: _case_studies/evaluating_perception/simple_script.ipynb
   - Multiagent Path Planning:
     - Multi-agent Coordination: _case_studies/multiagent_coordination/multiagent.ipynb
-  #- Signal Processing in Digital ICs: case_studies/signal_processing_ic.md
+  - Signal Processing in Digital ICs: _case_studies/digital_signal_processing/dsp_wl.ipynb
   #- Synthetic Biology: case_studies/synthbio.md
 - Documentation: #reference/
   - IoContract: iocontract.md
