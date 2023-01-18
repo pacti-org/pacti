@@ -16,9 +16,17 @@ class SymbolType(Enum):
     ANY = auto()
 
 
+all_symbols_types = {
+    SymbolType.FUSELAGE,
+    SymbolType.EMPTY,
+    SymbolType.ROTOR,
+    SymbolType.WING,
+    SymbolType.CONNECTOR,
+}
+
+
 symbols_short: dict = {
-    SymbolType.ANY: "A",
-    SymbolType.UNOCCUPIED: "U",
+    SymbolType.ANY: "U",
     SymbolType.FUSELAGE: "F",
     SymbolType.EMPTY: "E",
     SymbolType.ROTOR: "R",
