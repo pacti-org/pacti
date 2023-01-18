@@ -36,8 +36,8 @@ def read_contract(contract: dict | list[dict]) -> list[IoContract]:
             reqs.append([PolyhedralTerm(term["coefficients"], \
                         float(term["constant"])) for term in c_i[key]])
         iocont = IoContract(
-            inputVars=getVarlist(c_i["InputVars"]),
-            outputVars=getVarlist(c_i["OutputVars"]),
+            input_vars=getVarlist(c_i["InputVars"]),
+            output_vars=getVarlist(c_i["OutputVars"]),
             assumptions=PolyhedralTermList(list(reqs[0])),
             guarantees=PolyhedralTermList(list(reqs[1])),
         )
