@@ -21,8 +21,9 @@ dependencies = [
     "sympy>=1.11.1",
     "numpy>=1.24.1",
     "matplotlib>=3.6.2",
+    "networkx>=3.0",
 ]
-requires-python = ">=3.10, <=3.11.1"
+requires-python = ">=3.8, <=3.11.1"
 
 [project.scripts]
 pacti = "pacti.cli:main"
@@ -63,19 +64,19 @@ maintain = [
 ]
 quality = [
     "darglint>=1.8",
-#    "flake8<4",  # TODO: remove once importlib-metadata version conflict is resolved
-#    "flake8-bandit>=2.1",
-#    "flake8-black>=0.2",
-#    "flake8-bugbear>=21.9",
-#    "flake8-builtins>=1.5",
-#    "flake8-comprehensions>=3.7",
-#    "flake8-docstrings>=1.6",
-#    "flake8-pytest-style>=1.5",
-#    "flake8-string-format>=0.3",
-#    "flake8-tidy-imports>=4.5",
-#    "flake8-variables-names>=0.0",
-#    "pep8-naming>=0.12",
-#    "wps-light>=0.15",
+    "flake8>=5.0.0",
+    "flake8-bandit",
+    "flake8-black",
+    "flake8-bugbear",
+    "flake8-builtins",
+    "flake8-comprehensions",
+    "flake8-docstrings",
+    "flake8-pytest-style",
+    "flake8-string-format",
+    "flake8-tidy-imports",
+    "flake8-variables-names",
+    "pep8-naming",
+    "wps-light",
 ]
 tests = [
     "pytest>=6.2",
@@ -91,6 +92,7 @@ typing = [
 security = ["safety>=2"]
 dev = [
     "certifi>=2022.9.24",
+    "tox-pdm>=0.6.1",
 ]
 
 [tool.black]

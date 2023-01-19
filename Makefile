@@ -32,7 +32,8 @@ BASIC_DUTIES = \
 	docs-regen \
 	docs-serve \
 	format \
-	release
+	release \
+	tox
 
 QUALITY_DUTIES = \
 	check-quality \
