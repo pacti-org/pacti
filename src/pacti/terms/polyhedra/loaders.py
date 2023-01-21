@@ -54,11 +54,10 @@ def write_contract(contract: IoContract | list[IoContract], filename: str = None
     then a list of dicts is returned.
     If a filename is provided, a JSON file is written, otherwise only dictionaries are returned.
     Arguments:
-        * contract (gear.IoContract, list): Contract input of type IoContract
-                                                       or list of IoContracts.
-        * filename (str, optional): Name of file to write the output contract,
-                                    defaults to None in which case,
-                                    no file is written.
+        contract: Contract input of type IoContract or list of IoContracts.
+        filename: Name of file to write the output contract, defaults to None in which case,
+            no file is written.
+                                    
     Returns:
         contract_dict: A dictionary for the given IoContract.
     """
