@@ -513,7 +513,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         termlist.terms = list_diff(termlist.terms, terms_to_elim.terms)
         return termlist
 
-    def simplify(self, context: PolyhedralTermList | None = None) -> None:
+    def simplify(self, context: Union[PolyhedralTermList, None] = None) -> None:
         """
         Remove redundant terms in the PolyhedralTermList using the provided context.
 
@@ -685,7 +685,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
 
     @staticmethod
     def reduce_polytope(  # noqa: WPS231
-        a: np.ndarray, b: np.ndarray, a_help: np.ndarray | None = None, b_help: np.ndarray | None = None
+        a: np.ndarray, b: np.ndarray, a_help: Union[np.ndarray, None] = None, b_help: Union[np.ndarray, None] = None
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Eliminate redundant constraints from a given polytope.
@@ -767,10 +767,10 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
 
     @staticmethod
     def verify_polytope_containment(  # noqa: WPS231
-        a_l: np.ndarray | None = None,
-        b_l: np.ndarray | None = None,
-        a_r: np.ndarray | None = None,
-        b_r: np.ndarray | None = None,
+        a_l: Union[np.ndarray, None] = None,
+        b_l: Union[np.ndarray, None] = None,
+        a_r: Union[np.ndarray, None] = None,
+        b_r: Union[np.ndarray, None] = None,
     ) -> bool:
         """
         Tell whether a polytope is contained in another.
