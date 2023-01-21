@@ -20,7 +20,7 @@ from __future__ import annotations
 import copy
 import logging
 from abc import ABC, abstractmethod
-from typing import List, TypeVar
+from typing import List, TypeVar, Union
 
 from pacti.utils.lists import list_diff, list_intersection, list_union, lists_equal
 
@@ -118,7 +118,7 @@ class TermList(ABC):
     class that must be extended to support a specific constraint formalism.
     """
 
-    def __init__(self, term_list: List | None = None):
+    def __init__(self, term_list: Union[List, None] = None):
         """
         Class constructor.
 
@@ -233,7 +233,7 @@ class TermList(ABC):
         """
 
     @abstractmethod
-    def simplify(self: T, context: T | None = None):
+    def simplify(self: T, context: Union[T, None] = None):
         """Remove redundant terms in TermList.
 
         Let $S$ be this TermList and suppose $T \\subseteq S$. Let
@@ -492,7 +492,7 @@ class IoContract:
 
         return IoContract(assumptions, allguarantees, inputvars, outputvars)
 
-    def quotient(self, other: IoContract, additional_inputs: List[Var] | None = None) -> IoContract:
+    def quotient(self, other: IoContract, additional_inputs: Union[List[Var], None] = None) -> IoContract:
         """Compute the contract quotient.
 
         Compute the quotient self/other of the two given contracts and refine
