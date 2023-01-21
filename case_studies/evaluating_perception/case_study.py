@@ -1,11 +1,13 @@
 # Import libraries
 from pacti.iocontract.utils import getVarlist
 from PIL import Image
-from pacti.terms.polyhedra.loaders import readContract, writeContract
+from pacti.terms.polyhedra.loaders import read_contract, write_contract
 import pdb
 from utils import *
 import random
 import pickle as pkl
+import collections
+
 # Construct random confusion matrix
 def construct_CM(tp_ped, tp_obj, tp_emp):
     C = dict()
@@ -284,6 +286,27 @@ def plot_probabilities(points, tpped_vals, true_env, vmax, rand =True):
     else:
         plt.savefig("saved_plots/points_ped_lb"+str(lb)+"_ub"+str(ub)+"_vmax"+str(vmax)+".png")
 
+# Plot probability points:
+def plot_probabilities_bounds(points, tpped_vals, true_env, vmax, ubounds, lbounds, rand =True):
+    fig, ax = plt.subplots()
+    ax.set_title(true_env)
+    plt.rcParams['text.usetex'] = True
+    ax.set_ylabel(r'$\mathbb{P}$')
+    plt.plot(tpped_vals, points, 'b*')
+    ub_m, ub_c = ubounds
+    lb_m, lb_c = lbounds
+    y_ub = ub_m*tpped_vals + ub_c
+    y_lb = lb_m*tpped_vals + lb_c
+    plt.plot(tpped_vals, y_ub, 'r')
+    plt.plot(tpped_vals, y_lb, 'r')
+
+    lb = min(tpped_vals)
+    ub = max(tpped_vals)
+    if rand:
+        plt.savefig("saved_plots/bounded_points_ped_lb"+str(lb)+"_ub"+str(ub)+"_vmax"+str(vmax)+"rand.png")
+    else:
+        plt.savefig("saved_plots/bounded_points_ped_lb"+str(lb)+"_ub"+str(ub)+"_vmax"+str(vmax)+".png")
+
 def save_result(points_ped, tpped_vals, true_env, vmax, rand=True):
     lb = min(tpped_vals)
     ub = max(tpped_vals)
@@ -294,13 +317,14 @@ def save_result(points_ped, tpped_vals, true_env, vmax, rand=True):
     with open(fn, "wb") as f:
         pkl.dump([points_ped, tpped_vals], f)
     f.close()
+    return fn
 
 def load_result(fn):
     with open(fn, "rb") as f:
         points_ped, tpped_vals = pkl.load(f)
     f.close()
     return points_ped, tpped_vals
-    
+
 def find_min_max_probs(result_dict):
     max_probs = dict()
     min_probs = dict()
@@ -317,6 +341,32 @@ def find_min_max_probs(result_dict):
                 min_probs[tpped] = prob
     return max_probs, min_probs
 
+
+def bound_probs(max_probs, min_probs):
+    # Picking the two largest max_probs:
+    sorted_max = sorted(max_probs.items(), key=lambda kv: kv[1])
+    sorted_max = list(reversed(sorted_max))
+    sorted_max = collections.OrderedDict(sorted_max)
+
+    sorted_min = sorted(min_probs.items(), key=lambda kv: kv[1])
+    sorted_min = collections.OrderedDict(sorted_min)
+
+    # Getting first two max points and min points
+    tp_max1, pmax1 = list(sorted_max.items())[0]
+    tp_max2, pmax2 = list(sorted_max.items())[1]
+    tp_min1, pmin1 = list(sorted_min.items())[0]
+    tp_min2, pmin2 = list(sorted_min.items())[1]
+
+    # Finding line:
+    ub_m = (pmax1 - pmax2)/(tp_max1 - tp_max2)
+    ub_c = pmax2 - ub_m*tp_max2
+    lb_m = (pmin1 - pmin2)/(tp_min1 - tp_min2)
+    lb_c = pmin2 - lb_m*tp_min2
+    # Picking the two smallest min_probs:
+    ub = [ub_m, ub_c]
+    lb = [lb_m, lb_c]
+    return ub, lb
+
 def derive_prob_bounds(fn):
     points_ped, tpped_vals = load_result(fn)
     lb_ped = min(tpped_vals)
@@ -324,12 +374,14 @@ def derive_prob_bounds(fn):
     result_dict = {tpped_vals[i]:points_ped[i] for i in range(len(tpped_vals))}
     # Finding the max and min probabilities for each true positive value:
     max_probs, min_probs = find_min_max_probs(result_dict)
+    ub, lb = bound_probs(max_probs, min_probs)
+    return ub, lb
 
 
 if __name__=='__main__':
     MAX_V = 1
-    vmax = 5
-    Ncar = 15
+    vmax = 2
+    Ncar = 6
     Vlow = 0
     Vhigh = vmax
     xped, bad_states_ped, good_state_ped, formula_ped = new_initialize_ped(vmax, Ncar, "ped")
@@ -337,4 +389,8 @@ if __name__=='__main__':
 
     # Save results and plot:
     plot_probabilities(points_ped, tpped_vals, "ped", vmax)
-    save_result(points_ped, tpped_vals, "ped", vmax)
+    fn = save_result(points_ped, tpped_vals, "ped", vmax)
+
+    # Derive bounds and plot probability bounds:
+    ubounds, lbounds = derive_prob_bounds(fn)
+    plot_probabilities_bounds(points, tpped_vals, true_env, vmax, ubounds, lbounds, rand =True)
