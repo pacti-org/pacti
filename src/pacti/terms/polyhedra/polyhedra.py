@@ -8,7 +8,7 @@ $x_i$ are variables and the $a_i$ and $c$ are constants.
 from __future__ import annotations
 
 import logging
-from typing import Tuple, Any
+from typing import Tuple, Any, Union
 
 import numpy as np
 import sympy
@@ -17,7 +17,7 @@ from scipy.optimize import linprog
 from pacti.iocontract import Term, TermList, Var
 from pacti.utils.lists import list_diff, list_intersection, list_union
 
-numeric = int | float
+numeric = Union[int, float]
 
 
 class PolyhedralTerm(Term):
@@ -830,7 +830,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
                 is_refinement = False
                 break
             else:
-                if -res["fun"] <= b_temp:
+                if -res["fun"] <= b_temp:  # noqa: WPS309
                     logging.debug("Redundant constraint")
                 else:
                     is_refinement = False
