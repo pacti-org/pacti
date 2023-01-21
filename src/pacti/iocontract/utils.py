@@ -1,7 +1,7 @@
 """
 A set of helper routines.
 """
-from gear.iocontract import Var
+from pacti.iocontract import Var
 
 
 def getVarlist(aList):

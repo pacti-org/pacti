@@ -7,19 +7,19 @@
 
 [scipy](https://scipy.org/install/)
 
-The installation will provide access to the command-line tool `gear` and to the the Python package of the same name. Any updates to the dev folder `src/gear` will immediately be available in the system.
+The installation will provide access to the command-line tool `pacti` and to the the Python package of the same name. Any updates to the dev folder `src/pacti` will immediately be available in the system.
 
 
 ### Install Dependencies
 
-As Gear is in development, we use pdm manage the dependencies. To install run:
+As Pacti is in development, we use pdm manage the dependencies. To install run:
 
 ```bash
 pdm install
 ```
 
-The installation will provide access to the command-line tool `gear` and to the Python package of the same name.
-To launch the command-line tool run `pdm run gear`
+The installation will provide access to the command-line tool `pacti` and to the Python package of the same name.
+To launch the command-line tool run `pdm run pacti`
 
 
 ### Examples
@@ -28,13 +28,13 @@ You can run examples via the command line:
 
 
 ```bash
-pdm run gear examples/example.json output.json
+pdm run pacti examples/example.json output.json
 ```
 
 Or via python a script
 
 ```bash
-pdm run python src/gear/cli.py ./examples/example.json ./output.json
+pdm run python src/pacti/cli.py ./examples/example.json ./output.json
 ```
 
 
