@@ -1,0 +1,607 @@
+{
+    "r0": {
+        "conditions": {
+            "bottom": [
+                "UNOCCUPIED"
+            ],
+            "ego": [
+                "UNOCCUPIED"
+            ],
+            "front": [
+                "UNOCCUPIED"
+            ],
+            "left": [
+                "UNOCCUPIED"
+            ],
+            "rear": [
+                "UNOCCUPIED"
+            ],
+            "right": [
+                "UNOCCUPIED"
+            ],
+            "top": [
+                "UNOCCUPIED"
+            ]
+        },
+        "name": "FUSELAGE",
+        "production": {
+            "ego": "FUSELAGE"
+        }
+    },
+    "r1": {
+        "conditions": {
+            "bottom": [
+                "EMPTY",
+                "CONNECTOR"
+            ],
+            "ego": [
+                "UNOCCUPIED"
+            ],
+            "front": [
+                "EMPTY",
+                "CONNECTOR",
+                "ROTOR"
+            ],
+            "left": [
+                "FUSELAGE",
+                "CONNECTOR",
+                "ROTOR",
+                "WING"
+            ],
+            "rear": [],
+            "right": [
+                "EMPTY",
+                "UNOCCUPIED",
+                "CONNECTOR",
+                "ROTOR"
+            ],
+            "top": [
+                "EMPTY",
+                "UNOCCUPIED",
+                "CONNECTOR",
+                "WING"
+            ]
+        },
+        "name": "WING-RIGHT",
+        "production": {
+            "connection": "left",
+            "ego": "WING"
+        }
+    },
+    "r10": {
+        "conditions": {
+            "bottom": [],
+            "ego": [
+                "UNOCCUPIED"
+            ],
+            "front": [],
+            "left": [],
+            "rear": [
+                "FUSELAGE",
+                "WING",
+                "ROTOR",
+                "CONNECTOR"
+            ],
+            "right": [],
+            "top": []
+        },
+        "name": "CONNECTOR-FRONT",
+        "production": {
+            "connection": "rear",
+            "ego": "CONNECTOR"
+        }
+    },
+    "r11": {
+        "conditions": {
+            "bottom": [],
+            "ego": [
+                "UNOCCUPIED"
+            ],
+            "front": [
+                "FUSELAGE",
+                "WING",
+                "ROTOR",
+                "CONNECTOR"
+            ],
+            "left": [],
+            "rear": [],
+            "right": [],
+            "top": []
+        },
+        "name": "CONNECTOR-REAR",
+        "production": {
+            "connection": "front",
+            "ego": "CONNECTOR"
+        }
+    },
+    "r12": {
+        "conditions": {
+            "bottom": [
+                "CONNECTOR",
+                "WING"
+            ],
+            "ego": [
+                "UNOCCUPIED"
+            ],
+            "front": [],
+            "left": [],
+            "rear": [],
+            "right": [],
+            "top": []
+        },
+        "name": "CONNECTOR-TOP",
+        "production": {
+            "connection": "bottom",
+            "ego": "CONNECTOR"
+        }
+    },
+    "r13": {
+        "conditions": {
+            "bottom": [
+                "EMPTY",
+                "CONNECTOR"
+            ],
+            "ego": [
+                "UNOCCUPIED"
+            ],
+            "front": [],
+            "left": [],
+            "rear": [],
+            "right": [],
+            "top": [
+                "WING",
+                "ROTOR",
+                "CONNECTOR"
+            ]
+        },
+        "name": "CONNECTOR-BOTTOM",
+        "production": {
+            "connection": "top",
+            "ego": "CONNECTOR"
+        }
+    },
+    "r14": {
+        "conditions": {
+            "bottom": [
+                "EMPTY",
+                "CONNECTOR"
+            ],
+            "ego": [
+                "UNOCCUPIED"
+            ],
+            "front": [],
+            "left": [
+                "FUSELAGE",
+                "WING",
+                "ROTOR",
+                "CONNECTOR"
+            ],
+            "rear": [],
+            "right": [],
+            "top": []
+        },
+        "name": "CONNECTOR-RIGHT",
+        "production": {
+            "connection": "left",
+            "ego": "CONNECTOR"
+        }
+    },
+    "r15": {
+        "conditions": {
+            "bottom": [
+                "EMPTY",
+                "CONNECTOR"
+            ],
+            "ego": [
+                "UNOCCUPIED"
+            ],
+            "front": [],
+            "left": [],
+            "rear": [],
+            "right": [
+                "FUSELAGE",
+                "WING",
+                "ROTOR",
+                "CONNECTOR"
+            ],
+            "top": []
+        },
+        "name": "CONNECTOR-LEFT",
+        "production": {
+            "connection": "right",
+            "ego": "CONNECTOR"
+        }
+    },
+    "r16": {
+        "conditions": {
+            "bottom": [],
+            "ego": [
+                "UNOCCUPIED"
+            ],
+            "front": [],
+            "left": [],
+            "rear": [
+                "FUSELAGE",
+                "WING",
+                "ROTOR",
+                "CONNECTOR"
+            ],
+            "right": [],
+            "top": []
+        },
+        "name": "EMPTY-FRONT",
+        "production": {
+            "ego": "EMPTY"
+        }
+    },
+    "r17": {
+        "conditions": {
+            "bottom": [],
+            "ego": [
+                "UNOCCUPIED"
+            ],
+            "front": [
+                "FUSELAGE",
+                "WING",
+                "ROTOR",
+                "CONNECTOR"
+            ],
+            "left": [],
+            "rear": [],
+            "right": [],
+            "top": []
+        },
+        "name": "EMPTY-REAR",
+        "production": {
+            "ego": "EMPTY"
+        }
+    },
+    "r18": {
+        "conditions": {
+            "bottom": [
+                "FUSELAGE",
+                "WING",
+                "ROTOR",
+                "CONNECTOR"
+            ],
+            "ego": [
+                "UNOCCUPIED"
+            ],
+            "front": [],
+            "left": [],
+            "rear": [],
+            "right": [],
+            "top": []
+        },
+        "name": "EMPTY-TOP",
+        "production": {
+            "ego": "EMPTY"
+        }
+    },
+    "r19": {
+        "conditions": {
+            "bottom": [],
+            "ego": [
+                "UNOCCUPIED"
+            ],
+            "front": [],
+            "left": [],
+            "rear": [],
+            "right": [],
+            "top": [
+                "FUSELAGE",
+                "WING",
+                "ROTOR",
+                "CONNECTOR"
+            ]
+        },
+        "name": "EMPTY-BOTTOM",
+        "production": {
+            "ego": "EMPTY"
+        }
+    },
+    "r2": {
+        "conditions": {
+            "bottom": [
+                "CONNECTOR"
+            ],
+            "ego": [
+                "UNOCCUPIED"
+            ],
+            "front": [
+                "EMPTY",
+                "UNOCCUPIED",
+                "CONNECTOR",
+                "ROTOR"
+            ],
+            "left": [
+                "EMPTY",
+                "FUSELAGE",
+                "CONNECTOR",
+                "ROTOR"
+            ],
+            "rear": [],
+            "right": [
+                "EMPTY",
+                "UNOCCUPIED",
+                "CONNECTOR",
+                "ROTOR"
+            ],
+            "top": [
+                "EMPTY",
+                "UNOCCUPIED",
+                "CONNECTOR",
+                "WING"
+            ]
+        },
+        "name": "WING-TOP",
+        "production": {
+            "connection": "bottom",
+            "ego": "WING"
+        }
+    },
+    "r20": {
+        "conditions": {
+            "bottom": [],
+            "ego": [
+                "UNOCCUPIED"
+            ],
+            "front": [],
+            "left": [
+                "FUSELAGE",
+                "WING",
+                "ROTOR",
+                "CONNECTOR"
+            ],
+            "rear": [],
+            "right": [],
+            "top": []
+        },
+        "name": "EMPTY-RIGHT",
+        "production": {
+            "ego": "EMPTY"
+        }
+    },
+    "r21": {
+        "conditions": {
+            "bottom": [],
+            "ego": [
+                "UNOCCUPIED"
+            ],
+            "front": [],
+            "left": [],
+            "rear": [],
+            "right": [
+                "FUSELAGE",
+                "WING",
+                "ROTOR",
+                "CONNECTOR"
+            ],
+            "top": []
+        },
+        "name": "EMPTY-LEFT",
+        "production": {
+            "ego": "EMPTY"
+        }
+    },
+    "r3": {
+        "conditions": {
+            "bottom": [
+                "EMPTY",
+                "CONNECTOR",
+                "WING"
+            ],
+            "ego": [
+                "UNOCCUPIED"
+            ],
+            "front": [],
+            "left": [
+                "EMPTY",
+                "FUSELAGE",
+                "CONNECTOR",
+                "ROTOR"
+            ],
+            "rear": [],
+            "right": [
+                "EMPTY",
+                "UNOCCUPIED",
+                "CONNECTOR",
+                "ROTOR"
+            ],
+            "top": [
+                "CONNECTOR"
+            ]
+        },
+        "name": "WING-BOTTOM",
+        "production": {
+            "connection": "top",
+            "ego": "WING"
+        }
+    },
+    "r4": {
+        "conditions": {
+            "bottom": [
+                "EMPTY",
+                "CONNECTOR",
+                "ROTOR"
+            ],
+            "ego": [
+                "UNOCCUPIED"
+            ],
+            "front": [],
+            "left": [
+                "FUSELAGE",
+                "WING",
+                "ROTOR",
+                "CONNECTOR"
+            ],
+            "rear": [],
+            "right": [],
+            "top": [
+                "EMPTY",
+                "CONNECTOR",
+                "ROTOR"
+            ]
+        },
+        "name": "ROTOR-RIGHT",
+        "production": {
+            "connection": "left",
+            "ego": "ROTOR"
+        }
+    },
+    "r5": {
+        "conditions": {
+            "bottom": [
+                "EMPTY",
+                "CONNECTOR",
+                "ROTOR"
+            ],
+            "ego": [
+                "UNOCCUPIED"
+            ],
+            "front": [],
+            "left": [],
+            "rear": [],
+            "right": [
+                "FUSELAGE",
+                "WING",
+                "ROTOR",
+                "CONNECTOR"
+            ],
+            "top": [
+                "EMPTY",
+                "CONNECTOR",
+                "ROTOR"
+            ]
+        },
+        "name": "ROTOR-LEFT",
+        "production": {
+            "connection": "right",
+            "ego": "ROTOR"
+        }
+    },
+    "r6": {
+        "conditions": {
+            "bottom": [
+                "CONNECTOR"
+            ],
+            "ego": [
+                "UNOCCUPIED"
+            ],
+            "front": [],
+            "left": [],
+            "rear": [],
+            "right": [],
+            "top": [
+                "EMPTY",
+                "CONNECTOR",
+                "ROTOR"
+            ]
+        },
+        "name": "ROTOR-TOP",
+        "production": {
+            "connection": "bottom",
+            "ego": "ROTOR"
+        }
+    },
+    "r7": {
+        "conditions": {
+            "bottom": [
+                "EMPTY",
+                "CONNECTOR",
+                "ROTOR"
+            ],
+            "ego": [
+                "UNOCCUPIED"
+            ],
+            "front": [],
+            "left": [
+                "FUSELAGE",
+                "WING",
+                "ROTOR",
+                "CONNECTOR"
+            ],
+            "rear": [],
+            "right": [
+                "FUSELAGE",
+                "WING",
+                "ROTOR",
+                "CONNECTOR"
+            ],
+            "top": [
+                "CONNECTOR"
+            ]
+        },
+        "name": "ROTOR-BOTTOM",
+        "production": {
+            "connection": "top",
+            "ego": "ROTOR"
+        }
+    },
+    "r8": {
+        "conditions": {
+            "bottom": [
+                "EMPTY",
+                "CONNECTOR",
+                "ROTOR"
+            ],
+            "ego": [
+                "UNOCCUPIED"
+            ],
+            "front": [
+                "CONNECTOR"
+            ],
+            "left": [
+                "FUSELAGE",
+                "WING",
+                "ROTOR",
+                "CONNECTOR"
+            ],
+            "rear": [],
+            "right": [
+                "FUSELAGE",
+                "WING",
+                "ROTOR",
+                "CONNECTOR"
+            ],
+            "top": [
+                "EMPTY",
+                "CONNECTOR",
+                "ROTOR"
+            ]
+        },
+        "name": "ROTOR-REAR",
+        "production": {
+            "connection": "front",
+            "ego": "ROTOR"
+        }
+    },
+    "r9": {
+        "conditions": {
+            "bottom": [
+                "EMPTY",
+                "CONNECTOR",
+                "ROTOR"
+            ],
+            "ego": [
+                "UNOCCUPIED"
+            ],
+            "front": [],
+            "left": [],
+            "rear": [
+                "CONNECTOR"
+            ],
+            "right": [],
+            "top": [
+                "EMPTY",
+                "CONNECTOR",
+                "ROTOR"
+            ]
+        },
+        "name": "ROTOR-FRONT",
+        "production": {
+            "connection": "rear",
+            "ego": "ROTOR"
+        }
+    }
+}

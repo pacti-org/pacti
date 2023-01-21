@@ -1,2 +1,2 @@
-::: gear.terms.polyhedra.polyhedra
-::: gear.terms.polyhedra.loaders
+::: pacti.terms.polyhedra.polyhedra
+::: pacti.terms.polyhedra.loaders

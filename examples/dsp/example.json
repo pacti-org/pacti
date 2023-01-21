@@ -1,0 +1,40 @@
+{
+    "contract1":{
+        "InputVars":[
+            "a1", "a2", "e1", "e2"
+        ],
+        "OutputVars":[
+            "a3", "e3"
+        ],
+        "assumptions":
+        [
+            {"coefficients":{"a1":1, "a2":1},
+            "constant":8}
+        ],
+        "guarantees":
+        [
+            {"coefficients":{"e1":-1,"e2":-1, "e3":1},
+            "constant":0.125}
+        ]
+    },
+
+    "contract2":{
+        "InputVars":[
+            "a3", "a4", "e3", "e4"
+        ],
+        "OutputVars":[
+            "a5", "e5"
+        ],
+        "assumptions":
+        [
+            {"coefficients":{"a3":1, "a4":1},
+            "constant":16}
+        ],
+        "guarantees":
+        [
+            {"coefficients":{"e3":-1,"e4":-1, "e5":1},
+            "constant":0.0625}
+        ]
+    },
+    "operation":"composition"
+}
