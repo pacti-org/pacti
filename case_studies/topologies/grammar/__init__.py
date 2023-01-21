@@ -28,7 +28,7 @@ class Direction(Enum):
 
 @dataclass
 class Grammar:
-    rules: list[Rule]
+    rules: dict[str, Rule]
 
     """TODO"""
 
@@ -38,11 +38,10 @@ class Grammar:
 
     @classmethod
     def from_dict(cls, rules_dict: dict) -> Grammar:
-        """ "TODO"""
-        rules = []
+        rules: dict[str, Rule] = {}
         """"e.g.."""
         for rule_id, elements in rules_dict.items():
-            rules.append(Rule.from_dict(elements, name=rule_id))
+            rules[rule_id] = Rule.from_dict(elements, name=rule_id)
 
         return cls(rules=rules)
 
@@ -129,7 +128,7 @@ class ConditionSet:
         set_symbols = set()
         for direction, symbol_types in self.__dict__.items():
             if isinstance(symbol_types, set):
-                set_symbols |= symbol_types
+                set_symbols |= set(filter(lambda x: x != SymbolType.UNOCCUPIED, symbol_types))
         return set_symbols
 
     def get_all_directions_where_is_symbol(self, symbol: SymbolType) -> set[str]:
@@ -230,12 +229,24 @@ class SymbolConnection:
     symbol_b: Symbol
 
 
+
 def constraint_str_between_integers(symbol: str, cluster: tuple[int, int]) -> list[str]:
+    if cluster[1] < cluster[0]:
+        raise AttributeError("Not valid interval")
     constraints = []
-    if cluster[0] != 0:
-        constraints.append(f"-1 * {symbol} <= -1 * {cluster[0]}")
-    constraints.append(f"{symbol} <= {cluster[1]}")
+    if cluster[0] > 0:
+        constraints.append(constraint_str_greater_eq_than(symbol, cluster[0]))
+    constraints.append(constraint_str_less_eq_than(symbol, cluster[1]))
+
     return constraints
+
+
+def constraint_str_greater_eq_than(symbol: str, n: int) -> str:
+    return f"-1 * {symbol} <= -1 * {n}"
+
+
+def constraint_str_less_eq_than(symbol: str, n: int) -> str:
+    return f"{symbol} <= {n}"
 
 
 @dataclass
@@ -251,6 +262,8 @@ class LocalState:
     def get_all_symbol_types_and_directions(self) -> dict[SymbolType, set[str]]:
         ret = {}
         for direction, symbol in self.__dict__.items():
+            if symbol.symbol_type == SymbolType.UNOCCUPIED:
+                continue
             if direction == "ego":
                 continue
             if symbol.symbol_type not in ret.keys():
@@ -262,7 +275,7 @@ class LocalState:
     @property
     def plot(self) -> Figure:
         local_grid = DirectionsGrid(
-            ego=symbols_colors[self.front.symbol_type],
+            ego=symbols_colors[self.ego.symbol_type],
             front=symbols_colors[self.front.symbol_type],
             bottom=symbols_colors[self.bottom.symbol_type],
             left=symbols_colors[self.left.symbol_type],
@@ -294,9 +307,9 @@ class Production:
     ego: Symbol
     connection: Direction | None
 
-    def apply(self, state: LocalState) -> LocalState:
+    def apply(self, state: LocalState) -> SymbolConnection | None:
         state.ego = self.ego
         if self.connection is not None:
             connection = SymbolConnection(self.ego, getattr(state, self.connection.name))
-            state.connections.add(connection)
-        return state
+            return connection
+        return None

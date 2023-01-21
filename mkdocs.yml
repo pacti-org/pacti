@@ -21,7 +21,7 @@ nav:
   - Multiagent Path Planning:
     - Multi-agent Coordination: _case_studies/multiagent_coordination/multiagent.ipynb
   - Signal Processing in Digital ICs: _case_studies/digital_signal_processing/dsp_wl.ipynb
-  #- Synthetic Biology: case_studies/synthbio.md
+  - Synthetic Biology: _case_studies/biocircuit_specifications/specification_based_synthetic_biology.ipynb
 - Documentation: #reference/
   - IoContract: iocontract.md
   - PolyhedralTerms : Polyhedral.md

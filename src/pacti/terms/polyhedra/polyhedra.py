@@ -8,7 +8,7 @@ $x_i$ are variables and the $a_i$ and $c$ are constants.
 from __future__ import annotations
 
 import logging
-from typing import Tuple, Any
+from typing import Tuple, Any, Union
 
 import numpy as np
 import sympy
@@ -17,7 +17,7 @@ from scipy.optimize import linprog
 from pacti.iocontract import Term, TermList, Var
 from pacti.utils.lists import list_diff, list_intersection, list_union
 
-numeric = int | float
+numeric = Union[int, float]
 
 
 class PolyhedralTerm(Term):
@@ -513,7 +513,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         termlist.terms = list_diff(termlist.terms, terms_to_elim.terms)
         return termlist
 
-    def simplify(self, context: PolyhedralTermList | None = None) -> None:
+    def simplify(self, context: Union[PolyhedralTermList, None] = None) -> None:
         """
         Remove redundant terms in the PolyhedralTermList using the provided context.
 
@@ -569,6 +569,8 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         logging.debug("RH term: %s", other)
         if other.lacks_constraints():
             return True
+        if self.lacks_constraints():
+            return False
         variables, self_mat, self_cons, ctx_mat, ctx_cons = PolyhedralTermList.termlist_to_polytope(  # noqa: WPS236
             self, other
         )
@@ -683,7 +685,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
 
     @staticmethod
     def reduce_polytope(  # noqa: WPS231
-        a: np.ndarray, b: np.ndarray, a_help: np.ndarray | None = None, b_help: np.ndarray | None = None
+        a: np.ndarray, b: np.ndarray, a_help: Union[np.ndarray, None] = None, b_help: Union[np.ndarray, None] = None
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Eliminate redundant constraints from a given polytope.
@@ -765,10 +767,10 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
 
     @staticmethod
     def verify_polytope_containment(  # noqa: WPS231
-        a_l: np.ndarray | None = None,
-        b_l: np.ndarray | None = None,
-        a_r: np.ndarray | None = None,
-        b_r: np.ndarray | None = None,
+        a_l: Union[np.ndarray, None] = None,
+        b_l: Union[np.ndarray, None] = None,
+        a_r: Union[np.ndarray, None] = None,
+        b_r: Union[np.ndarray, None] = None,
     ) -> bool:
         """
         Tell whether a polytope is contained in another.
@@ -824,14 +826,17 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
 
             res = linprog(c=objective, A_ub=a_opt, b_ub=b_opt, bounds=(None, None))  # ,options={'tol':0.000001})
             b_temp -= 1
-            logging.debug("Optimal value: %s", -res["fun"])
-            logging.debug("Results: %s", res)
-            # if res["success"] and -res["fun"] <= b_temp[i]:
-            if res["status"] != 2 and -res["fun"] <= b_temp:  # noqa: WPS309
-                logging.debug("Redundant constraint")
-            else:
+            if res["status"] == 2:
                 is_refinement = False
                 break
+            else:
+                if -res["fun"] <= b_temp:  # noqa: WPS309
+                    logging.debug("Redundant constraint")
+                else:
+                    is_refinement = False
+                    break
+            logging.debug("Optimal value: %s", -res["fun"])
+            logging.debug("Results: %s", res)
         return is_refinement
 
     @staticmethod
