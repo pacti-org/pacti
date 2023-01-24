@@ -1,4 +1,8 @@
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/logos/pacti_white.png">
+  <img src="docs/logos/pacti_black.png">
+</picture>
 
 ![Image title](docs/logos/pacti_black.png#gh-dark-mode-only)
 ![Image title](docs/logos/pacti_white.png#gh-light-mode-only)
