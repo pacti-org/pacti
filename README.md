@@ -1,8 +1,7 @@
-# Pacti
 
-<p align="center">
-  <img src="docs/logos/pacti_gray.png" width="200">
-</p>
+![Image title](docs/logos/pacti_black.png#only-light)
+![Image title](docs/logos/pacti_white.png#only-dark)
+
 
 Pacti is a Python package for carrying out compositional system analysis and design. Pacti represents components in a
 system using assume-guarantee specifications, or contracts. Pacti's capabilities include the following:
