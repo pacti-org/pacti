@@ -45,8 +45,6 @@ Pacti places the result of composition in the file result.json. The output is
 
 Now we consider an example of quotient. Consider the following circuits:
 
-<img src="docs/source/_static/exports/circuit_series_quotient_black.svg" width="350" alt="Buffers connected in series">
-
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/source/_static/exports/circuit_series_quotient_white.svg" width="250">
   <source media="(prefers-color-scheme: light)" srcset="docs/source/_static/exports/circuit_series_quotient_black.svg" width="250">
