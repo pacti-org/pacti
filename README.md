@@ -2,7 +2,7 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/logos/pacti_white.png">
   <source media="(prefers-color-scheme: light)" srcset="docs/logos/pacti_black.png">
-  <img alt="Logo in light and dark mode." src="docs/logos/pacti_black.png">
+  <img alt="Logo in light and dark mode." src="docs/logos/pacti_white.png">
 </picture>
 
 
