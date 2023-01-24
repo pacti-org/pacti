@@ -1,6 +1,7 @@
 
-![Image title](docs/logos/pacti_black.png#only-light)
-![Image title](docs/logos/pacti_white.png#only-dark)
+
+![Image title](docs/logos/pacti_black.png#gh-dark-mode-only)
+![Image title](docs/logos/pacti_white.png#gh-light-mode-only)
 
 
 Pacti is a Python package for carrying out compositional system analysis and design. Pacti represents components in a
