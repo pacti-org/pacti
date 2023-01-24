@@ -1,10 +1,9 @@
+
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/logos/pacti_white.png">
-  <img alt="Text changing depending on mode. Light: 'So light!' Dark: 'So dark!'" src="docs/logos/pacti_black.png">
+  <source media="(prefers-color-scheme: light)" srcset="docs/logos/pacti_black.png">
+  <img alt="Logo in light and dark mode." src="docs/logos/pacti_black.png">
 </picture>
-
-![Image title](docs/logos/pacti_black.png#gh-dark-mode-only)
-![Image title](docs/logos/pacti_white.png#gh-light-mode-only)
 
 
 Pacti is a Python package for carrying out compositional system analysis and design. Pacti represents components in a
