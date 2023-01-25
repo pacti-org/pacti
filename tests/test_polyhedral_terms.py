@@ -2,8 +2,8 @@ import pytest
 import sympy as sympy
 from sympy.parsing.sympy_parser import parse_expr
 
-from gear.iocontract import Var
-from gear.terms.polyhedra import PolyhedralTerm, PolyhedralTermList
+from pacti.iocontract import Var
+from pacti.terms.polyhedra import PolyhedralTerm, PolyhedralTermList
 
 
 def to_pt(str_rep):
@@ -115,7 +115,7 @@ def test_polyhedral_deduce_7():
     assert reference.terms == expected.terms
 
 
-#def test_polyhedral_abduce_8():
+# def test_polyhedral_abduce_8():
 #    # a term that can be simplified with one element of the context
 #    y = Var("y")
 #    z = Var("z")

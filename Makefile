@@ -32,7 +32,8 @@ BASIC_DUTIES = \
 	docs-regen \
 	docs-serve \
 	format \
-	release
+	release \
+	tox
 
 QUALITY_DUTIES = \
 	check-quality \
@@ -50,8 +51,7 @@ lock:
 
 .PHONY: check
 check:
-	@bash scripts/multirun.sh duty check-quality check-types check-docs
-	@$(DUTY) check-dependencies
+	@$(DUTY) check-quality check-types check-docs check-dependencies
 
 .PHONY: uninstall
 uninstall:
@@ -65,9 +65,10 @@ uninstall:
 	rm -rf pip-wheel-metadata
 	rm -rf site
 	find . -type d -name __pycache__ | xargs rm -rf
+	find . -type d -name __pypackages__ | xargs rm -rf
 	find . -name '*.rej' -delete
-	rm -rf __pypackages__
-	rm -f pdm.lock .pdm.toml gear.log
+	find . -name pdm.lock -delete
+	find . -name .pdm.toml -delete
 
 
 .PHONY: $(BASIC_DUTIES)

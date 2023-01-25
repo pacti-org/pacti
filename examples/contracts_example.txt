@@ -1,0 +1,21 @@
+ASSUMPTIONS
+    i <= 2
+GUARANTEES
+    -x <= 1
+    p < 3
+INPUTS
+    i
+OUTPUTS
+    x, p
+
+--
+
+ASSUMPTIONS
+    -x <= 2
+GUARANTEES
+    o <= 5
+INPUTS
+    x
+OUTPUTS
+    o
+--
