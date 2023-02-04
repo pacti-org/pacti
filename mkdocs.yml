@@ -23,6 +23,7 @@ nav:
     - Three Robot Example: _case_studies/multiagent_coordination/multiagent.ipynb
   - Signal Processing in Digital ICs: _case_studies/digital_signal_processing/dsp_wl.ipynb
   - Synthetic Biology: _case_studies/biocircuit_specifications/specification_based_synthetic_biology.ipynb
+  - Space Mission: _case_studies/space_mission/space_mission.ipynb
 - Documentation: #reference/
   - IoContract: iocontract.md
   - PolyhedralTerms : Polyhedral.md

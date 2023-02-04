@@ -15,3 +15,7 @@ We will treat each time step as our viewpoint to find a solution that satisfies 
 A case study on modeling the specifications of biological sensors to construct a library of parts and guide biocircuit design.
 
 # Signal processing pipelines in digital ICs
+
+# Space Mission
+
+A case study on modeling the specifications of autonomous tasks for a planning/scheduling onboard of a space mission system.
