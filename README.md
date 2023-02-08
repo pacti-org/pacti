@@ -26,18 +26,18 @@ Suppose we have the following system:
 </picture>
 
 
-Components $M$ and $M'$ obey, respectively, contracts $C = (|i| \le 2, o \le i \le 2o + 5)$ and $C' = (-1 \le o \le 1/3, o' \le o)$. We can use Pacti to obtain the specification of the system by executing the command
+Components $M$ and $M'$ obey, respectively, contracts $C = (|i| \le 2, o \le i \le 2o + 2)$ and $C' = (-1 \le o \le 1/5, o' \le o)$. We can use Pacti to obtain the specification of the system by executing the command
 
 `pacti examples/example.json result.json`
 
 Pacti places the result of composition in the file result.json. The output is
 
 ```
-   Composed contract:
-   InVars: {<Var i>}
-   OutVars:{<Var o_p>}
-   A: 3*i <= 1, -1*i <= 2
-   G: 1*o_p + -1*i <= 0
+  Composed contract:      
+  InVars: [<Var i>]       
+  OutVars:[<Var o_p>]     
+  A: 5*i <= 1, -1/2*i <= 0
+  G: -1*i + 1*o_p <= 0
 ```
 
 ### Quotient
@@ -51,18 +51,18 @@ Now we consider an example of quotient. Consider the following circuits:
   <img alt="Logo in light and dark mode." src="docs/source/_static/exports/circuit_series_quotient_black.svg" width="250">
 </picture>
 
-We wish to implement a system $M$ with specification $C = (i \le 1, o' \le 2i)$, and to do this we have available a component $M'$ with specification $C' = (i \le 2, o \le 2i)$. We use the quotient operation in Pacti to obtain the specification of the component that we are missing so that the resulting object meets the specification $C$. We run the command
+We wish to implement a system $M$ with specification $C = (|i| \le 1, o' = 2i + 1)$, and to do this we have available a component $M'$ with specification $C' = (|i| \le 2, o = 2i)$. We use the quotient operation in Pacti to obtain the specification of the component that we are missing so that the resulting object meets the specification $C$. We run the command
 
 `pacti examples/example_quotient.json result.json`
 
 And Pacti outputs
 
 ```
-   Contract quotient:
-   InVars: {<Var o>}
-   OutVars:{<Var o_p>}
-   A: 1/2*o <= 1
-   G: -1*o + 1*o_p <= 1
+  Contract quotient:
+  InVars: [<Var o>]
+  OutVars:[<Var o_p>]
+  A: 1*o <= 2, -1*o <= 2
+  G: -1*o + 1*o_p <= 1, 1*o + -1*o_p <= -1
 ```
 
 # Installing
