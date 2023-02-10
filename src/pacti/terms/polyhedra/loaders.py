@@ -3,7 +3,7 @@ Consists of loader functions that can read a JSON dictionary contract
 or write a IOContract to a JSON file.
 """
 import json
-
+import re
 import sympy
 from sympy.parsing.sympy_parser import parse_expr
 
@@ -14,6 +14,7 @@ from pacti.utils.string_contract import StrContract
 
 from typing import Union
 
+numeric = Union[int, float]
 
 def read_contract(contract: Union[dict, list[dict]]) -> list[IoContract]:
     """
@@ -100,32 +101,96 @@ def write_contract(contract: Union[IoContract, list[IoContract]], filename: str 
     else:
         return contract_list
 
+# Patterns for the syntax of constant numbers.
+
+plusPattern = re.compile(r'^\s*\+\s*$')
+minusPattern = re.compile(r'^\s*\-\s*$')
+signedNumber = re.compile(r'^\s*(?P<sign>[+-])\s*(?P<float>(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)\s*$')
+
+def parseConstant(c: str) -> numeric:
+  if plusPattern.match(c):
+    return 1.0
+  elif minusPattern.match(c):
+     return -1.0
+  else:
+    m=signedNumber.match(c)
+    if not m:
+      raise ValueError(f"Constant syntax mismatch: {c}")
+    
+    s=m.group('sign')
+    n=float(m.group('float'))
+
+    if s == '-':
+      return -n
+    else:
+      return n
+
+# Patterns for the syntax of variables with numeric coefficients
+
+variablePattern = re.compile(
+  r'^'
+  r'\s*(?P<coefficient>[+-]\s*((\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)?)'
+  r'\s*(?P<multiplication>\*)?'
+  r'\s*(?P<variable>[a-zA-Z]\w*)'
+  r'(?P<variables>(\s*[+-]\s*(((\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?(\s*\*\s*)?)?)?\s*[a-zA-Z]\w*)*)'
+  r'\s*$')
+
+def addVariable(terms: str, variables: dict[Var, numeric], v: str, c: str) -> dict[Var, numeric]:
+  if variables.__contains__(v):
+    raise(ValueError(f"Multiple coefficients involving the same variable: {v} in: {terms}"))
+  
+  n=parseConstant(c)
+  variables.update({v:n})
+  
+def parseVariables(variables: dict[Var, numeric], terms: str) -> dict[Var, numeric]:
+  t=variablePattern.match(terms)
+  if not t:
+    raise(ValueError(f"Polyhedral variable syntax mismatch: {terms}"))
+  
+  v=t.group('variable')
+  c=t.group('coefficient')
+  addVariable(terms, variables, v, c)
+
+  rest=t.group('variables')
+  if rest:
+    parseVariables(variables, rest)
+  else:
+    variables
+
+# Patterns for a canonical polyhedral term syntax
+# TODO: add the 3 non-canonical variants for rewrite:
+# | LHS | <= RHS
+# | LHS | = 0
+# LHS = RHS
+
+canonicalPolyhedralTermPattern = re.compile(
+  r'^'
+  r'\s*(?P<coefficient>[+-]?\s*(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)'
+  r'\s*(?P<multiplication>\*)?'
+  r'\s*(?P<variable>[a-zA-Z]\w*)'
+  r'(?P<variables>(\s*[+-]\s*(((\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?(\s*\*\s*)?)?)?\s*[a-zA-Z]\w*)*)'
+  r'\s*<='
+  r'\s*(?P<constant>[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)'
+  r'$')
 
 def pt_from_string(str_rep: str) -> PolyhedralTerm:
-    # print(str_rep)
-    expr = parse_expr(str_rep)
-    # assert isinstance(expr, sympy.core.relational.LessThan)
-    # print(str_rep)
-    # print(expr)
-    constant = expr.args[1]
-    # print(type(constant))
-    variables = {}
-    for k, v in expr.args[0].as_coefficients_dict().items():
-        if k == 1:
-            pass
-        elif isinstance(k, sympy.core.symbol.Symbol):
-            variables[str(k)] = v
-        elif isinstance(k, sympy.core.mul.Mul):
-            if isinstance(k.args[1], k, sympy.core.symbol.Symbol):
-                print(k.args[0])
-                variables[str(k.args[1])] = k.args[0]
-            elif isinstance(k.args[0], k, sympy.core.symbol.Symbol):
-                print(k.args[1])
-                variables[str(k.args[0])] = k.args[1]
-        else:
-            raise ValueError
-    return PolyhedralTerm(variables, constant)
+  m=canonicalPolyhedralTermPattern.match(str_rep)
+  if not m:
+    raise ValueError(f"Polyhedral term syntax mismatch: {str_rep}")
+  
+  variables: dict[Var, numeric] = {}
+  
+  v=m.group('variable')
+  c=m.group('coefficient')
+  addVariable(m.group(0), variables, v, c)
 
+  rest=m.group('variables')
+  if rest:
+    parseVariables(variables, rest)
+
+  constant=float(m.group('constant'))
+
+  return PolyhedralTerm(variables, constant)
 
 def string_to_polyhedra_contract(contract: StrContract) -> IoContract:
     """
