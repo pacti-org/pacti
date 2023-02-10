@@ -22,6 +22,8 @@ dependencies = [
     "numpy>=1.24.1",
     "matplotlib>=3.6.2",
     "networkx>=3.0",
+    "pycddlib>=2.1.6",
+    "pypoman>=0.5.4",
 ]
 requires-python = ">=3.8, <=3.11.1"
 
