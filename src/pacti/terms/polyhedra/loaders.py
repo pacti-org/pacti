@@ -157,29 +157,21 @@ def parseVariables(variables: dict[Var, numeric], terms: str) -> dict[Var, numer
   else:
     variables
 
-# Patterns for a canonical polyhedral term syntax
-# TODO: add the 3 non-canonical variants for rewrite:
-# | LHS | <= RHS
-# | LHS | = 0
-# LHS = RHS
+# Patterns for polyhedral term syntax
 
-canonicalPolyhedralTermPattern = re.compile(
+polyhedralTermPattern1 = re.compile(
   r'^'
   r'\s*(?P<coefficient>[+-]?\s*(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)'
   r'\s*(?P<multiplication>\*)?'
   r'\s*(?P<variable>[a-zA-Z]\w*)'
-  r'(?P<variables>(\s*[+-]\s*(((\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?(\s*\*\s*)?)?)?\s*[a-zA-Z]\w*)*)'
+  r'(?P<variables>(\s*[+-]\s*((\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?\s*\*?)?\s*[a-zA-Z]\w*)*)'
   r'\s*<='
   r'\s*(?P<constant>[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)'
   r'$')
 
-def pt_from_string(str_rep: str) -> PolyhedralTerm:
-  m=canonicalPolyhedralTermPattern.match(str_rep)
-  if not m:
-    raise ValueError(f"Polyhedral term syntax mismatch: {str_rep}")
-  
+def pt1_from_match(m: re.Match[str]) -> PolyhedralTerm:
   variables: dict[Var, numeric] = {}
-  
+
   v=m.group('variable')
   c=m.group('coefficient')
   addVariable(m.group(0), variables, v, c)
@@ -189,8 +181,89 @@ def pt_from_string(str_rep: str) -> PolyhedralTerm:
     parseVariables(variables, rest)
 
   constant=float(m.group('constant'))
-
   return PolyhedralTerm(variables, constant)
+
+polyhedralTermPattern2 = re.compile(
+  r'^'
+  r'\s*\|'
+  r'(?P<LHS>(\s*[+-]\s*((\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?\s*\*?)?\s*[a-zA-Z]\w*)+)'
+  r'\s*\|'
+  r'\s*<='
+  r'\s*(?P<RHS>[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)'
+  r'$')
+
+def pt2_from_match(m: re.Match[str]) -> list[PolyhedralTerm]:
+   s1=f"{m.group('LHS')} <= {m.group('RHS')}"
+   m1=polyhedralTermPattern1.match(s1)
+   if not m1:
+      raise ValueError(f"Invalid 'LHS <= RHS' syntax in: {s1}")
+   
+   pos: PolyhedralTerm = pt1_from_match(m1)
+   neg: PolyhedralTerm = pos.copy()
+   for key, value in neg.variables.items():
+      neg.variables.update({key: -value})
+   return [pos,neg]
+
+polyhedralTermPattern3 = re.compile(
+  r'^'
+  r'\s*\|'
+  r'(?P<LHS>(\s*[+-]\s*((\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?\s*\*?)?\s*[a-zA-Z]\w*)+)'
+  r'\s*\|'
+  r'\s*='
+  r'\s*0'
+  r'$')
+  
+def pt3_from_match(m: re.Match[str]) -> list[PolyhedralTerm]:
+   s1=f"{m.group('LHS')} <= 0"
+   m1=polyhedralTermPattern1.match(s1)
+   if not m1:
+      raise ValueError(f"Invalid 'LHS <= 0' syntax in: {s1}")
+   
+   pos: PolyhedralTerm = pt1_from_match(m1)
+   neg: PolyhedralTerm = pos.copy()
+   for key, value in neg.variables.items():
+      neg.variables.update({key: -value})
+   return [pos,neg]
+
+polyhedralTermPattern4 = re.compile(
+  r'^'
+  r'(?P<LHS>(\s*[+-]\s*((\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?\s*\*?)?\s*[a-zA-Z]\w*)+)'
+  r'\s*='
+  r'\s*(?P<RHS>[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)'
+  r'$')
+
+def pt4_from_match(m: re.Match[str]) -> list[PolyhedralTerm]:
+   s1=f"{m.group('LHS')} <= {m.group('RHS')}"
+   m1=polyhedralTermPattern1.match(s1)
+   if not m1:
+      raise ValueError(f"Invalid 'LHS <= RHS' syntax in: {s1}")
+   
+   pos: PolyhedralTerm = pt1_from_match(m1)
+   neg: PolyhedralTerm = pos.copy()
+   for key, value in neg.variables.items():
+      neg.variables.update({key: -value})
+   neg.constant = - neg.constant
+   return [pos,neg]
+
+def pt_from_string(str_rep: str) -> list[PolyhedralTerm]:
+  m1=polyhedralTermPattern1.match(str_rep)
+  m2=polyhedralTermPattern2.match(str_rep)
+  m3=polyhedralTermPattern3.match(str_rep)
+  m4=polyhedralTermPattern4.match(str_rep)
+  if m1:
+    return [pt1_from_match(m1)]
+
+  elif m2:
+    return pt2_from_match(m2)
+     
+  elif m3:
+    return pt3_from_match(m3)
+     
+  elif m4:
+    return pt4_from_match(m4)
+     
+  else:
+    raise ValueError(f"Polyhedral term syntax mismatch: {str_rep}")
 
 def string_to_polyhedra_contract(contract: StrContract) -> IoContract:
     """
