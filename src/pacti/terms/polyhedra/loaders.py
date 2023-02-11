@@ -192,6 +192,10 @@ polyhedralTermPattern2 = re.compile(
   r'\s*(?P<RHS>[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)'
   r'$')
 
+# rewrite as 2 terms given input match: | LHS | <= RHS
+# pos: LHS <= RHS
+# neg: -(LHS) <= RHS
+# result is [pos,neg]
 def pt2_from_match(m: re.Match[str]) -> list[PolyhedralTerm]:
    s1=f"{m.group('LHS')} <= {m.group('RHS')}"
    m1=polyhedralTermPattern1.match(s1)
@@ -213,6 +217,10 @@ polyhedralTermPattern3 = re.compile(
   r'\s*0'
   r'$')
   
+# rewrite as 2 terms given input match: | LHS | = 0
+# pos: LHS <= 0
+# neg: -(LHS) <= 0
+# result is [pos,neg]
 def pt3_from_match(m: re.Match[str]) -> list[PolyhedralTerm]:
    s1=f"{m.group('LHS')} <= 0"
    m1=polyhedralTermPattern1.match(s1)
@@ -232,6 +240,10 @@ polyhedralTermPattern4 = re.compile(
   r'\s*(?P<RHS>[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)'
   r'$')
 
+# rewrite as 2 terms given input match: LHS = RHS
+# pos: LHS <= RHS
+# neg: -(LHS) <= -
+# result is [pos,neg]
 def pt4_from_match(m: re.Match[str]) -> list[PolyhedralTerm]:
    s1=f"{m.group('LHS')} <= {m.group('RHS')}"
    m1=polyhedralTermPattern1.match(s1)
