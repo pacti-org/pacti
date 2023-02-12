@@ -1,4 +1,4 @@
-from pacti.terms.polyhedra.loaders import string_to_polyhedra_contract
+from pacti.terms.polyhedra.loaders import string_to_polyhedra_contract, polyhedra_contract_to_string
 from pacti.utils.string_contract import StrContract
 from pacti.iocontract import IoContract
 
@@ -49,3 +49,6 @@ def DSN_contract(s: int, tstart: float, duration: float, min_soc: float, consump
 
 _,d1=DSN_contract(s=1, tstart=0.0, duration=10.0, min_soc=75.0, consumption=30.0)
 print(d1)
+
+p1=polyhedra_contract_to_string(d1)
+print(p1)

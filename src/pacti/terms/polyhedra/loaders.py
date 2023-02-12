@@ -4,7 +4,7 @@ or write a IOContract to a JSON file.
 """
 import json
 import re
-import sympy
+from numpy import isclose
 from sympy.parsing.sympy_parser import parse_expr
 
 from functools import reduce
@@ -13,7 +13,7 @@ from pacti.iocontract.utils import getVarlist
 from pacti.terms.polyhedra.polyhedra import PolyhedralTerm, PolyhedralTermList
 from pacti.utils.string_contract import StrContract
 
-from typing import Union
+from typing import Any, Optional, Tuple, Union
 
 numeric = Union[int, float]
 
@@ -301,23 +301,116 @@ def string_to_polyhedra_contract(contract: StrContract) -> IoContract:
     )
     return io_contract
 
-def castToPolyhedralTerm(t) -> PolyhedralTerm:
+def castToPolyhedralTerm(t: Any) -> PolyhedralTerm:
    if isinstance(t, PolyhedralTerm):
       return t
    else:
       raise ValueError(f"Term is not a PolyhedralTerm: {t}")
    
-def polyhedra_contract_to_string(contract: IoContract) -> str:
-   assumptions = list(map(lambda t: castToPolyhedralTerm(t), contract.a.terms))
-   guarantees = list(map(lambda t: castToPolyhedralTerm(t), contract.g.terms))
+def areNumbersApproximativelyEqual(v1: numeric, v2: numeric) -> bool:
+   if isinstance(v1, int) & isinstance(v2, int):
+      return v1 == v2
+   else:
+      f1=float(v1)
+      f2=float(v2)
+      return isclose(f1, f2, rtol=1e-05, atol=1e-08, equal_nan=False)
+
+def isPolyhedraTermOppositeOf(term1: PolyhedralTerm, term2: PolyhedralTerm) -> bool:
+    for var, value in term1.variables.items():
+      if not term2.contains_var(var):
+         return False
+      if not areNumbersApproximativelyEqual(-value, term2.variables[var]):
+         return False
+    return True
+
+def polyhedraVariablesToString(t: PolyhedralTerm) -> str:
+   varlist = list(t.variables.items())
+   varlist.sort(key=lambda x: str(x[0]))
+   res = ""
+   first=True
+   for var, coeff in varlist:
+      if areNumbersApproximativelyEqual(coeff, 1.0):
+         if first:
+            res += var.name
+         else:
+            res += " + " + var.name
+      elif areNumbersApproximativelyEqual(coeff, -1.0):
+         if first:
+            res += "-" + var.name
+         else:
+            res += " - " + var.name
+      elif not areNumbersApproximativelyEqual(coeff, 0.0):
+         if coeff > 0:
+            res += " + " + str(coeff) + var.name
+         else:
+            res += " - " + str(-coeff) + var.name
+      first=False
+         
+   return res
+
+def onePolyhedraTermToString(terms: list[PolyhedralTerm]) -> Optional[Tuple[str, list[PolyhedralTerm]]]:
+   if not terms:
+      return None
+   
+   tp = terms[0]
+
+   ts = terms[1:]
+   for tn in ts:
+      if isPolyhedraTermOppositeOf(tp, tn):
+         # tp has the form: LHS
+         # tn has the form: -(LHS)
+         if areNumbersApproximativelyEqual(tp.constant, tn.constant):
+            if areNumbersApproximativelyEqual(tp.constant, 0.0):
+                # inverse of rule 3
+                # rewrite as 2 terms given input match: | LHS | = 0
+                # pos: LHS <= 0
+                # neg: -(LHS) <= 0
+                s = "| " + polyhedraVariablesToString(tp) + " | = 0"
+                ts.remove(tn)
+                return s, ts
+            else:
+                # inverse of rule 2
+                # rewrite as 2 terms given input match: | LHS | <= RHS
+                # pos: LHS <= RHS
+                # neg: -(LHS) <= RHS
+                s = "| " + polyhedraVariablesToString(tp) + " | <= " + str(tp.constant)
+                ts.remove(tn)
+                return s, ts
+         else:
+            # inverse of rule 4
+            # rewrite as 2 terms given input match: LHS = RHS
+            # pos: LHS <= RHS
+            # neg: -(LHS) <= -(RHS)
+            s = polyhedraVariablesToString(tp) + " = " + str(tp.constant)
+            ts.remove(tn)
+            return s, ts
+         
+   s = polyhedraVariablesToString(tp) + " <= " + str(tp.constant)
+   return s, ts
+
+def rewritePolyhedraTermsToString(terms: list[PolyhedralTerm]) -> list[str]:
+   res=[]
+   while terms:
+      s, rest=onePolyhedraTermToString(terms)
+      res.append(s)
+      terms = rest
+   return res
+
+def polyhedra_contract_to_string(contract: IoContract):
+   inputs: list[str] = list(map(lambda v: v.name, contract.inputvars))
+   outputs: list[str] = list(map(lambda v: v.name, contract.outputvars))
+   assumptions: list[PolyhedralTerm] = list(map(lambda t: castToPolyhedralTerm(t), contract.a.terms))
+   a: list[str] = rewritePolyhedraTermsToString(assumptions)
+   guarantees: list[PolyhedralTerm] = list(map(lambda t: castToPolyhedralTerm(t), contract.g.terms))
+   g: list[str] = rewritePolyhedraTermsToString(guarantees)
    return(
-      "InVars:"
-      + str(map(lambda v: v.name(), contract.inputvars))
-      + "\nOutVars:"
-      + str(map(lambda v: v.name(), contract.outputvars))
+      "Inputs:"
+      + str(inputs)
+      + "\nOutputs:"
+      + str(outputs)
       + "\nA: "
-      + str(assumptions)
+      + str(a)
       + "\nG: "
-      + str(guarantees)
+      + str(g)
    )
     
