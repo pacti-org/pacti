@@ -288,8 +288,14 @@ def string_to_polyhedra_contract(contract: StrContract) -> IoContract:
     Returns:
         io_contract: An input-output Pacti contract object
     """
-    assumptions: list[PolyhedralTerm] = reduce(list.__add__, list(map(lambda x: pt_from_string(x), contract.assumptions)))
-    guarantees: list[PolyhedralTerm] = reduce(list.__add__, list(map(lambda x: pt_from_string(x), contract.guarantees)))
+    if contract.assumptions: 
+      assumptions: list[PolyhedralTerm] = reduce(list.__add__, list(map(lambda x: pt_from_string(x), contract.assumptions)))
+    else: 
+      assumptions: list[PolyhedralTerm] = []
+    if contract.guarantees:
+      guarantees: list[PolyhedralTerm] = reduce(list.__add__, list(map(lambda x: pt_from_string(x), contract.guarantees)))
+    else:
+      guarantees: list[PolyhedralTerm] = []
     inputs: list[Var] = [Var(x) for x in contract.inputs]
     outputs: list[Var] = [Var(x) for x in contract.outputs]
 

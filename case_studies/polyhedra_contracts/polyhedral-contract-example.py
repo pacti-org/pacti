@@ -2,6 +2,17 @@ from pacti.terms.polyhedra.loaders import string_to_polyhedra_contract, polyhedr
 from pacti.utils.string_contract import StrContract
 from pacti.iocontract import IoContract
 
+c0=string_to_polyhedra_contract(StrContract(
+  inputs=[],
+  outputs=[],
+  assumptions=[],
+  guarantees=[]
+))
+print("\nEmpty Polhedra Contract pretty-printing")
+p0=polyhedra_contract_to_string(c0)
+print(p0)
+
+
 def DSN_contract(s: int, tstart: float, duration: float, min_soc: float, consumption: float) -> tuple[int, list[IoContract]]:
   e = s+1
   spec = StrContract(
