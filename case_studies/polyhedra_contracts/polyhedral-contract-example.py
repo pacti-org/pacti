@@ -48,7 +48,9 @@ def DSN_contract(s: int, tstart: float, duration: float, min_soc: float, consump
   return e, string_to_polyhedra_contract(spec)
 
 _,d1=DSN_contract(s=1, tstart=0.0, duration=10.0, min_soc=75.0, consumption=30.0)
+print("IoContract rendering:")
 print(d1)
 
 p1=polyhedra_contract_to_string(d1)
+print("\nPolhedra Contract pretty-printing")
 print(p1)

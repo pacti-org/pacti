@@ -404,13 +404,14 @@ def polyhedra_contract_to_string(contract: IoContract):
    guarantees: list[PolyhedralTerm] = list(map(lambda t: castToPolyhedralTerm(t), contract.g.terms))
    g: list[str] = rewritePolyhedraTermsToString(guarantees)
    return(
-      "Inputs:"
-      + str(inputs)
-      + "\nOutputs:"
-      + str(outputs)
-      + "\nA: "
-      + str(a)
-      + "\nG: "
-      + str(g)
+      "Inputs: ["
+      + ", ".join(inputs)
+      + "]\nOutputs: ["
+      + ", ".join(outputs)
+      + "]\nA: [\n\t"
+      + ",\n\t".join(a)
+      + "\n   ]\nG: [\n\t"
+      + ",\n\t".join(g)
+      + "\n   ]"
    )
     
