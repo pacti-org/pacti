@@ -298,8 +298,20 @@ def string_to_polyhedra_contract(contract: StrContract) -> IoContract:
         guarantees=PolyhedralTermList(guarantees),
         input_vars=inputs,
         output_vars=outputs,
+        pretty_printer=polyhedra_contract_to_string,
+        termlist_printer=polyhedraTermList_to_string,
+        varlist_printer=varList_to_string
     )
     return io_contract
+
+def varList_to_string(vars: list[Var]) -> str:
+   varlist = vars.copy()
+   varlist.sort(key=lambda x: x.name)
+   vs=[]
+   for v in varlist:
+      vs.append(v.name)
+   return "[" + ", ".join(vs) + "]"
+
 
 def castToPolyhedralTerm(t: Any) -> PolyhedralTerm:
    if isinstance(t, PolyhedralTerm):
@@ -396,7 +408,11 @@ def rewritePolyhedraTermsToString(terms: list[PolyhedralTerm]) -> list[str]:
       terms = rest
    return res
 
-def polyhedra_contract_to_string(contract: IoContract):
+def polyhedraTermList_to_string(pl: PolyhedralTermList) -> str:
+   ss = rewritePolyhedraTermsToString(pl.terms)
+   return "[\n" + ",\n ".join(ss) + "\n]"
+
+def polyhedra_contract_to_string(contract: IoContract) -> str:
    inputs: list[str] = list(map(lambda v: v.name, contract.inputvars))
    outputs: list[str] = list(map(lambda v: v.name, contract.outputvars))
    assumptions: list[PolyhedralTerm] = list(map(lambda t: castToPolyhedralTerm(t), contract.a.terms))

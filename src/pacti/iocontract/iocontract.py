@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import copy
 import logging
+from collections.abc import Callable
 from abc import ABC, abstractmethod
 from typing import List, TypeVar, Union
 
@@ -278,7 +279,10 @@ class IoContract:
     """
 
     def __init__(
-        self, assumptions: TermList, guarantees: TermList, input_vars: List[Var], output_vars: List[Var]
+        self, assumptions: TermList, guarantees: TermList, input_vars: List[Var], output_vars: List[Var],
+        pretty_printer: Callable[[IoContract], str] = lambda x: x.__str__(),
+        termlist_printer: Callable[[TermList], str] = lambda x: x.__str__(),
+        varlist_printer: Callable[[list[Var]], str] = lambda x: x.__str__()
     ) -> None:
         """
         Class constructor.
@@ -318,6 +322,9 @@ class IoContract:
         self.outputvars = output_vars.copy()
         # simplify the guarantees with the assumptions
         self.g.simplify(self.a)
+        self.pretty_printer = pretty_printer
+        self.termlist_printer = termlist_printer
+        self.varlist_printer = varlist_printer
 
     @property
     def vars(self) -> list[Var]:  # noqa: A003
@@ -442,7 +449,7 @@ class IoContract:
         assumptions_forbidden_vars = list_union(intvars, outputvars)
         if not self.can_compose_with(other):
             raise ValueError(
-                "Cannot compose the following contracts due to incompatible IO profiles:\n %s \n %s" % (self, other)
+                "Cannot compose the following contracts due to incompatible IO profiles:\n %s \n %s" % (self.pretty_printer(self), self.pretty_printer(other))
             )
         other_helps_self = len(list_intersection(other.outputvars, self.inputvars)) > 0
         self_helps_other = len(list_intersection(other.inputvars, self.outputvars)) > 0
@@ -456,9 +463,9 @@ class IoContract:
             new_a = other.a.abduce_with_context(self.a | self.g, assumptions_forbidden_vars)
             if list_intersection(new_a.vars, assumptions_forbidden_vars):
                 raise ValueError(
-                    "The guarantees \n{}\n".format(self.g)
-                    + "were insufficient to abduce the assumptions \n{}\n".format(other.a)
-                    + "by eliminating the variables \n{}".format(assumptions_forbidden_vars)
+                    "The guarantees \n{}\n".format(self.termlist_printer(self.g))
+                    + "were insufficient to abduce the assumptions \n{}\n".format(self.termlist_printer(other.a))
+                    + "by eliminating the variables \n{}".format(self.varlist_printer(assumptions_forbidden_vars))
                 )
             assumptions = new_a | self.a
         elif other_helps_self and not self_helps_other:
@@ -466,9 +473,9 @@ class IoContract:
             new_a = self.a.abduce_with_context(other.a | other.g, assumptions_forbidden_vars)
             if list_intersection(new_a.vars, assumptions_forbidden_vars):
                 raise ValueError(
-                    "The guarantees \n{}\n".format(other.g)
-                    + "were insufficient to abduce the assumptions \n{}\n".format(self.a)
-                    + "by eliminating the variables \n{}".format(assumptions_forbidden_vars)
+                    "The guarantees \n{}\n".format(self.termlist_printer(other.g))
+                    + "were insufficient to abduce the assumptions \n{}\n".format(self.termlist_printer(self.a))
+                    + "by eliminating the variables \n{}".format(self.varlist_printer(assumptions_forbidden_vars))
                 )
             assumptions = new_a | other.a
         # contracts can't help each other
@@ -490,7 +497,7 @@ class IoContract:
         terms_to_elim = allguarantees.get_terms_with_vars(intvars)
         allguarantees -= terms_to_elim
 
-        return IoContract(assumptions, allguarantees, inputvars, outputvars)
+        return IoContract(assumptions, allguarantees, inputvars, outputvars, pretty_printer=self.pretty_printer, termlist_printer=self.termlist_printer, varlist_printer=self.varlist_printer)
 
     def quotient(self, other: IoContract, additional_inputs: Union[List[Var], None] = None) -> IoContract:
         """Compute the contract quotient.
@@ -552,7 +559,7 @@ class IoContract:
         guarantees = guarantees.abduce_with_context(self.a, intvars)
         logging.debug("Guarantees after processing: %s", guarantees)
 
-        return IoContract(assumptions, guarantees, inputvars, outputvars)
+        return IoContract(assumptions, guarantees, inputvars, outputvars, pretty_printer=self.pretty_printer, termlist_printer=self.termlist_printer, varlist_printer=self.varlist_printer)
 
     def merge(self, other: IoContract) -> IoContract:
         """Compute the merging operation for two contracts.
@@ -574,4 +581,4 @@ class IoContract:
             raise ValueError("Contracts cannot be merged due to incompatible IO")
         assumptions = self.a | other.a
         guarantees = self.g | other.g
-        return IoContract(assumptions, guarantees, self.inputvars, self.outputvars)
+        return IoContract(assumptions, guarantees, self.inputvars, self.outputvars, pretty_printer=self.pretty_printer, termlist_printer=self.termlist_printer, varlist_printer=self.varlist_printer)
