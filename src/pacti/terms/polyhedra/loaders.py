@@ -4,7 +4,6 @@ or write a IOContract to a JSON file.
 """
 import json
 import re
-from numpy import isclose
 from sympy.parsing.sympy_parser import parse_expr
 
 from functools import reduce
@@ -13,7 +12,7 @@ from pacti.iocontract.utils import getVarlist
 from pacti.terms.polyhedra.polyhedra import areNumbersApproximativelyEqual, PolyhedralTerm, PolyhedralTermList
 from pacti.utils.string_contract import StrContract
 
-from typing import Any, Optional, Tuple, Union
+from typing import Any, Union
 
 numeric = Union[int, float]
 
