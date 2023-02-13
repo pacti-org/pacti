@@ -377,7 +377,16 @@ def onePolyhedraTermToString(terms: list[PolyhedralTerm]) -> Optional[Tuple[str,
       if isPolyhedraTermOppositeOf(tp, tn):
          # tp has the form: LHS
          # tn has the form: -(LHS)
-         if areNumbersApproximativelyEqual(tp.constant, tn.constant):
+         if areNumbersApproximativelyEqual(tp.constant, -tn.constant):
+            # inverse of rule 4
+            # rewrite as 2 terms given input match: LHS = RHS
+            # pos: LHS <= RHS
+            # neg: -(LHS) <= -(RHS)
+            s = polyhedraVariablesToString(tp) + " = " + str(tp.constant)
+            ts.remove(tn)
+            return s, ts
+         
+         else:
             if areNumbersApproximativelyEqual(tp.constant, 0.0):
                 # inverse of rule 3
                 # rewrite as 2 terms given input match: | LHS | = 0
@@ -394,14 +403,6 @@ def onePolyhedraTermToString(terms: list[PolyhedralTerm]) -> Optional[Tuple[str,
                 s = "| " + polyhedraVariablesToString(tp) + " | <= " + str(tp.constant)
                 ts.remove(tn)
                 return s, ts
-         else:
-            # inverse of rule 4
-            # rewrite as 2 terms given input match: LHS = RHS
-            # pos: LHS <= RHS
-            # neg: -(LHS) <= -(RHS)
-            s = polyhedraVariablesToString(tp) + " = " + str(tp.constant)
-            ts.remove(tn)
-            return s, ts
          
    s = polyhedraVariablesToString(tp) + " <= " + str(tp.constant)
    return s, ts
