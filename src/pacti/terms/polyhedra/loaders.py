@@ -16,6 +16,14 @@ from typing import Any, Union
 
 numeric = Union[int, float]
 
+def read_polyhedralTermList(kind: str, l: Union[list[dict], list[str]]) -> PolyhedralTermList:
+   if all(isinstance(x, dict) for x in l):
+      return PolyhedralTermList(list(PolyhedralTerm(x["coefficients"], float(x["constant"])) for x in l))
+   elif all(isinstance(x, str) for x in l):
+      return PolyhedralTermList(l)
+   else:
+      raise ValueError(f"{kind} must be either a list of dicts or strings.")
+   
 def read_contract(contract: Union[dict, list[dict]]) -> list[IoContract]:
     """
     Converts a contract written as JSON dictionary to pacti.iocontract type.
@@ -34,15 +42,13 @@ def read_contract(contract: Union[dict, list[dict]]) -> list[IoContract]:
     for c_i in contract:
         if not isinstance(c_i, dict):
             raise ValueError("A dict type contract is expected.")
-        reqs = []
-        for key in ["assumptions", "guarantees"]:
-            reqs.append([PolyhedralTerm(term["coefficients"], \
-                        float(term["constant"])) for term in c_i[key]])
+        a=read_polyhedralTermList("Assumptions", c_i["assumptions"])
+        g=read_polyhedralTermList("Guarantees", c_i["guarantees"])
         iocont = IoContract(
             input_vars=getVarlist(c_i["InputVars"]),
             output_vars=getVarlist(c_i["OutputVars"]),
-            assumptions=PolyhedralTermList(list(reqs[0])),
-            guarantees=PolyhedralTermList(list(reqs[1])),
+            assumptions=a,
+            guarantees=g,
         )
         list_iocontracts.append(iocont)
     if len(list_iocontracts) == 1:
@@ -101,184 +107,6 @@ def write_contract(contract: Union[IoContract, list[IoContract]], filename: str 
     else:
         return contract_list
 
-# Patterns for the syntax of constant numbers.
-
-plusPattern = re.compile(r'^\s*\+\s*$')
-minusPattern = re.compile(r'^\s*\-\s*$')
-signedNumber = re.compile(r'^\s*(?P<sign>[+-])?\s*(?P<float>(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)\s*$')
-
-def parseConstant(val: str) -> numeric:
-  if "" == val:
-    return 1.0
-  elif plusPattern.match(val):
-    return 1.0
-  elif minusPattern.match(val):
-     return -1.0
-  else:
-    m=signedNumber.match(val)
-    if not m:
-      raise ValueError(f"Constant syntax mismatch: {val}")
-    
-    s=m.group('sign')
-    n=float(m.group('float'))
-
-    if s == '-':
-      return -n
-    else:
-      return n
-
-# Patterns for the syntax of variables with numeric coefficients
-
-variablePattern = re.compile(
-  r'^'
-  r'\s*(?P<coefficient>[+-]\s*((\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)?)'
-  r'\s*(?P<multiplication>\*)?'
-  r'\s*(?P<variable>[a-zA-Z]\w*)'
-  r'(?P<variables>(\s*[+-]\s*(((\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?(\s*\*\s*)?)?)?\s*[a-zA-Z]\w*)*)'
-  r'\s*$')
-
-def addVariable(terms: str, variables: dict[Var, numeric], v: str, c: str) -> dict[Var, numeric]:
-  if variables.__contains__(v):
-    raise(ValueError(f"Multiple coefficients involving the same variable: {v} in: {terms}"))
-  
-  n=parseConstant(c)
-  variables.update({v:n})
-  
-def parseVariables(variables: dict[Var, numeric], terms: str) -> dict[Var, numeric]:
-  t=variablePattern.match(terms)
-  if not t:
-    raise(ValueError(f"Polyhedral variable syntax mismatch: {terms}"))
-  
-  v=t.group('variable')
-  c=t.group('coefficient')
-  addVariable(terms, variables, v, c)
-
-  rest=t.group('variables')
-  if rest:
-    parseVariables(variables, rest)
-  else:
-    variables
-
-# Patterns for polyhedral term syntax
-
-polyhedralTermPattern1 = re.compile(
-  r'^'
-  r'\s*(?P<coefficient>([+-]?(\s*(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)?)?)'
-  r'\s*(?P<multiplication>\*)?'
-  r'\s*(?P<variable>[a-zA-Z]\w*)'
-  r'(?P<variables>(\s*[+-]\s*((\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?\s*\*?)?\s*[a-zA-Z]\w*)*)'
-  r'\s*<='
-  r'\s*(?P<constant>[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)'
-  r'$')
-
-def pt1_from_match(m: re.Match[str]) -> PolyhedralTerm:
-  variables: dict[Var, numeric] = {}
-
-  v=m.group('variable')
-  c=m.group('coefficient')
-  addVariable(m.group(0), variables, v, c)
-
-  rest=m.group('variables')
-  if rest:
-    parseVariables(variables, rest)
-
-  constant=float(m.group('constant'))
-  return PolyhedralTerm(variables, constant)
-
-polyhedralTermPattern2 = re.compile(
-  r'^'
-  r'\s*\|'
-  r'(?P<LHS>([+-]?(\s*(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)?)?\s*\*?\s*[a-zA-Z]\w*(\s*[+-]\s*((\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?\s*\*?)?\s*[a-zA-Z]\w*)*)'
-  r'\s*\|'
-  r'\s*<='
-  r'\s*(?P<RHS>[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)'
-  r'$')
-
-# rewrite as 2 terms given input match: | LHS | <= RHS
-# pos: LHS <= RHS
-# neg: -(LHS) <= RHS
-# result is [pos,neg]
-def pt2_from_match(m: re.Match[str]) -> list[PolyhedralTerm]:
-   s1=f"{m.group('LHS')} <= {m.group('RHS')}"
-   m1=polyhedralTermPattern1.match(s1)
-   if not m1:
-      raise ValueError(f"Invalid 'LHS <= RHS' syntax in: {s1}")
-   
-   pos: PolyhedralTerm = pt1_from_match(m1)
-   neg: PolyhedralTerm = pos.copy()
-   for key, value in neg.variables.items():
-      neg.variables.update({key: -value})
-   return [pos,neg]
-
-polyhedralTermPattern3 = re.compile(
-  r'^'
-  r'\s*\|'
-  r'(?P<LHS>([+-]?(\s*(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)?)?\s*\*?\s*[a-zA-Z]\w*(\s*[+-]\s*((\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?\s*\*?)?\s*[a-zA-Z]\w*)*)'
-  r'\s*\|'
-  r'\s*='
-  r'\s*0'
-  r'$')
-  
-# rewrite as 2 terms given input match: | LHS | = 0
-# pos: LHS <= 0
-# neg: -(LHS) <= 0
-# result is [pos,neg]
-def pt3_from_match(m: re.Match[str]) -> list[PolyhedralTerm]:
-   s1=f"{m.group('LHS')} <= 0"
-   m1=polyhedralTermPattern1.match(s1)
-   if not m1:
-      raise ValueError(f"Invalid 'LHS <= 0' syntax in: {s1}")
-   
-   pos: PolyhedralTerm = pt1_from_match(m1)
-   neg: PolyhedralTerm = pos.copy()
-   for key, value in neg.variables.items():
-      neg.variables.update({key: -value})
-   return [pos,neg]
-
-polyhedralTermPattern4 = re.compile(
-  r'^'
-  r'(?P<LHS>([+-]?(\s*(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)?)?\s*\*?\s*[a-zA-Z]\w*(\s*[+-]\s*((\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?\s*\*?)?\s*[a-zA-Z]\w*)*)'
-  r'\s*='
-  r'\s*(?P<RHS>[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)'
-  r'$')
-
-# rewrite as 2 terms given input match: LHS = RHS
-# pos: LHS <= RHS
-# neg: -(LHS) <= -(RHS)
-# result is [pos,neg]
-def pt4_from_match(m: re.Match[str]) -> list[PolyhedralTerm]:
-   s1=f"{m.group('LHS')} <= {m.group('RHS')}"
-   m1=polyhedralTermPattern1.match(s1)
-   if not m1:
-      raise ValueError(f"Invalid 'LHS <= RHS' syntax in: {s1}")
-   
-   pos: PolyhedralTerm = pt1_from_match(m1)
-   neg: PolyhedralTerm = pos.copy()
-   for key, value in neg.variables.items():
-      neg.variables.update({key: -value})
-   neg.constant = - neg.constant
-   return [pos,neg]
-
-def pt_from_string(str_rep: str) -> list[PolyhedralTerm]:
-  m1=polyhedralTermPattern1.match(str_rep)
-  m2=polyhedralTermPattern2.match(str_rep)
-  m3=polyhedralTermPattern3.match(str_rep)
-  m4=polyhedralTermPattern4.match(str_rep)
-  if m1:
-    return [pt1_from_match(m1)]
-
-  elif m2:
-    return pt2_from_match(m2)
-     
-  elif m3:
-    return pt3_from_match(m3)
-     
-  elif m4:
-    return pt4_from_match(m4)
-     
-  else:
-    raise ValueError(f"Polyhedral term syntax mismatch: {str_rep}")
-
 def string_to_polyhedra_contract(contract: StrContract) -> IoContract:
     """
     Converts a StrContract to a pacti.iocontract type.
@@ -287,21 +115,10 @@ def string_to_polyhedra_contract(contract: StrContract) -> IoContract:
     Returns:
         io_contract: An input-output Pacti contract object
     """
-    if contract.assumptions: 
-      assumptions: list[PolyhedralTerm] = reduce(list.__add__, list(map(lambda x: pt_from_string(x), contract.assumptions)))
-    else: 
-      assumptions: list[PolyhedralTerm] = []
-    if contract.guarantees:
-      guarantees: list[PolyhedralTerm] = reduce(list.__add__, list(map(lambda x: pt_from_string(x), contract.guarantees)))
-    else:
-      guarantees: list[PolyhedralTerm] = []
-    inputs: list[Var] = [Var(x) for x in contract.inputs]
-    outputs: list[Var] = [Var(x) for x in contract.outputs]
-
     io_contract = IoContract(
-        assumptions=PolyhedralTermList(assumptions),
-        guarantees=PolyhedralTermList(guarantees),
-        input_vars=inputs,
-        output_vars=outputs
+        assumptions=PolyhedralTermList(contract.assumptions),
+        guarantees=PolyhedralTermList(contract.guarantees),
+        input_vars=[Var(x) for x in contract.inputs],
+        output_vars=[Var(x) for x in contract.outputs]
     )
     return io_contract
