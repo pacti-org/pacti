@@ -392,7 +392,7 @@ def onePolyhedraTermToString(terms: list[PolyhedralTerm]) -> Optional[Tuple[str,
                 # rewrite as 2 terms given input match: | LHS | = 0
                 # pos: LHS <= 0
                 # neg: -(LHS) <= 0
-                s = "| " + polyhedraVariablesToString(tp) + " | = 0"
+                s = "|" + polyhedraVariablesToString(tp) + "| = 0"
                 ts.remove(tn)
                 return s, ts
             else:
@@ -400,7 +400,7 @@ def onePolyhedraTermToString(terms: list[PolyhedralTerm]) -> Optional[Tuple[str,
                 # rewrite as 2 terms given input match: | LHS | <= RHS
                 # pos: LHS <= RHS
                 # neg: -(LHS) <= RHS
-                s = "| " + polyhedraVariablesToString(tp) + " | <= " + str(tp.constant)
+                s = "|" + polyhedraVariablesToString(tp) + "| <= " + str(tp.constant)
                 ts.remove(tn)
                 return s, ts
          

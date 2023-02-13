@@ -42,7 +42,7 @@ def DSN_contract(s: int, tstart: float, duration: float, min_soc: float, consump
     ],
     guarantees = [
       # Scheduled task instance end time
-      f"t{e} - t{s} = {duration}",
+      f"|t{e} - t{s}| <= {duration}",
 
       # Battery SOC discharge
       f"soc{e} - soc{s} <= {duration*consumption}",
