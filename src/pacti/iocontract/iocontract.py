@@ -322,12 +322,12 @@ class IoContract:
     @property
     def vars(self) -> list[Var]:  # noqa: A003
         """
-        The list of variables used referenced by contract.
+        The list of variables in the interface of the contract.
 
         Returns:
-            Variables referenced in the assumptions and guarantees.
+            Input and output variables of the contract.
         """
-        return list_union(self.a.vars, self.g.vars)
+        return list_union(self.inputvars, self.outputvars)
 
     def __str__(self):
         return (

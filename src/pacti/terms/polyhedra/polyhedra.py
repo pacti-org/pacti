@@ -599,7 +599,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
 
     @staticmethod
     def termlist_to_polytope(
-        terms: PolyhedralTermList, context: PolyhedralTermList
+        terms: PolyhedralTermList, context: PolyhedralTermList = PolyhedralTermList([])
     ) -> Tuple[list[Var], np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """
         Converts a list of terms with its context into matrix-vector pairs.
