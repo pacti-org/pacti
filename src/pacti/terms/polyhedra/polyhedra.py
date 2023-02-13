@@ -19,6 +19,16 @@ from pacti.utils.lists import list_diff, list_intersection, list_union
 
 numeric = Union[int, float]
 
+RelativeTolerance: float = 1e-05
+AbsoluteTolerance: float = 1e-08
+
+def areNumbersApproximativelyEqual(v1: numeric, v2: numeric) -> bool:
+   if isinstance(v1, int) & isinstance(v2, int):
+      return v1 == v2
+   else:
+      f1=float(v1)
+      f2=float(v2)
+      return np.isclose(f1, f2, rtol=RelativeTolerance, atol=AbsoluteTolerance, equal_nan=True)
 
 class PolyhedralTerm(Term):
     """Polyhedral terms are linear inequalities over a list of variables."""
@@ -68,8 +78,32 @@ class PolyhedralTerm(Term):
     def __str__(self) -> str:
         varlist = list(self.variables.items())
         varlist.sort(key=lambda x: str(x[0]))
-        res = " + ".join([str(coeff) + "*" + var.name for var, coeff in varlist])
-        res += " <= " + str(self.constant)
+        res = ""
+        first=True
+        for var, coeff in varlist:
+            if areNumbersApproximativelyEqual(coeff, 1.0):
+                if first:
+                    res += var.name
+                else:
+                    res += " + " + var.name
+            elif areNumbersApproximativelyEqual(coeff, -1.0):
+                if first:
+                    res += "-" + var.name
+                else:
+                    res += " - " + var.name
+            elif not areNumbersApproximativelyEqual(coeff, 0.0):
+                if coeff > 0:
+                    if first:
+                        res += str(coeff) + var.name
+                    else:
+                        res += " + " + str(coeff) + var.name
+                else:
+                    if first:
+                        res += str(coeff) + var.name
+                    else:
+                        res += " - " + str(-coeff) + var.name
+            first=False
+                
         return res
 
     def __hash__(self):
@@ -271,6 +305,14 @@ class PolyhedralTerm(Term):
             return self + term
         return self.copy()
 
+    def isOppositeOf(self, other: PolyhedralTerm) -> bool:
+        for var, value in self.variables.items():
+            if not other.contains_var(var):
+                return False
+            if not areNumbersApproximativelyEqual(-value, other.variables[var]):
+                return False
+        return True
+
     @staticmethod
     def to_symbolic(term: PolyhedralTerm) -> Any:
         """
@@ -405,8 +447,59 @@ class PolyhedralTerm(Term):
         return {}
 
 
+def onePolyhedraTermToString(terms: list[PolyhedralTerm]) -> Optional[Tuple[str, list[PolyhedralTerm]]]:
+   if not terms:
+      return None
+   
+   tp = terms[0]
+
+   ts = terms[1:]
+   for tn in ts:
+      if tp.isOppositeOf(tn):
+         # tp has the form: LHS
+         # tn has the form: -(LHS)
+         if areNumbersApproximativelyEqual(tp.constant, -tn.constant):
+            # inverse of rule 4
+            # rewrite as 2 terms given input match: LHS = RHS
+            # pos: LHS <= RHS
+            # neg: -(LHS) <= -(RHS)
+            s = str(tp) + " = " + str(tp.constant)
+            ts.remove(tn)
+            return s, ts
+         
+         else:
+            if areNumbersApproximativelyEqual(tp.constant, 0.0):
+                # inverse of rule 3
+                # rewrite as 2 terms given input match: | LHS | = 0
+                # pos: LHS <= 0
+                # neg: -(LHS) <= 0
+                s = "|" + str(tp) + "| = 0"
+                ts.remove(tn)
+                return s, ts
+            else:
+                # inverse of rule 2
+                # rewrite as 2 terms given input match: | LHS | <= RHS
+                # pos: LHS <= RHS
+                # neg: -(LHS) <= RHS
+                s = "|" + str(tp) + "| <= " + str(tp.constant)
+                ts.remove(tn)
+                return s, ts
+         
+   s = str(tp) + " <= " + str(tp.constant)
+   return s, ts
+
 class PolyhedralTermList(TermList):  # noqa: WPS338
     """A TermList of PolyhedralTerm instances."""
+
+    def __str__(self) -> str:
+        res="["
+        ts=self.terms.copy()
+        while ts:
+            s, rest=onePolyhedraTermToString(ts)
+            res += "\n  "+s
+            ts = rest
+        res += "\n]"
+        return res
 
     def abduce_with_context(self, context: PolyhedralTermList, vars_to_elim: list) -> PolyhedralTermList:
         """

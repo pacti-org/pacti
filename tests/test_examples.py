@@ -39,10 +39,12 @@ def test_examples():
             ]
         }
     c1 = read_contract(contract1)
+    print("c1:")
+    print(str(c1))
     c2 = read_contract(contract2)
-    contract_str = "Contract1:InVars: [<Var u_1>]"
-    contract_str += "\nOutVars:[<Var x_1>]\nA: -1*u_1 <= -1.0"
-    contract_str += "\nG: -1*x_1 <= -1.5"
+    contract_str = "Contract1:InVars: [u_1]"
+    contract_str += "\nOutVars:[x_1]\nA: [\n  -u_1 <= -1.0\n"
+    contract_str += "]\nG: [\n  -x_1 <= -1.5\n]"
     assert "Contract1:" + str(c1) ==  contract_str
     contract_comp = c1.compose(c2)
     assert isinstance(contract_comp, iocontract.IoContract)

@@ -279,10 +279,7 @@ class IoContract:
     """
 
     def __init__(
-        self, assumptions: TermList, guarantees: TermList, input_vars: List[Var], output_vars: List[Var],
-        pretty_printer: Callable[[IoContract], str] = lambda x: x.__str__(),
-        termlist_printer: Callable[[TermList], str] = lambda x: x.__str__(),
-        varlist_printer: Callable[[list[Var]], str] = lambda x: x.__str__()
+        self, assumptions: TermList, guarantees: TermList, input_vars: List[Var], output_vars: List[Var]
     ) -> None:
         """
         Class constructor.
@@ -322,9 +319,6 @@ class IoContract:
         self.outputvars = output_vars.copy()
         # simplify the guarantees with the assumptions
         self.g.simplify(self.a)
-        self.pretty_printer = pretty_printer
-        self.termlist_printer = termlist_printer
-        self.varlist_printer = varlist_printer
 
     @property
     def vars(self) -> list[Var]:  # noqa: A003
@@ -339,9 +333,9 @@ class IoContract:
     def __str__(self):
         return (
             "InVars: "
-            + str(self.inputvars)
+            + "[" + ", ".join([v.name for v in self.inputvars]) + "]"
             + "\nOutVars:"
-            + str(self.outputvars)
+            + "[" + ", ".join([v.name for v in self.outputvars]) + "]"
             + "\nA: "
             + str(self.a)
             + "\n"
@@ -497,7 +491,7 @@ class IoContract:
         terms_to_elim = allguarantees.get_terms_with_vars(intvars)
         allguarantees -= terms_to_elim
 
-        return IoContract(assumptions, allguarantees, inputvars, outputvars, pretty_printer=self.pretty_printer, termlist_printer=self.termlist_printer, varlist_printer=self.varlist_printer)
+        return IoContract(assumptions, allguarantees, inputvars, outputvars)
 
     def quotient(self, other: IoContract, additional_inputs: Union[List[Var], None] = None) -> IoContract:
         """Compute the contract quotient.
@@ -559,7 +553,7 @@ class IoContract:
         guarantees = guarantees.abduce_with_context(self.a, intvars)
         logging.debug("Guarantees after processing: %s", guarantees)
 
-        return IoContract(assumptions, guarantees, inputvars, outputvars, pretty_printer=self.pretty_printer, termlist_printer=self.termlist_printer, varlist_printer=self.varlist_printer)
+        return IoContract(assumptions, guarantees, inputvars, outputvars)
 
     def merge(self, other: IoContract) -> IoContract:
         """Compute the merging operation for two contracts.
@@ -581,4 +575,4 @@ class IoContract:
             raise ValueError("Contracts cannot be merged due to incompatible IO")
         assumptions = self.a | other.a
         guarantees = self.g | other.g
-        return IoContract(assumptions, guarantees, self.inputvars, self.outputvars, pretty_printer=self.pretty_printer, termlist_printer=self.termlist_printer, varlist_printer=self.varlist_printer)
+        return IoContract(assumptions, guarantees, self.inputvars, self.outputvars)
