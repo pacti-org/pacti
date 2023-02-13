@@ -119,7 +119,7 @@ class TermList(ABC):
     class that must be extended to support a specific constraint formalism.
     """
 
-    def __init__(self, term_list: Union[List, None] = None):
+    def __init__(self, term_list: Union[List[Term], None] = None):
         """
         Class constructor.
 
