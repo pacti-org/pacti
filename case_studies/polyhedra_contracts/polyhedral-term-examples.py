@@ -1,5 +1,5 @@
 import re
-from pacti.terms.polyhedra.loaders import pt_from_string
+from pacti.terms.polyhedra.serializer import pt_from_string
 
 terms=["-t1 <= -1.0", 
        "t1<=4", 

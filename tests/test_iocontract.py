@@ -1,12 +1,12 @@
 import pacti.iocontract as iocontract
-from pacti.terms.polyhedra.loaders import read_contract
+from pacti.terms.polyhedra import *
 
 
 def validate_iocontract(contract):
     return isinstance(contract, iocontract.IoContract)
 
 
-def create_contracts(num=1):
+def create_contracts(num=1) -> list[dict]:
     """
     Creates `num` number of contracts and returns a list of dicts
     """
@@ -19,13 +19,10 @@ def create_contracts(num=1):
             "guarantees": [{"coefficients": {"o" + str(i): 1}, "constant": 1}],
         }
         contracts.append(c_i)
-    if num == 1:
-        return contracts[0]
-    else:
-        return contracts
+    return contracts
 
 def test_validate_iocontract():
-    c_1, c_2 = read_contract(create_contracts(num=2))
+    [c_1, c_2] = [PolyhedralContract.readFromDict(c) for c in create_contracts(num=2)]
     assert validate_iocontract(c_1)
     assert validate_iocontract(c_2)
 

@@ -1,28 +1,28 @@
-from pacti.terms.polyhedra.loaders import string_to_polyhedra_contract
-from pacti.utils.string_contract import StrContract
-from pacti.iocontract import IoContract
 
-c0=string_to_polyhedra_contract(StrContract(
-  inputs=[],
-  outputs=[],
+from pacti.iocontract import IoContract
+from pacti.terms.polyhedra import *
+
+c0=PolyhedralContract.readFromString(
+  InputVars=[],
+  OutputVars=[],
   assumptions=[],
   guarantees=[]
-))
+)
 print("\nEmpty Polhedra Contract pretty-printing")
 print(c0)
 
 
 def DSN_contract(s: int, tstart: float, duration: float, min_soc: float, consumption: float) -> tuple[int, list[IoContract]]:
   e = s+1
-  spec = StrContract(
-    inputs = [
+  spec = PolyhedralContract.readFromString(
+    InputVars = [
       f"t{s}",    # Scheduled start time
       f"soc{s}",  # initial battery SOC
       f"d{s}",    # initial data volume
       f"e{s}",    # initial trajectory error
       f"r{s}",    # initial relative distance
     ],
-    outputs = [
+    OutputVars = [
       f"t{e}",    # Scheduled end time
       f"soc{e}",  # final battery SOC
       f"d{e}",    # final data volume
@@ -55,7 +55,7 @@ def DSN_contract(s: int, tstart: float, duration: float, min_soc: float, consump
       # no change to relative distance
       f"3.1r{e} - r{s} = 0",
     ])
-  return e, string_to_polyhedra_contract(spec)
+  return e, spec
 
 _,d1=DSN_contract(s=1, tstart=0.0, duration=10.0, min_soc=75.0, consumption=30.0)
 print("IoContract rendering:")

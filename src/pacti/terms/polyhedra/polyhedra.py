@@ -7,30 +7,19 @@ $x_i$ are variables and the $a_i$ and $c$ are constants.
 """
 from __future__ import annotations
 
-import re
 import logging
-from typing import Any, Optional, Tuple, Union
+from typing import Any, Tuple, Union
 
 import numpy as np
 import sympy
 from scipy.optimize import linprog
 
-from functools import reduce
 from pacti.iocontract import Term, TermList, Var
 from pacti.utils.lists import list_diff, list_intersection, list_union
 
+import pacti.terms.polyhedra.serializer as serializer
+
 numeric = Union[int, float]
-
-RelativeTolerance: float = 1e-05
-AbsoluteTolerance: float = 1e-08
-
-def areNumbersApproximativelyEqual(v1: numeric, v2: numeric) -> bool:
-   if isinstance(v1, int) & isinstance(v2, int):
-      return v1 == v2
-   else:
-      f1=float(v1)
-      f2=float(v2)
-      return np.isclose(f1, f2, rtol=RelativeTolerance, atol=AbsoluteTolerance, equal_nan=True)
 
 class PolyhedralTerm(Term):
     """Polyhedral terms are linear inequalities over a list of variables."""
@@ -83,17 +72,17 @@ class PolyhedralTerm(Term):
         res = ""
         first=True
         for var, coeff in varlist:
-            if areNumbersApproximativelyEqual(coeff, 1.0):
+            if serializer.areNumbersApproximativelyEqual(coeff, 1.0):
                 if first:
                     res += var.name
                 else:
                     res += " + " + var.name
-            elif areNumbersApproximativelyEqual(coeff, -1.0):
+            elif serializer.areNumbersApproximativelyEqual(coeff, -1.0):
                 if first:
                     res += "-" + var.name
                 else:
                     res += " - " + var.name
-            elif not areNumbersApproximativelyEqual(coeff, 0.0):
+            elif not serializer.areNumbersApproximativelyEqual(coeff, 0.0):
                 if coeff > 0:
                     if first:
                         res += str(coeff) + var.name
@@ -307,14 +296,6 @@ class PolyhedralTerm(Term):
             return self + term
         return self.copy()
 
-    def isOppositeOf(self, other: PolyhedralTerm) -> bool:
-        for var, value in self.variables.items():
-            if not other.contains_var(var):
-                return False
-            if not areNumbersApproximativelyEqual(-value, other.variables[var]):
-                return False
-        return True
-
     @staticmethod
     def to_symbolic(term: PolyhedralTerm) -> Any:
         """
@@ -448,122 +429,22 @@ class PolyhedralTerm(Term):
             return {Var(str(key)): PolyhedralTerm.to_term(sols[key]) for key in sols.keys()}
         return {}
 
-
-def onePolyhedraTermToString(terms: list[PolyhedralTerm]) -> Optional[Tuple[str, list[PolyhedralTerm]]]:
-   if not terms:
-      return None
-   
-   tp = terms[0]
-
-   ts = terms[1:]
-   for tn in ts:
-      if tp.isOppositeOf(tn):
-         # tp has the form: LHS
-         # tn has the form: -(LHS)
-         if areNumbersApproximativelyEqual(tp.constant, -tn.constant):
-            # inverse of rule 4
-            # rewrite as 2 terms given input match: LHS = RHS
-            # pos: LHS <= RHS
-            # neg: -(LHS) <= -(RHS)
-            s = str(tp) + " = " + str(tp.constant)
-            ts.remove(tn)
-            return s, ts
-         
-         else:
-            if areNumbersApproximativelyEqual(tp.constant, 0.0):
-                # inverse of rule 3
-                # rewrite as 2 terms given input match: | LHS | = 0
-                # pos: LHS <= 0
-                # neg: -(LHS) <= 0
-                s = "|" + str(tp) + "| = 0"
-                ts.remove(tn)
-                return s, ts
-            else:
-                # inverse of rule 2
-                # rewrite as 2 terms given input match: | LHS | <= RHS
-                # pos: LHS <= RHS
-                # neg: -(LHS) <= RHS
-                s = "|" + str(tp) + "| <= " + str(tp.constant)
-                ts.remove(tn)
-                return s, ts
-         
-   s = str(tp) + " <= " + str(tp.constant)
-   return s, ts
-
-
-# Patterns for the syntax of constant numbers.
-
-plusPattern = re.compile(r'^\s*\+\s*$')
-minusPattern = re.compile(r'^\s*\-\s*$')
-signedNumber = re.compile(r'^\s*(?P<sign>[+-])?\s*(?P<float>(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)\s*$')
-
-
-# Patterns for the syntax of variables with numeric coefficients
-
-variablePattern = re.compile(
-    r'^'
-    r'\s*(?P<coefficient>[+-]\s*((\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)?)'
-    r'\s*(?P<multiplication>\*)?'
-    r'\s*(?P<variable>[a-zA-Z]\w*)'
-    r'(?P<variables>(\s*[+-]\s*(((\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?(\s*\*\s*)?)?)?\s*[a-zA-Z]\w*)*)'
-    r'\s*$')
-
-
-# Patterns for polyhedral term syntax
-
-polyhedralTermPattern1 = re.compile(
-    r'^'
-    r'\s*(?P<coefficient>([+-]?(\s*(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)?)?)'
-    r'\s*(?P<multiplication>\*)?'
-    r'\s*(?P<variable>[a-zA-Z]\w*)'
-    r'(?P<variables>(\s*[+-]\s*((\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?\s*\*?)?\s*[a-zA-Z]\w*)*)'
-    r'\s*<='
-    r'\s*(?P<constant>[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)'
-    r'$')
-
-polyhedralTermPattern2 = re.compile(
-    r'^'
-    r'\s*\|'
-    r'(?P<LHS>([+-]?(\s*(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)?)?\s*\*?\s*[a-zA-Z]\w*(\s*[+-]\s*((\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?\s*\*?)?\s*[a-zA-Z]\w*)*)'
-    r'\s*\|'
-    r'\s*<='
-    r'\s*(?P<RHS>[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)'
-    r'$')
-
-polyhedralTermPattern3 = re.compile(
-    r'^'
-    r'\s*\|'
-    r'(?P<LHS>([+-]?(\s*(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)?)?\s*\*?\s*[a-zA-Z]\w*(\s*[+-]\s*((\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?\s*\*?)?\s*[a-zA-Z]\w*)*)'
-    r'\s*\|'
-    r'\s*='
-    r'\s*0'
-    r'$')
-
-polyhedralTermPattern4 = re.compile(
-    r'^'
-    r'(?P<LHS>([+-]?(\s*(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)?)?\s*\*?\s*[a-zA-Z]\w*(\s*[+-]\s*((\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?\s*\*?)?\s*[a-zA-Z]\w*)*)'
-    r'\s*='
-    r'\s*(?P<RHS>[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)'
-    r'$')
-
 class PolyhedralTermList(TermList):  # noqa: WPS338
     """A TermList of PolyhedralTerm instances."""
 
-    def __init__(self, terms: Union[None, list[PolyhedralTerm], list[str]] = None):
+    def __init__(self, terms: list[PolyhedralTerm] = None):
         if terms is None:
             self.terms = []
         elif all(isinstance(t, PolyhedralTerm) for t in terms):
             self.terms = terms
-        elif all(isinstance(t, str) for t in terms):
-            self.terms = reduce(list.__add__, list(map(lambda x: PolyhedralTermList.pt_from_string(x), terms)))
         else:
-            raise ValueError("PolyhedralTermList constructor argument must be a list of strings or a list of PolyhedralTerms.")
+            raise ValueError("PolyhedralTermList constructor argument must be a list of PolyhedralTerms.")
 
     def __str__(self) -> str:
         res="["
         ts=self.terms.copy()
         while ts:
-            s, rest=onePolyhedraTermToString(ts)
+            s, rest=serializer.onePolyhedraTermToString(ts)
             res += "\n  "+s
             ts = rest
         res += "\n]"
@@ -1122,138 +1003,3 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         logging.debug("Term %s transformed to %s", term, result)
 
         return result
-
-    @staticmethod
-    def parseConstant(val: str) -> numeric:
-        if "" == val:
-            return 1.0
-        elif plusPattern.match(val):
-            return 1.0
-        elif minusPattern.match(val):
-            return -1.0
-        else:
-            m=signedNumber.match(val)
-            if not m:
-                raise ValueError(f"Constant syntax mismatch: {val}")
-            
-            s=m.group('sign')
-            n=float(m.group('float'))
-
-            if s == '-':
-                return -n
-            else:
-                return n
-
-    @staticmethod
-    def addVariable(terms: str, variables: dict[Var, numeric], v: str, c: str) -> dict[Var, numeric]:
-        if variables.__contains__(v):
-            raise(ValueError(f"Multiple coefficients involving the same variable: {v} in: {terms}"))
-    
-        n=PolyhedralTermList.parseConstant(c)
-        variables.update({v:n})
-        
-    @staticmethod
-    def parseVariables(variables: dict[Var, numeric], terms: str) -> dict[Var, numeric]:
-        t=variablePattern.match(terms)
-        if not t:
-            raise(ValueError(f"Polyhedral variable syntax mismatch: {terms}"))
-        
-        v=t.group('variable')
-        c=t.group('coefficient')
-        PolyhedralTermList.addVariable(terms, variables, v, c)
-
-        rest=t.group('variables')
-        if rest:
-            PolyhedralTermList.parseVariables(variables, rest)
-        else:
-            variables
-
-    @staticmethod
-    def pt1_from_match(m: re.Match[str]) -> PolyhedralTerm:
-        variables: dict[Var, numeric] = {}
-
-        v=m.group('variable')
-        c=m.group('coefficient')
-        PolyhedralTermList.addVariable(m.group(0), variables, v, c)
-
-        rest=m.group('variables')
-        if rest:
-            PolyhedralTermList.parseVariables(variables, rest)
-
-        constant=float(m.group('constant'))
-        return PolyhedralTerm(variables, constant)
-
-
-    # rewrite as 2 terms given input match: | LHS | <= RHS
-    # pos: LHS <= RHS
-    # neg: -(LHS) <= RHS
-    # result is [pos,neg]
-    @staticmethod
-    def pt2_from_match(m: re.Match[str]) -> list[PolyhedralTerm]:
-        s1=f"{m.group('LHS')} <= {m.group('RHS')}"
-        m1=polyhedralTermPattern1.match(s1)
-        if not m1:
-            raise ValueError(f"Invalid 'LHS <= RHS' syntax in: {s1}")
-        
-        pos: PolyhedralTerm = PolyhedralTermList.pt1_from_match(m1)
-        neg: PolyhedralTerm = pos.copy()
-        for key, value in neg.variables.items():
-            neg.variables.update({key: -value})
-        return [pos,neg]
-
-    # rewrite as 2 terms given input match: | LHS | = 0
-    # pos: LHS <= 0
-    # neg: -(LHS) <= 0
-    # result is [pos,neg]
-    @staticmethod
-    def pt3_from_match(m: re.Match[str]) -> list[PolyhedralTerm]:
-        s1=f"{m.group('LHS')} <= 0"
-        m1=polyhedralTermPattern1.match(s1)
-        if not m1:
-            raise ValueError(f"Invalid 'LHS <= 0' syntax in: {s1}")
-        
-        pos: PolyhedralTerm = PolyhedralTermList.pt1_from_match(m1)
-        neg: PolyhedralTerm = pos.copy()
-        for key, value in neg.variables.items():
-            neg.variables.update({key: -value})
-        return [pos,neg]
-
-    # rewrite as 2 terms given input match: LHS = RHS
-    # pos: LHS <= RHS
-    # neg: -(LHS) <= -(RHS)
-    # result is [pos,neg]
-    @staticmethod
-    def pt4_from_match(m: re.Match[str]) -> list[PolyhedralTerm]:
-        s1=f"{m.group('LHS')} <= {m.group('RHS')}"
-        m1=polyhedralTermPattern1.match(s1)
-        if not m1:
-            raise ValueError(f"Invalid 'LHS <= RHS' syntax in: {s1}")
-        
-        pos: PolyhedralTerm = PolyhedralTermList.pt1_from_match(m1)
-        neg: PolyhedralTerm = pos.copy()
-        for key, value in neg.variables.items():
-            neg.variables.update({key: -value})
-        neg.constant = - neg.constant
-        return [pos,neg]
-
-    @staticmethod
-    def pt_from_string(str_rep: str) -> list[PolyhedralTerm]:
-        
-        m1=polyhedralTermPattern1.match(str_rep)
-        m2=polyhedralTermPattern2.match(str_rep)
-        m3=polyhedralTermPattern3.match(str_rep)
-        m4=polyhedralTermPattern4.match(str_rep)
-        if m1:
-            return [PolyhedralTermList.pt1_from_match(m1)]
-
-        elif m2:
-            return PolyhedralTermList.pt2_from_match(m2)
-            
-        elif m3:
-            return PolyhedralTermList.pt3_from_match(m3)
-            
-        elif m4:
-            return PolyhedralTermList.pt4_from_match(m4)
-            
-        else:
-            raise ValueError(f"Polyhedral term syntax mismatch: {str_rep}")

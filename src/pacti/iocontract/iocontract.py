@@ -78,7 +78,7 @@ class Term(ABC):
         """Variables contained in the syntax of the term."""
 
     @abstractmethod
-    def contains_var(self, var_to_seek: Var):
+    def contains_var(self, var_to_seek: Var) -> bool:
         """
         Tell whether term contains a given variable.
 
