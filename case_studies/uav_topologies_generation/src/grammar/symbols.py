@@ -3,53 +3,12 @@ from __future__ import annotations
 from abc import abstractmethod
 from dataclasses import dataclass
 
-from aenum import Enum, auto
+from ..shared import SymbolType
 
-
-class SymbolType(Enum):
-    UNOCCUPIED = auto()
-    FUSELAGE = auto()
-    EMPTY = auto()
-    ROTOR = auto()
-    WING = auto()
-    CONNECTOR = auto()
-    ANY = auto()
-
-
-all_symbols_types = {
-    SymbolType.FUSELAGE,
-    SymbolType.EMPTY,
-    SymbolType.ROTOR,
-    SymbolType.WING,
-    SymbolType.CONNECTOR,
-}
-
-
-symbols_short: dict = {
-    SymbolType.ANY: "U",
-    SymbolType.FUSELAGE: "F",
-    SymbolType.EMPTY: "E",
-    SymbolType.ROTOR: "R",
-    SymbolType.CONNECTOR: "C",
-    SymbolType.WING: "W",
-}
-
-symbols_short_in = lambda x: f"{symbols_short[x]}in"
-symbols_short_out = lambda x: f"{symbols_short[x]}out"
-
-
-symbols_colors: dict = {
-    SymbolType.ANY: "white",
-    SymbolType.UNOCCUPIED: "white",
-    SymbolType.FUSELAGE: "red",
-    SymbolType.EMPTY: "black",
-    SymbolType.ROTOR: "green",
-    SymbolType.CONNECTOR: "grey",
-    SymbolType.WING: "blue",
-}
 
 @dataclass(frozen=True)
 class Symbol:
+    """General Symbol class"""
     symbol_type = SymbolType.UNOCCUPIED
 
     @property
@@ -108,6 +67,3 @@ class Connector(TSymbol):
 @dataclass(frozen=True)
 class Empty(TSymbol):
     symbol_type = SymbolType.EMPTY
-
-
-
