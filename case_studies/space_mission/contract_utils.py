@@ -1,6 +1,5 @@
 from pacti.iocontract import IoContract, Var
-from pacti.utils.string_contract import StrContract
-from pacti.terms.polyhedra.loaders import string_to_polyhedra_contract
+from pacti.terms.polyhedra import *
 
 def input2output(i: str, outputs: list[Var], varPrefixes: list[str]) -> str:
   for o in outputs:
@@ -11,12 +10,11 @@ def input2output(i: str, outputs: list[Var], varPrefixes: list[str]) -> str:
   raise ValueError(f"Cannot match variable: {i} to any of {outputs} using prefixes: {varPrefixes}")
 
 def connect(c1: IoContract, c2: IoContract, varPrefixes: list[str]) -> IoContract:
-    c12 = string_to_polyhedra_contract(StrContract(
-      inputs = list(map(lambda x: x.name, c1.outputvars)),
-      outputs = list(map(lambda x: x.name, c2.inputvars)),
+    c12 = PolyhedralContract.readFromString(
+      InputVars = list(map(lambda x: x.name, c1.outputvars)),
+      OutputVars = list(map(lambda x: x.name, c2.inputvars)),
       assumptions = [],
-      guarantees = list(map(lambda i: input2output(i.name, c1.outputvars, varPrefixes), c2.inputvars))
-    ))
+      guarantees = list(map(lambda i: input2output(i.name, c1.outputvars, varPrefixes), c2.inputvars)))
 
     return c1.compose(c12).compose(c2)
     
