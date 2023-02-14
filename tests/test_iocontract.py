@@ -22,7 +22,7 @@ def create_contracts(num=1) -> list[dict]:
     return contracts
 
 def test_validate_iocontract():
-    [c_1, c_2] = [PolyhedralContract.readFromDict(c) for c in create_contracts(num=2)]
+    [c_1, c_2] = [PolyhedralContract.from_dict(c) for c in create_contracts(num=2)]
     assert validate_iocontract(c_1)
     assert validate_iocontract(c_2)
 

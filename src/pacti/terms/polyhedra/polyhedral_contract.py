@@ -15,19 +15,19 @@ class PolyhedralContract(IoContract):
         super().__init__(assumptions, guarantees, input_vars, output_vars)
         
     @staticmethod
-    def readFromString(
+    def from_string(
         assumptions: list[str] = field(default_factory=list),
         guarantees: list[str] = field(default_factory=list),
         InputVars: list[str] = field(default_factory=list),
         OutputVars: list[str] = field(default_factory=list)) -> PolyhedralContract:
         
         if assumptions:
-            a: list[PolyhedralTerm] = reduce(list.__add__, list(map(lambda x: serializer.pt_from_string(x), assumptions)))
+            a: list[PolyhedralTerm] = reduce(list.__add__, list(map(lambda x: serializer.internal_pt_from_string(x), assumptions)))
         else:
             a: list[PolyhedralTerm] = []
 
         if guarantees:
-            g: list[PolyhedralTerm] = reduce(list.__add__, list(map(lambda x: serializer.pt_from_string(x), guarantees)))
+            g: list[PolyhedralTerm] = reduce(list.__add__, list(map(lambda x: serializer.internal_pt_from_string(x), guarantees)))
         else:
             g: list[PolyhedralTerm] = []
 
@@ -38,22 +38,23 @@ class PolyhedralContract(IoContract):
             guarantees=PolyhedralTermList(g))
         
     @staticmethod
-    def readFromDict(
+    def from_dict(
         contract: dict) -> PolyhedralContract:
         if not isinstance(contract, dict):
             raise ValueError("A dict type contract is expected.")
         
+        if all(isinstance(x, dict) for x in contract["assumptions"]):
+            a = PolyhedralTermList(list(PolyhedralTerm(x["coefficients"], float(x["constant"])) for x in contract["assumptions"]))
+        else:
+            raise ValueError(f"Assumptions must be a list of dicts.")
+        
+        if all(isinstance(x, dict) for x in contract["guarantees"]):
+            g = PolyhedralTermList(list(PolyhedralTerm(x["coefficients"], float(x["constant"])) for x in contract["guarantees"]))
+        else:
+            raise ValueError(f"Guarantees must be a list of dicts.")
+        
         return PolyhedralContract(
             input_vars=[Var(x) for x in contract["InputVars"]],
             output_vars=[Var(x) for x in contract["OutputVars"]],
-            assumptions=PolyhedralContract.read_polyhedralTermList("Assumptions", contract["assumptions"]),
-            guarantees=PolyhedralContract.read_polyhedralTermList("Guarantees", contract["guarantees"]),
-        )
-    
-    @staticmethod
-    def read_polyhedralTermList(kind: str, l: list[dict]) -> PolyhedralTermList:
-        if all(isinstance(x, dict) for x in l):
-            return PolyhedralTermList(list(PolyhedralTerm(x["coefficients"], float(x["constant"])) for x in l))
-        else:
-            raise ValueError(f"{kind} must be either a list of dicts or strings.")
-   
+            assumptions=a,
+            guarantees=g)

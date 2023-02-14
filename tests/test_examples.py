@@ -38,10 +38,10 @@ def test_examples():
                 "constant":-0.3}
             ]
         }
-    c1 = PolyhedralContract.readFromDict(contract1)
+    c1 = PolyhedralContract.from_dict(contract1)
     print("c1:")
     print(str(c1))
-    c2 = PolyhedralContract.readFromDict(contract2)
+    c2 = PolyhedralContract.from_dict(contract2)
     contract_str = "Contract1:InVars: [u_1]"
     contract_str += "\nOutVars:[x_1]\nA: [\n  -u_1 <= -1.0\n"
     contract_str += "]\nG: [\n  -x_1 <= -1.5\n]"

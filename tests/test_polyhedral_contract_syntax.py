@@ -1,7 +1,7 @@
 from pacti.terms.polyhedra import *
 
 def test_empty_contract():
-  c=PolyhedralContract.readFromString(
+  c=PolyhedralContract.from_string(
     InputVars=[],
     OutputVars=[],
     assumptions=[],
@@ -13,7 +13,7 @@ def test_empty_contract():
   assert 0 == len(c.g.terms)
 
 def test_simple_contract():
-  c=PolyhedralContract.readFromString(
+  c=PolyhedralContract.from_string(
     InputVars=["x"],
     OutputVars=[],
     assumptions=["-3x <= 0"],
@@ -33,7 +33,7 @@ def test_simple_contract():
 
 # | LHS | <= RHS
 def test_pattern2_contract():
-  c=PolyhedralContract.readFromString(
+  c=PolyhedralContract.from_string(
     InputVars=["x"],
     OutputVars=[],
     assumptions=["|x| <= 0"],
@@ -61,7 +61,7 @@ def test_pattern2_contract():
 
 # | LHS | = 0
 def test_pattern3_contract():
-  c=PolyhedralContract.readFromString(
+  c=PolyhedralContract.from_string(
     InputVars=["x"],
     OutputVars=[],
     assumptions=["|x| = 0"],
@@ -90,7 +90,7 @@ def test_pattern3_contract():
 
 # LHS = RHS
 def test_pattern4_contract():
-  c=PolyhedralContract.readFromString(
+  c=PolyhedralContract.from_string(
     InputVars=["x"],
     OutputVars=[],
     assumptions=["x = 1"],

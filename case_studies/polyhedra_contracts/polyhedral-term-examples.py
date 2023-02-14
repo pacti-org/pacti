@@ -1,5 +1,5 @@
 import re
-from pacti.terms.polyhedra.serializer import pt_from_string
+from pacti.terms.polyhedra.serializer import internal_pt_from_string
 
 terms=["-t1 <= -1.0", 
        "t1<=4", 
@@ -22,5 +22,5 @@ terms=["-t1 <= -1.0",
        "-3.0e1 e - x+z = 3.0e-1"]
 for t in terms:
   print(f"\nterm: {t}")
-  p=pt_from_string(t)
+  p=internal_pt_from_string(t)
   print(p)

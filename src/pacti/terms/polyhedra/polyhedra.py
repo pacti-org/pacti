@@ -72,17 +72,17 @@ class PolyhedralTerm(Term):
         res = ""
         first=True
         for var, coeff in varlist:
-            if serializer.areNumbersApproximativelyEqual(coeff, 1.0):
+            if serializer.are_numbers_approximatively_equal(coeff, 1.0):
                 if first:
                     res += var.name
                 else:
                     res += " + " + var.name
-            elif serializer.areNumbersApproximativelyEqual(coeff, -1.0):
+            elif serializer.are_numbers_approximatively_equal(coeff, -1.0):
                 if first:
                     res += "-" + var.name
                 else:
                     res += " - " + var.name
-            elif not serializer.areNumbersApproximativelyEqual(coeff, 0.0):
+            elif not serializer.are_numbers_approximatively_equal(coeff, 0.0):
                 if coeff > 0:
                     if first:
                         res += serializer.number2string(coeff) + " " + var.name
@@ -444,7 +444,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         res="["
         ts=self.terms.copy()
         while ts:
-            s, rest=serializer.onePolyhedraTermToString(ts)
+            s, rest=serializer.internal_pt_to_string(ts)
             res += "\n  "+s
             ts = rest
         res += "\n]"

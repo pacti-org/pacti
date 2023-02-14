@@ -30,11 +30,11 @@ def test_read_contract():
     # Create 1 contract and read it
     c_i = create_contracts(1)
     for c in c_i:
-        assert validate_iocontract(PolyhedralContract.readFromDict(c))
+        assert validate_iocontract(PolyhedralContract.from_dict(c))
 
     # Create 5 contracts and read
     c_i = create_contracts(5)
-    io_contracts = [PolyhedralContract.readFromDict(c) for c in c_i]
+    io_contracts = [PolyhedralContract.from_dict(c) for c in c_i]
     assert len(io_contracts) == 5
     for io_c in io_contracts:
         assert isinstance(io_c, iocontract.IoContract)
@@ -42,7 +42,7 @@ def test_read_contract():
     # Ensure that all contracts are dictionaries
     c_i = [("InputVars", "u"), ("OutputVars", "x")]
     with pytest.raises(ValueError, match="A dict type contract is expected."):
-        PolyhedralContract.readFromDict(c_i)
+        PolyhedralContract.from_dict(c_i)
 
 
 def test_write_contract():
@@ -50,8 +50,8 @@ def test_write_contract():
     Test write_contract
     """
     c_i = create_contracts(1)
-    io_c = [PolyhedralContract.readFromDict(c) for c in c_i]
+    io_c = [PolyhedralContract.from_dict(c) for c in c_i]
     assert c_i == write_contract(io_c)
     all_contracts = create_contracts(5)
-    io_contracts = [PolyhedralContract.readFromDict(c) for c in all_contracts]
+    io_contracts = [PolyhedralContract.from_dict(c) for c in all_contracts]
     assert all_contracts == write_contract(io_contracts)
