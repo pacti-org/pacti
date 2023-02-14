@@ -85,14 +85,14 @@ class PolyhedralTerm(Term):
             elif not serializer.areNumbersApproximativelyEqual(coeff, 0.0):
                 if coeff > 0:
                     if first:
-                        res += str(coeff) + var.name
+                        res += serializer.number2string(coeff) + " " + var.name
                     else:
-                        res += " + " + str(coeff) + var.name
+                        res += " + " + serializer.number2string(coeff) + " " + var.name
                 else:
                     if first:
-                        res += str(coeff) + var.name
+                        res += serializer.number2string(coeff) + " " + var.name
                     else:
-                        res += " - " + str(-coeff) + var.name
+                        res += " - " + serializer.number2string(-coeff) + " " + var.name
             first=False
                 
         return res

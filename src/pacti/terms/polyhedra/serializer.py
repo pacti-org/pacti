@@ -7,6 +7,7 @@ import re
 
 from typing import Optional, Tuple, Union
 import numpy as np
+import sympy
 
 from pacti.iocontract import IoContract
 from pacti.iocontract.iocontract import Var
@@ -65,6 +66,13 @@ def write_contract(contract: Union[IoContract, list[IoContract]], filename: str 
 RelativeTolerance: float = 1e-05
 AbsoluteTolerance: float = 1e-08
 
+def number2string(n: numeric) -> str:
+    if isinstance(n, sympy.core.numbers.Float):
+        f: sympy.core.numbers.Float = n
+        return str(f.num)
+    else:
+        return str(n)
+
 def areNumbersApproximativelyEqual(v1: numeric, v2: numeric) -> bool:
    if isinstance(v1, int) & isinstance(v2, int):
       return v1 == v2
@@ -89,7 +97,7 @@ def onePolyhedraTermToString(terms: list[PolyhedralTerm]) -> Optional[Tuple[str,
             # rewrite as 2 terms given input match: LHS = RHS
             # pos: LHS <= RHS
             # neg: -(LHS) <= -(RHS)
-            s = str(tp) + " = " + str(tp.constant)
+            s = str(tp) + " = " + number2string(tp.constant)
             ts.remove(tn)
             return s, ts
          
@@ -107,11 +115,11 @@ def onePolyhedraTermToString(terms: list[PolyhedralTerm]) -> Optional[Tuple[str,
                 # rewrite as 2 terms given input match: | LHS | <= RHS
                 # pos: LHS <= RHS
                 # neg: -(LHS) <= RHS
-                s = "|" + str(tp) + "| <= " + str(tp.constant)
+                s = "|" + str(tp) + "| <= " + number2string(tp.constant)
                 ts.remove(tn)
                 return s, ts
          
-   s = str(tp) + " <= " + str(tp.constant)
+   s = str(tp) + " <= " + number2string(tp.constant)
    return s, ts
 
 
