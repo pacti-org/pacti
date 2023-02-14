@@ -45,7 +45,7 @@ def initial_contract() -> tuple[int, PolyhedralContract]:
 
 def SBO_contract(s: int, duration: float, generation: float, consumption: float, improvement: float) -> tuple[int, PolyhedralContract]:
   e = s+1
-  spec = PolyhedralContract.readFromString(
+  spec = PolyhedralContract.from_string(
     InputVars = [
       f"t{s}",    # Scheduled start time
       f"soc{s}",  # initial battery SOC
