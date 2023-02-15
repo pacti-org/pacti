@@ -113,8 +113,8 @@ def _plot_constraints(constraints:PolyhedralTermList, x_var:Var, y_var:Var, var_
     halfspaces = np.concatenate((A, -np.reshape(b, (-1,1))), axis=1)
     if variables[0] == y_var:
         # place the x variable in first row
-        halfspaces[[0,1]] = halfspaces[[1,0]]
-        interior_point[[0,1]] = interior_point[[1,0]]
+        halfspaces[:,[0,1]] = halfspaces[:,[1,0]]
+        interior_point[[0,1]] = interior_point[[1,0]]    
     
     hs = HalfspaceIntersection(halfspaces,interior_point)
     # Now that we have all vertices, we can plot the polygon
@@ -162,6 +162,38 @@ if __name__ == "__main__":
         ]
     }
     c1 = PolyhedralContract.from_dict(contract1)
-    fig = plot_assumptions(contract=c1,x_var=Var("u_1"),y_var=Var("u_2"),var_values={Var("x_1"):0},x_lims=(-2,2),y_lims=(-2,2))
-    fig = plot_guarantees(contract=c1,x_var=Var("u_1"),y_var=Var("x_1"),var_values={Var("u_2"):1},x_lims=(-2,2),y_lims=(-2,2))
+    #fig = plot_assumptions(contract=c1,x_var=Var("u_1"),y_var=Var("u_2"),var_values={Var("x_1"):0},x_lims=(-2,2),y_lims=(-2,2))
+    #fig = plot_guarantees(contract=c1,x_var=Var("u_1"),y_var=Var("x_1"),var_values={Var("u_2"):1},x_lims=(-2,2),y_lims=(-2,2))
+    #plt.show()
+
+    contract2 = {
+        "InputVars":[
+            "t0", "v0"
+        ],
+        "OutputVars":[
+            "t1", "v1"
+        ],
+        "assumptions":
+        [
+            {"coefficients":{"v0":1}, "constant":20000}
+        ],
+        "guarantees":
+        [
+            {"coefficients":{"t1":-1}, "constant":-90},
+            {"coefficients":{"v1":-1}, "constant":-1600.00}
+        ]
+    }
+    c2 = PolyhedralContract.from_dict(contract2)
+    print(c2.vars)
+    fig = plot_guarantees(
+        contract=c2,
+        x_var=Var("t0"),
+        y_var=Var("v1"),
+        var_values={
+            Var("t1"):91,
+            Var("v0"):20000.0
+        },
+        x_lims=(-10,100),
+        y_lims=(1000, 21000)
+        )
     plt.show()
