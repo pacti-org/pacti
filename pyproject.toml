@@ -3,7 +3,7 @@ requires = ["pdm-pep517"]
 build-backend = "pdm.pep517.api"
 
 [project]
-name = "pacti"
+name = "Pacti"
 description = "pacti-description"
 authors = [{name = "pacti-authors-name", email = "pacti-authors-email"}]
 license = "BSD-2-Clause"

@@ -8,7 +8,7 @@ $x_i$ are variables and the $a_i$ and $c$ are constants.
 from __future__ import annotations
 
 import logging
-from typing import Tuple, Any, Union
+from typing import Any, Tuple, Union
 
 import numpy as np
 import sympy
@@ -17,8 +17,9 @@ from scipy.optimize import linprog
 from pacti.iocontract import Term, TermList, Var
 from pacti.utils.lists import list_diff, list_intersection, list_union
 
-numeric = Union[int, float]
+import pacti.terms.polyhedra.serializer as serializer
 
+numeric = Union[int, float]
 
 class PolyhedralTerm(Term):
     """Polyhedral terms are linear inequalities over a list of variables."""
@@ -68,8 +69,32 @@ class PolyhedralTerm(Term):
     def __str__(self) -> str:
         varlist = list(self.variables.items())
         varlist.sort(key=lambda x: str(x[0]))
-        res = " + ".join([str(coeff) + "*" + var.name for var, coeff in varlist])
-        res += " <= " + str(self.constant)
+        res = ""
+        first=True
+        for var, coeff in varlist:
+            if serializer.are_numbers_approximatively_equal(coeff, 1.0):
+                if first:
+                    res += var.name
+                else:
+                    res += " + " + var.name
+            elif serializer.are_numbers_approximatively_equal(coeff, -1.0):
+                if first:
+                    res += "-" + var.name
+                else:
+                    res += " - " + var.name
+            elif not serializer.are_numbers_approximatively_equal(coeff, 0.0):
+                if coeff > 0:
+                    if first:
+                        res += serializer.number2string(coeff) + " " + var.name
+                    else:
+                        res += " + " + serializer.number2string(coeff) + " " + var.name
+                else:
+                    if first:
+                        res += serializer.number2string(coeff) + " " + var.name
+                    else:
+                        res += " - " + serializer.number2string(-coeff) + " " + var.name
+            first=False
+                
         return res
 
     def __hash__(self):
@@ -404,9 +429,26 @@ class PolyhedralTerm(Term):
             return {Var(str(key)): PolyhedralTerm.to_term(sols[key]) for key in sols.keys()}
         return {}
 
-
 class PolyhedralTermList(TermList):  # noqa: WPS338
     """A TermList of PolyhedralTerm instances."""
+
+    def __init__(self, terms: list[PolyhedralTerm] = None):
+        if terms is None:
+            self.terms = []
+        elif all(isinstance(t, PolyhedralTerm) for t in terms):
+            self.terms = terms
+        else:
+            raise ValueError("PolyhedralTermList constructor argument must be a list of PolyhedralTerms.")
+
+    def __str__(self) -> str:
+        res="["
+        ts=self.terms.copy()
+        while ts:
+            s, rest=serializer.internal_pt_to_string(ts)
+            res += "\n  "+s
+            ts = rest
+        res += "\n]"
+        return res
 
     def abduce_with_context(self, context: PolyhedralTermList, vars_to_elim: list) -> PolyhedralTermList:
         """
