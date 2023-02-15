@@ -457,8 +457,8 @@ class IoContract:
             new_a = other.a.abduce_with_context(self.a | self.g, assumptions_forbidden_vars)
             if list_intersection(new_a.vars, assumptions_forbidden_vars):
                 raise ValueError(
-                    "The guarantees \n{}\n".format(self.termlist_printer(self.g))
-                    + "were insufficient to abduce the assumptions \n{}\n".format(self.termlist_printer(other.a))
+                    "The guarantees \n{}\n".format(str(self.g))
+                    + "were insufficient to abduce the assumptions \n{}\n".format(str(other.a))
                     + "by eliminating the variables \n{}".format(self.varlist_printer(assumptions_forbidden_vars))
                 )
             assumptions = new_a | self.a
@@ -467,8 +467,8 @@ class IoContract:
             new_a = self.a.abduce_with_context(other.a | other.g, assumptions_forbidden_vars)
             if list_intersection(new_a.vars, assumptions_forbidden_vars):
                 raise ValueError(
-                    "The guarantees \n{}\n".format(self.termlist_printer(other.g))
-                    + "were insufficient to abduce the assumptions \n{}\n".format(self.termlist_printer(self.a))
+                    "The guarantees \n{}\n".format(str(other.g))
+                    + "were insufficient to abduce the assumptions \n{}\n".format(str(self.a))
                     + "by eliminating the variables \n{}".format(self.varlist_printer(assumptions_forbidden_vars))
                 )
             assumptions = new_a | other.a
