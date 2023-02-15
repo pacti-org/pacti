@@ -169,13 +169,13 @@ class TermList(ABC):
         return type(self)(terms)
 
     def __and__(self, other):
-        return type(self)(list_intersection(self.terms, other.terms))
+        return type(self)(list_intersection(self.copy().terms, other.copy().terms))
 
     def __or__(self, other):
-        return type(self)(list_union(self.terms, other.terms))
+        return type(self)(list_union(self.copy().terms, other.copy().terms))
 
     def __sub__(self, other):
-        return type(self)(list_union(self.terms, other.terms))
+        return type(self)(list_union(self.copy().terms, other.copy().terms))
 
     def __le__(self, other):
         return self.refines(other)
@@ -187,7 +187,7 @@ class TermList(ABC):
         Returns:
             Copy of termlist.
         """
-        return type(self)(copy.copy(self.terms))
+        return type(self)([term.copy() for term in self.terms])
 
     @abstractmethod
     def abduce_with_context(self: T, context: T, vars_to_elim: List[Var]) -> T:
