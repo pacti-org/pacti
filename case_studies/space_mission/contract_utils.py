@@ -10,7 +10,7 @@ def input2output(i: str, outputs: list[Var], varPrefixes: list[str]) -> str:
   raise ValueError(f"Cannot match variable: {i} to any of {outputs} using prefixes: {varPrefixes}")
 
 def connect(c1: IoContract, c2: IoContract, varPrefixes: list[str]) -> IoContract:
-    c12 = PolyhedralContract.readFromString(
+    c12 = PolyhedralContract.from_string(
       InputVars = list(map(lambda x: x.name, c1.outputvars)),
       OutputVars = list(map(lambda x: x.name, c2.inputvars)),
       assumptions = [],
