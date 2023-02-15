@@ -161,6 +161,7 @@ def _plot_constraints(constraints:PolyhedralTermList, x_var:Var, y_var:Var, var_
     ax.set_ylim(y_lims)
     ax.set_xlabel(x_var.name)
     ax.set_ylabel(y_var.name)
+    ax.set_aspect((x_lims[1] - x_lims[0]) / (y_lims[1] - y_lims[0]))
 
     poly = MplPatchPolygon(np.column_stack([x, y]), animated=False,closed=True,color='deepskyblue')
     ax.add_patch(poly)
