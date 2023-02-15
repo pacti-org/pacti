@@ -459,7 +459,7 @@ class IoContract:
                 raise ValueError(
                     "The guarantees \n{}\n".format(str(self.g))
                     + "were insufficient to abduce the assumptions \n{}\n".format(str(other.a))
-                    + "by eliminating the variables \n{}".format(self.varlist_printer(assumptions_forbidden_vars))
+                    + "by eliminating the variables \n{}".format(str(assumptions_forbidden_vars))
                 )
             assumptions = new_a | self.a
         elif other_helps_self and not self_helps_other:
@@ -469,7 +469,7 @@ class IoContract:
                 raise ValueError(
                     "The guarantees \n{}\n".format(str(other.g))
                     + "were insufficient to abduce the assumptions \n{}\n".format(str(self.a))
-                    + "by eliminating the variables \n{}".format(self.varlist_printer(assumptions_forbidden_vars))
+                    + "by eliminating the variables \n{}".format(str(assumptions_forbidden_vars))
                 )
             assumptions = new_a | other.a
         # contracts can't help each other
