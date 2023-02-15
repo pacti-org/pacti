@@ -27,6 +27,8 @@ atmospheric_entry_contract = PolyhedralContract.from_string(
       # upper limit on atmospheric entry duration
       f"t0 - t1 <= {atmospheric_t_entry - atmospheric_t_exit}",
 
+      "-v1 <= 0",
+
       # "v1 <= v0 - (t1 - t0)*atmospheric_min_deacceleration"
       f"v1 - v0 + {atmospheric_min_deacceleration} t1 - {atmospheric_min_deacceleration} t0 <= 0"
 
@@ -34,6 +36,8 @@ atmospheric_entry_contract = PolyhedralContract.from_string(
       # f"v0 - v1 + {atmospheric_min_deacceleration} t1 - {atmospheric_min_deacceleration} t0 <= 0"
     ])
 
+
+print(f"atmospheric_entry_contract=\n{repr(atmospheric_entry_contract)}")
 print(f"atmospheric_entry_contract=\n{atmospheric_entry_contract}")
 
 parachute_v_entry = 1600.0
