@@ -82,7 +82,7 @@ def _substitute_in_termlist(constraints:PolyhedralTermList, var_values:dict[Var,
         # we may have eliminated all variables after substitution
         if not term.vars:
             if term.constant < 0:
-                raise ValueError("Assumptions are unfeasible")
+                raise ValueError("Constraints are unfeasible")
             else:
                 continue
         plot_list.append(term)
@@ -99,7 +99,7 @@ def _get_feasible_point(A:np.ndarray, b:np.ndarray,interior:bool=True) -> np.nda
         obj = np.array([0,0,-1])
     res = linprog(c=obj, A_ub=A_new, b_ub=b_new, bounds=(None, None))
     if res["status"] == 2:
-        raise ValueError("Assumptions are unfeasible")
+        raise ValueError("Constraints are unfeasible")
     interior_point = np.array(res["x"])[0:-1]
     return interior_point
 
