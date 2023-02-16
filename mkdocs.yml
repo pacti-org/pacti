@@ -52,6 +52,7 @@ theme:
     scheme: default
     primary: white
     accent: purple
+  logo: pacti_small_icon.svg
 #  - media: "(prefers-color-scheme: light)"
 #    scheme: default
 #    primary: teal
