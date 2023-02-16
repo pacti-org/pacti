@@ -25,7 +25,7 @@ atmospheric_entry_contract = PolyhedralContract.from_string(
     ],
     guarantees=[
       # upper limit on atmospheric entry duration
-      f"t0 - t1 <= {atmospheric_t_entry - atmospheric_t_exit}",
+      f"t0 - t1 = {atmospheric_t_entry - atmospheric_t_exit}", # changed to equality
 
       "-v1 <= 0",
 
