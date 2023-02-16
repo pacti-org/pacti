@@ -1,5 +1,6 @@
 import matplotlib
 import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
 import numpy as np
 from IPython.display import HTML
 from matplotlib.patches import Circle, Rectangle
@@ -138,7 +139,7 @@ def animate(trace, n, m, filename):
 
         ax.set_aspect("equal", "box")
 
-    anim = matplotlib.animation.FuncAnimation(fig, render_frame, frames=frames, interval=1000, blit=False)
+    anim = FuncAnimation(fig, render_frame, frames=frames, interval=1000, blit=False)
 
     anim.save(filename + ".mp4", fps=1)
 
