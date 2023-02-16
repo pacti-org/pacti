@@ -103,7 +103,7 @@ def _get_feasible_point(A:np.ndarray, b:np.ndarray,interior:bool=True) -> np.nda
     interior_point = np.array(res["x"])[0:-1]
     return interior_point
 
-# given a closed and bounded polygon, return the vertices
+# given a bounded polygon, return its vertices
 def _get_bounding_vertices(A:np.ndarray, b:np.ndarray) -> tuple[tuple[numeric],tuple[numeric]]:
     try:
         interior_point = _get_feasible_point(A,b)
@@ -118,7 +118,7 @@ def _get_bounding_vertices(A:np.ndarray, b:np.ndarray) -> tuple[tuple[numeric],t
         boundary_point = _get_feasible_point(A,b,False)
         x = (interior_point[0], boundary_point[0])
         y = (interior_point[1], boundary_point[1])
-    # sort the points in polar coordinates
+    # sort the points by angle from the center of the polygon
     center=(sum(x)/len(x),sum(y)/len(y))
     points = sorted(zip(x,y), key= lambda p: atan2(p[1]-center[1],p[0]-center[0]))
     x,y = zip(*points)
@@ -147,7 +147,7 @@ def _plot_constraints(constraints:PolyhedralTermList, x_var:Var, y_var:Var, var_
     plot_tl = _substitute_in_termlist(term_list, var_values)
     assert not list_diff(plot_tl.vars, [x_var,y_var]), "termlist vars: %s" %(plot_tl.vars)
     # Now we plot the polygon
-    variables, A, b, C, d = PolyhedralTermList.termlist_to_polytope(plot_tl, PolyhedralTermList([]))
+    variables, A, b, _, _ = PolyhedralTermList.termlist_to_polytope(plot_tl, PolyhedralTermList([]))
     if variables[0] == y_var:
         # place the x variable in first row
         A[:,[0,1]] = A[:,[1,0]]
