@@ -178,7 +178,14 @@ internal_polyhedral_term_equality_pattern = re.compile(
     r'\s*(?P<RHS>[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)'
     r'$')
 
-def are_polyhedral_terms_opposite(self, other: PolyhedralTerm) -> bool:
+# opposite terms means:
+# - same set of variables
+# - the variable coefficients of self are approximatively the negative of those of other.
+def are_polyhedral_terms_opposite(self: PolyhedralTerm, other: PolyhedralTerm) -> bool:
+    for var in other.variables.keys():
+        if not self.contains_var(var):
+            return False
+        
     for var, value in self.variables.items():
         if not other.contains_var(var):
             return False
