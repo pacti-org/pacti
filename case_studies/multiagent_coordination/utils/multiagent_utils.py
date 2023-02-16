@@ -1,7 +1,7 @@
 import random
 from itertools import combinations
 import numpy as np
-from pacti.terms.polyhedra.loaders import read_contract
+from pacti.terms.polyhedra.serializer import read_contract
 
 # coordinate class
 class Coord:
