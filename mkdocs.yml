@@ -1,4 +1,4 @@
-site_name: "pacti"
+site_name: "Pacti"
 site_description: "Compositional system analysis and design using contracts."
 site_url: "https://FormalSystems.github.io/pacti"
 repo_url: "https://github.com/FormalSystems/pacti"
@@ -15,13 +15,14 @@ nav:
   - License: license.md
 # defer to gen-files + literate-nav
 - Case Studies:
-  - Case Studies: case_studies.md
+  - Overview: case_studies.md
   - Autonomous Systems:
     - Simple script: _case_studies/evaluating_perception/simple_script.ipynb
-  - Multiagent Path Planning:
-    - Multi-agent Coordination: _case_studies/multiagent_coordination/multiagent.ipynb
+  - Multi-agent Coordination:
+    - Introduction: multiagent_intro.md
+    - Three Robot Example: _case_studies/multiagent_coordination/multiagent.ipynb
   - Signal Processing in Digital ICs: _case_studies/digital_signal_processing/dsp_wl.ipynb
-  - Synthetic Biology: _case_studies/specification_based_synthetic_biology.ipynb
+  - Synthetic Biology: _case_studies/biocircuit_specifications/specification_based_synthetic_biology.ipynb
 - Documentation: #reference/
   - IoContract: iocontract.md
   - PolyhedralTerms : Polyhedral.md
@@ -36,7 +37,7 @@ theme:
   - navigation.tabs
   - navigation.tabs.sticky
   - navigation.top
-  - toc.integrate
+#  - toc.integrate
   font:
     #text: Eczar
     #text: Alegreya Sans
@@ -51,6 +52,7 @@ theme:
     scheme: default
     primary: white
     accent: purple
+  logo: pacti_small_icon.svg
 #  - media: "(prefers-color-scheme: light)"
 #    scheme: default
 #    primary: teal
@@ -93,7 +95,8 @@ extra_javascript:
 
 plugins:
 - search
-- mkdocs-jupyter:
+- mkdocs-jupyter
+- mkdocs-video
 - markdown-exec
 - gen-files:
     scripts:

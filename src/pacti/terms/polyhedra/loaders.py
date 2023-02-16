@@ -12,8 +12,10 @@ from pacti.iocontract.utils import getVarlist
 from pacti.terms.polyhedra.polyhedra import PolyhedralTerm, PolyhedralTermList
 from pacti.utils.string_contract import StrContract
 
+from typing import Union
 
-def read_contract(contract: dict | list[dict]) -> list[IoContract]:
+
+def read_contract(contract: Union[dict, list[dict]]) -> list[IoContract]:
     """
     Converts a contract written as JSON dictionary to pacti.iocontract type.
     If a list of JSON contracts are passed, a corresponding list of iocontracts is returned.
@@ -48,17 +50,16 @@ def read_contract(contract: dict | list[dict]) -> list[IoContract]:
         return list_iocontracts
 
 
-def write_contract(contract: IoContract | list[IoContract], filename: str = None) -> list[dict]:
+def write_contract(contract: Union[IoContract, list[IoContract]], filename: str = None) -> list[dict]:
     """
     Converts a pacti.IoContract to a dictionary. If a list of iocontracts is passed,
     then a list of dicts is returned.
     If a filename is provided, a JSON file is written, otherwise only dictionaries are returned.
     Arguments:
-        * contract (gear.IoContract, list): Contract input of type IoContract
-                                                       or list of IoContracts.
-        * filename (str, optional): Name of file to write the output contract,
-                                    defaults to None in which case,
-                                    no file is written.
+        contract: Contract input of type IoContract or list of IoContracts.
+        filename: Name of file to write the output contract, defaults to None in which case,
+            no file is written.
+                                    
     Returns:
         contract_dict: A dictionary for the given IoContract.
     """
