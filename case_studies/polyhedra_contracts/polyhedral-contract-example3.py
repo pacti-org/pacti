@@ -32,6 +32,7 @@ atmospheric_entry_contract = PolyhedralContract.from_string(
       f"t0 - t1 <= {atmospheric_t_entry - atmospheric_t_exit}", # changed to equality
 
       "-v1 <= 0",
+      f"v1 <= 1500",
 
       # "v1 <= v0 - (t1 - t0)*atmospheric_min_deacceleration"
       f"v1 - v0 + {atmospheric_min_deacceleration} t1 - {atmospheric_min_deacceleration} t0 <= 0"
