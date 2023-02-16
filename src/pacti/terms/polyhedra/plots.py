@@ -114,10 +114,17 @@ def _get_bounding_vertices(A:np.ndarray, b:np.ndarray) -> tuple[tuple[numeric],t
         hs = HalfspaceIntersection(halfspaces,interior_point)
         x, y = zip(*hs.intersections)
     except QhullError:
-        # polygon has no interior
-        boundary_point = _get_feasible_point(A,b,False)
-        x = (interior_point[0], boundary_point[0])
-        y = (interior_point[1], boundary_point[1])
+        # polygon has no interior. optimize four directions
+        res = linprog(c=[0,1], A_ub=A, b_ub=b, bounds=(None, None))
+        p1 = np.array(res["x"])
+        res = linprog(c=[0,-1], A_ub=A, b_ub=b, bounds=(None, None))
+        p2 = np.array(res["x"])
+        res = linprog(c=[1,0], A_ub=A, b_ub=b, bounds=(None, None))
+        p3 = np.array(res["x"])
+        res = linprog(c=[-1,0], A_ub=A, b_ub=b, bounds=(None, None))
+        p4 = np.array(res["x"])
+        x = (p1[0], p2[0],p3[0],p4[0])
+        y = (p1[1], p2[1],p3[1],p4[1])
     # sort the points by angle from the center of the polygon
     center=(sum(x)/len(x),sum(y)/len(y))
     points = sorted(zip(x,y), key= lambda p: atan2(p[1]-center[1],p[0]-center[0]))
@@ -163,7 +170,7 @@ def _plot_constraints(constraints:PolyhedralTermList, x_var:Var, y_var:Var, var_
     ax.set_ylabel(y_var.name)
     ax.set_aspect((x_lims[1] - x_lims[0]) / (y_lims[1] - y_lims[0]))
 
-    poly = MplPatchPolygon(np.column_stack([x, y]), animated=False,closed=True,color='deepskyblue')
+    poly = MplPatchPolygon(np.column_stack([x, y]), animated=False,closed=True,facecolor='deepskyblue',edgecolor='deepskyblue')
     ax.add_patch(poly)
 
     return fig
