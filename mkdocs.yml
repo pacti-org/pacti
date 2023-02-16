@@ -37,7 +37,7 @@ theme:
   - navigation.tabs
   - navigation.tabs.sticky
   - navigation.top
-  - toc.integrate
+#  - toc.integrate
   font:
     #text: Eczar
     #text: Alegreya Sans
