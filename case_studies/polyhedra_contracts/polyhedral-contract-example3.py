@@ -1,5 +1,9 @@
 
 from pacti.terms.polyhedra import *
+import logging
+
+FORMAT = "%(asctime)s:%(levelname)s:%(name)s:%(message)s"
+logging.basicConfig(filename="../pacti.log", filemode="w", level=logging.DEBUG, format=FORMAT)
 
 atmospheric_v_entry = 20000.0
 atmospheric_v_exit = 1600.0
@@ -25,7 +29,7 @@ atmospheric_entry_contract = PolyhedralContract.from_string(
     ],
     guarantees=[
       # upper limit on atmospheric entry duration
-      f"t0 - t1 = {atmospheric_t_entry - atmospheric_t_exit}", # changed to equality
+      f"t0 - t1 <= {atmospheric_t_entry - atmospheric_t_exit}", # changed to equality
 
       "-v1 <= 0",
 
