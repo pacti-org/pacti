@@ -221,7 +221,7 @@ if __name__ == "__main__":
             {"coefficients":{"v1":-1}, "constant":-1600.00}
         ]
     }
-    c2 = read_contract(contract2)
+    c2 = PolyhedralContract.from_dict(contract2)
     fig = plot_guarantees(
         contract=c2,
         x_var=Var("t0"),
@@ -235,7 +235,7 @@ if __name__ == "__main__":
         )
 
     contract3 = {"InputVars": ["t10", "soc10", "d10", "e10", "r10"], "OutputVars": ["t11", "soc11", "d11", "e11", "r11"], "assumptions": [{"constant": -6.0, "coefficients": {"soc10": -1.0}}, {"constant": -1.0, "coefficients": {"d10": -1.0}}], "guarantees": [{"constant": 2.0, "coefficients": {"t11": 1.0, "t10": -1.0}}, {"constant": -2.0, "coefficients": {"t11": -1.0, "t10": 1.0}}, {"constant": 6.0, "coefficients": {"soc10": 1.0, "soc11": -1.0}}, {"constant": 0.0, "coefficients": {"d11": 1.0}}, {"constant": 0.0, "coefficients": {"d11": -1.0}}, {"constant": 0.0, "coefficients": {"e11": 1.0, "e10": -1.0}}, {"constant": 0.0, "coefficients": {"e11": -1.0, "e10": 1.0}}, {"constant": 0.0, "coefficients": {"r11": 1.0, "r10": -1.0}}, {"constant": 0.0, "coefficients": {"r11": -1.0, "r10": 1.0}}]}
-    c3 = read_contract(contract3)
+    c3 = PolyhedralContract.from_dict(contract3)
 
     fig = plot_guarantees(contract=c3,
                 x_var=Var("t10"),
