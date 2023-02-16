@@ -8,7 +8,7 @@ $x_i$ are variables and the $a_i$ and $c$ are constants.
 from __future__ import annotations
 
 import logging
-from typing import Any, Tuple, Union
+from typing import Tuple, Any, Union
 
 import numpy as np
 import sympy
@@ -69,6 +69,8 @@ class PolyhedralTerm(Term):
     def __str__(self) -> str:
         varlist = list(self.variables.items())
         varlist.sort(key=lambda x: str(x[0]))
+        #res = " + ".join([str(coeff) + "*" + var.name for var, coeff in varlist])
+        #res += " <= " + str(self.constant)
         res = ""
         first=True
         for var, coeff in varlist:
@@ -626,7 +628,14 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         term_list = list(self.terms)
         new_terms = []
         for term in term_list:
-            helpers = (context | self) - PolyhedralTermList([term])
+            # NOTE: Need to review!!!!!!!!!!!!!!!
+            logging.debug("Transforming term %s", type(term))
+            logging.debug("Transforming term %s", str(term))
+            newcontext = context.copy()
+            if context.terms:
+                newcontext._transform(PolyhedralTermList([]), list_diff(vars_to_elim, term.vars), abduce)
+            helpers = (newcontext | self) - PolyhedralTermList([term])
+            # ENDNOTE: Review
             try:
                 new_term = PolyhedralTermList._transform_term(term, helpers, vars_to_elim, abduce)
             except ValueError:

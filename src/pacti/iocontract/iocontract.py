@@ -19,7 +19,6 @@ from __future__ import annotations
 
 import copy
 import logging
-from collections.abc import Callable
 from abc import ABC, abstractmethod
 from typing import List, TypeVar, Union
 
@@ -119,7 +118,7 @@ class TermList(ABC):
     class that must be extended to support a specific constraint formalism.
     """
 
-    def __init__(self, term_list: Union[List[Term], None] = None):
+    def __init__(self, term_list: Union[List, None] = None):
         """
         Class constructor.
 
@@ -169,13 +168,13 @@ class TermList(ABC):
         return type(self)(terms)
 
     def __and__(self, other):
-        return type(self)(list_intersection(self.terms, other.terms))
+        return type(self)(list_intersection(self.copy().terms, other.copy().terms))
 
     def __or__(self, other):
-        return type(self)(list_union(self.terms, other.terms))
+        return type(self)(list_union(self.copy().terms, other.copy().terms))
 
     def __sub__(self, other):
-        return type(self)(list_union(self.terms, other.terms))
+        return type(self)(list_union(self.copy().terms, other.copy().terms))
 
     def __le__(self, other):
         return self.refines(other)
@@ -187,7 +186,7 @@ class TermList(ABC):
         Returns:
             Copy of termlist.
         """
-        return type(self)(copy.copy(self.terms))
+        return type(self)([term.copy() for term in self.terms])
 
     @abstractmethod
     def abduce_with_context(self: T, context: T, vars_to_elim: List[Var]) -> T:
@@ -323,12 +322,12 @@ class IoContract:
     @property
     def vars(self) -> list[Var]:  # noqa: A003
         """
-        The list of variables used referenced by contract.
+        The list of variables in the interface of the contract.
 
         Returns:
-            Variables referenced in the assumptions and guarantees.
+            Input and output variables of the contract.
         """
-        return list_union(self.a.vars, self.g.vars)
+        return list_union(self.inputvars, self.outputvars)
 
     def __str__(self):
         return (
@@ -443,7 +442,7 @@ class IoContract:
         assumptions_forbidden_vars = list_union(intvars, outputvars)
         if not self.can_compose_with(other):
             raise ValueError(
-                "Cannot compose the following contracts due to incompatible IO profiles:\n %s \n %s" % (self.pretty_printer(self), self.pretty_printer(other))
+                "Cannot compose the following contracts due to incompatible IO profiles:\n %s \n %s" % (self, other)
             )
         other_helps_self = len(list_intersection(other.outputvars, self.inputvars)) > 0
         self_helps_other = len(list_intersection(other.inputvars, self.outputvars)) > 0
@@ -457,9 +456,9 @@ class IoContract:
             new_a = other.a.abduce_with_context(self.a | self.g, assumptions_forbidden_vars)
             if list_intersection(new_a.vars, assumptions_forbidden_vars):
                 raise ValueError(
-                    "The guarantees \n{}\n".format(str(self.g))
-                    + "were insufficient to abduce the assumptions \n{}\n".format(str(other.a))
-                    + "by eliminating the variables \n{}".format(str(assumptions_forbidden_vars))
+                    "The guarantees \n{}\n".format(self.g)
+                    + "were insufficient to abduce the assumptions \n{}\n".format(other.a)
+                    + "by eliminating the variables \n{}".format(assumptions_forbidden_vars)
                 )
             assumptions = new_a | self.a
         elif other_helps_self and not self_helps_other:
@@ -467,9 +466,9 @@ class IoContract:
             new_a = self.a.abduce_with_context(other.a | other.g, assumptions_forbidden_vars)
             if list_intersection(new_a.vars, assumptions_forbidden_vars):
                 raise ValueError(
-                    "The guarantees \n{}\n".format(str(other.g))
-                    + "were insufficient to abduce the assumptions \n{}\n".format(str(self.a))
-                    + "by eliminating the variables \n{}".format(str(assumptions_forbidden_vars))
+                    "The guarantees \n{}\n".format(other.g)
+                    + "were insufficient to abduce the assumptions \n{}\n".format(self.a)
+                    + "by eliminating the variables \n{}".format(assumptions_forbidden_vars)
                 )
             assumptions = new_a | other.a
         # contracts can't help each other
