@@ -21,7 +21,6 @@ import pacti.terms.polyhedra.serializer as serializer
 
 numeric = Union[int, float]
 
-
 class PolyhedralTerm(Term):
     """Polyhedral terms are linear inequalities over a list of variables."""
 
@@ -431,7 +430,6 @@ class PolyhedralTerm(Term):
         if len(sols) > 0:
             return {Var(str(key)): PolyhedralTerm.to_term(sols[key]) for key in sols.keys()}
         return {}
-
 
 class PolyhedralTermList(TermList):  # noqa: WPS338
     """A TermList of PolyhedralTerm instances."""
