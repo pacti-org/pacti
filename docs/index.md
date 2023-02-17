@@ -1,4 +1,7 @@
-# Pacti
+#
+<p align="center">
+<img src="/pacti/logos/pacti_colorful.svg" alt= "pacti logo" width="300"/>
+</p>
 
 Pacti is a Python package for carrying out compositional system analysis and design. Pacti represents components in a
 system using assume-guarantee specifications, or contracts. Pacti's capabilities include the following:
@@ -52,4 +55,3 @@ And Pacti outputs
   A: 1*o <= 2, -1*o <= 2
   G: -1*o + 1*o_p <= 1, 1*o + -1*o_p <= -1
 ```
-

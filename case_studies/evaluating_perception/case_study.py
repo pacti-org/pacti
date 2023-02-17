@@ -1,7 +1,5 @@
 # Import libraries
 from pacti.iocontract.utils import getVarlist
-from PIL import Image
-from pacti.terms.polyhedra.serializer import read_contract, write_contract
 import pdb
 from utils import *
 import random

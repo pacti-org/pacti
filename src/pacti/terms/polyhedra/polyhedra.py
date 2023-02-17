@@ -630,12 +630,14 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         term_list = list(self.terms)
         new_terms = []
         for term in term_list:
+            # NOTE: Need to review!!!!!!!!!!!!!!!
             logging.debug("Transforming term %s", type(term))
             logging.debug("Transforming term %s", str(term))
             newcontext = context.copy()
             if context.terms:
                 newcontext._transform(PolyhedralTermList([]), list_diff(vars_to_elim, term.vars), abduce)
             helpers = (newcontext | self) - PolyhedralTermList([term])
+            # ENDNOTE: Review
             try:
                 new_term = PolyhedralTermList._transform_term(term, helpers, vars_to_elim, abduce)
             except ValueError:
