@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from pacti.utils.string_contract import StrContract
+from pacti.terms.polyhedra.polyhedral_contract import StrContract
 
 ASSUMPTIONS_HEADER = "ASSUMPTIONS"
 GUARANTEES_HEADER = "GUARANTEES"

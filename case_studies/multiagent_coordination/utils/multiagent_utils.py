@@ -1,7 +1,7 @@
 import random
 from itertools import combinations
 import numpy as np
-from pacti.terms.polyhedra.loaders import read_contract
+from pacti.terms.polyhedra import PolyhedralContract
 
 # coordinate class
 class Coord:
@@ -229,7 +229,7 @@ def get_dynamic_collision_contract(robots):
         "guarantees": [{"constant": -1, "coefficients": {delta[0]: -1, delta[1]: -1}} for delta in delta_pairs],
     }
 
-    c_dyn_coll = read_contract(contract)
+    c_dyn_coll = PolyhedralContract.from_dict(contract)
 
     return c_dyn_coll
 
@@ -337,9 +337,9 @@ def get_collision_contracts_robot_pair(robot_1, robot_2, other):
         ],
     }
 
-    contract_c1 = read_contract(contract_1)
-    contract_c2 = read_contract(contract_2)
-    contract_c3 = read_contract(contract_3)
-    contract_c4 = read_contract(contract_4)
+    contract_c1 = PolyhedralContract.from_dict(contract_1)
+    contract_c2 = PolyhedralContract.from_dict(contract_2)
+    contract_c3 = PolyhedralContract.from_dict(contract_3)
+    contract_c4 = PolyhedralContract.from_dict(contract_4)
 
     return [contract_c1, contract_c2, contract_c3, contract_c4]
