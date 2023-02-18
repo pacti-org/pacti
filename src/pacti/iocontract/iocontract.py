@@ -285,7 +285,7 @@ class IoContract:
 
         Args:
             assumptions: The assumptions of the contract.
-            guarantees: The assumptions of the contract.
+            guarantees: The guarantees of the contract.
             input_vars: The input variables of the contract.
             output_vars: The output variables of the contract.
 
@@ -575,3 +575,27 @@ class IoContract:
         assumptions = self.a | other.a
         guarantees = self.g | other.g
         return IoContract(assumptions, guarantees, self.inputvars, self.outputvars)
+
+    def has_environment(self, component: TermList) -> bool:
+        """Tell whether a component is a valid environment for the contract.
+
+        Args:
+            component:
+                The component in question.
+
+        Returns:
+            True if the component is a valid environment; false otherwise.
+        """
+        return component <= self.a
+
+    def has_implementation(self, component: TermList) -> bool:
+        """Tell whether a component is a valid implementation for the contract.
+
+        Args:
+            component:
+                The component in question.
+
+        Returns:
+            True if the component is a valid implementation; false otherwise.
+        """
+        return (component | self.a)  <= (self.g | self.a)
