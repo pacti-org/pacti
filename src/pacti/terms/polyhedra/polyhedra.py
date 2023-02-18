@@ -53,11 +53,11 @@ class PolyhedralTerm(Term):
         for key, value in variables.items():
             if value != 0:
                 if isinstance(key, str):
-                    variable_dict[Var(key)] = value
+                    variable_dict[Var(key)] = float(value)
                 else:
-                    variable_dict[key] = value
+                    variable_dict[key] = float(value)
         self.variables = variable_dict
-        self.constant = constant
+        self.constant = float(constant)
 
     def __eq__(self, other):
         match = self.variables.keys() == other.variables.keys()
