@@ -576,7 +576,7 @@ class IoContract:
         guarantees = self.g | other.g
         return IoContract(assumptions, guarantees, self.inputvars, self.outputvars)
 
-    def has_environment(self, component: TermList) -> bool:
+    def contains_environment(self, component: TermList) -> bool:
         """Tell whether a component is a valid environment for the contract.
 
         Args:
@@ -588,7 +588,7 @@ class IoContract:
         """
         return component <= self.a
 
-    def has_implementation(self, component: TermList) -> bool:
+    def contains_implementation(self, component: TermList) -> bool:
         """Tell whether a component is a valid implementation for the contract.
 
         Args:
