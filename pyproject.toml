@@ -24,6 +24,7 @@ dependencies = [
     "networkx>=3.0",
     "pycddlib>=2.1.6",
     "pypoman>=0.5.4",
+    "ipympl>=0.9.3",
 ]
 requires-python = ">=3.8, <=3.11.1"
 

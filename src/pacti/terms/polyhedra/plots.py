@@ -45,7 +45,7 @@ def plot_assumptions(contract:IoContract, x_var:Var, y_var:Var, var_values:dict[
     ax.set_title("Assumptions")
     return fig
 
-def plot_guarantees(contract:IoContract, x_var:Var, y_var:Var, var_values:dict[Var,numeric], x_lims:tuple[numeric], y_lims: tuple[numeric]) -> MplFigure:
+def plot_guarantees(contract:IoContract, x_var:Var, y_var:Var, var_values:dict[Var,numeric], x_lims: tuple, y_lims: tuple) -> MplFigure:
     """
     Plots the guarantees and assumptions of an IoContract with polyhedral terms.
 
