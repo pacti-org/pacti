@@ -69,6 +69,13 @@ class PolyhedralTerm(Term):
     def __str__(self) -> str:
         varlist = list(self.variables.items())
         varlist.sort(key=lambda x: str(x[0]))
+        res = " + ".join([str(coeff) + "*" + var.name for var, coeff in varlist])
+        res += " <= " + str(self.constant)
+        return res
+
+    def _lhs_str(self) -> str:
+        varlist = list(self.variables.items())
+        varlist.sort(key=lambda x: str(x[0]))
         #res = " + ".join([str(coeff) + "*" + var.name for var, coeff in varlist])
         #res += " <= " + str(self.constant)
         res = ""
@@ -96,7 +103,7 @@ class PolyhedralTerm(Term):
                     else:
                         res += " - " + serializer.number2string(-coeff) + " " + var.name
             first=False
-                
+        #res += " <= " + serializer.number2string(self.constant)
         return res
 
     def __hash__(self):

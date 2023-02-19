@@ -97,7 +97,7 @@ def internal_pt_to_string(terms: list[PolyhedralTerm]) -> Optional[Tuple[str, li
             # rewrite as 2 terms given input match: LHS = RHS
             # pos: LHS <= RHS
             # neg: -(LHS) <= -(RHS)
-            s = str(tp) + " = " + number2string(tp.constant)
+            s = tp._lhs_str() + " = " + number2string(tp.constant)
             ts.remove(tn)
             return s, ts
          
@@ -107,7 +107,7 @@ def internal_pt_to_string(terms: list[PolyhedralTerm]) -> Optional[Tuple[str, li
                 # rewrite as 2 terms given input match: | LHS | = 0
                 # pos: LHS <= 0
                 # neg: -(LHS) <= 0
-                s = "|" + str(tp) + "| = 0"
+                s = "|" + tp._lhs_str() + "| = 0"
                 ts.remove(tn)
                 return s, ts
             elif are_numbers_approximatively_equal(tp.constant, tn.constant):
@@ -115,11 +115,11 @@ def internal_pt_to_string(terms: list[PolyhedralTerm]) -> Optional[Tuple[str, li
                 # rewrite as 2 terms given input match: | LHS | <= RHS
                 # pos: LHS <= RHS
                 # neg: -(LHS) <= RHS
-                s = "|" + str(tp) + "| <= " + number2string(tp.constant)
+                s = "|" + tp._lhs_str() + "| <= " + number2string(tp.constant)
                 ts.remove(tn)
                 return s, ts
          
-   s = str(tp) + " <= " + number2string(tp.constant)
+   s = tp._lhs_str() + " <= " + number2string(tp.constant)
    return s, ts
 
 

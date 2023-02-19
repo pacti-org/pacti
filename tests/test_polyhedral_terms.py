@@ -5,6 +5,11 @@ from sympy.parsing.sympy_parser import parse_expr
 from pacti.iocontract import Var
 from pacti.terms.polyhedra import PolyhedralTerm, PolyhedralTermList
 
+import logging
+
+FORMAT = "%(asctime)s:%(levelname)s:%(name)s:%(message)s"
+logging.basicConfig(filename="../pacti.log", filemode="w", level=logging.DEBUG, format=FORMAT)
+
 
 def to_pt(str_rep):
     expr = parse_expr(str_rep)
@@ -133,3 +138,16 @@ def test_simplify_1():
     expected = to_pts(["-1/2*i <= -3/2", "3*i <= 1"])
     with pytest.raises(ValueError):
         reference.simplify()
+
+
+def test_issue171():
+    constraints = to_pts(["-1*dt0 - 1*t0 <= 0.0", "-1*t0 <= 0.0", "-1*dt0 - 1*t0 + 1*t1 <= 0.0", "1*dt0 + 1*t0 - 1*t1 <= 0.0"])
+    print(constraints)
+    transformed = constraints.deduce_with_context(PolyhedralTermList([]),[Var("t0"), Var("dt0")])
+    print(transformed)
+    expected = to_pts(["1*t1 <= 0"])
+    assert expected == transformed
+
+
+if __name__ == "__main__":
+    test_issue171()

@@ -538,6 +538,7 @@ class IoContract:
         assumptions = copy.deepcopy(self.a)
         empty_context = type(assumptions)([])
         if assumptions.refines(other.a):
+            logging.debug("Extending top-level assumptions with divisor's guarantees")
             assumptions = assumptions | other.g
         assumptions = assumptions.deduce_with_context(empty_context, list_union(intvars, outputvars))
         logging.debug("Assumptions after processing: %s", assumptions)
