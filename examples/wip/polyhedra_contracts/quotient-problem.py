@@ -22,7 +22,7 @@ print(C12)
 TOP = PolyhedralContract.from_string(
     InputVars   =[ "t0", "dt0", "dt1" ],
     OutputVars  =["t2"],
-    assumptions =["-t0 <= 0"],
+    assumptions =["-t0 - dt0 <= 0", "-t0 <= 0"],
     guarantees  =["t2 - t0 - dt1 - dt0 = 0"])
 
 Q = TOP.quotient(C1)
