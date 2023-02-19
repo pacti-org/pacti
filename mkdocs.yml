@@ -9,8 +9,8 @@ watch: [README.md, CONTRIBUTING.md, CHANGELOG.md, src/pacti]
 nav:
 - Home:
   - Overview: index.md
-  - Getting started: getting_started.md
-  - Features: getting_started.ipynb
+  - Installing: installing.md
+  - Getting Started: getting_started.ipynb
   - Changelog: changelog.md
   - Credits: credits.md
   - License: license.md
@@ -109,4 +109,4 @@ plugins:
 extra:
   social:
   - icon: fontawesome/brands/github
-    link: https://github.com/github_username
+    link: https://github.com/FormalSystems
