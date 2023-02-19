@@ -142,10 +142,12 @@ def test_simplify_1():
 
 def test_issue171():
     constraints = to_pts(["-1*dt0 - 1*t0 <= 0.0", "-1*t0 <= 0.0", "-1*dt0 - 1*t0 + 1*t1 <= 0.0", "1*dt0 + 1*t0 - 1*t1 <= 0.0"])
-    print(constraints)
     transformed = constraints.deduce_with_context(PolyhedralTermList([]),[Var("t0"), Var("dt0")])
+    print("Before transformation")
+    print(constraints)
+    print("After transformation")
     print(transformed)
-    expected = to_pts(["1*t1 <= 0"])
+    expected = to_pts(["-1*t1 <= 0"])
     assert expected == transformed
 
 

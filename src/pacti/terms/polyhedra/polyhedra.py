@@ -997,17 +997,16 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         logging.debug("Matrix row terms %s", matrix_row_terms)
         return matrix_row_terms, forbidden_vars
 
+
     @staticmethod
-    def _transform_term(term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, abduce: bool):
-        logging.debug("Transforming term: %s", term)
-        logging.debug("Context: %s", context)
+    def _tactic_1(term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, abduce: bool):
         try:
             matrix_row_terms, forbidden_vars = PolyhedralTermList._get_kaykobad_context(
                 term, context, vars_to_elim, abduce
             )
         except ValueError as e:
-            logging.debug("Could not transform %s", term)
-            raise ValueError("Could not transform term {}".format(term)) from e
+            logging.debug("Could not transform %s using Tactic 1", term)
+            raise ValueError("Could not transform term {}".format(term))
         matrix_row_terms = PolyhedralTermList(list(matrix_row_terms))
         sols = PolyhedralTerm.solve_for_variables(matrix_row_terms, list(forbidden_vars))
         logging.debug("Sols %s", sols)
@@ -1019,3 +1018,65 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         logging.debug("Term %s transformed to %s", term, result)
 
         return result
+
+    @staticmethod
+    def _tactic_2(term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, abduce: bool):
+        new_context_list = []
+        print("This is the context")
+        print(context)
+        # Extract from context the terms that only contain forbidden vars
+        for context_term in context.terms:
+            if not list_diff(context_term.vars, vars_to_elim):
+                if context_term != term:
+                    new_context_list.append(context_term.copy())
+        print("This is what we kept")
+        for el in new_context_list:
+            print(el)
+        if not new_context_list:
+            raise ValueError("No term contains only irrelevant variables")
+        # now optimize
+        retval = PolyhedralTermList.termlist_to_polytope(PolyhedralTermList(new_context_list),PolyhedralTermList([]))
+        variables = retval[0]
+        new_context_mat = retval[1]
+        new_context_cons = retval[2]
+        polarity = 1
+        if abduce:
+            polarity = -1
+        objective = [polarity*term.get_coefficient(var) for var in variables]
+        print(new_context_mat)
+        print(new_context_cons)
+        print(objective)
+        res = linprog(c=objective,A_ub=new_context_mat,b_ub=new_context_cons,bounds=(None, None))
+        if res["status"] == 3:
+            # unbounded
+            return term.copy()
+        replacement = polarity * res["fun"]
+        # replace the irrelevant variables with new findings in term
+        result = term.copy()
+        for var in vars_to_elim:
+            result.remove_variable(var)
+        result.constant -= replacement
+        # check vacuity
+        if not result.vars:
+            return term.copy()
+        return result
+
+        
+        
+
+
+    @staticmethod
+    def _transform_term(term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, abduce: bool):
+        logging.debug("Transforming term: %s", term)
+        logging.debug("Context: %s", context)
+
+        try:
+            result =  PolyhedralTermList._tactic_1(term, context, vars_to_elim, abduce)
+        except ValueError as e:
+            try:
+                result = PolyhedralTermList._tactic_2(term, context, vars_to_elim, abduce)
+            except ValueError as e:
+                raise e
+
+        return result
+

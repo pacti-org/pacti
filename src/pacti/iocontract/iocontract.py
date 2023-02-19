@@ -548,6 +548,11 @@ class IoContract:
         guarantees = self.g
         logging.debug("Using existing guarantees to aid system-level guarantees")
         guarantees = guarantees.abduce_with_context(other.g | other.a, intvars)
+        print("The guarantees now are")
+        print(guarantees)
+        print("Just used abduction help by")
+        print(other.g | other.a)
+        #exit()
         logging.debug("Using system-level assumptions to aid quotient guarantees")
         guarantees = guarantees | other.a
         guarantees = guarantees.abduce_with_context(self.a, intvars)
