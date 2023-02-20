@@ -5,15 +5,14 @@ from dataclasses import dataclass, field
 
 from matplotlib.figure import Figure
 
+from case_studies.uav_topologies_generation.src.contracts_utils.union import ContractsUnions
+from pacti.terms.polyhedra import PolyhedralContract
 from .figures import DirectionsGrid
 from ..tools.plotting import plot_3d_grid
 from .rule import Rule
 from .symbols import Symbol, Unoccupied, Fuselage, Empty, Rotor, Wing, Connector
 from ..shared import Direction, SymbolType, symbols_colors
 from ..tools.constraints import from_symbol_directions_to_constraints
-from pacti.terms.polyhedra import string_to_polyhedra_contract
-from pacti.utils.contracts_union import ContractsUnions
-from pacti.utils.string_contract import StrContract
 
 
 @dataclass
@@ -136,9 +135,17 @@ class LocalState:
         contract_union = ContractsUnions()
         for constraint in constraints:
             # new_c = StrContract(assumptions=constraint, inputs=list(symbols))
-            new_c = StrContract(guarantees=constraint, outputs=list(symbols))
+            # new_c = StrContract(guarantees=constraint, outputs=list(symbols))
             # print(constraint)
-            io_contract = string_to_polyhedra_contract(new_c)
+            # io_contract = string_to_polyhedra_contract(new_c)
+
+            io_contract = PolyhedralContract.from_string(
+                OutputVars=list(symbols),
+                InputVars=[],
+                assumptions=[],
+                guarantees=constraint)
+
+
             contract_union.contracts.add(io_contract)
         return contract_union
 
