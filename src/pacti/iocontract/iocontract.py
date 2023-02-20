@@ -20,7 +20,7 @@ from __future__ import annotations
 import copy
 import logging
 from abc import ABC, abstractmethod
-from typing import List, TypeVar
+from typing import List, TypeVar, Union
 
 from pacti.utils.lists import list_diff, list_intersection, list_union, lists_equal
 
@@ -77,7 +77,7 @@ class Term(ABC):
         """Variables contained in the syntax of the term."""
 
     @abstractmethod
-    def contains_var(self, var_to_seek: Var):
+    def contains_var(self, var_to_seek: Var) -> bool:
         """
         Tell whether term contains a given variable.
 
@@ -118,7 +118,7 @@ class TermList(ABC):
     class that must be extended to support a specific constraint formalism.
     """
 
-    def __init__(self, term_list: List | None = None):
+    def __init__(self, term_list: Union[List, None] = None):
         """
         Class constructor.
 
@@ -168,13 +168,13 @@ class TermList(ABC):
         return type(self)(terms)
 
     def __and__(self, other):
-        return type(self)(list_intersection(self.terms, other.terms))
+        return type(self)(list_intersection(self.copy().terms, other.copy().terms))
 
     def __or__(self, other):
-        return type(self)(list_union(self.terms, other.terms))
+        return type(self)(list_union(self.copy().terms, other.copy().terms))
 
     def __sub__(self, other):
-        return type(self)(list_union(self.terms, other.terms))
+        return type(self)(list_union(self.copy().terms, other.copy().terms))
 
     def __le__(self, other):
         return self.refines(other)
@@ -186,7 +186,7 @@ class TermList(ABC):
         Returns:
             Copy of termlist.
         """
-        return type(self)(copy.copy(self.terms))
+        return type(self)([term.copy() for term in self.terms])
 
     @abstractmethod
     def abduce_with_context(self: T, context: T, vars_to_elim: List[Var]) -> T:
@@ -233,7 +233,7 @@ class TermList(ABC):
         """
 
     @abstractmethod
-    def simplify(self: T, context: T | None = None):
+    def simplify(self: T, context: Union[T, None] = None):
         """Remove redundant terms in TermList.
 
         Let $S$ be this TermList and suppose $T \\subseteq S$. Let
@@ -322,19 +322,19 @@ class IoContract:
     @property
     def vars(self) -> list[Var]:  # noqa: A003
         """
-        The list of variables used referenced by contract.
+        The list of variables in the interface of the contract.
 
         Returns:
-            Variables referenced in the assumptions and guarantees.
+            Input and output variables of the contract.
         """
-        return list_union(self.a.vars, self.g.vars)
+        return list_union(self.inputvars, self.outputvars)
 
     def __str__(self):
         return (
             "InVars: "
-            + str(self.inputvars)
+            + "[" + ", ".join([v.name for v in self.inputvars]) + "]"
             + "\nOutVars:"
-            + str(self.outputvars)
+            + "[" + ", ".join([v.name for v in self.outputvars]) + "]"
             + "\nA: "
             + str(self.a)
             + "\n"
@@ -492,7 +492,7 @@ class IoContract:
 
         return IoContract(assumptions, allguarantees, inputvars, outputvars)
 
-    def quotient(self, other: IoContract, additional_inputs: List[Var] | None = None) -> IoContract:
+    def quotient(self, other: IoContract, additional_inputs: Union[List[Var], None] = None) -> IoContract:
         """Compute the contract quotient.
 
         Compute the quotient self/other of the two given contracts and refine

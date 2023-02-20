@@ -1,17 +1,7 @@
 import random
 from itertools import combinations
-
-import matplotlib
-import matplotlib.pyplot as plt
 import numpy as np
-from ipdb import set_trace as st
-from IPython.display import HTML
-from matplotlib.patches import Circle, Rectangle
-
-from pacti.terms.polyhedra.loaders import readContract
-
-# from copy import deepcopy
-
+from pacti.terms.polyhedra import PolyhedralContract
 
 # coordinate class
 class Coord:
@@ -32,14 +22,6 @@ class Robot:
         self.pos = Coord(new_pos)
 
 
-# # snapshot of the simulation for a timestep
-# class Snapshot():
-#     def __init__(self, timestep, robots, goals):
-#         self.t = timestep
-#         self.robots = [Coord(robot) for robot in robots]
-#         self.goals = [Coord(goal) for goal in goals]
-
-
 def distance(candidate, goal):
     """
     Distance measure from current robot positions to desired position.
@@ -48,14 +30,17 @@ def distance(candidate, goal):
     for i, move in enumerate(candidate):
         distance = distance + np.abs(move[0] - goal[i].x) + np.abs(move[1] - goal[i].y)
 
-    # distance_a = np.abs(candidate[0][0]-goal[0].x)+np.abs(candidate[0][1]-goal[0].y)
-    # distance_b = np.abs(candidate[1][0]-goal[1].x)+np.abs(candidate[1][1]-goal[1].y)
+    return distance
+
+def indiv_distance(move, goal):
+    distance = np.abs(move[0]-goal.x)+np.abs(move[1]-goal.y)
     return distance
 
 
 def strategy(move_candidates, goal):
     """
-    Function to return a chosen move for both robots.
+    Function to return a chosen move for both robots
+    by choosing the best next move.
     """
     min_dist = {}
     for candidate in move_candidates:
@@ -68,20 +53,15 @@ def strategy(move_candidates, goal):
 
         candidate_list.append(candidate)
         min_dist.update({dist: candidate_list})
-    # find the best options and pick randomly
-    # print(min_dist)
-    # print(sorted(min_dist.keys()))
-    # print(min(sorted(min_dist.keys())))
-    # options_key = min(min_dist, key=min_dist.get)
-    # print(options_key)
 
     move = random.choice(min_dist[min(sorted(min_dist.keys()))])
     return move
 
-
-def strategy_multiple(move_candidates, goal):
+def strategy_multiple_simple(move_candidates, goal):
     """
-    Function to return a chosen move for both robots.
+    Function to return a chosen move for both robots,
+    a random move is taken in 10% of the cases and
+    otherwise the best next move is taken.
     """
     min_dist = {}
     for candidate in move_candidates:
@@ -94,118 +74,81 @@ def strategy_multiple(move_candidates, goal):
 
         candidate_list.append(candidate)
         min_dist.update({dist: candidate_list})
-    move = random.choice(min_dist[min(sorted(min_dist.keys()))])
+
+    if random.random() < 0.2:
+        move = random.choice(move_candidates)
+    else:
+        move = random.choice(min_dist[min(sorted(min_dist.keys()))])
+
     return move
 
 
-#
-# def save_trace(trace, robots , goal):
-#     if trace:
-#         t = trace[-1].t + 1
-#     else:
-#         t = 0
-#     snap = Snapshot(t, robots, goal)
-#     trace.append(snap)
-#     return trace
-#
-# def plot_grid_world(n,m,robots):
-#     gridsize = 10
-#     r1 = robots[0]
-#     r2 = robots[1]
-#     if len(robots) > 5:
-#         print('Need more colors!')
-#
-#     colors = ['blue', 'red', 'orange','yellow', 'green']
-#     color_map = {}
-#     for i,robot in enumerate(robots):
-#         color_map.update({robot: colors[i]})
-#
-#     xs = np.linspace(0, n*gridsize, n+1)
-#     ys = np.linspace(0, m*gridsize, m+1)
-#     ax = plt.gca()
-#
-#     w, h = xs[1] - xs[0], ys[1] - ys[0]
-#     for i, x in enumerate(xs[:-1]):
-#         for j, y in enumerate(ys[:-1]):
-#             if i % 2 == j % 2:
-#                 ax.add_patch(Rectangle((x, y), w, h, fill=True, color='lemonchiffon'))
-#     for x in xs:
-#         plt.plot([x, x], [ys[0], ys[-1]], color='black', alpha=.3)
-#     for y in ys:
-#         plt.plot([xs[0], xs[-1]], [y, y], color='black', alpha=.3)
-#
-#     for x in range(n):
-#         for y in range(m):
-#             for robot in robots:
-#                 if (x,y) == robot.pos.xy:
-#                     ax.add_patch(Circle(((x+0.5)*gridsize, (y+0.5)*gridsize), 0.2*gridsize, color=color_map[robot], alpha=0.6))
-#                 if (x,y) == robot.goal.xy:
-#                     ax.add_patch(Circle(((x+0.5)*gridsize, (y+0.5)*gridsize), 0.2*gridsize, color=color_map[robot], alpha=0.3))
-#
-#     ax.set_aspect('equal', 'box')
-#     ax.xaxis.set_visible(False)
-#     ax.yaxis.set_visible(False)
-#     plt.gca().invert_yaxis()
-#     plt.title('Grid World')
-#     plt.show()
-#
-#
-# def animate(trace, n, m):
-#     colors = ['blue', 'red', 'orange','yellow', 'green']
-#     frames = len(trace)
-#     print("Rendering %d frames..." % frames)
-#     gridsize = 10
-#
-#     # prepare the gridworld
-#     xs = np.linspace(0, n*gridsize, n+1)
-#     ys = np.linspace(0, m*gridsize, m+1)
-#     w, h = xs[1] - xs[0], ys[1] - ys[0]
-#     fig, ax = plt.subplots()
-#
-#     ax.set_xlim(xs[0], n*gridsize)
-#     ax.set_ylim(ys[0], m*gridsize)
-#     ax.xaxis.set_visible(False)
-#     ax.yaxis.set_visible(False)
-#
-#     def render_frame(i):
-#         robots = trace[i].robots
-#         goals = trace[i].goals
-#
-#         for i, x in enumerate(xs[:-1]):
-#             for j, y in enumerate(ys[:-1]):
-#                 if i % 2 == j % 2:
-#                     ax.add_patch(Rectangle((x, y), w, h, fill=True, color='lemonchiffon'))
-#                 else:
-#                     ax.add_patch(Rectangle((x, y), w, h, fill=True, color='white'))
-#         for x in xs:
-#             ax.plot([x, x], [ys[0], ys[-1]], color='black', alpha=.3)
-#         for y in ys:
-#             ax.plot([xs[0], xs[-1]], [y, y], color='black', alpha=.3)
-#
-#         for x in range(n):
-#             for y in range(m):
-#                 for i,robot in enumerate(robots):
-#                     if (x,y) == robot.xy:
-#                         ax.add_patch(Circle(((x+0.5)*gridsize, (y+0.5)*gridsize), 0.2*gridsize, color=colors[i], alpha=0.6))
-#                 for i,goal in enumerate(goals):
-#                     if (x,y) == goal.xy:
-#                         ax.add_patch(Circle(((x+0.5)*gridsize, (y+0.5)*gridsize), 0.2*gridsize, color=colors[i], alpha=0.3))
-#
-#         ax.set_aspect('equal', 'box')
-#
-#     anim = matplotlib.animation.FuncAnimation(
-#         fig, render_frame, frames=frames, interval=1000, blit=False)
-#
-#     anim.save("test.mp4", fps=1)
-#
-#     plt.close()
-#     display(HTML(anim.to_html5_video()))
+def strategy_multiple(move_candidates, goal, cur_pos, last_pos):
+    '''
+    Function to return a chosen move for all robots.
+    '''
+    min_dist = {}
+    for candidate in move_candidates:
+        candidate_list = []
+        dist = distance(candidate,goal)
+
+        if dist in min_dist.keys():
+            for entry in min_dist[dist]:
+                candidate_list.append(entry)
+        if candidate not in candidate_list:
+            candidate_list.append(candidate)
+        min_dist.update({dist: candidate_list})
+
+    best_move = random.choice(min_dist[min(sorted(min_dist.keys()))])
+
+    best_dist = distance(best_move,goal)
+    cur_dist = distance(cur_pos,goal)
+
+    if best_dist < cur_dist:
+        move_options = []
+        for distances in min_dist:
+            if distances < cur_dist:
+                move_options = move_options + min_dist[distances]
+        # prune options where robots leave their goal
+        moves = []
+        for move in move_options:
+            move_ok = True
+            for i in range(len(cur_pos)): # keep robots at goal at goal
+                if indiv_distance(cur_pos[i],goal[i]) < indiv_distance(move[i],goal[i]):#indiv_distance(cur_pos[i],goal[i]) < indiv_distance(move[i],goal[i]):
+                    move_ok = False
+            if move_ok and move not in moves:
+                moves = moves + [move]
+
+        if random.random() < 0.1: # take the best move 10% of the time
+            move = random.choice(min_dist[min(sorted(min_dist.keys()))])
+        else: # take a random good move
+            move = random.choice(moves)
+    # check that other moves are possible
+    elif best_dist == cur_dist:
+        moves = []
+        for move in move_candidates:
+            move_ok = True
+            if move == cur_pos: # remove staying in the same position
+                move_ok = False
+            if move == last_pos: # remove going back to previous position
+                move_ok = False
+            for i in range(len(cur_pos)): # keep robots at goal at goal
+                if indiv_distance(cur_pos[i],goal[i]) == 0 and indiv_distance(move[i],goal[i]) != 0:#indiv_distance(cur_pos[i],goal[i]) < indiv_distance(move[i],goal[i]):
+                    move_ok = False
+            if move_ok and move not in moves: # add move to possible moves
+                moves = moves + [move]
+
+        move = random.choice(moves) # take a random move
+
+    return move
 
 
 def check_collision_quadrants(merged_dyn_contract, c_q1, c_q2, c_q3, c_q4):
+    '''
+    Merge each of the collision contracts with
+    the dynamics contract.
+    '''
     merged_contracts = []
-    # st()
-
     try:
         merged_contract_q1 = merged_dyn_contract.merge(c_q1)
         merged_contracts.append(merged_contract_q1)
@@ -233,6 +176,10 @@ def check_collision_quadrants(merged_dyn_contract, c_q1, c_q2, c_q3, c_q4):
 
 
 def find_move_candidates_multiple(n, m, robots, t_0, contract, c_dyn_collision):
+    '''
+    Evaluate the contracts for possible next positions
+    of the robots to find allowed moves.
+    '''
     x_A_0 = robots[0].pos.x
     y_A_0 = robots[0].pos.y
     x_B_0 = robots[1].pos.x
@@ -246,12 +193,12 @@ def find_move_candidates_multiple(n, m, robots, t_0, contract, c_dyn_collision):
     t_1 = t_0 + 1
     # find possible [(x,y),(x,y)] options for robots
     possible_sol = []
-    for x_a in range(n):
-        for y_a in range(m):
-            for x_b in range(n):
-                for y_b in range(m):
-                    for x_c in range(n):
-                        for y_c in range(m):
+    for x_a in [max(x_A_0-1,0), x_A_0, min(x_A_0+1,n-1)]:
+        for y_a in [max(y_A_0-1,0), y_A_0, min(y_A_0+1,m-1)]:
+            for x_b in [max(x_B_0-1,0), x_B_0, min(x_B_0+1,n-1)]:
+                for y_b in [max(y_B_0-1,0), y_B_0, min(y_B_0+1,m-1)]:
+                    for x_c in [max(x_C_0-1,0), x_C_0, min(x_C_0+1,n-1)]:
+                        for y_c in [max(y_C_0-1,0), y_C_0, min(y_C_0+1,m-1)]:
                             x_A_1 = x_a
                             y_A_1 = y_a
                             x_B_1 = x_b
@@ -266,41 +213,43 @@ def find_move_candidates_multiple(n, m, robots, t_0, contract, c_dyn_collision):
                             delta_y_B_C = (y_B_1 - y_C_1) * (y_B_0 - y_C_0)
 
                             sol = True
-                            for g in contract.g.terms:
-                                holds = eval(str(g))
-                                dynamic_collision_holds = eval(str(c_dyn_collision.g))
-                                if not holds or not dynamic_collision_holds:
+                            for g in c_dyn_collision.g.terms:
+                                dynamic_collision_holds = eval(str(g)+'<='+str(g.constant))
+                                if not dynamic_collision_holds:
                                     sol = False
+                            if sol:
+                                for g in contract.g.terms:
+                                    holds = eval(str(g)+'<='+str(g.constant))
+                                    if not holds or not dynamic_collision_holds:
+                                        sol = False
                             if sol:
                                 possible_sol.append([(x_a, y_a), (x_b, y_b), (x_c, y_c)])
     return possible_sol, t_1
 
 
 def robots_move(robots, move):
+    '''
+    Apply next move and update positions.
+    '''
     for i in range(len(robots)):
         robots[i].move(move[i])
 
 
 def get_possible_moves_multiple_robots(n, m, robots, merged_dyn_contract, collision_contracts, c_dyn_collision):
-    # go though each robot pair
-    # go through each of the 4 collision contracts
-    # merge the contract with the dynamics and
-    # print(collision_contracts)
-    # merged_contracts = check_collision_quadrants(merged_dyn_contract, c_q1, c_q2, c_q3, c_q4)
+    '''
+    Iterate though the robot pairs, merge each collision
+    contract with the dynamics contract and find the
+    possible moves for that robot pair.
+    Returns moves that are allowed for all robot pairs.
+    '''
     t_0 = 0
     move_options = []
     for contract_list in collision_contracts:
-        # st()
-        # print(contract_list)
-        # print(contract_list[0])
         merged_contracts = check_collision_quadrants(
             merged_dyn_contract, contract_list[0], contract_list[1], contract_list[2], contract_list[3]
         )
-        # print(len(merged_contracts))
-        # print(merged_contracts)
         sols = []
         for i in range(len(merged_contracts)):
-            # possible_sol, t_1 = find_move_candidates(r1, r2, t_0, merged_contracts[i])
             possible_sol, t_1 = find_move_candidates_multiple(n, m, robots, t_0, merged_contracts[i], c_dyn_collision)
             sols = sols + possible_sol
         move_options.append(sols)
@@ -315,11 +264,13 @@ def get_possible_moves_multiple_robots(n, m, robots, merged_dyn_contract, collis
         if move_ok:
             moves.append(move)
 
-    # print(moves)
     return moves
 
 
 def get_dynamic_collision_contract(robots):
+    '''
+    Contract ensureing no swapping conflicts for all robots.
+    '''
     robotnames = []
     for robot in robots:
         robotnames.append(robot.name)
@@ -342,7 +293,7 @@ def get_dynamic_collision_contract(robots):
         "guarantees": [{"constant": -1, "coefficients": {delta[0]: -1, delta[1]: -1}} for delta in delta_pairs],
     }
 
-    c_dyn_coll = readContract(contract)
+    c_dyn_coll = PolyhedralContract.from_dict(contract)
 
     return c_dyn_coll
 
@@ -450,9 +401,9 @@ def get_collision_contracts_robot_pair(robot_1, robot_2, other):
         ],
     }
 
-    contract_c1 = readContract(contract_1)
-    contract_c2 = readContract(contract_2)
-    contract_c3 = readContract(contract_3)
-    contract_c4 = readContract(contract_4)
+    contract_c1 = PolyhedralContract.from_dict(contract_1)
+    contract_c2 = PolyhedralContract.from_dict(contract_2)
+    contract_c3 = PolyhedralContract.from_dict(contract_3)
+    contract_c4 = PolyhedralContract.from_dict(contract_4)
 
     return [contract_c1, contract_c2, contract_c3, contract_c4]
