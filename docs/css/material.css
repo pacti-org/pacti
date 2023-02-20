@@ -2,3 +2,8 @@
 .md-main__inner {
   margin-bottom: 1.5rem;
 }
+
+
+.md-content__button {
+  display: none;
+}
