@@ -570,8 +570,8 @@ class IoContract:
         Raises:
             ValueError: the IO profiles are incompatible with contract merging.
         """
-        if not self.shares_io_with(other):
-            raise ValueError("Contracts cannot be merged due to incompatible IO")
+        input_vars  = list_union(self.inputvars, other.inputvars)
+        output_vars = list_union(self.outputvars, other.outputvars)
         assumptions = self.a | other.a
         guarantees = self.g | other.g
-        return IoContract(assumptions, guarantees, self.inputvars, self.outputvars)
+        return IoContract(assumptions, guarantees, input_vars, output_vars)
