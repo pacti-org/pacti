@@ -270,3 +270,6 @@ fabric.properties
 # pyenv
 .python-version
 examples/.ipynb_checkpoints/*
+
+# Draw.io
+*.bkp
