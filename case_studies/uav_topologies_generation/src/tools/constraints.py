@@ -16,7 +16,7 @@ def constraint_str_between_integers(symbol: str, cluster: tuple[int, int]) -> li
 
 
 def constraint_str_greater_eq_than(symbol: str, n: int) -> str:
-    return f"-1 * {symbol} <= -1 * {n}"
+    return f"-1 * {symbol} <= -{n}"
 
 
 def constraint_str_less_eq_than(symbol: str, n: int) -> str:

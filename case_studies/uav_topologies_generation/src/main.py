@@ -1,13 +1,13 @@
 import random
 from datetime import datetime
 
+from case_studies.uav_topologies_generation.src.contracts_utils.union import ContractsUnions
 from case_studies.uav_topologies_generation.src.grammar.grammar import Grammar
 from case_studies.uav_topologies_generation.src.grammar.grid import GridBuilder
 from case_studies.uav_topologies_generation.src.shared import DirectionsAssignment, SymbolType
 from case_studies.uav_topologies_generation.src.shared.paths import rules_path
 from case_studies.uav_topologies_generation.src.tools.refinement_checking import rule_matching
 from case_studies.uav_topologies_generation.src.tools.simple_rule_search import set_rules_search
-from pacti.utils.contracts_union import ContractsUnions
 
 grid_half_size = 2
 max_num_wings = 2
