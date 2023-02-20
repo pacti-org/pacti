@@ -260,7 +260,7 @@ def copy_case_studies(ctx):
     ctx.run("cp -r case_studies docs/_case_studies")
     py_files = glob.glob("docs/_case_studies/**/*.py",recursive=True)
     for path in py_files:
-        pathlib.Path.unlink(path)
+        pathlib.Path.unlink(Path(path))
 
 
 
