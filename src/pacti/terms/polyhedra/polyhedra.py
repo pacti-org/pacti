@@ -434,7 +434,7 @@ class PolyhedralTerm(Term):
 class PolyhedralTermList(TermList):  # noqa: WPS338
     """A TermList of PolyhedralTerm instances."""
 
-    def __init__(self, terms: list[PolyhedralTerm] = None):
+    def __init__(self, terms: Union[list[PolyhedralTerm],None] = None):
         if terms is None:
             self.terms = []
         elif all(isinstance(t, PolyhedralTerm) for t in terms):

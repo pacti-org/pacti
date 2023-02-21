@@ -81,9 +81,9 @@ def are_numbers_approximatively_equal(v1: numeric, v2: numeric) -> bool:
       f2=float(v2)
       return np.isclose(f1, f2, rtol=float_closeness_relative_tolerance, atol=float_closeness_absolute_tolerance, equal_nan=True)
 
-def internal_pt_to_string(terms: list[PolyhedralTerm]) -> Optional[Tuple[str, list[PolyhedralTerm]]]:
+def internal_pt_to_string(terms: list[PolyhedralTerm]) -> Tuple[str, list[PolyhedralTerm]]:
    if not terms:
-      return None
+      return "", []
    
    tp = terms[0]
 
