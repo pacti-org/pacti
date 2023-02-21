@@ -1,7 +1,7 @@
 # Case Studies
 In the following sections we will present case studies that illustrate the use of pacti for different applications.
 
-<font size="5">[**Safety of autonomous vehicles**](/pacti/_case_studies/evaluating_perception/simple_script/)</font>
+<font size="5">[**Safety of autonomous vehicles**](/pacti/_case_studies/evaluating_perception/saved_results/)</font>
 
 We present a case study to evaluate the perception system of an autonomous car using the _quotient_ operator.
 
