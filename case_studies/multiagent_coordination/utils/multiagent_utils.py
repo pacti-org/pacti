@@ -1,7 +1,7 @@
 import random
 from itertools import combinations
 import numpy as np
-from pacti.terms.polyhedra.loaders import read_contract
+from pacti.terms.polyhedra import PolyhedralContract
 
 # coordinate class
 class Coord:
@@ -32,6 +32,10 @@ def distance(candidate, goal):
 
     return distance
 
+def indiv_distance(move, goal):
+    distance = np.abs(move[0]-goal.x)+np.abs(move[1]-goal.y)
+    return distance
+
 
 def strategy(move_candidates, goal):
     """
@@ -53,8 +57,7 @@ def strategy(move_candidates, goal):
     move = random.choice(min_dist[min(sorted(min_dist.keys()))])
     return move
 
-
-def strategy_multiple(move_candidates, goal):
+def strategy_multiple_simple(move_candidates, goal):
     """
     Function to return a chosen move for both robots,
     a random move is taken in 10% of the cases and
@@ -73,12 +76,69 @@ def strategy_multiple(move_candidates, goal):
         min_dist.update({dist: candidate_list})
 
     if random.random() < 0.2:
-        # st()
         move = random.choice(move_candidates)
-        # print('Taking a random move')
     else:
-        # print('Taking strategy move')
         move = random.choice(min_dist[min(sorted(min_dist.keys()))])
+
+    return move
+
+
+def strategy_multiple(move_candidates, goal, cur_pos, last_pos):
+    '''
+    Function to return a chosen move for all robots.
+    '''
+    min_dist = {}
+    for candidate in move_candidates:
+        candidate_list = []
+        dist = distance(candidate,goal)
+
+        if dist in min_dist.keys():
+            for entry in min_dist[dist]:
+                candidate_list.append(entry)
+        if candidate not in candidate_list:
+            candidate_list.append(candidate)
+        min_dist.update({dist: candidate_list})
+
+    best_move = random.choice(min_dist[min(sorted(min_dist.keys()))])
+
+    best_dist = distance(best_move,goal)
+    cur_dist = distance(cur_pos,goal)
+
+    if best_dist < cur_dist:
+        move_options = []
+        for distances in min_dist:
+            if distances < cur_dist:
+                move_options = move_options + min_dist[distances]
+        # prune options where robots leave their goal
+        moves = []
+        for move in move_options:
+            move_ok = True
+            for i in range(len(cur_pos)): # keep robots at goal at goal
+                if indiv_distance(cur_pos[i],goal[i]) < indiv_distance(move[i],goal[i]):#indiv_distance(cur_pos[i],goal[i]) < indiv_distance(move[i],goal[i]):
+                    move_ok = False
+            if move_ok and move not in moves:
+                moves = moves + [move]
+
+        if random.random() < 0.1: # take the best move 10% of the time
+            move = random.choice(min_dist[min(sorted(min_dist.keys()))])
+        else: # take a random good move
+            move = random.choice(moves)
+    # check that other moves are possible
+    elif best_dist == cur_dist:
+        moves = []
+        for move in move_candidates:
+            move_ok = True
+            if move == cur_pos: # remove staying in the same position
+                move_ok = False
+            if move == last_pos: # remove going back to previous position
+                move_ok = False
+            for i in range(len(cur_pos)): # keep robots at goal at goal
+                if indiv_distance(cur_pos[i],goal[i]) == 0 and indiv_distance(move[i],goal[i]) != 0:#indiv_distance(cur_pos[i],goal[i]) < indiv_distance(move[i],goal[i]):
+                    move_ok = False
+            if move_ok and move not in moves: # add move to possible moves
+                moves = moves + [move]
+
+        move = random.choice(moves) # take a random move
 
     return move
 
@@ -153,11 +213,15 @@ def find_move_candidates_multiple(n, m, robots, t_0, contract, c_dyn_collision):
                             delta_y_B_C = (y_B_1 - y_C_1) * (y_B_0 - y_C_0)
 
                             sol = True
-                            for g in contract.g.terms:
-                                holds = eval(str(g))
-                                dynamic_collision_holds = eval(str(c_dyn_collision.g))
-                                if not holds or not dynamic_collision_holds:
+                            for g in c_dyn_collision.g.terms:
+                                dynamic_collision_holds = eval(str(g)+'<='+str(g.constant))
+                                if not dynamic_collision_holds:
                                     sol = False
+                            if sol:
+                                for g in contract.g.terms:
+                                    holds = eval(str(g)+'<='+str(g.constant))
+                                    if not holds or not dynamic_collision_holds:
+                                        sol = False
                             if sol:
                                 possible_sol.append([(x_a, y_a), (x_b, y_b), (x_c, y_c)])
     return possible_sol, t_1
@@ -229,7 +293,7 @@ def get_dynamic_collision_contract(robots):
         "guarantees": [{"constant": -1, "coefficients": {delta[0]: -1, delta[1]: -1}} for delta in delta_pairs],
     }
 
-    c_dyn_coll = read_contract(contract)
+    c_dyn_coll = PolyhedralContract.from_dict(contract)
 
     return c_dyn_coll
 
@@ -337,9 +401,9 @@ def get_collision_contracts_robot_pair(robot_1, robot_2, other):
         ],
     }
 
-    contract_c1 = read_contract(contract_1)
-    contract_c2 = read_contract(contract_2)
-    contract_c3 = read_contract(contract_3)
-    contract_c4 = read_contract(contract_4)
+    contract_c1 = PolyhedralContract.from_dict(contract_1)
+    contract_c2 = PolyhedralContract.from_dict(contract_2)
+    contract_c3 = PolyhedralContract.from_dict(contract_3)
+    contract_c4 = PolyhedralContract.from_dict(contract_4)
 
     return [contract_c1, contract_c2, contract_c3, contract_c4]
