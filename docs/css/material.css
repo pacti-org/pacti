@@ -7,3 +7,8 @@
 .md-content__button {
   display: none;
 }
+
+/* override max-width that would otherwise be 61rem */
+.md-grid {
+  max-width: 100%;
+}

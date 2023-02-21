@@ -1,3 +1,8 @@
+---
+hide:
+  - footer
+---
+
 #
 <p align="center">
 <img src="/pacti/logos/pacti_colorful.svg" alt= "pacti logo" width="300"/>
