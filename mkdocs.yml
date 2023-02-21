@@ -9,7 +9,8 @@ watch: [README.md, CONTRIBUTING.md, CHANGELOG.md, src/pacti]
 nav:
 - Home:
   - Overview: index.md
-  - Getting started: getting_started.md
+  - Installing: installing.md
+  - Getting Started: getting_started.ipynb
   - Changelog: changelog.md
   - Credits: credits.md
   - License: license.md
@@ -17,13 +18,12 @@ nav:
 - Case Studies:
   - Overview: case_studies.md
   - Autonomous Systems:
-    - Simple script: _case_studies/evaluating_perception/simple_script.ipynb
-  - Multi-agent Coordination:
-    - Introduction: multiagent_intro.md
-    - Three Robot Example: _case_studies/multiagent_coordination/multiagent.ipynb
+    - From saved data: _case_studies/evaluating_perception/saved_results.ipynb
+    - Full demonstration: _case_studies/evaluating_perception/recompute.ipynb
+  - Multi-agent Coordination: _case_studies/multiagent_coordination/multiagent.ipynb
   - Signal Processing in Digital ICs: _case_studies/digital_signal_processing/dsp_wl.ipynb
   - Synthetic Biology: _case_studies/biocircuit_specifications/specification_based_synthetic_biology.ipynb
-- Documentation: #reference/
+- API: #reference/
   - IoContract: iocontract.md
   - PolyhedralTerms : Polyhedral.md
 - Development:
@@ -37,7 +37,7 @@ theme:
   - navigation.tabs
   - navigation.tabs.sticky
   - navigation.top
-  - toc.integrate
+#  - toc.integrate
   font:
     #text: Eczar
     #text: Alegreya Sans
@@ -52,6 +52,7 @@ theme:
     scheme: default
     primary: white
     accent: purple
+  logo: pacti_small_icon.svg
 #  - media: "(prefers-color-scheme: light)"
 #    scheme: default
 #    primary: teal
@@ -109,4 +110,4 @@ plugins:
 extra:
   social:
   - icon: fontawesome/brands/github
-    link: https://github.com/github_username
+    link: https://github.com/FormalSystems

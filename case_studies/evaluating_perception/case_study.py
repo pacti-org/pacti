@@ -1,11 +1,10 @@
 # Import libraries
 from pacti.iocontract.utils import getVarlist
-from PIL import Image
-from pacti.terms.polyhedra.loaders import read_contract, write_contract
 import pdb
 from utils import *
 import random
 import pickle as pkl
+import cvxpy as cp
 import collections
 
 # Construct random confusion matrix
@@ -324,19 +323,25 @@ def plot_probabilities(points, tpped_vals, true_env, vmax, rand =True):
 # Plot probability points:
 def plot_probabilities_bounds(points, tpped_vals, true_env, vmax, Ncar, ubounds, lbounds, rand =True):
     fig, ax = plt.subplots()
-    ax.set_title(true_env)
-    plt.rcParams['text.usetex'] = True
-    ax.set_ylabel(r'$\mathbb{P}$')
-    plt.plot(tpped_vals, points, 'b*')
-    ub_m, ub_c = ubounds
+    # ax.set_title(true_env,fontsize=35)
+    # plt.rcParams['text.usetex'] = True
+    # plt.ylabel(r'$\mathbb{P}_{'+str(true_env)+'}$',fontsize=35)
+    # plt.xlabel(r'$TP_{'+str(true_env)+'}$',fontsize=35)
+    ax.tick_params(axis='both', which='major', labelsize=35)
+    plt.plot(tpped_vals, points, 'b*',label='sampled')
+    if ubounds != []:
+        ub_m, ub_c = ubounds
+        y_ub = ub_m*np.array(tpped_vals) + ub_c
+        plt.plot(tpped_vals, y_ub, 'r')
+
     lb_m, lb_c = lbounds
-    y_ub = ub_m*np.array(tpped_vals) + ub_c
     y_lb = lb_m*np.array(tpped_vals) + lb_c
-    plt.plot(tpped_vals, y_ub, 'r')
-    plt.plot(tpped_vals, y_lb, 'k')
+    plt.plot(tpped_vals, y_lb, 'k',label='lower bound',linewidth=5)
 
     lb = min(tpped_vals)
     ub = max(tpped_vals)
+    plt.legend(prop={'size': 35})
+    plt.show()
     if rand:
         plt.savefig("saved_plots/bounded_points_"+true_env+"_lb"+str(lb)+"_ub"+str(ub)+"_vmax"+str(vmax)+"_N"+str(Ncar)+"rand.png")
     else:
@@ -450,6 +455,7 @@ def bound_probs_emp(max_probs, min_probs):
     lb = [lb_m, lb_c]
     return ub, lb
 
+# +
 def bound_probs_ped(max_probs, min_probs):
     # Picking the two largest max_probs:
     sorted_max = sorted(max_probs.items(), key=lambda kv: kv[1])
@@ -467,6 +473,18 @@ def bound_probs_ped(max_probs, min_probs):
             break
     tp_max2, pmax2 = list(sorted_max.items())[0]
 
+    # For the larger case study:
+    tp_max1, pmax1 = list(sorted_max.items())[0]
+    tp_max2, pmax2 = list(sorted_max.items())[-1]
+
+    for tp, prob in min_probs.items():
+        if tp > 0.8:
+            tp_min1 = tp
+            pmin1 = prob
+            break
+    tp_min2, pmin2 = list(sorted_min.items())[-1]
+
+    # For the larger case study
     for tp, prob in min_probs.items():
         if tp > 0.8:
             tp_min1 = tp
@@ -489,6 +507,45 @@ def bound_probs_ped(max_probs, min_probs):
     lb = [lb_m, lb_c]
     return ub, lb
 
+def bound_probs_lp(tpx, proby):
+    l = min(tpx)
+    u = max(tpx)
+    m = cp.Variable()
+    b = cp.Variable()
+
+    alpha = (u**2 - l**2)/2
+    beta = (u-l)
+    obj =  alpha*m + beta*b
+    n = len(tpx)
+
+    A = np.array(tpx).reshape(1,-1)
+    B = np.ones((n,1))
+    C = np.array(proby).reshape(1,-1)
+
+    constraints = [A*m + B*b <=C]
+    prob = cp.Problem(cp.Maximize(obj), constraints)
+    prob.solve()
+    # pdb.set_trace()
+    if prob.status == "infeasible" or prob.status == "unbounded":
+        pdb.set_trace()
+    else:
+        lb = [m.value, b.value]
+        ub = []
+        return ub, lb
+
+
+def derive_prob_bounds_lp(fn, true_env):
+    points, tp_vals = load_result(fn)
+    result_tuple = [[tp_vals[i],points[i]] for i in range(len(tp_vals))]
+    if true_env == "ped":
+        ub, lb = bound_probs_lp(tp_vals, points)
+    elif true_env == "obj":
+        ub, lb = bound_probs_lp(tp_vals, points)
+    else:
+        ub, lb = bound_probs_lp(tp_vals, points)
+    return ub, lb, points, tp_vals
+
+
 def derive_prob_bounds(fn, true_env):
     points_ped, tpped_vals = load_result(fn)
     lb_ped = min(tpped_vals)
@@ -497,7 +554,7 @@ def derive_prob_bounds(fn, true_env):
     # Finding the max and min probabilities for each true positive value:
     max_probs, min_probs = find_min_max_probs(result_tuple)
     if true_env == "ped":
-        ub, lb = bound_probs_ped(max_probs, min_probs)
+        ub, lb = bound_probs_lp(tpped_vals, points_ped)
     elif true_env == "obj":
         ub, lb = bound_probs_obj(max_probs, min_probs)
     else:
@@ -506,8 +563,8 @@ def derive_prob_bounds(fn, true_env):
 
 
 if __name__=='__main__':
-    vmax = 2
-    Ncar = 6
+    vmax = 5
+    Ncar = 15
     Vlow = 0
     Vhigh = vmax
     recompute = False
@@ -526,7 +583,18 @@ if __name__=='__main__':
         fn = save_result(points, tp_vals, true_env, vmax, Ncar)
     # Derive bounds and plot probability bounds:
     else:
-        fn = "results/points_"+true_env+"_lb0.6_ub0.999_vmax2_N6rand.pkl"
+        fn = "data/points_"+true_env+"_lb0.6_ub0.999_vmax2_N6rand.pkl"
 
-    ubounds, lbounds, points, tp_vals = derive_prob_bounds(fn, true_env)
-    plot_probabilities_bounds(points, tp_vals, true_env, vmax, Ncar, ubounds, lbounds, rand =True)
+    recompute_lb = False
+    if recompute_lb:
+        ubounds, lbounds, points, tp_vals = derive_prob_bounds_lp(fn, true_env)
+        with open("lb"+true_env+".pkl", "wb") as f:
+            pkl.dump([lbounds, points, tp_vals], f)
+        f.close()
+        plot_probabilities_bounds(points, tp_vals, true_env, vmax, Ncar, ubounds, lbounds, rand =True)
+    else:
+        with open("lb"+true_env+".pkl", "rb") as f:
+            lbounds, points, tp_vals = pkl.load(f)
+        f.close()
+        ubounds = []
+        plot_probabilities_bounds(points, tp_vals, true_env, vmax, Ncar, ubounds, lbounds, rand =True)
