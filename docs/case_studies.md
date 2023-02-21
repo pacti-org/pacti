@@ -7,7 +7,7 @@ We present a case study to evaluate the perception system of an autonomous car u
 
 <img src="/pacti/_case_studies/evaluating_perception/imglib/autonomy-stack.png" alt= "autonomy figure" width="700"/>
 
-<font size="5">[**Trajectory planning for multi-agent systems**](/pacti/multiagent_intro/)</font>
+<font size="5">[**Trajectory planning for multi-agent systems**](/pacti/_case_studies/multiagent_coordination/multiagent/)</font>
 
 <img src="/pacti/_case_studies/multiagent_coordination/multiagent_overview.png" alt= "multiagent figure" width="700"/>
 
