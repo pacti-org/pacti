@@ -20,7 +20,7 @@ from __future__ import annotations
 import copy
 import logging
 from abc import ABC, abstractmethod
-from typing import List, TypeVar, Union
+from typing import List, TypeVar, Union, Generic
 
 from pacti.utils.lists import list_diff, list_intersection, list_union, lists_equal
 
@@ -261,7 +261,7 @@ class TermList(ABC):
         """
 
 
-class IoContract:
+class IoContract(Generic[T]):
     """
     Basic type for an IO contract.
 
@@ -278,14 +278,14 @@ class IoContract:
     """
 
     def __init__(
-        self, assumptions: TermList, guarantees: TermList, input_vars: List[Var], output_vars: List[Var]
+        self, assumptions: T, guarantees: T, input_vars: List[Var], output_vars: List[Var]
     ) -> None:
         """
         Class constructor.
 
         Args:
             assumptions: The assumptions of the contract.
-            guarantees: The assumptions of the contract.
+            guarantees: The guarantees of the contract.
             input_vars: The input variables of the contract.
             output_vars: The output variables of the contract.
 
@@ -312,8 +312,8 @@ class IoContract:
                 % (list_diff(guarantees.vars, list_union(input_vars, output_vars)), input_vars, output_vars, guarantees)
             )
 
-        self.a = assumptions.copy()
-        self.g = guarantees.copy()
+        self.a : T = assumptions.copy()
+        self.g : T = guarantees.copy()
         self.inputvars = input_vars.copy()
         self.outputvars = output_vars.copy()
         # simplify the guarantees with the assumptions

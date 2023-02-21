@@ -6,6 +6,7 @@ import json
 import re
 
 from typing import Optional, Tuple, Union
+from typing_extensions import TypedDict
 import numpy as np
 import sympy
 
@@ -14,8 +15,10 @@ from pacti.iocontract.iocontract import Var
 from pacti.terms.polyhedra.polyhedra import PolyhedralTerm
 
 numeric = Union[int, float]
+ser_pt = dict[str,Union[float,dict[str,float]]]
+ser_contract = TypedDict('ser_contract', {'InputVars': list[str], 'OutputVars': list[str], 'assumptions' : list[ser_pt], 'guarantees' : list[ser_pt]})
 
-def write_contract(contract: Union[IoContract, list[IoContract]], filename: str = None) -> list[dict]:
+def write_contract(contract: Union[IoContract, list[IoContract]], filename: Union[str,None] = None) -> list[ser_contract]:
     """
     Converts a pacti.IoContract to a dictionary. If a list of iocontracts is passed,
     then a list of dicts is returned.
@@ -33,20 +36,29 @@ def write_contract(contract: Union[IoContract, list[IoContract]], filename: str 
     contract_list = []
     for c_i in contract:
         if not isinstance(c_i, IoContract):
-            return ValueError("A IoContract is expected.")
-        contract_dict = {}
-        contract_dict["InputVars"] = [str(var) for var in c_i.inputvars]
-        contract_dict["OutputVars"] = [str(var) for var in c_i.outputvars]
-        contract_dict["assumptions"] = [
-            {"constant":float(term.constant), \
-             "coefficients": {str(k): float(v) for k, v in term.variables.items()}}
-            for term in c_i.a.terms
+            return ValueError("An IoContract is expected.")
+
+        inputvars = [str(var) for var in c_i.inputvars]
+        outputvars = [str(var) for var in c_i.outputvars]
+
+        assumptions : list[ser_pt] = [
+           {"constant":float(term.constant), \
+            "coefficients": {str(k): float(v) for k, v in term.variables.items()}}
+           for term in c_i.a.terms
         ]
-        contract_dict["guarantees"] = [
+        
+        guarantees : list[ser_pt] = [
             {"constant":float(term.constant), \
              "coefficients": {str(k): float(v) for k, v in term.variables.items()}}
             for term in c_i.g.terms
         ]
+
+        contract_dict : ser_contract = \
+            {"InputVars" : inputvars,
+            "OutputVars" : outputvars,
+            "assumptions" : assumptions,
+            "guarantees" : guarantees}
+
         contract_list.append(contract_dict)
     if filename:
         with open(filename, "w+", encoding='utf-8') as f_i:
@@ -79,7 +91,7 @@ def are_numbers_approximatively_equal(v1: numeric, v2: numeric) -> bool:
    else:
       f1=float(v1)
       f2=float(v2)
-      return np.isclose(f1, f2, rtol=float_closeness_relative_tolerance, atol=float_closeness_absolute_tolerance, equal_nan=True)
+      return bool(np.isclose(f1, f2, rtol=float_closeness_relative_tolerance, atol=float_closeness_absolute_tolerance, equal_nan=True))
 
 def internal_pt_to_string(terms: list[PolyhedralTerm]) -> Tuple[str, list[PolyhedralTerm]]:
    if not terms:
