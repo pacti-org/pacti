@@ -5,6 +5,8 @@ In the following sections we will present case studies that illustrate the use o
 
 We present a case study to evaluate the perception system of an autonomous car using the _quotient_ operator.
 
+<img src="/pacti/_case_studies/evaluating_perception/imglib/autonomy-stack.png" alt= "autonomy figure" width="700"/>
+
 <font size="5">[**Trajectory planning for multi-agent systems**](/pacti/multiagent_intro/)</font>
 
 <img src="/pacti/_case_studies/multiagent_coordination/multiagent_overview.png" alt= "multiagent figure" width="700"/>
