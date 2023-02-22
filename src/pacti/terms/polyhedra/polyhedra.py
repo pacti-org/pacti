@@ -1147,7 +1147,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         except ValueError:
             try:  # noqa: WPS505
                 result = PolyhedralTermList._tactic_2(term, context, vars_to_elim, refine)
-            except ValueError as e:  # noqa: WPS329
-                raise e
+            except ValueError as e:
+                raise ValueError("Could not transform term") from e
 
         return result
