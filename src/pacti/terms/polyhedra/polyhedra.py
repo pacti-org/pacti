@@ -69,6 +69,13 @@ class PolyhedralTerm(Term):
     def __str__(self) -> str:
         varlist = list(self.variables.items())
         varlist.sort(key=lambda x: str(x[0]))
+        res = " + ".join([str(coeff) + "*" + var.name for var, coeff in varlist])
+        res += " <= " + str(self.constant)
+        return res
+
+    def _lhs_str(self) -> str:
+        varlist = list(self.variables.items())
+        varlist.sort(key=lambda x: str(x[0]))
         #res = " + ".join([str(coeff) + "*" + var.name for var, coeff in varlist])
         #res += " <= " + str(self.constant)
         res = ""
@@ -96,7 +103,7 @@ class PolyhedralTerm(Term):
                     else:
                         res += " - " + serializer.number2string(-coeff) + " " + var.name
             first=False
-                
+        #res += " <= " + serializer.number2string(self.constant)
         return res
 
     def __hash__(self):
@@ -434,7 +441,7 @@ class PolyhedralTerm(Term):
 class PolyhedralTermList(TermList):  # noqa: WPS338
     """A TermList of PolyhedralTerm instances."""
 
-    def __init__(self, terms: list[PolyhedralTerm] = None):
+    def __init__(self, terms: Union[list[PolyhedralTerm],None] = None):
         if terms is None:
             self.terms = []
         elif all(isinstance(t, PolyhedralTerm) for t in terms):
@@ -452,22 +459,70 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         res += "\n]"
         return res
 
-    def abduce_with_context(self, context: PolyhedralTermList, vars_to_elim: list) -> PolyhedralTermList:
+    def evaluate(self, var_values:dict[Var,numeric]) -> PolyhedralTermList:
+        """
+        Replace variables in termlist with given values.
+        Args:
+            var_values:
+                The values that variables will take.
+        Returns:
+            A new PolyhedralTermList in which the variables have been
+            substituted with the values provided.
+        Raises:
+            ValueError: One term is unsatisfiable under these valuation of
+            variables.
+        """
+        new_list = []
+        for term in self.terms:
+            new_term = term.copy()
+            for var, val in var_values.items():
+                new_term = new_term.substitute_variable(var=var, subst_with_term=PolyhedralTerm(variables={},constant=-val))
+            # we may have eliminated all variables after substitution
+            if not new_term.vars:
+                if new_term.constant < 0:
+                    raise ValueError("Term %s not satisfied" % (term))
+                else:
+                    continue
+            new_list.append(new_term)
+        return PolyhedralTermList(new_list)
+
+    def contains_behavior(self, behavior: dict[Var, numeric]) -> bool:
+        """
+        Tell whether TermList contains the given behavior.
+        Args:
+            behavior:
+                The behavior in question.
+        Returns:
+            True if the behavior satisfies the constraints; false otherwise.
+        Raises:
+            ValueError: Not all variables in the constraints were assined values.
+        """
+        excess_vars = list_diff(self.vars, list(behavior.keys()))
+        if excess_vars:
+            raise ValueError("The variables %s were not assigned values" % (excess_vars))
+        retval = True
+        try:
+            _ = self.evaluate(behavior)
+        except ValueError:
+            retval = False
+        return retval
+
+    def elim_vars_by_refining(self, context: PolyhedralTermList, vars_to_elim: list) -> PolyhedralTermList:
         """
         Eliminate variables from PolyhedralTermList by refining it in context.
 
         Example:
             Suppose the current list of terms is $\\{x + y \\le 6\\}$, the
-            context is $\\{y \\le 5\\}$, and the abduced terms should not
+            context is $\\{y \\le 5\\}$, and the resulting terms should not
             contain variable $y$. Then the current TermList could be
-            abduced to $\\{x \\le 1\\}$ because $x \\le 1
+            refined to $\\{x \\le 1\\}$ because $x \\le 1
             \\;\\land\\; y \\le 5 \\Rightarrow x + y \\le 6$.
 
         Args:
             context:
-                The TermList providing the context for the abduction.
+                The TermList providing the context for the refinement.
             vars_to_elim:
-                Variables that should not appear in the abduced term.
+                Variables that should not appear in the resulting term.
 
         Returns:
             A list of terms not containing any variables in `vars_to_elim`
@@ -478,7 +533,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
             ValueError: Self has empty intersection with its context.
         """
         termlist = self.copy()
-        logging.debug("Abducing from terms: %s", self)
+        logging.debug("Refining from terms: %s", self)
         logging.debug("Context: %s", context)
         logging.debug("Vars to elim: %s", vars_to_elim)
         try:
@@ -488,11 +543,11 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
                 "Provided constraints \n{}\n".format(self) + "are unsatisfiable in context \n{}".format(context)
             ) from e
         try:
-            termlist._transform(context=context, vars_to_elim=vars_to_elim, abduce=True)
+            termlist._transform(context=context, vars_to_elim=vars_to_elim, refine=True)
         except ValueError as e:
             raise ValueError(
                 "The elimination of variables \n{}\n".format(vars_to_elim)
-                + "by abducing terms \n{}\n".format(self)
+                + "by refining terms \n{}\n".format(self)
                 + "in context \n{}\n".format(context)
                 + "was not possible"
             ) from e
@@ -507,22 +562,22 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         """
         return len(self.terms) == 0
 
-    def deduce_with_context(self, context: PolyhedralTermList, vars_to_elim: list) -> PolyhedralTermList:
+    def elim_vars_by_relaxing(self, context: PolyhedralTermList, vars_to_elim: list) -> PolyhedralTermList:
         """
         Eliminate variables from PolyhedralTermList by abstracting it in context.
 
         Example:
             Suppose the current list of terms is $\\{x - y \\le 6\\}$, the
-            context is $\\{y \\le 5\\}$, and the deduced terms should not
+            context is $\\{y \\le 5\\}$, and the resulting terms should not
             contain variable $y$. Then the current TermList could be
-            deduced to $\\{x \\le 11\\}$ because $x - y \\le 6
+            relaxed to $\\{x \\le 11\\}$ because $x - y \\le 6
             \\;\\land\\; y \\le 5 \\Rightarrow x \\le 11$.
 
         Args:
             context:
-                The TermList providing the context for the deduction.
+                The TermList providing the context for the transformation.
             vars_to_elim:
-                Variables that should not appear in the deduced term.
+                Variables that should not appear in the relaxed terms.
 
         Returns:
             A list of terms not containing any variables in `vars_to_elim`
@@ -533,8 +588,8 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
             ValueError: Constraints have empty intersection with context.
         """
         termlist = self.copy()
-        logging.debug("Deduce with context")
-        logging.debug("Deducing from terms %s", self)
+        logging.debug("Relaxing with context")
+        logging.debug("Relaxing from terms %s", self)
         logging.debug("Context: %s", context)
         logging.debug("Vars to elim: %s", vars_to_elim)
         try:
@@ -544,11 +599,11 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
                 "Provided constraints \n{}\n".format(self) + "are unsatisfiable in context \n{}".format(context)
             ) from e
         try:
-            termlist._transform(context=context, vars_to_elim=vars_to_elim, abduce=False)
+            termlist._transform(context=context, vars_to_elim=vars_to_elim, refine=False)
         except ValueError as e:
             raise ValueError(
                 "The elimination of variables \n{}\n".format(vars_to_elim)
-                + "by deducing terms \n{}\n".format(self)
+                + "by relaxing terms \n{}\n".format(self)
                 + "in context \n{}\n".format(context)
                 + "was not possible"
             ) from e
@@ -621,7 +676,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         logging.debug("Polytope is \n%s", self_mat)
         return PolyhedralTermList.verify_polytope_containment(self_mat, self_cons, ctx_mat, ctx_cons)
 
-    def _transform(self, context: PolyhedralTermList, vars_to_elim: list, abduce: bool):
+    def _transform(self, context: PolyhedralTermList, vars_to_elim: list, refine: bool):
         logging.debug("Transforming: %s", self)
         logging.debug("Context terms: %s", context)
         logging.debug("Variables to eliminate: %s", vars_to_elim)
@@ -633,11 +688,11 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
             logging.debug("Transforming term %s", str(term))
             newcontext = context.copy()
             if context.terms:
-                newcontext._transform(PolyhedralTermList([]), list_diff(vars_to_elim, term.vars), abduce)
+                newcontext._transform(PolyhedralTermList([]), list_diff(vars_to_elim, term.vars), refine)
             helpers = (newcontext | self) - PolyhedralTermList([term])
             # ENDNOTE: Review
             try:
-                new_term = PolyhedralTermList._transform_term(term, helpers, vars_to_elim, abduce)
+                new_term = PolyhedralTermList._transform_term(term, helpers, vars_to_elim, refine)
             except ValueError:
                 new_term = term
             new_terms.append(new_term)
@@ -917,7 +972,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
 
     @staticmethod
     def _get_kaykobad_context(  # noqa: WPS231
-        term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, abduce: bool
+        term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, refine: bool
     ):
         forbidden_vars = list_intersection(vars_to_elim, term.vars)
         other_forbibben_vars = list_diff(vars_to_elim, term.vars)
@@ -925,7 +980,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         matrix_row_terms = []  # type: list[PolyhedralTerm]
         partial_sums = [float(0) for i in range(n)]
         transform_coeff = -1
-        if abduce:
+        if refine:
             transform_coeff = 1
         matrix_contains_others = False
         # We add a row to the matrix in each iteration
@@ -990,17 +1045,16 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         logging.debug("Matrix row terms %s", matrix_row_terms)
         return matrix_row_terms, forbidden_vars
 
+
     @staticmethod
-    def _transform_term(term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, abduce: bool):
-        logging.debug("Transforming term: %s", term)
-        logging.debug("Context: %s", context)
+    def _tactic_1(term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, refine: bool):
         try:
             matrix_row_terms, forbidden_vars = PolyhedralTermList._get_kaykobad_context(
-                term, context, vars_to_elim, abduce
+                term, context, vars_to_elim, refine
             )
         except ValueError as e:
-            logging.debug("Could not transform %s", term)
-            raise ValueError("Could not transform term {}".format(term)) from e
+            logging.debug("Could not transform %s using Tactic 1", term)
+            raise ValueError("Could not transform term {}".format(term))
         matrix_row_terms = PolyhedralTermList(list(matrix_row_terms))
         sols = PolyhedralTerm.solve_for_variables(matrix_row_terms, list(forbidden_vars))
         logging.debug("Sols %s", sols)
@@ -1012,3 +1066,65 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         logging.debug("Term %s transformed to %s", term, result)
 
         return result
+
+    @staticmethod
+    def _tactic_2(term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, refine: bool):
+        new_context_list = []
+        print("This is the context")
+        print(context)
+        # Extract from context the terms that only contain forbidden vars
+        for context_term in context.terms:
+            if not list_diff(context_term.vars, vars_to_elim):
+                if context_term != term:
+                    new_context_list.append(context_term.copy())
+        print("This is what we kept")
+        for el in new_context_list:
+            print(el)
+        if not new_context_list:
+            raise ValueError("No term contains only irrelevant variables")
+        # now optimize
+        retval = PolyhedralTermList.termlist_to_polytope(PolyhedralTermList(new_context_list),PolyhedralTermList([]))
+        variables = retval[0]
+        new_context_mat = retval[1]
+        new_context_cons = retval[2]
+        polarity = 1
+        if refine:
+            polarity = -1
+        objective = [polarity*term.get_coefficient(var) for var in variables]
+        print(new_context_mat)
+        print(new_context_cons)
+        print(objective)
+        res = linprog(c=objective,A_ub=new_context_mat,b_ub=new_context_cons,bounds=(None, None))
+        if res["status"] == 3:
+            # unbounded
+            return term.copy()
+        replacement = polarity * res["fun"]
+        # replace the irrelevant variables with new findings in term
+        result = term.copy()
+        for var in vars_to_elim:
+            result.remove_variable(var)
+        result.constant -= replacement
+        # check vacuity
+        if not result.vars:
+            return term.copy()
+        return result
+
+        
+        
+
+
+    @staticmethod
+    def _transform_term(term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, refine: bool):
+        logging.debug("Transforming term: %s", term)
+        logging.debug("Context: %s", context)
+
+        try:
+            result =  PolyhedralTermList._tactic_1(term, context, vars_to_elim, refine)
+        except ValueError as e:
+            try:
+                result = PolyhedralTermList._tactic_2(term, context, vars_to_elim, refine)
+            except ValueError as e:
+                raise e
+
+        return result
+
