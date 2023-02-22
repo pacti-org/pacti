@@ -19,7 +19,7 @@ def create_contracts(num=1) -> list[dict]:
             "guarantees": [{"coefficients": {"x" + str(i): float(1)}, "constant": float(i)}],
         }
         contracts.append(c_i)
-    
+
     return contracts
 
 

@@ -16,8 +16,10 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
+import glob
 import importlib
 import os
+import pathlib
 import re
 import ssl
 import sys
@@ -25,7 +27,6 @@ from io import StringIO
 from pathlib import Path
 from typing import List, Optional, Pattern
 from urllib.request import urlopen
-import pathlib, glob
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -256,12 +257,11 @@ def clean(ctx):
 def copy_case_studies(ctx):
     if os.path.exists("docs/_case_studies"):
         ctx.run("rm -rf docs/_case_studies")
-        
+
     ctx.run("cp -r case_studies docs/_case_studies")
-    py_files = glob.glob("docs/_case_studies/**/*.py",recursive=True)
+    py_files = glob.glob("docs/_case_studies/**/*.py", recursive=True)
     for path in py_files:
         pathlib.Path.unlink(Path(path))
-
 
 
 @duty

@@ -20,7 +20,7 @@ from __future__ import annotations
 import copy
 import logging
 from abc import ABC, abstractmethod
-from typing import List, TypeVar, Union, Generic
+from typing import Generic, List, TypeVar, Union
 
 from pacti.utils.lists import list_diff, list_intersection, list_union, lists_equal
 
@@ -277,9 +277,7 @@ class IoContract(Generic[T]):
         g(TermList): Contract guarantees.
     """
 
-    def __init__(
-        self, assumptions: T, guarantees: T, input_vars: List[Var], output_vars: List[Var]
-    ) -> None:
+    def __init__(self, assumptions: T, guarantees: T, input_vars: List[Var], output_vars: List[Var]) -> None:
         """
         Class constructor.
 
@@ -312,8 +310,8 @@ class IoContract(Generic[T]):
                 % (list_diff(guarantees.vars, list_union(input_vars, output_vars)), input_vars, output_vars, guarantees)
             )
 
-        self.a : T = assumptions.copy()
-        self.g : T = guarantees.copy()
+        self.a: T = assumptions.copy()
+        self.g: T = guarantees.copy()
         self.inputvars = input_vars.copy()
         self.outputvars = output_vars.copy()
         # simplify the guarantees with the assumptions
@@ -332,9 +330,13 @@ class IoContract(Generic[T]):
     def __str__(self):
         return (
             "InVars: "
-            + "[" + ", ".join([v.name for v in self.inputvars]) + "]"
+            + "["
+            + ", ".join([v.name for v in self.inputvars])
+            + "]"
             + "\nOutVars:"
-            + "[" + ", ".join([v.name for v in self.outputvars]) + "]"
+            + "["
+            + ", ".join([v.name for v in self.outputvars])
+            + "]"
             + "\nA: "
             + str(self.a)
             + "\n"
@@ -556,44 +558,46 @@ class IoContract(Generic[T]):
         return IoContract(assumptions, guarantees, inputvars, outputvars)
 
     def merge(self, other: IoContract) -> IoContract:
-        """Compute the merging operation for two contracts.
+        """
+        Compute the merging operation for two contracts.
 
         Compute the merging operation of the two given contracts. No
         abstraction/refinement is applied.
 
         Args:
-            other:
-                The contract with which we are merging self.
+            other: The contract with which we are merging self.
+
 
         Returns:
             The result of merging.
-
-        Raises:
-            ValueError: the IO profiles are incompatible with contract merging.
         """
-        input_vars  = list_union(self.inputvars, other.inputvars)
+        input_vars = list_union(self.inputvars, other.inputvars)
         output_vars = list_union(self.outputvars, other.outputvars)
         assumptions = self.a | other.a
         guarantees = self.g | other.g
         return IoContract(assumptions, guarantees, input_vars, output_vars)
 
-
     def contains_environment(self, component: TermList) -> bool:
-        """Tell whether a component is a valid environment for the contract.
+        """
+        Tell whether a component is a valid environment for the contract.
+
         Args:
-            component:
-                The component in question.
+            component: The component in question.
+
         Returns:
             True if the component is a valid environment; false otherwise.
         """
         return component <= self.a
 
     def contains_implementation(self, component: TermList) -> bool:
-        """Tell whether a component is a valid implementation for the contract.
+        """
+        Tell whether a component is a valid implementation for the contract.
+
         Args:
             component:
                 The component in question.
+
         Returns:
             True if the component is a valid implementation; false otherwise.
         """
-        return (component | self.a)  <= (self.g | self.a)
+        return (component | self.a) <= (self.g | self.a)
