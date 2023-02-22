@@ -1,7 +1,10 @@
+"""Plotting functionality for polyhedral contracts."""
+
+
 from math import atan2
 from typing import Union
 
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt  # noqa: WPS301 Found dotted raw import
 import numpy as np
 from matplotlib.figure import Figure as MplFigure
 from matplotlib.patches import Polygon as MplPatchPolygon
@@ -37,13 +40,16 @@ def plot_assumptions(
 
     Returns:
         Figure element with a single "axes" object showing the feasible region for the assumptions.
+
+    Raises:
+        ValueError: arguments provided failed sanity checks.
     """
-    if not (x_var in contract.vars):
+    if x_var not in contract.vars:
         raise ValueError("Variable %s is not in an input or output variable of contract." % (x_var))
-    if not (y_var in contract.vars):
+    if y_var not in contract.vars:
         raise ValueError("Variable %s is not in an input or output variable of contract." % (y_var))
-    for var in var_values.keys():
-        if not var in contract.vars:
+    for var in var_values.keys():  # noqa: VNE002
+        if var not in contract.vars:
             raise ValueError("Var %s from var_values is not in the interface of the contract." % (var))
     fig = _plot_constraints(contract.a, x_var, y_var, var_values, x_lims, y_lims)
     ax = fig.axes[0]
@@ -72,13 +78,16 @@ def plot_guarantees(
 
     Returns:
         Figure element with a single "axes" object showing the feasible region for the assumptions & guarantees.
+
+    Raises:
+        ValueError: arguments provided failed sanity checks.
     """
-    if not (x_var in contract.vars):
+    if x_var not in contract.vars:
         raise ValueError("Variable %s is not in an input or output variable of contract." % (x_var))
-    if not (y_var in contract.vars):
+    if y_var not in contract.vars:
         raise ValueError("Variable %s is not in an input or output variable of contract." % (y_var))
-    for var in var_values.keys():
-        if not var in contract.vars:
+    for var in var_values.keys():  # noqa: VNE002
+        if var not in contract.vars:
             raise ValueError("Var %s from var_values is not in the interface of the contract." % (var))
     fig = _plot_constraints(contract.a | contract.g, x_var, y_var, var_values, x_lims, y_lims)
     ax = fig.axes[0]
@@ -86,55 +95,56 @@ def plot_guarantees(
     return fig
 
 
-def _substitute_in_termlist(constraints: PolyhedralTermList, var_values: dict[Var, numeric]) -> PolyhedralTermList:
+def _substitute_in_termlist(  # noqa: WPS231
+    constraints: PolyhedralTermList, var_values: dict[Var, numeric]
+) -> PolyhedralTermList:
     plot_list = []
     for term in constraints.terms:
-        for var, val in var_values.items():
+        for var, val in var_values.items():  # noqa: VNE002
             term = term.substitute_variable(var=var, subst_with_term=PolyhedralTerm(variables={}, constant=-val))
         # we may have eliminated all variables after substitution
         if not term.vars:
             if term.constant < 0:
                 raise ValueError("Constraints are unfeasible")
             else:
-                continue
+                continue  # noqa: WPS503 Found useless returning `else` statement
         plot_list.append(term)
     return PolyhedralTermList(plot_list)
 
 
 # Find interior point of the set -> we compute the Chebyshev center of the polyhedron
-def _get_feasible_point(A: np.ndarray, b: np.ndarray, interior: bool = True) -> np.ndarray:
-    A_1 = np.concatenate((A, np.linalg.norm(A, axis=1, keepdims=True)), axis=1)
-    A_new = np.concatenate((A_1, np.array([[0, 0, -1]])), axis=0)
+def _get_feasible_point(a_mat: np.ndarray, b: np.ndarray, interior: bool = True) -> np.ndarray:
+    a_mat_1 = np.concatenate((a_mat, np.linalg.norm(a_mat, axis=1, keepdims=True)), axis=1)
+    a_mat_new = np.concatenate((a_mat_1, np.array([[0, 0, -1]])), axis=0)
     b_new = np.concatenate((np.reshape(b, (-1, 1)), np.array([[0]])), axis=0)
     obj = np.array([0, 0, 1])
     if interior:
         obj = np.array([0, 0, -1])
-    res = linprog(c=obj, A_ub=A_new, b_ub=b_new, bounds=(None, None))
+    res = linprog(c=obj, A_ub=a_mat_new, b_ub=b_new, bounds=(None, None))
     if res["status"] == 2:
         raise ValueError("Constraints are unfeasible")
-    interior_point = np.array(res["x"])[0:-1]
-    return interior_point
+    return np.array(res["x"])[0:-1]  # noqa: WPS349 Found redundant subscript slice
 
 
 # given a bounded polygon, return its vertices
-def _get_bounding_vertices(A: np.ndarray, b: np.ndarray) -> tuple[tuple, tuple]:
+def _get_bounding_vertices(a_mat: np.ndarray, b: np.ndarray) -> tuple[tuple, tuple]:
     try:
-        interior_point = _get_feasible_point(A, b)
+        interior_point = _get_feasible_point(a_mat, b)
     except ValueError as e:
-        raise e
-    halfspaces = np.concatenate((A, -np.reshape(b, (-1, 1))), axis=1)
-    try:
+        raise ValueError("Region is empty") from e
+    halfspaces = np.concatenate((a_mat, -np.reshape(b, (-1, 1))), axis=1)
+    try:  # noqa: WPS229 Found too long ``try`` body length: 2 > 1
         hs = HalfspaceIntersection(halfspaces, interior_point)
         x, y = zip(*hs.intersections)
     except QhullError:
         # polygon has no interior. optimize four directions
-        res = linprog(c=[0, 1], A_ub=A, b_ub=b, bounds=(None, None))
+        res = linprog(c=[0, 1], A_ub=a_mat, b_ub=b, bounds=(None, None))
         p1 = np.array(res["x"])
-        res = linprog(c=[0, -1], A_ub=A, b_ub=b, bounds=(None, None))
+        res = linprog(c=[0, -1], A_ub=a_mat, b_ub=b, bounds=(None, None))
         p2 = np.array(res["x"])
-        res = linprog(c=[1, 0], A_ub=A, b_ub=b, bounds=(None, None))
+        res = linprog(c=[1, 0], A_ub=a_mat, b_ub=b, bounds=(None, None))
         p3 = np.array(res["x"])
-        res = linprog(c=[-1, 0], A_ub=A, b_ub=b, bounds=(None, None))
+        res = linprog(c=[-1, 0], A_ub=a_mat, b_ub=b, bounds=(None, None))
         p4 = np.array(res["x"])
         x = (p1[0], p2[0], p3[0], p4[0])
         y = (p1[1], p2[1], p3[1], p4[1])
@@ -142,7 +152,7 @@ def _get_bounding_vertices(A: np.ndarray, b: np.ndarray) -> tuple[tuple, tuple]:
     center = (sum(x) / len(x), sum(y) / len(y))
     points = sorted(zip(x, y), key=lambda p: atan2(p[1] - center[1], p[0] - center[0]))
     x, y = zip(*points)
-    return x, y
+    return x, y  # noqa: WPS331 Found variables that are only used for `return`: x, y
 
 
 def _gen_boundary_constraints(
@@ -177,12 +187,15 @@ def _plot_constraints(
     plot_tl = _substitute_in_termlist(term_list, var_values)
     assert not list_diff(plot_tl.vars, [x_var, y_var]), "termlist vars: %s" % (plot_tl.vars)
     # Now we plot the polygon
-    variables, A, b, _, _ = PolyhedralTermList.termlist_to_polytope(plot_tl, PolyhedralTermList([]))
+    res_tuple = PolyhedralTermList.termlist_to_polytope(plot_tl, PolyhedralTermList([]))
+    variables = res_tuple[0]
+    a_mat = res_tuple[1]
+    b = res_tuple[2]
     if variables[0] == y_var:
         # place the x variable in first row
-        A[:, [0, 1]] = A[:, [1, 0]]
+        a_mat[:, [0, 1]] = a_mat[:, [1, 0]]  # noqa: WPS359 Found an iterable unpacking to list
 
-    x, y = _get_bounding_vertices(A, b)
+    x, y = _get_bounding_vertices(a_mat, b)
 
     # generate figure
     fig = plt.figure()
@@ -227,7 +240,7 @@ if __name__ == "__main__":
         "assumptions": [{"coefficients": {"v0": 1}, "constant": 20000}],
         "guarantees": [
             {"coefficients": {"t1": -1}, "constant": -90},
-            {"coefficients": {"v1": -1}, "constant": -1600.00},
+            {"coefficients": {"v1": -1}, "constant": -1600},
         ],
     }
     c2 = PolyhedralContract.from_dict(contract2)
@@ -235,7 +248,7 @@ if __name__ == "__main__":
         contract=c2,
         x_var=Var("t0"),
         y_var=Var("v1"),
-        var_values={Var("t1"): 91, Var("v0"): 20000.0},
+        var_values={Var("t1"): 91, Var("v0"): 20000},
         x_lims=(-10, 100),
         y_lims=(1000, 21000),
     )
@@ -251,12 +264,12 @@ if __name__ == "__main__":
             {"constant": 2.0, "coefficients": {"t11": 1.0, "t10": -1.0}},
             {"constant": -2.0, "coefficients": {"t11": -1.0, "t10": 1.0}},
             {"constant": 6.0, "coefficients": {"soc10": 1.0, "soc11": -1.0}},
-            {"constant": 0.0, "coefficients": {"d11": 1.0}},
-            {"constant": 0.0, "coefficients": {"d11": -1.0}},
-            {"constant": 0.0, "coefficients": {"e11": 1.0, "e10": -1.0}},
-            {"constant": 0.0, "coefficients": {"e11": -1.0, "e10": 1.0}},
-            {"constant": 0.0, "coefficients": {"r11": 1.0, "r10": -1.0}},
-            {"constant": 0.0, "coefficients": {"r11": -1.0, "r10": 1.0}},
+            {"constant": float(0), "coefficients": {"d11": 1.0}},
+            {"constant": float(0), "coefficients": {"d11": -1.0}},
+            {"constant": float(0), "coefficients": {"e11": 1.0, "e10": -1.0}},
+            {"constant": float(0), "coefficients": {"e11": -1.0, "e10": 1.0}},
+            {"constant": float(0), "coefficients": {"r11": 1.0, "r10": -1.0}},
+            {"constant": float(0), "coefficients": {"r11": -1.0, "r10": 1.0}},
         ],
     }
     c3 = PolyhedralContract.from_dict(contract3)
