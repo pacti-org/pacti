@@ -21,15 +21,13 @@ class PolyhedralContract(IoContract):
         InputVars: list[str] = field(default_factory=list),
         OutputVars: list[str] = field(default_factory=list)) -> PolyhedralContract:
         
+        a: list[PolyhedralTerm] = []
         if assumptions:
-            a: list[PolyhedralTerm] = reduce(list.__add__, list(map(lambda x: serializer.internal_pt_from_string(x), assumptions)))
-        else:
-            a: list[PolyhedralTerm] = []
-
+            a = reduce(list.__add__, list(map(lambda x: serializer.internal_pt_from_string(x), assumptions)))
+                    
+        g: list[PolyhedralTerm] = []
         if guarantees:
-            g: list[PolyhedralTerm] = reduce(list.__add__, list(map(lambda x: serializer.internal_pt_from_string(x), guarantees)))
-        else:
-            g: list[PolyhedralTerm] = []
+            g = reduce(list.__add__, list(map(lambda x: serializer.internal_pt_from_string(x), guarantees)))
 
         return PolyhedralContract(
             input_vars=[Var(x) for x in InputVars],
