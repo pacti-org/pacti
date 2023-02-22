@@ -66,9 +66,9 @@ uninstall:
 	rm -rf site
 	find . -type d -name __pycache__ | xargs rm -rf
 	find . -type d -name __pypackages__ | xargs rm -rf
-	find . -name '*.rej' -delete
-	find . -name pdm.lock -delete
-	find . -name .pdm.toml -delete
+	find . -name pdm.lock | xargs rm -rf
+	find . -name .pdm.toml | xargs rm -rf
+	find . -name '*.rej' | xargs rm -rf
 
 
 .PHONY: $(BASIC_DUTIES)
