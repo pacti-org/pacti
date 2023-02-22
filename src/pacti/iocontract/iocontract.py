@@ -558,20 +558,18 @@ class IoContract(Generic[T]):
         return IoContract(assumptions, guarantees, inputvars, outputvars)
 
     def merge(self, other: IoContract) -> IoContract:
-        """Compute the merging operation for two contracts.
+        """
+        Compute the merging operation for two contracts.
 
         Compute the merging operation of the two given contracts. No
         abstraction/refinement is applied.
 
         Args:
-            other:
-                The contract with which we are merging self.
+            other: The contract with which we are merging self.
+
 
         Returns:
             The result of merging.
-
-        Raises:
-            ValueError: the IO profiles are incompatible with contract merging.
         """
         input_vars = list_union(self.inputvars, other.inputvars)
         output_vars = list_union(self.outputvars, other.outputvars)
@@ -580,20 +578,25 @@ class IoContract(Generic[T]):
         return IoContract(assumptions, guarantees, input_vars, output_vars)
 
     def contains_environment(self, component: TermList) -> bool:
-        """Tell whether a component is a valid environment for the contract.
+        """
+        Tell whether a component is a valid environment for the contract.
+
         Args:
-            component:
-                The component in question.
+            component: The component in question.
+
         Returns:
             True if the component is a valid environment; false otherwise.
         """
         return component <= self.a
 
     def contains_implementation(self, component: TermList) -> bool:
-        """Tell whether a component is a valid implementation for the contract.
+        """
+        Tell whether a component is a valid implementation for the contract.
+
         Args:
             component:
                 The component in question.
+
         Returns:
             True if the component is a valid implementation; false otherwise.
         """
