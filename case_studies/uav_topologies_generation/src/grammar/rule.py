@@ -6,12 +6,11 @@ from dataclasses import dataclass
 
 from matplotlib.figure import Figure
 
+from pacti.terms.polyhedra import PolyhedralContract
 from .figures import DirectionsGrid
+from ..contracts_utils.union import ContractsUnions
 from ..shared import Direction, SymbolType, symbols_colors
 from ..tools.constraints import from_symbol_directions_to_constraints
-from pacti.terms.polyhedra import string_to_polyhedra_contract
-from pacti.utils.contracts_union import ContractsUnions
-from pacti.utils.string_contract import StrContract
 
 
 @dataclass
@@ -45,9 +44,15 @@ class Rule:
         contract_union = ContractsUnions(name=self.name)
         for constraint in constraints:
             # new_c = StrContract(assumptions=constraint, inputs=list(symbols))
-            new_c = StrContract(assumptions=constraint, inputs=list(symbols))
             # print(new_c)
-            io_contract = string_to_polyhedra_contract(new_c)
+            print(constraint)
+            print(list(symbols))
+            io_contract = PolyhedralContract.from_string(
+                InputVars=list(symbols),
+                OutputVars=[],
+                assumptions=constraint,
+                guarantees=[])
+
             contract_union.contracts.add(io_contract)
 
         return contract_union

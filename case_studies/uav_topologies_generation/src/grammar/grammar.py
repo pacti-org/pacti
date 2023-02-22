@@ -6,8 +6,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .rule import Rule
+from ..contracts_utils.union import ContractsUnions
 from ..shared import SymbolType
-from pacti.utils.contracts_union import ContractsUnions
 
 
 @dataclass

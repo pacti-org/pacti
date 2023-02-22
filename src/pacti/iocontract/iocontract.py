@@ -20,7 +20,7 @@ from __future__ import annotations
 import copy
 import logging
 from abc import ABC, abstractmethod
-from typing import List, TypeVar, Union
+from typing import List, TypeVar, Union, Generic
 
 from pacti.utils.lists import list_diff, list_intersection, list_union, lists_equal
 
@@ -189,9 +189,9 @@ class TermList(ABC):
         return type(self)([term.copy() for term in self.terms])
 
     @abstractmethod
-    def abduce_with_context(self: T, context: T, vars_to_elim: List[Var]) -> T:
+    def elim_vars_by_refining(self: T, context: T, vars_to_elim: List[Var]) -> T:
         """
-        Abduce terms containing variables to be eliminated using a user-provided context.
+        Eliminate variables from termlist by refining it in a context.
 
         Given a context $\\Gamma$, and the list of terms contained in self,
         $s$, this routine identifies a TermList $x$ lacking variables
@@ -200,9 +200,9 @@ class TermList(ABC):
 
         Args:
             context:
-                List of context terms that will be used to abduce the TermList.
+                List of context terms that will be used to refine the TermList.
             vars_to_elim:
-                Variables that cannot be present in TermList after abduction.
+                Variables to be eliminated.
 
         Returns:
             A list of terms not containing any variables in `vars_to_elim`
@@ -211,9 +211,9 @@ class TermList(ABC):
         """
 
     @abstractmethod
-    def deduce_with_context(self: T, context: T, vars_to_elim: List[Var]) -> T:
+    def elim_vars_by_relaxing(self: T, context: T, vars_to_elim: List[Var]) -> T:
         """
-        Deduce terms containing variables to be eliminated using a user-provided context.
+        Eliminate variables from termlist by relaxing it in a context
 
         Given a context $\\Gamma$, and the list of terms contained in self,
         $s$, this routine identifies a formula $x$ lacking variables
@@ -224,7 +224,7 @@ class TermList(ABC):
             context:
                 List of context terms that will be used to abstract the TermList.
             vars_to_elim:
-                Variables that cannot be present in TermList after deduction.
+                Variables that cannot be present in TermList after relaxation.
 
         Returns:
             A list of terms not containing any variables in `vars_to_elim`
@@ -261,7 +261,7 @@ class TermList(ABC):
         """
 
 
-class IoContract:
+class IoContract(Generic[T]):
     """
     Basic type for an IO contract.
 
@@ -278,14 +278,14 @@ class IoContract:
     """
 
     def __init__(
-        self, assumptions: TermList, guarantees: TermList, input_vars: List[Var], output_vars: List[Var]
+        self, assumptions: T, guarantees: T, input_vars: List[Var], output_vars: List[Var]
     ) -> None:
         """
         Class constructor.
 
         Args:
             assumptions: The assumptions of the contract.
-            guarantees: The assumptions of the contract.
+            guarantees: The guarantees of the contract.
             input_vars: The input variables of the contract.
             output_vars: The output variables of the contract.
 
@@ -312,8 +312,8 @@ class IoContract:
                 % (list_diff(guarantees.vars, list_union(input_vars, output_vars)), input_vars, output_vars, guarantees)
             )
 
-        self.a = assumptions.copy()
-        self.g = guarantees.copy()
+        self.a : T = assumptions.copy()
+        self.g : T = guarantees.copy()
         self.inputvars = input_vars.copy()
         self.outputvars = output_vars.copy()
         # simplify the guarantees with the assumptions
@@ -453,21 +453,21 @@ class IoContract:
             raise ValueError("Cannot compose contracts due to feedback")
         elif self_helps_other and not other_helps_self:
             logging.debug("Assumption computation: self provides context for other")
-            new_a = other.a.abduce_with_context(self.a | self.g, assumptions_forbidden_vars)
+            new_a = other.a.elim_vars_by_refining(self.a | self.g, assumptions_forbidden_vars)
             if list_intersection(new_a.vars, assumptions_forbidden_vars):
                 raise ValueError(
                     "The guarantees \n{}\n".format(self.g)
-                    + "were insufficient to abduce the assumptions \n{}\n".format(other.a)
+                    + "were insufficient to refine the assumptions \n{}\n".format(other.a)
                     + "by eliminating the variables \n{}".format(assumptions_forbidden_vars)
                 )
             assumptions = new_a | self.a
         elif other_helps_self and not self_helps_other:
             logging.debug("Assumption computation: other provides context for self")
-            new_a = self.a.abduce_with_context(other.a | other.g, assumptions_forbidden_vars)
+            new_a = self.a.elim_vars_by_refining(other.a | other.g, assumptions_forbidden_vars)
             if list_intersection(new_a.vars, assumptions_forbidden_vars):
                 raise ValueError(
                     "The guarantees \n{}\n".format(other.g)
-                    + "were insufficient to abduce the assumptions \n{}\n".format(self.a)
+                    + "were insufficient to refine the assumptions \n{}\n".format(self.a)
                     + "by eliminating the variables \n{}".format(assumptions_forbidden_vars)
                 )
             assumptions = new_a | other.a
@@ -481,10 +481,10 @@ class IoContract:
         # process guarantees
         g1_t = self.g.copy()
         g2_t = other.g.copy()
-        g1 = g1_t.deduce_with_context(g2_t, intvars)
-        g2 = g2_t.deduce_with_context(g1_t, intvars)
+        g1 = g1_t.elim_vars_by_relaxing(g2_t, intvars)
+        g2 = g2_t.elim_vars_by_relaxing(g1_t, intvars)
         allguarantees = g1 | g2
-        allguarantees = allguarantees.deduce_with_context(assumptions, intvars)
+        allguarantees = allguarantees.elim_vars_by_relaxing(assumptions, intvars)
 
         # eliminate terms with forbidden vars
         terms_to_elim = allguarantees.get_terms_with_vars(intvars)
@@ -540,22 +540,17 @@ class IoContract:
         if assumptions.refines(other.a):
             logging.debug("Extending top-level assumptions with divisor's guarantees")
             assumptions = assumptions | other.g
-        assumptions = assumptions.deduce_with_context(empty_context, list_union(intvars, outputvars))
+        assumptions = assumptions.elim_vars_by_relaxing(empty_context, list_union(intvars, outputvars))
         logging.debug("Assumptions after processing: %s", assumptions)
 
         # get guarantees
         logging.debug("Computing quotient guarantees")
         guarantees = self.g
         logging.debug("Using existing guarantees to aid system-level guarantees")
-        guarantees = guarantees.abduce_with_context(other.g | other.a, intvars)
-        print("The guarantees now are")
-        print(guarantees)
-        print("Just used abduction help by")
-        print(other.g | other.a)
-        #exit()
+        guarantees = guarantees.elim_vars_by_refining(other.g | other.a, intvars)
         logging.debug("Using system-level assumptions to aid quotient guarantees")
         guarantees = guarantees | other.a
-        guarantees = guarantees.abduce_with_context(self.a, intvars)
+        guarantees = guarantees.elim_vars_by_refining(self.a, intvars)
         logging.debug("Guarantees after processing: %s", guarantees)
 
         return IoContract(assumptions, guarantees, inputvars, outputvars)
@@ -576,8 +571,29 @@ class IoContract:
         Raises:
             ValueError: the IO profiles are incompatible with contract merging.
         """
-        if not self.shares_io_with(other):
-            raise ValueError("Contracts cannot be merged due to incompatible IO")
+        input_vars  = list_union(self.inputvars, other.inputvars)
+        output_vars = list_union(self.outputvars, other.outputvars)
         assumptions = self.a | other.a
         guarantees = self.g | other.g
-        return IoContract(assumptions, guarantees, self.inputvars, self.outputvars)
+        return IoContract(assumptions, guarantees, input_vars, output_vars)
+
+
+    def contains_environment(self, component: TermList) -> bool:
+        """Tell whether a component is a valid environment for the contract.
+        Args:
+            component:
+                The component in question.
+        Returns:
+            True if the component is a valid environment; false otherwise.
+        """
+        return component <= self.a
+
+    def contains_implementation(self, component: TermList) -> bool:
+        """Tell whether a component is a valid implementation for the contract.
+        Args:
+            component:
+                The component in question.
+        Returns:
+            True if the component is a valid implementation; false otherwise.
+        """
+        return (component | self.a)  <= (self.g | self.a)

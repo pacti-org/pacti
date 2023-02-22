@@ -1,4 +1,4 @@
-from pacti.utils.contracts_union import ContractsUnions
+from case_studies.uav_topologies_generation.src.contracts_utils.union import ContractsUnions
 
 
 def rule_matching(state_contracts: ContractsUnions, rules_contracts: list[ContractsUnions]) -> set[ContractsUnions]:
