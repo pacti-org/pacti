@@ -26,7 +26,7 @@ def test_simple_contract():
 
   t0 = c.a.terms[0]
   assert isinstance(t0, PolyhedralTerm)
-  p0: PolyhedralTerm = t0
+  p0 = t0
   assert p0.contains_var(c.inputvars[0])
   assert -3.0 == p0.get_coefficient(c.inputvars[0])
   assert 0 == len(c.g.terms)
@@ -46,11 +46,11 @@ def test_pattern2_contract():
 
   t0 = c.a.terms[0]
   assert isinstance(t0, PolyhedralTerm)
-  p0: PolyhedralTerm = t0
+  p0 = t0
 
   t1 = c.a.terms[1]
   assert isinstance(t1, PolyhedralTerm)
-  p1: PolyhedralTerm = t1
+  p1 = t1
 
   assert p0.contains_var(c.inputvars[0])
   assert 1.0 == p0.get_coefficient(c.inputvars[0])
@@ -74,11 +74,11 @@ def test_pattern3_contract():
 
   t0 = c.a.terms[0]
   assert isinstance(t0, PolyhedralTerm)
-  p0: PolyhedralTerm = t0
+  p0 = t0
 
   t1 = c.a.terms[1]
   assert isinstance(t1, PolyhedralTerm)
-  p1: PolyhedralTerm = t1
+  p1 = t1
 
   assert p0.contains_var(c.inputvars[0])
   assert 1.0 == p0.get_coefficient(c.inputvars[0])
@@ -102,11 +102,11 @@ def test_pattern4_contract():
   assert 2 == len(c.a.terms)
   t0 = c.a.terms[0]
   assert isinstance(t0, PolyhedralTerm)
-  p0: PolyhedralTerm = t0
+  p0 = t0
 
   t1 = c.a.terms[1]
   assert isinstance(t1, PolyhedralTerm)
-  p1: PolyhedralTerm = t1
+  p1 = t1
 
   assert p0.contains_var(c.inputvars[0])
   assert 1.0 == p0.get_coefficient(c.inputvars[0])
