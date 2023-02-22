@@ -1070,16 +1070,16 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
     @staticmethod
     def _tactic_2(term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, refine: bool):
         new_context_list = []
-        print("This is the context")
-        print(context)
+        logging.debug("This is the context")
+        logging.debug(context)
         # Extract from context the terms that only contain forbidden vars
         for context_term in context.terms:
             if not list_diff(context_term.vars, vars_to_elim):
                 if context_term != term:
                     new_context_list.append(context_term.copy())
-        print("This is what we kept")
+        logging.debug("This is what we kept")
         for el in new_context_list:
-            print(el)
+            logging.debug(el)
         if not new_context_list:
             raise ValueError("No term contains only irrelevant variables")
         # now optimize
@@ -1091,9 +1091,9 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         if refine:
             polarity = -1
         objective = [polarity*term.get_coefficient(var) for var in variables]
-        print(new_context_mat)
-        print(new_context_cons)
-        print(objective)
+        logging.debug(new_context_mat)
+        logging.debug(new_context_cons)
+        logging.debug(objective)
         res = linprog(c=objective,A_ub=new_context_mat,b_ub=new_context_cons,bounds=(None, None))
         if res["status"] == 3:
             # unbounded
