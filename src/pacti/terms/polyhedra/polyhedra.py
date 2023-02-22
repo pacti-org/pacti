@@ -8,18 +8,18 @@ $x_i$ are variables and the $a_i$ and $c$ are constants.
 from __future__ import annotations
 
 import logging
-from typing import Tuple, Any, Union
+from typing import Any, Tuple, Union
 
 import numpy as np
 import sympy
 from scipy.optimize import linprog
 
+import pacti.terms.polyhedra.serializer as serializer
 from pacti.iocontract import Term, TermList, Var
 from pacti.utils.lists import list_diff, list_intersection, list_union
 
-import pacti.terms.polyhedra.serializer as serializer
-
 numeric = Union[int, float]
+
 
 class PolyhedralTerm(Term):
     """Polyhedral terms are linear inequalities over a list of variables."""
@@ -76,10 +76,10 @@ class PolyhedralTerm(Term):
     def _lhs_str(self) -> str:
         varlist = list(self.variables.items())
         varlist.sort(key=lambda x: str(x[0]))
-        #res = " + ".join([str(coeff) + "*" + var.name for var, coeff in varlist])
-        #res += " <= " + str(self.constant)
+        # res = " + ".join([str(coeff) + "*" + var.name for var, coeff in varlist])
+        # res += " <= " + str(self.constant)
         res = ""
-        first=True
+        first = True
         for var, coeff in varlist:
             if serializer.are_numbers_approximatively_equal(coeff, 1.0):
                 if first:
@@ -102,8 +102,8 @@ class PolyhedralTerm(Term):
                         res += serializer.number2string(coeff) + " " + var.name
                     else:
                         res += " - " + serializer.number2string(-coeff) + " " + var.name
-            first=False
-        #res += " <= " + serializer.number2string(self.constant)
+            first = False
+        # res += " <= " + serializer.number2string(self.constant)
         return res
 
     def __hash__(self):
@@ -438,10 +438,11 @@ class PolyhedralTerm(Term):
             return {Var(str(key)): PolyhedralTerm.to_term(sols[key]) for key in sols.keys()}
         return {}
 
+
 class PolyhedralTermList(TermList):  # noqa: WPS338
     """A TermList of PolyhedralTerm instances."""
 
-    def __init__(self, terms: Union[list[PolyhedralTerm],None] = None):
+    def __init__(self, terms: Union[list[PolyhedralTerm], None] = None):
         if terms is None:
             self.terms = []
         elif all(isinstance(t, PolyhedralTerm) for t in terms):
@@ -450,16 +451,16 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
             raise ValueError("PolyhedralTermList constructor argument must be a list of PolyhedralTerms.")
 
     def __str__(self) -> str:
-        res="["
-        ts=self.terms.copy()
+        res = "["
+        ts = self.terms.copy()
         while ts:
-            s, rest=serializer.internal_pt_to_string(ts)
-            res += "\n  "+s
+            s, rest = serializer.internal_pt_to_string(ts)
+            res += "\n  " + s
             ts = rest
         res += "\n]"
         return res
 
-    def evaluate(self, var_values:dict[Var,numeric]) -> PolyhedralTermList:
+    def evaluate(self, var_values: dict[Var, numeric]) -> PolyhedralTermList:
         """
         Replace variables in termlist with given values.
         Args:
@@ -476,7 +477,9 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         for term in self.terms:
             new_term = term.copy()
             for var, val in var_values.items():
-                new_term = new_term.substitute_variable(var=var, subst_with_term=PolyhedralTerm(variables={},constant=-val))
+                new_term = new_term.substitute_variable(
+                    var=var, subst_with_term=PolyhedralTerm(variables={}, constant=-val)
+                )
             # we may have eliminated all variables after substitution
             if not new_term.vars:
                 if new_term.constant < 0:
@@ -1045,7 +1048,6 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         logging.debug("Matrix row terms %s", matrix_row_terms)
         return matrix_row_terms, forbidden_vars
 
-
     @staticmethod
     def _tactic_1(term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, refine: bool):
         try:
@@ -1083,18 +1085,18 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         if not new_context_list:
             raise ValueError("No term contains only irrelevant variables")
         # now optimize
-        retval = PolyhedralTermList.termlist_to_polytope(PolyhedralTermList(new_context_list),PolyhedralTermList([]))
+        retval = PolyhedralTermList.termlist_to_polytope(PolyhedralTermList(new_context_list), PolyhedralTermList([]))
         variables = retval[0]
         new_context_mat = retval[1]
         new_context_cons = retval[2]
         polarity = 1
         if refine:
             polarity = -1
-        objective = [polarity*term.get_coefficient(var) for var in variables]
+        objective = [polarity * term.get_coefficient(var) for var in variables]
         logging.debug(new_context_mat)
         logging.debug(new_context_cons)
         logging.debug(objective)
-        res = linprog(c=objective,A_ub=new_context_mat,b_ub=new_context_cons,bounds=(None, None))
+        res = linprog(c=objective, A_ub=new_context_mat, b_ub=new_context_cons, bounds=(None, None))
         if res["status"] == 3:
             # unbounded
             return term.copy()
@@ -1109,17 +1111,13 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
             return term.copy()
         return result
 
-        
-        
-
-
     @staticmethod
     def _transform_term(term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, refine: bool):
         logging.debug("Transforming term: %s", term)
         logging.debug("Context: %s", context)
 
         try:
-            result =  PolyhedralTermList._tactic_1(term, context, vars_to_elim, refine)
+            result = PolyhedralTermList._tactic_1(term, context, vars_to_elim, refine)
         except ValueError as e:
             try:
                 result = PolyhedralTermList._tactic_2(term, context, vars_to_elim, refine)
@@ -1127,4 +1125,3 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
                 raise e
 
         return result
-
