@@ -26,10 +26,10 @@ import toml
 from jinja2 import StrictUndefined
 from jinja2.sandbox import SandboxedEnvironment
 
-try:
-    from importlib.metadata import PackageNotFoundError, metadata
-except ImportError:
-    from importlib_metadata import PackageNotFoundError, metadata
+#try:
+from importlib.metadata import PackageNotFoundError, metadata
+#except ImportError:
+#    from importlib_metadata import PackageNotFoundError, metadata
 
 project_dir = Path(".")
 pyproject = toml.load(project_dir / "pyproject.toml")

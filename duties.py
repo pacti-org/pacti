@@ -72,14 +72,14 @@ def update_changelog(
         template_url: The URL to the Jinja template used to render contents.
     """
     from git_changelog.build import Changelog
-    from git_changelog.commit import AngularStyle
+    from git_changelog.commit import AngularConvention
     from jinja2.sandbox import SandboxedEnvironment
 
-    AngularStyle.DEFAULT_RENDER.insert(0, AngularStyle.TYPES["build"])
+    AngularConvention.DEFAULT_RENDER.insert(0, AngularConvention.TYPES["build"])
     env = SandboxedEnvironment(autoescape=False)
     template_text = urlopen(template_url).read().decode("utf8")  # noqa: S310
     template = env.from_string(template_text)
-    changelog = Changelog(".", style="angular")
+    changelog = Changelog(".", convention=AngularConvention)
 
     if len(changelog.versions_list) == 1:
         last_version = changelog.versions_list[0]
@@ -145,7 +145,7 @@ def check_quality(ctx, files=PY_SRC):
         files: The files to check.
     """
     """Latest Flake8 cause problems with dependencies. Suppress for now."""
-    ctx.run(f"flake8 --config=config/flake8.ini {files}", title="Checking code quality", pty=PTY)
+    ctx.run(f"flake8 --quiet --count --config=config/flake8.ini {files}", title="Checking code quality", pty=PTY)
 
 
 @duty
