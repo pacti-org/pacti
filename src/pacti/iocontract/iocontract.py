@@ -189,9 +189,9 @@ class TermList(ABC):
         return type(self)([term.copy() for term in self.terms])
 
     @abstractmethod
-    def abduce_with_context(self: T, context: T, vars_to_elim: List[Var]) -> T:
+    def elim_vars_by_refinement(self: T, context: T, vars_to_elim: List[Var]) -> T:
         """
-        Abduce terms containing variables to be eliminated using a user-provided context.
+        Eliminate variables from termlist by refining it in a context.
 
         Given a context $\\Gamma$, and the list of terms contained in self,
         $s$, this routine identifies a TermList $x$ lacking variables
@@ -200,9 +200,9 @@ class TermList(ABC):
 
         Args:
             context:
-                List of context terms that will be used to abduce the TermList.
+                List of context terms that will be used to refine the TermList.
             vars_to_elim:
-                Variables that cannot be present in TermList after abduction.
+                Variables to be eliminated.
 
         Returns:
             A list of terms not containing any variables in `vars_to_elim`
@@ -211,9 +211,9 @@ class TermList(ABC):
         """
 
     @abstractmethod
-    def deduce_with_context(self: T, context: T, vars_to_elim: List[Var]) -> T:
+    def elim_vars_by_relaxing(self: T, context: T, vars_to_elim: List[Var]) -> T:
         """
-        Deduce terms containing variables to be eliminated using a user-provided context.
+        Eliminate variables from termlist by relaxing it in a context
 
         Given a context $\\Gamma$, and the list of terms contained in self,
         $s$, this routine identifies a formula $x$ lacking variables
@@ -224,7 +224,7 @@ class TermList(ABC):
             context:
                 List of context terms that will be used to abstract the TermList.
             vars_to_elim:
-                Variables that cannot be present in TermList after deduction.
+                Variables that cannot be present in TermList after relaxation.
 
         Returns:
             A list of terms not containing any variables in `vars_to_elim`
@@ -453,21 +453,21 @@ class IoContract:
             raise ValueError("Cannot compose contracts due to feedback")
         elif self_helps_other and not other_helps_self:
             logging.debug("Assumption computation: self provides context for other")
-            new_a = other.a.abduce_with_context(self.a | self.g, assumptions_forbidden_vars)
+            new_a = other.a.elim_vars_by_refinement(self.a | self.g, assumptions_forbidden_vars)
             if list_intersection(new_a.vars, assumptions_forbidden_vars):
                 raise ValueError(
                     "The guarantees \n{}\n".format(self.g)
-                    + "were insufficient to abduce the assumptions \n{}\n".format(other.a)
+                    + "were insufficient to refine the assumptions \n{}\n".format(other.a)
                     + "by eliminating the variables \n{}".format(assumptions_forbidden_vars)
                 )
             assumptions = new_a | self.a
         elif other_helps_self and not self_helps_other:
             logging.debug("Assumption computation: other provides context for self")
-            new_a = self.a.abduce_with_context(other.a | other.g, assumptions_forbidden_vars)
+            new_a = self.a.elim_vars_by_refinement(other.a | other.g, assumptions_forbidden_vars)
             if list_intersection(new_a.vars, assumptions_forbidden_vars):
                 raise ValueError(
                     "The guarantees \n{}\n".format(other.g)
-                    + "were insufficient to abduce the assumptions \n{}\n".format(self.a)
+                    + "were insufficient to refine the assumptions \n{}\n".format(self.a)
                     + "by eliminating the variables \n{}".format(assumptions_forbidden_vars)
                 )
             assumptions = new_a | other.a
@@ -481,10 +481,10 @@ class IoContract:
         # process guarantees
         g1_t = self.g.copy()
         g2_t = other.g.copy()
-        g1 = g1_t.deduce_with_context(g2_t, intvars)
-        g2 = g2_t.deduce_with_context(g1_t, intvars)
+        g1 = g1_t.elim_vars_by_relaxing(g2_t, intvars)
+        g2 = g2_t.elim_vars_by_relaxing(g1_t, intvars)
         allguarantees = g1 | g2
-        allguarantees = allguarantees.deduce_with_context(assumptions, intvars)
+        allguarantees = allguarantees.elim_vars_by_relaxing(assumptions, intvars)
 
         # eliminate terms with forbidden vars
         terms_to_elim = allguarantees.get_terms_with_vars(intvars)
@@ -539,17 +539,17 @@ class IoContract:
         empty_context = type(assumptions)([])
         if assumptions.refines(other.a):
             assumptions = assumptions | other.g
-        assumptions = assumptions.deduce_with_context(empty_context, list_union(intvars, outputvars))
+        assumptions = assumptions.elim_vars_by_relaxing(empty_context, list_union(intvars, outputvars))
         logging.debug("Assumptions after processing: %s", assumptions)
 
         # get guarantees
         logging.debug("Computing quotient guarantees")
         guarantees = self.g
         logging.debug("Using existing guarantees to aid system-level guarantees")
-        guarantees = guarantees.abduce_with_context(other.g | other.a, intvars)
+        guarantees = guarantees.elim_vars_by_refinement(other.g | other.a, intvars)
         logging.debug("Using system-level assumptions to aid quotient guarantees")
         guarantees = guarantees | other.a
-        guarantees = guarantees.abduce_with_context(self.a, intvars)
+        guarantees = guarantees.elim_vars_by_refinement(self.a, intvars)
         logging.debug("Guarantees after processing: %s", guarantees)
 
         return IoContract(assumptions, guarantees, inputvars, outputvars)
