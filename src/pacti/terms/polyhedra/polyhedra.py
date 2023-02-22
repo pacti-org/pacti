@@ -452,6 +452,54 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         res += "\n]"
         return res
 
+    def evaluate(self, var_values:dict[Var,numeric]) -> PolyhedralTermList:
+        """
+        Replace variables in termlist with given values.
+        Args:
+            var_values:
+                The values that variables will take.
+        Returns:
+            A new PolyhedralTermList in which the variables have been
+            substituted with the values provided.
+        Raises:
+            ValueError: One term is unsatisfiable under these valuation of
+            variables.
+        """
+        new_list = []
+        for term in self.terms:
+            new_term = term.copy()
+            for var, val in var_values.items():
+                new_term = new_term.substitute_variable(var=var, subst_with_term=PolyhedralTerm(variables={},constant=-val))
+            # we may have eliminated all variables after substitution
+            if not new_term.vars:
+                if new_term.constant < 0:
+                    raise ValueError("Term %s not satisfied" % (term))
+                else:
+                    continue
+            new_list.append(new_term)
+        return PolyhedralTermList(new_list)
+
+    def contains_behavior(self, behavior: dict[Var, numeric]) -> bool:
+        """
+        Tell whether TermList contains the given behavior.
+        Args:
+            behavior:
+                The behavior in question.
+        Returns:
+            True if the behavior satisfies the constraints; false otherwise.
+        Raises:
+            ValueError: Not all variables in the constraints were assined values.
+        """
+        excess_vars = list_diff(self.vars, list(behavior.keys()))
+        if excess_vars:
+            raise ValueError("The variables %s were not assigned values" % (excess_vars))
+        retval = True
+        try:
+            _ = self.evaluate(behavior)
+        except ValueError:
+            retval = False
+        return retval
+
     def elim_vars_by_refining(self, context: PolyhedralTermList, vars_to_elim: list) -> PolyhedralTermList:
         """
         Eliminate variables from PolyhedralTermList by refining it in context.
