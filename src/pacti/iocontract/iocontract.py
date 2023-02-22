@@ -189,7 +189,7 @@ class TermList(ABC):
         return type(self)([term.copy() for term in self.terms])
 
     @abstractmethod
-    def elim_vars_by_refinement(self: T, context: T, vars_to_elim: List[Var]) -> T:
+    def elim_vars_by_refining(self: T, context: T, vars_to_elim: List[Var]) -> T:
         """
         Eliminate variables from termlist by refining it in a context.
 
@@ -453,7 +453,7 @@ class IoContract:
             raise ValueError("Cannot compose contracts due to feedback")
         elif self_helps_other and not other_helps_self:
             logging.debug("Assumption computation: self provides context for other")
-            new_a = other.a.elim_vars_by_refinement(self.a | self.g, assumptions_forbidden_vars)
+            new_a = other.a.elim_vars_by_refining(self.a | self.g, assumptions_forbidden_vars)
             if list_intersection(new_a.vars, assumptions_forbidden_vars):
                 raise ValueError(
                     "The guarantees \n{}\n".format(self.g)
@@ -463,7 +463,7 @@ class IoContract:
             assumptions = new_a | self.a
         elif other_helps_self and not self_helps_other:
             logging.debug("Assumption computation: other provides context for self")
-            new_a = self.a.elim_vars_by_refinement(other.a | other.g, assumptions_forbidden_vars)
+            new_a = self.a.elim_vars_by_refining(other.a | other.g, assumptions_forbidden_vars)
             if list_intersection(new_a.vars, assumptions_forbidden_vars):
                 raise ValueError(
                     "The guarantees \n{}\n".format(other.g)
@@ -546,10 +546,10 @@ class IoContract:
         logging.debug("Computing quotient guarantees")
         guarantees = self.g
         logging.debug("Using existing guarantees to aid system-level guarantees")
-        guarantees = guarantees.elim_vars_by_refinement(other.g | other.a, intvars)
+        guarantees = guarantees.elim_vars_by_refining(other.g | other.a, intvars)
         logging.debug("Using system-level assumptions to aid quotient guarantees")
         guarantees = guarantees | other.a
-        guarantees = guarantees.elim_vars_by_refinement(self.a, intvars)
+        guarantees = guarantees.elim_vars_by_refining(self.a, intvars)
         logging.debug("Guarantees after processing: %s", guarantees)
 
         return IoContract(assumptions, guarantees, inputvars, outputvars)

@@ -41,7 +41,7 @@ def test_polyhedral_var_elim_by_refinement_1():
     context = to_pts(["2*x <= 5"])
     expected = reference.copy()
     vars_elim = {x}
-    reference = reference.elim_vars_by_refinement(context, vars_elim)
+    reference = reference.elim_vars_by_refining(context, vars_elim)
     assert reference.terms == expected.terms
 
 
@@ -52,7 +52,7 @@ def test_polyhedral_var_elim_by_refinement_2():
     context = to_pts(["2*x <= 3"])
     expected = to_pts([])
     vars_elim = {x}
-    reference = reference.elim_vars_by_refinement(context, vars_elim)
+    reference = reference.elim_vars_by_refining(context, vars_elim)
     assert reference.terms == expected.terms
 
 
@@ -64,7 +64,7 @@ def test_polyhedral_var_elim_by_refinement_3():
     context = to_pts(["y <= 10"])
     expected = to_pts(["x <= -6"])
     vars_elim = {y}
-    reference = reference.elim_vars_by_refinement(context, vars_elim)
+    reference = reference.elim_vars_by_refining(context, vars_elim)
     assert reference.terms == expected.terms
 
 
@@ -75,7 +75,7 @@ def test_polyhedral_var_elim_by_refinement_4():
     context = to_pts(["-x + y <= 0"])
     expected = to_pts(["x <= -1"])
     vars_elim = {x}
-    reference = reference.elim_vars_by_refinement(context, vars_elim)
+    reference = reference.elim_vars_by_refining(context, vars_elim)
     assert reference.terms == expected.terms
 
 
@@ -86,7 +86,7 @@ def test_polyhedral_var_elim_by_refinement_5():
     context = to_pts(["x - y <= 0"])
     expected = to_pts(["y <= -1"])
     vars_elim = {x}
-    reference = reference.elim_vars_by_refinement(context, vars_elim)
+    reference = reference.elim_vars_by_refining(context, vars_elim)
     assert reference.terms == expected.terms
 
 
@@ -98,7 +98,7 @@ def test_polyhedral_var_elim_by_refinement_6():
     context = to_pts(["x - y <= 0", "-z + x <= 0"])
     expected = to_pts(["y <= -1"])
     vars_elim = {x, z}
-    reference = reference.elim_vars_by_refinement(context, vars_elim)
+    reference = reference.elim_vars_by_refining(context, vars_elim)
     assert reference.terms == expected.terms
 
 
@@ -124,7 +124,7 @@ def test_polyhedral_var_elim_by_relaxation_7():
 #    # the expected value is wrong
 #    expected = to_pts(["x <= -0.2"])
 #    vars_elim = {y, z}
-#    reference = reference.elim_vars_by_refinement(context, vars_elim)
+#    reference = reference.elim_vars_by_refining(context, vars_elim)
 #    assert reference.terms == expected.terms
 
 

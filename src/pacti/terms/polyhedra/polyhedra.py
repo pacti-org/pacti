@@ -452,7 +452,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         res += "\n]"
         return res
 
-    def elim_vars_by_refinement(self, context: PolyhedralTermList, vars_to_elim: list) -> PolyhedralTermList:
+    def elim_vars_by_refining(self, context: PolyhedralTermList, vars_to_elim: list) -> PolyhedralTermList:
         """
         Eliminate variables from PolyhedralTermList by refining it in context.
 
