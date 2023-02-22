@@ -25,6 +25,7 @@ dependencies = [
     "pycddlib>=2.1.6",
     "pypoman>=0.5.4",
     "ipympl>=0.9.3",
+    "typing-extensions>=4.5.0",
 ]
 requires-python = ">=3.8, <=3.11.1"
 
