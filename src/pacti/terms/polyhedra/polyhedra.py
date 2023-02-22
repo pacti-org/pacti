@@ -452,22 +452,22 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         res += "\n]"
         return res
 
-    def abduce_with_context(self, context: PolyhedralTermList, vars_to_elim: list) -> PolyhedralTermList:
+    def elim_vars_by_refining(self, context: PolyhedralTermList, vars_to_elim: list) -> PolyhedralTermList:
         """
         Eliminate variables from PolyhedralTermList by refining it in context.
 
         Example:
             Suppose the current list of terms is $\\{x + y \\le 6\\}$, the
-            context is $\\{y \\le 5\\}$, and the abduced terms should not
+            context is $\\{y \\le 5\\}$, and the resulting terms should not
             contain variable $y$. Then the current TermList could be
-            abduced to $\\{x \\le 1\\}$ because $x \\le 1
+            refined to $\\{x \\le 1\\}$ because $x \\le 1
             \\;\\land\\; y \\le 5 \\Rightarrow x + y \\le 6$.
 
         Args:
             context:
-                The TermList providing the context for the abduction.
+                The TermList providing the context for the refinement.
             vars_to_elim:
-                Variables that should not appear in the abduced term.
+                Variables that should not appear in the resulting term.
 
         Returns:
             A list of terms not containing any variables in `vars_to_elim`
@@ -478,7 +478,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
             ValueError: Self has empty intersection with its context.
         """
         termlist = self.copy()
-        logging.debug("Abducing from terms: %s", self)
+        logging.debug("Refining from terms: %s", self)
         logging.debug("Context: %s", context)
         logging.debug("Vars to elim: %s", vars_to_elim)
         try:
@@ -488,11 +488,11 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
                 "Provided constraints \n{}\n".format(self) + "are unsatisfiable in context \n{}".format(context)
             ) from e
         try:
-            termlist._transform(context=context, vars_to_elim=vars_to_elim, abduce=True)
+            termlist._transform(context=context, vars_to_elim=vars_to_elim, refine=True)
         except ValueError as e:
             raise ValueError(
                 "The elimination of variables \n{}\n".format(vars_to_elim)
-                + "by abducing terms \n{}\n".format(self)
+                + "by refining terms \n{}\n".format(self)
                 + "in context \n{}\n".format(context)
                 + "was not possible"
             ) from e
@@ -507,22 +507,22 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         """
         return len(self.terms) == 0
 
-    def deduce_with_context(self, context: PolyhedralTermList, vars_to_elim: list) -> PolyhedralTermList:
+    def elim_vars_by_relaxing(self, context: PolyhedralTermList, vars_to_elim: list) -> PolyhedralTermList:
         """
         Eliminate variables from PolyhedralTermList by abstracting it in context.
 
         Example:
             Suppose the current list of terms is $\\{x - y \\le 6\\}$, the
-            context is $\\{y \\le 5\\}$, and the deduced terms should not
+            context is $\\{y \\le 5\\}$, and the resulting terms should not
             contain variable $y$. Then the current TermList could be
-            deduced to $\\{x \\le 11\\}$ because $x - y \\le 6
+            relaxed to $\\{x \\le 11\\}$ because $x - y \\le 6
             \\;\\land\\; y \\le 5 \\Rightarrow x \\le 11$.
 
         Args:
             context:
-                The TermList providing the context for the deduction.
+                The TermList providing the context for the transformation.
             vars_to_elim:
-                Variables that should not appear in the deduced term.
+                Variables that should not appear in the relaxed terms.
 
         Returns:
             A list of terms not containing any variables in `vars_to_elim`
@@ -533,8 +533,8 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
             ValueError: Constraints have empty intersection with context.
         """
         termlist = self.copy()
-        logging.debug("Deduce with context")
-        logging.debug("Deducing from terms %s", self)
+        logging.debug("Relaxing with context")
+        logging.debug("Relaxing from terms %s", self)
         logging.debug("Context: %s", context)
         logging.debug("Vars to elim: %s", vars_to_elim)
         try:
@@ -544,11 +544,11 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
                 "Provided constraints \n{}\n".format(self) + "are unsatisfiable in context \n{}".format(context)
             ) from e
         try:
-            termlist._transform(context=context, vars_to_elim=vars_to_elim, abduce=False)
+            termlist._transform(context=context, vars_to_elim=vars_to_elim, refine=False)
         except ValueError as e:
             raise ValueError(
                 "The elimination of variables \n{}\n".format(vars_to_elim)
-                + "by deducing terms \n{}\n".format(self)
+                + "by relaxing terms \n{}\n".format(self)
                 + "in context \n{}\n".format(context)
                 + "was not possible"
             ) from e
@@ -621,7 +621,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         logging.debug("Polytope is \n%s", self_mat)
         return PolyhedralTermList.verify_polytope_containment(self_mat, self_cons, ctx_mat, ctx_cons)
 
-    def _transform(self, context: PolyhedralTermList, vars_to_elim: list, abduce: bool):
+    def _transform(self, context: PolyhedralTermList, vars_to_elim: list, refine: bool):
         logging.debug("Transforming: %s", self)
         logging.debug("Context terms: %s", context)
         logging.debug("Variables to eliminate: %s", vars_to_elim)
@@ -633,11 +633,11 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
             logging.debug("Transforming term %s", str(term))
             newcontext = context.copy()
             if context.terms:
-                newcontext._transform(PolyhedralTermList([]), list_diff(vars_to_elim, term.vars), abduce)
+                newcontext._transform(PolyhedralTermList([]), list_diff(vars_to_elim, term.vars), refine)
             helpers = (newcontext | self) - PolyhedralTermList([term])
             # ENDNOTE: Review
             try:
-                new_term = PolyhedralTermList._transform_term(term, helpers, vars_to_elim, abduce)
+                new_term = PolyhedralTermList._transform_term(term, helpers, vars_to_elim, refine)
             except ValueError:
                 new_term = term
             new_terms.append(new_term)
@@ -917,7 +917,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
 
     @staticmethod
     def _get_kaykobad_context(  # noqa: WPS231
-        term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, abduce: bool
+        term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, refine: bool
     ):
         forbidden_vars = list_intersection(vars_to_elim, term.vars)
         other_forbibben_vars = list_diff(vars_to_elim, term.vars)
@@ -925,7 +925,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         matrix_row_terms = []  # type: list[PolyhedralTerm]
         partial_sums = [float(0) for i in range(n)]
         transform_coeff = -1
-        if abduce:
+        if refine:
             transform_coeff = 1
         matrix_contains_others = False
         # We add a row to the matrix in each iteration
@@ -991,12 +991,12 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         return matrix_row_terms, forbidden_vars
 
     @staticmethod
-    def _transform_term(term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, abduce: bool):
+    def _transform_term(term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, refine: bool):
         logging.debug("Transforming term: %s", term)
         logging.debug("Context: %s", context)
         try:
             matrix_row_terms, forbidden_vars = PolyhedralTermList._get_kaykobad_context(
-                term, context, vars_to_elim, abduce
+                term, context, vars_to_elim, refine
             )
         except ValueError as e:
             logging.debug("Could not transform %s", term)
