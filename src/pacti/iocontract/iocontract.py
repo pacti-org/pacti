@@ -201,7 +201,6 @@ class TermList(ABC):
         """
         return type(self)([term.copy() for term in self.terms])
 
-
     def rename_variable(self: T, source_var: Var, target_var: Var) -> T:
         """
         Rename a variable in a termlist.
@@ -382,10 +381,9 @@ class IoContract(Generic[T]):
             + str(self.g)
         )
 
-
-
-
-    def rename_variable(self, source_var : Var, target_var : Var) -> IoContract:
+    def rename_variable(  # noqa: WPS231 too much cognitive complexity
+        self, source_var: Var, target_var: Var
+    ) -> IoContract:
         """
         Rename a variable in a contract.
 
@@ -410,18 +408,17 @@ class IoContract(Generic[T]):
                 elif target_var not in inputvars:
                     inputvars.append(target_var)
                 inputvars.remove(source_var)
-                assumptions = assumptions.rename_variable(source_var,target_var)
-                guarantees = guarantees.rename_variable(source_var,target_var)
+                assumptions = assumptions.rename_variable(source_var, target_var)
+                guarantees = guarantees.rename_variable(source_var, target_var)
             elif source_var in outputvars:
                 if target_var in inputvars:
                     raise ValueError("Making variable %s both an input and output" % (target_var))
                 elif target_var not in outputvars:
                     outputvars.append(target_var)
                 outputvars.remove(source_var)
-                assumptions = assumptions.rename_variable(source_var,target_var)
-                guarantees = guarantees.rename_variable(source_var,target_var)
+                assumptions = assumptions.rename_variable(source_var, target_var)
+                guarantees = guarantees.rename_variable(source_var, target_var)
         return type(self)(assumptions, guarantees, inputvars, outputvars)
-
 
     def copy(self: IoContract) -> IoContract:
         """
@@ -435,7 +432,6 @@ class IoContract(Generic[T]):
         assumptions = self.a.copy()
         guarantees = self.g.copy()
         return type(self)(assumptions, guarantees, inputvars, outputvars)
-
 
     def __le__(self, other):
         return self.refines(other)
