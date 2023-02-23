@@ -26,10 +26,10 @@ import toml
 from jinja2 import StrictUndefined
 from jinja2.sandbox import SandboxedEnvironment
 
-try:
-    from importlib.metadata import metadata, PackageNotFoundError
-except ImportError:
-    from importlib_metadata import metadata, PackageNotFoundError
+#try:
+from importlib.metadata import PackageNotFoundError, metadata
+#except ImportError:
+#    from importlib_metadata import PackageNotFoundError, metadata
 
 project_dir = Path(".")
 pyproject = toml.load(project_dir / "pyproject.toml")
@@ -39,6 +39,7 @@ lock_data = toml.load(project_dir / "pdm.lock")
 lock_pkgs = {pkg["name"].lower(): pkg for pkg in lock_data["package"]}
 project_name = project["name"]
 regex = re.compile(r"(?P<dist>[\w.-]+)(?P<spec>.*)$")
+
 
 def get_license(pkg_name):
     try:
@@ -52,6 +53,7 @@ def get_license(pkg_name):
             if header == "Classifier" and value.startswith("License ::"):
                 license = value.rsplit("::", 1)[1].strip()
     return license or "?"
+
 
 def get_deps(base_deps):
     deps = {}
@@ -71,8 +73,9 @@ def get_deps(base_deps):
                     if dep_name not in deps:
                         deps[dep_name] = {"license": get_license(dep_name), **parsed, **lock_pkgs[dep_name]}
                         again = True
-        
+
     return deps
+
 
 dev_dependencies = get_deps(chain(*pdm.get("dev-dependencies", {}).values()))
 prod_dependencies = get_deps(
