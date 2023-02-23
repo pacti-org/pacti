@@ -119,7 +119,7 @@ class Term(ABC):
         """
 
 
-T = TypeVar("T", bound="TermList")
+TL_t = TypeVar("TL_t", bound="TermList")
 
 
 class TermList(ABC):
@@ -164,7 +164,7 @@ class TermList(ABC):
     def __eq__(self, other):
         return self.terms == other.terms
 
-    def get_terms_with_vars(self: T, variable_list: List[Var]) -> T:
+    def get_terms_with_vars(self: TL_t, variable_list: List[Var]) -> TL_t:
         """
         Returns the list of terms which contain any of the variables indicated.
 
@@ -192,7 +192,7 @@ class TermList(ABC):
     def __le__(self, other):
         return self.refines(other)
 
-    def copy(self: T) -> T:
+    def copy(self: TL_t) -> TL_t:
         """
         Makes copy of termlist.
 
@@ -201,7 +201,7 @@ class TermList(ABC):
         """
         return type(self)([term.copy() for term in self.terms])
 
-    def rename_variable(self: T, source_var: Var, target_var: Var) -> T:
+    def rename_variable(self: TL_t, source_var: Var, target_var: Var) -> TL_t:
         """
         Rename a variable in a termlist.
 
@@ -215,7 +215,7 @@ class TermList(ABC):
         return type(self)([term.rename_variable(source_var, target_var) for term in self.terms])
 
     @abstractmethod
-    def elim_vars_by_refining(self: T, context: T, vars_to_elim: List[Var]) -> T:
+    def elim_vars_by_refining(self: TL_t, context: TL_t, vars_to_elim: List[Var]) -> TL_t:
         """
         Eliminate variables from termlist by refining it in a context.
 
@@ -237,7 +237,7 @@ class TermList(ABC):
         """
 
     @abstractmethod
-    def elim_vars_by_relaxing(self: T, context: T, vars_to_elim: List[Var]) -> T:
+    def elim_vars_by_relaxing(self: TL_t, context: TL_t, vars_to_elim: List[Var]) -> TL_t:
         """
         Eliminate variables from termlist by relaxing it in a context
 
@@ -259,7 +259,7 @@ class TermList(ABC):
         """
 
     @abstractmethod
-    def simplify(self: T, context: Union[T, None] = None):
+    def simplify(self: TL_t, context: Union[TL_t, None] = None):
         """Remove redundant terms in TermList.
 
         Let $S$ be this TermList and suppose $T \\subseteq S$. Let
@@ -274,7 +274,7 @@ class TermList(ABC):
         """
 
     @abstractmethod
-    def refines(self: T, other: T) -> bool:
+    def refines(self: TL_t, other: TL_t) -> bool:
         """
         Tell whether the argument is a larger specification.
 
@@ -286,8 +286,17 @@ class TermList(ABC):
             self <= other.
         """
 
+    @abstractmethod
+    def is_empty(self) -> bool:
+        """
+        Tell whether the termlist has no satisfying assignments.
 
-class IoContract(Generic[T]):
+        Returns:
+            True if termlist constraints cannot be satisfied.
+        """
+
+
+class IoContract(Generic[TL_t]):
     """
     Basic type for an IO contract.
 
@@ -303,7 +312,7 @@ class IoContract(Generic[T]):
         g(TermList): Contract guarantees.
     """
 
-    def __init__(self, assumptions: T, guarantees: T, input_vars: List[Var], output_vars: List[Var]) -> None:
+    def __init__(self, assumptions: TL_t, guarantees: TL_t, input_vars: List[Var], output_vars: List[Var]) -> None:
         """
         Class constructor.
 
@@ -347,8 +356,8 @@ class IoContract(Generic[T]):
                 % (list_diff(guarantees.vars, list_union(input_vars, output_vars)), input_vars, output_vars, guarantees)
             )
 
-        self.a: T = assumptions.copy()
-        self.g: T = guarantees.copy()
+        self.a: TL_t = assumptions.copy()
+        self.g: TL_t = guarantees.copy()
         self.inputvars = input_vars.copy()
         self.outputvars = output_vars.copy()
         # simplify the guarantees with the assumptions
@@ -655,7 +664,6 @@ class IoContract(Generic[T]):
 
         Args:
             other: The contract with which we are merging self.
-
 
         Returns:
             The result of merging.
