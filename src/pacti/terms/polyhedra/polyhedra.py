@@ -95,6 +95,25 @@ class PolyhedralTerm(Term):
         """
         return PolyhedralTerm(self.variables, self.constant)
 
+    def rename_variable(self, source_var: Var, target_var: Var) -> PolyhedralTerm:
+        """
+        Rename a variable in a term.
+
+        Args:
+            source_var: The variable to be replaced.
+            target_var: The new variable.
+
+        Returns:
+            A term with `source_var` replaced by `target_var`.
+        """
+        new_term = self.copy()
+        if source_var in self.vars:
+            if target_var not in self.vars:
+                new_term.variables[target_var] = 0
+            new_term.variables[target_var] += new_term.variables[source_var]
+            new_term.remove_variable(source_var)
+        return new_term
+
     @property
     def vars(self) -> list[Var]:  # noqa: A003
         """

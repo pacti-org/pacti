@@ -105,6 +105,19 @@ class Term(ABC):
     def copy(self):
         """Returns a copy of term."""
 
+    @abstractmethod
+    def rename_variable(self, source_var: Var, target_var: Var):
+        """
+        Rename a variable in a term.
+
+        Args:
+            source_var: The variable to be replaced.
+            target_var: The new variable.
+
+        Returns:
+            A term with `source_var` replaced by `target_var`.
+        """
+
 
 T = TypeVar("T", bound="TermList")
 
@@ -187,6 +200,20 @@ class TermList(ABC):
             Copy of termlist.
         """
         return type(self)([term.copy() for term in self.terms])
+
+
+    def rename_variable(self: T, source_var: Var, target_var: Var) -> T:
+        """
+        Rename a variable in a termlist.
+
+        Args:
+            source_var: The variable to be replaced.
+            target_var: The new variable.
+
+        Returns:
+            A termlist with `source_var` replaced by `target_var`.
+        """
+        return type(self)([term.rename_variable(source_var, target_var) for term in self.terms])
 
     @abstractmethod
     def elim_vars_by_refining(self: T, context: T, vars_to_elim: List[Var]) -> T:
@@ -288,8 +315,19 @@ class IoContract(Generic[T]):
             output_vars: The output variables of the contract.
 
         Raises:
-            ValueError: The provided does not produce a valid IO contract.
+            ValueError: Arguments provided does not produce a valid IO contract.
         """
+        # make sure the input and output variables have no repeated entries
+        if len(input_vars) != len(set(input_vars)):
+            raise ValueError(
+                "The following input variables appear multiple times in argument %s"
+                % (set(list_diff(input_vars, list(set(input_vars)))))
+            )
+        if len(output_vars) != len(set(output_vars)):
+            raise ValueError(
+                "The following output variables appear multiple times in argument %s"
+                % (set(list_diff(output_vars, list(set(output_vars)))))
+            )
         # make sure the input & output variables are disjoint
         if list_intersection(input_vars, output_vars):
             raise ValueError(
@@ -343,6 +381,61 @@ class IoContract(Generic[T]):
             + "G: "
             + str(self.g)
         )
+
+
+
+
+    def rename_variable(self, source_var : Var, target_var : Var) -> IoContract:
+        """
+        Rename a variable in a contract.
+
+        Args:
+            source_var: The variable to be replaced.
+            target_var: The new variable.
+
+        Returns:
+            A contract with `source_var` replaced by `target_var`.
+
+        Raises:
+            ValueError: The new variable is both an input and output of the resulting contract.
+        """
+        inputvars = self.inputvars.copy()
+        outputvars = self.outputvars.copy()
+        assumptions = self.a.copy()
+        guarantees = self.g.copy()
+        if source_var != target_var:
+            if source_var in inputvars:
+                if target_var in outputvars:
+                    raise ValueError("Making variable %s both an input and output" % (target_var))
+                elif target_var not in inputvars:
+                    inputvars.append(target_var)
+                inputvars.remove(source_var)
+                assumptions = assumptions.rename_variable(source_var,target_var)
+                guarantees = guarantees.rename_variable(source_var,target_var)
+            elif source_var in outputvars:
+                if target_var in inputvars:
+                    raise ValueError("Making variable %s both an input and output" % (target_var))
+                elif target_var not in outputvars:
+                    outputvars.append(target_var)
+                outputvars.remove(source_var)
+                assumptions = assumptions.rename_variable(source_var,target_var)
+                guarantees = guarantees.rename_variable(source_var,target_var)
+        return type(self)(assumptions, guarantees, inputvars, outputvars)
+
+
+    def copy(self: IoContract) -> IoContract:
+        """
+        Makes copy of contract.
+
+        Returns:
+            Copy of contract.
+        """
+        inputvars = self.inputvars.copy()
+        outputvars = self.outputvars.copy()
+        assumptions = self.a.copy()
+        guarantees = self.g.copy()
+        return type(self)(assumptions, guarantees, inputvars, outputvars)
+
 
     def __le__(self, other):
         return self.refines(other)

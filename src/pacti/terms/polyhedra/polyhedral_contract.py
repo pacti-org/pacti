@@ -19,6 +19,12 @@ class PolyhedralContract(IoContract):
     ) -> None:
         super().__init__(assumptions, guarantees, input_vars, output_vars)
 
+    def rename_variables(self, variable_mappings: list[tuple[str,str]]) -> IoContract:
+        new_contract = self.copy()
+        for mapping in variable_mappings:
+            new_contract = new_contract.rename_variable(Var(mapping[0]), Var(mapping[1]))
+        return new_contract
+
     @staticmethod
     def from_string(
         assumptions: list[str] = field(default_factory=list),
