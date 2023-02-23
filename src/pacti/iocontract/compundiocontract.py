@@ -6,6 +6,7 @@ from typing import List, TypeVar
 
 from pacti.iocontract.iocontract import TL_t, Var
 from pacti.utils.lists import list_diff, list_intersection, list_union
+import logging
 
 NTL_t = TypeVar("NTL_t", bound="NestedTermList")
 
@@ -127,6 +128,10 @@ class IoContractCompound:
         Raises:
             ValueError: Arguments provided does not produce a valid IO contract.
         """
+        logging.debug("Constructor assumptions")
+        logging.debug(assumptions)
+        logging.debug("Constructor guarantees")
+        logging.debug(guarantees)
         # make sure the input and output variables have no repeated entries
         if len(input_vars) != len(set(input_vars)):
             raise ValueError(
@@ -163,7 +168,7 @@ class IoContractCompound:
         self.inputvars = input_vars.copy()
         self.outputvars = output_vars.copy()
         # simplify the guarantees with the assumptions
-        self.g.simplify(self.a)
+        # self.g.simplify(self.a)
 
     def __str__(self):
         return (
