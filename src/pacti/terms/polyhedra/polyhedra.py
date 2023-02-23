@@ -724,6 +724,19 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         logging.debug("Polytope is \n%s", self_mat)
         return PolyhedralTermList.verify_polytope_containment(self_mat, self_cons, ctx_mat, ctx_cons)
 
+    def is_empty(self) -> bool:
+        """
+        Tell whether the argument has no satisfying assignments.
+
+        Returns:
+            True if constraints cannot be satisfied.
+        """
+        _, self_mat, self_cons, _, _ = PolyhedralTermList.termlist_to_polytope(  # noqa: WPS236
+            self, PolyhedralTermList([])
+        )
+        logging.debug("Polytope is \n%s", self_mat)
+        return PolyhedralTermList.is_polytope_empty(self_mat, self_cons)
+
     def _transform(self, context: PolyhedralTermList, vars_to_elim: list, refine: bool):
         logging.debug("Transforming: %s", self)
         logging.debug("Context terms: %s", context)
@@ -999,6 +1012,9 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
 
         Returns:
             True if empty. False otherwise.
+
+        Raises:
+            ValueError: Numerical difficulties encountered.
         """
         logging.debug("Verifying polytope emptiness: a is %s a.shape is %s, b is %s", a, a.shape, b)
         if len(a) == 0:
@@ -1009,7 +1025,17 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         assert n == len(b)
         objective = np.zeros((1, m))
         res = linprog(c=objective, A_ub=a, b_ub=b, bounds=(None, None))  # ,options={'tol':0.000001})
-        return res["status"] == 2
+        # Linprog's status values
+        # 0 : Optimization proceeding nominally.
+        # 1 : Iteration limit reached.
+        # 2 : Problem appears to be infeasible.
+        # 3 : Problem appears to be unbounded.
+        # 4 : Numerical difficulties encountered.
+        if res["status"] == 2:
+            return True
+        elif res["status"] in {0, 3}:
+            return False
+        raise ValueError("Cannot decide emptiness")
 
     @staticmethod
     def _get_kaykobad_context(  # noqa: WPS231
