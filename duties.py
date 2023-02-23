@@ -16,8 +16,10 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
+import glob
 import importlib
 import os
+import pathlib
 import re
 import ssl
 import sys
@@ -25,7 +27,6 @@ from io import StringIO
 from pathlib import Path
 from typing import List, Optional, Pattern
 from urllib.request import urlopen
-import pathlib, glob
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -71,14 +72,14 @@ def update_changelog(
         template_url: The URL to the Jinja template used to render contents.
     """
     from git_changelog.build import Changelog
-    from git_changelog.commit import AngularStyle
+    from git_changelog.commit import AngularConvention
     from jinja2.sandbox import SandboxedEnvironment
 
-    AngularStyle.DEFAULT_RENDER.insert(0, AngularStyle.TYPES["build"])
+    AngularConvention.DEFAULT_RENDER.insert(0, AngularConvention.TYPES["build"])
     env = SandboxedEnvironment(autoescape=False)
     template_text = urlopen(template_url).read().decode("utf8")  # noqa: S310
     template = env.from_string(template_text)
-    changelog = Changelog(".", style="angular")
+    changelog = Changelog(".", convention=AngularConvention)
 
     if len(changelog.versions_list) == 1:
         last_version = changelog.versions_list[0]
@@ -256,12 +257,11 @@ def clean(ctx):
 def copy_case_studies(ctx):
     if os.path.exists("docs/_case_studies"):
         ctx.run("rm -rf docs/_case_studies")
-        
+
     ctx.run("cp -r case_studies docs/_case_studies")
-    py_files = glob.glob("docs/_case_studies/**/*.py",recursive=True)
+    py_files = glob.glob("docs/_case_studies/**/*.py", recursive=True)
     for path in py_files:
         pathlib.Path.unlink(Path(path))
-
 
 
 @duty
