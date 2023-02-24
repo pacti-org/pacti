@@ -22,6 +22,7 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Generic, List, TypeVar, Union
 
+from pacti.utils.errors import IncompatibleArgsError
 from pacti.utils.lists import list_diff, list_intersection, list_union, lists_equal
 
 
@@ -323,34 +324,34 @@ class IoContract(Generic[TL_t]):
             output_vars: The output variables of the contract.
 
         Raises:
-            ValueError: Arguments provided does not produce a valid IO contract.
+            IncompatibleArgsError: Arguments provided does not produce a valid IO contract.
         """
         # make sure the input and output variables have no repeated entries
         if len(input_vars) != len(set(input_vars)):
-            raise ValueError(
+            raise IncompatibleArgsError(
                 "The following input variables appear multiple times in argument %s"
                 % (set(list_diff(input_vars, list(set(input_vars)))))
             )
         if len(output_vars) != len(set(output_vars)):
-            raise ValueError(
+            raise IncompatibleArgsError(
                 "The following output variables appear multiple times in argument %s"
                 % (set(list_diff(output_vars, list(set(output_vars)))))
             )
         # make sure the input & output variables are disjoint
         if list_intersection(input_vars, output_vars):
-            raise ValueError(
+            raise IncompatibleArgsError(
                 "The following variables appear in inputs and outputs: %s"
                 % (list_intersection(input_vars, output_vars))
             )
         # make sure the assumptions only contain input variables
         if list_diff(assumptions.vars, input_vars):
-            raise ValueError(
+            raise IncompatibleArgsError(
                 "The following variables appear in the assumptions but are not inputs: %s"
                 % (list_diff(assumptions.vars, input_vars))
             )
         # make sure the guarantees only contain input or output variables
         if list_diff(guarantees.vars, list_union(input_vars, output_vars)):
-            raise ValueError(
+            raise IncompatibleArgsError(
                 "The guarantees contain the following variables which are neither"
                 "inputs nor outputs: %s. Inputs: %s. Outputs: %s. Guarantees: %s"
                 % (list_diff(guarantees.vars, list_union(input_vars, output_vars)), input_vars, output_vars, guarantees)
@@ -404,7 +405,7 @@ class IoContract(Generic[TL_t]):
             A contract with `source_var` replaced by `target_var`.
 
         Raises:
-            ValueError: The new variable is both an input and output of the resulting contract.
+            IncompatibleArgsError: The new variable is both an input and output of the resulting contract.
         """
         inputvars = self.inputvars.copy()
         outputvars = self.outputvars.copy()
@@ -413,7 +414,7 @@ class IoContract(Generic[TL_t]):
         if source_var != target_var:
             if source_var in inputvars:
                 if target_var in outputvars:
-                    raise ValueError("Making variable %s both an input and output" % (target_var))
+                    raise IncompatibleArgsError("Making variable %s both an input and output" % (target_var))
                 elif target_var not in inputvars:
                     inputvars.append(target_var)
                 inputvars.remove(source_var)
@@ -421,7 +422,7 @@ class IoContract(Generic[TL_t]):
                 guarantees = guarantees.rename_variable(source_var, target_var)
             elif source_var in outputvars:
                 if target_var in inputvars:
-                    raise ValueError("Making variable %s both an input and output" % (target_var))
+                    raise IncompatibleArgsError("Making variable %s both an input and output" % (target_var))
                 elif target_var not in outputvars:
                     outputvars.append(target_var)
                 outputvars.remove(source_var)
@@ -501,10 +502,10 @@ class IoContract(Generic[TL_t]):
             True if the calling contract refines the argument.
 
         Raises:
-            ValueError: Refinement cannot be computed.
+            IncompatibleArgsError: Refinement cannot be computed.
         """
         if not self.shares_io_with(other):
-            raise ValueError("Contracts do not share IO")
+            raise IncompatibleArgsError("Contracts do not share IO")
         return (other.a <= self.a) and ((self.g | other.a) <= (other.g | other.a))
 
     def compose(self, other: IoContract) -> IoContract:  # noqa: WPS231, WPS238
@@ -523,7 +524,7 @@ class IoContract(Generic[TL_t]):
             The abstracted composition of the two contracts.
 
         Raises:
-            ValueError: An error occurred during composition.
+            IncompatibleArgsError: An error occurred during composition.
         """
         logging.debug("Composing contracts \n%s and \n%s", self, other)
         intvars = list_union(
@@ -541,7 +542,7 @@ class IoContract(Generic[TL_t]):
 
         assumptions_forbidden_vars = list_union(intvars, outputvars)
         if not self.can_compose_with(other):
-            raise ValueError(
+            raise IncompatibleArgsError(
                 "Cannot compose the following contracts due to incompatible IO profiles:\n %s \n %s" % (self, other)
             )
         other_helps_self = len(list_intersection(other.outputvars, self.inputvars)) > 0
@@ -550,25 +551,29 @@ class IoContract(Generic[TL_t]):
         self_drives_const_inputs = len(list_intersection(self.outputvars, otherinputconst)) > 0
         # process assumptions
         if cycle_present and (other_drives_const_inputs or self_drives_const_inputs):
-            raise ValueError("Cannot compose contracts due to feedback")
+            raise IncompatibleArgsError("Cannot compose contracts due to feedback")
         elif self_helps_other and not other_helps_self:
             logging.debug("Assumption computation: self provides context for other")
-            new_a = other.a.elim_vars_by_refining(self.a | self.g, assumptions_forbidden_vars)
-            if list_intersection(new_a.vars, assumptions_forbidden_vars):
-                raise ValueError(
-                    "The guarantees \n{}\n".format(self.g)
-                    + "were insufficient to refine the assumptions \n{}\n".format(other.a)
-                    + "by eliminating the variables \n{}".format(assumptions_forbidden_vars)
+            new_a: TL_t = other.a.elim_vars_by_refining(self.a | self.g, assumptions_forbidden_vars)
+            conflict_variables = list_intersection(new_a.vars, assumptions_forbidden_vars)
+            if conflict_variables:
+                raise IncompatibleArgsError(
+                    "Could not eliminate variables {}\n".format([str(x) for x in conflict_variables])
+                    + "by refining the assumptions \n{}\n".format(new_a.get_terms_with_vars(assumptions_forbidden_vars))
+                    + "using guarantees \n{}\n".format(self.g)
                 )
             assumptions = new_a | self.a
         elif other_helps_self and not self_helps_other:
             logging.debug("Assumption computation: other provides context for self")
             new_a = self.a.elim_vars_by_refining(other.a | other.g, assumptions_forbidden_vars)
-            if list_intersection(new_a.vars, assumptions_forbidden_vars):
-                raise ValueError(
-                    "The guarantees \n{}\n".format(other.g)
-                    + "were insufficient to refine the assumptions \n{}\n".format(self.a)
-                    + "by eliminating the variables \n{}".format(assumptions_forbidden_vars)
+            conflict_variables = list_intersection(new_a.vars, assumptions_forbidden_vars)
+            if conflict_variables:
+                raise IncompatibleArgsError(
+                    "Could not eliminate variables {}".format([str(x) for x in conflict_variables])
+                    + " by refining the assumptions \n{}\n".format(
+                        new_a.get_terms_with_vars(assumptions_forbidden_vars)
+                    )
+                    + "using guarantees \n{}\n".format(other.g)
                 )
             assumptions = new_a | other.a
         # contracts can't help each other
@@ -612,14 +617,14 @@ class IoContract(Generic[TL_t]):
             The refined quotient self/other.
 
         Raises:
-            ValueError: Arguments provided are incompatible with computation of the quotient.
+            IncompatibleArgsError: Arguments provided are incompatible with computation of the quotient.
         """
         if not additional_inputs:
             additional_inputs = []
         if not self.can_quotient_by(other):
-            raise ValueError("Contracts cannot be quotiented due to incompatible IO")
+            raise IncompatibleArgsError("Contracts cannot be quotiented due to incompatible IO")
         if list_diff(additional_inputs, list_union(other.outputvars, self.inputvars)):
-            raise ValueError(
+            raise IncompatibleArgsError(
                 "The additional inputs %s are neither top level inputs nor existing component outputs"
                 % (list_diff(additional_inputs, list_union(other.outputvars, self.inputvars)))
             )
@@ -645,13 +650,19 @@ class IoContract(Generic[TL_t]):
 
         # get guarantees
         logging.debug("Computing quotient guarantees")
-        guarantees = self.g
+        guarantees: TL_t = self.g
         logging.debug("Using existing guarantees to aid system-level guarantees")
         guarantees = guarantees.elim_vars_by_refining(other.g | other.a, intvars)
         logging.debug("Using system-level assumptions to aid quotient guarantees")
         guarantees = guarantees | other.a
         guarantees = guarantees.elim_vars_by_refining(self.a, intvars)
         logging.debug("Guarantees after processing: %s", guarantees)
+        conflict_variables = list_intersection(guarantees.vars, intvars)
+        if conflict_variables:
+            raise IncompatibleArgsError(
+                "Could not eliminate variables \n{}".format([str(x) for x in conflict_variables])
+                + "by refining the guarantees \n{}\n".format(guarantees.get_terms_with_vars(intvars))
+            )
 
         return IoContract(assumptions, guarantees, inputvars, outputvars)
 
