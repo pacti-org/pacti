@@ -1,38 +1,33 @@
 from __future__ import annotations
 
-from dataclasses import field
 from functools import reduce
-from typing import List
 
 import pacti.terms.polyhedra.serializer as serializer
-from pacti.iocontract import IoContract, Var
+from pacti.iocontract import IoContract, IoContractCompound, NestedTermList, Var
 from pacti.terms.polyhedra.polyhedra import PolyhedralTerm, PolyhedralTermList
 
 
 class PolyhedralContract(IoContract):
-    def __init__(
-        self,
-        assumptions: PolyhedralTermList,
-        guarantees: PolyhedralTermList,
-        input_vars: List[Var],
-        output_vars: List[Var],
-    ) -> None:
-        super().__init__(assumptions, guarantees, input_vars, output_vars)
+    def rename_variables(self, variable_mappings: list[tuple[str, str]]) -> IoContract:
+        new_contract = self.copy()
+        for mapping in variable_mappings:
+            new_contract = new_contract.rename_variable(Var(mapping[0]), Var(mapping[1]))
+        return new_contract
 
     @staticmethod
     def from_string(
-        assumptions: list[str] = field(default_factory=list),
-        guarantees: list[str] = field(default_factory=list),
-        InputVars: list[str] = field(default_factory=list),
-        OutputVars: list[str] = field(default_factory=list),
+        assumptions: list[str],
+        guarantees: list[str],
+        InputVars: list[str],
+        OutputVars: list[str],
     ) -> PolyhedralContract:
         a: list[PolyhedralTerm] = []
         if assumptions:
-            a = reduce(list.__add__, list(map(lambda x: serializer.internal_pt_from_string(x), assumptions)))
+            a = reduce(list.__add__, [serializer.internal_pt_from_string(x) for x in assumptions])
 
         g: list[PolyhedralTerm] = []
         if guarantees:
-            g = reduce(list.__add__, list(map(lambda x: serializer.internal_pt_from_string(x), guarantees)))
+            g = reduce(list.__add__, [serializer.internal_pt_from_string(x) for x in guarantees])
 
         return PolyhedralContract(
             input_vars=[Var(x) for x in InputVars],
@@ -65,4 +60,37 @@ class PolyhedralContract(IoContract):
             output_vars=[Var(x) for x in contract["OutputVars"]],
             assumptions=a,
             guarantees=g,
+        )
+
+
+class NestedPolyhedra(NestedTermList):
+    def __init__(self, nested_termlist: list[PolyhedralTermList]):  # noqa: WPS612 useless overwritten __init__
+        super().__init__(nested_termlist)
+
+
+class PolyhedralContractCompound(IoContractCompound):
+    @staticmethod
+    def from_string(
+        assumptions: list[list[str]],
+        guarantees: list[list[str]],
+        InputVars: list[str],
+        OutputVars: list[str],
+    ) -> PolyhedralContractCompound:
+        a: list[PolyhedralTermList] = []
+        if assumptions:
+            for termlist_str in assumptions:
+                a_termlist = reduce(list.__add__, [serializer.internal_pt_from_string(x) for x in termlist_str])
+                a.append(PolyhedralTermList(a_termlist))
+
+        g: list[PolyhedralTermList] = []
+        if guarantees:
+            for termlist_str in guarantees:
+                g_termlist = reduce(list.__add__, [serializer.internal_pt_from_string(x) for x in termlist_str])
+                g.append(PolyhedralTermList(g_termlist))
+
+        return PolyhedralContractCompound(
+            input_vars=[Var(x) for x in InputVars],
+            output_vars=[Var(x) for x in OutputVars],
+            assumptions=NestedPolyhedra(a),
+            guarantees=NestedPolyhedra(g),
         )

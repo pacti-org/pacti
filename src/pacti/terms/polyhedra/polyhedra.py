@@ -95,6 +95,25 @@ class PolyhedralTerm(Term):
         """
         return PolyhedralTerm(self.variables, self.constant)
 
+    def rename_variable(self, source_var: Var, target_var: Var) -> PolyhedralTerm:
+        """
+        Rename a variable in a term.
+
+        Args:
+            source_var: The variable to be replaced.
+            target_var: The new variable.
+
+        Returns:
+            A term with `source_var` replaced by `target_var`.
+        """
+        new_term = self.copy()
+        if source_var in self.vars:
+            if target_var not in self.vars:
+                new_term.variables[target_var] = 0
+            new_term.variables[target_var] += new_term.variables[source_var]
+            new_term.remove_variable(source_var)
+        return new_term
+
     @property
     def vars(self) -> list[Var]:  # noqa: A003
         """
@@ -705,6 +724,19 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         logging.debug("Polytope is \n%s", self_mat)
         return PolyhedralTermList.verify_polytope_containment(self_mat, self_cons, ctx_mat, ctx_cons)
 
+    def is_empty(self) -> bool:
+        """
+        Tell whether the argument has no satisfying assignments.
+
+        Returns:
+            True if constraints cannot be satisfied.
+        """
+        _, self_mat, self_cons, _, _ = PolyhedralTermList.termlist_to_polytope(  # noqa: WPS236
+            self, PolyhedralTermList([])
+        )
+        logging.debug("Polytope is \n%s", self_mat)
+        return PolyhedralTermList.is_polytope_empty(self_mat, self_cons)
+
     def _transform(self, context: PolyhedralTermList, vars_to_elim: list, refine: bool):
         logging.debug("Transforming: %s", self)
         logging.debug("Context terms: %s", context)
@@ -712,14 +744,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         term_list = list(self.terms)
         new_terms = []
         for term in term_list:
-            # NOTE: Need to review!!!!!!!!!!!!!!!
-            logging.debug("Transforming term %s", type(term))
-            logging.debug("Transforming term %s", str(term))
-            newcontext = context.copy()
-            if context.terms:
-                newcontext._transform(PolyhedralTermList([]), list_diff(vars_to_elim, term.vars), refine)
-            helpers = (newcontext | self) - PolyhedralTermList([term])
-            # ENDNOTE: Review
+            helpers = (context | self) - PolyhedralTermList([term])
             try:
                 new_term = PolyhedralTermList._transform_term(term, helpers, vars_to_elim, refine)
             except ValueError:
@@ -987,6 +1012,9 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
 
         Returns:
             True if empty. False otherwise.
+
+        Raises:
+            ValueError: Numerical difficulties encountered.
         """
         logging.debug("Verifying polytope emptiness: a is %s a.shape is %s, b is %s", a, a.shape, b)
         if len(a) == 0:
@@ -997,7 +1025,17 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         assert n == len(b)
         objective = np.zeros((1, m))
         res = linprog(c=objective, A_ub=a, b_ub=b, bounds=(None, None))  # ,options={'tol':0.000001})
-        return res["status"] == 2
+        # Linprog's status values
+        # 0 : Optimization proceeding nominally.
+        # 1 : Iteration limit reached.
+        # 2 : Problem appears to be infeasible.
+        # 3 : Problem appears to be unbounded.
+        # 4 : Numerical difficulties encountered.
+        if res["status"] == 2:
+            return True
+        elif res["status"] in {0, 3}:
+            return False
+        raise ValueError("Cannot decide emptiness")
 
     @staticmethod
     def _get_kaykobad_context(  # noqa: WPS231

@@ -18,6 +18,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 
 import re
+from importlib.metadata import PackageNotFoundError, metadata
 from itertools import chain
 from pathlib import Path
 from textwrap import dedent
@@ -25,11 +26,6 @@ from textwrap import dedent
 import toml
 from jinja2 import StrictUndefined
 from jinja2.sandbox import SandboxedEnvironment
-
-#try:
-from importlib.metadata import PackageNotFoundError, metadata
-#except ImportError:
-#    from importlib_metadata import PackageNotFoundError, metadata
 
 project_dir = Path(".")
 pyproject = toml.load(project_dir / "pyproject.toml")
