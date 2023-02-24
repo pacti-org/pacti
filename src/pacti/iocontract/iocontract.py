@@ -653,6 +653,7 @@ class IoContract(Generic[TL_t]):
         guarantees: TL_t = self.g
         logging.debug("Using existing guarantees to aid system-level guarantees")
         guarantees = guarantees.elim_vars_by_refining(other.g | other.a, intvars)
+        logging.debug("Guarantees are %s" %(guarantees))
         logging.debug("Using system-level assumptions to aid quotient guarantees")
         guarantees = guarantees | other.a
         guarantees = guarantees.elim_vars_by_refining(self.a, intvars)
