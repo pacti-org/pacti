@@ -39,7 +39,7 @@ pacti.egg-info
 .venv
 .vscode
 *_case_studies*
-
+.history
 
 .idea/
 __pycache__/
