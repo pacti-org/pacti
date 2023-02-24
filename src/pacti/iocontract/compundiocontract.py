@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
+import logging
 from typing import List, TypeVar
 
 from pacti.iocontract.iocontract import TL_t, Var
 from pacti.utils.lists import list_diff, list_intersection, list_union
-import logging
 
 NTL_t = TypeVar("NTL_t", bound="NestedTermList")
 
