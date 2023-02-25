@@ -20,7 +20,7 @@ from __future__ import annotations
 import copy
 import logging
 from abc import ABC, abstractmethod
-from typing import Generic, List, TypeVar, Union
+from typing import Any, Generic, List, TypeVar, Union
 
 from pacti.utils.errors import IncompatibleArgsError
 from pacti.utils.lists import list_diff, list_intersection, list_union, lists_equal
@@ -214,6 +214,22 @@ class TermList(ABC):
             A termlist with `source_var` replaced by `target_var`.
         """
         return type(self)([term.rename_variable(source_var, target_var) for term in self.terms])
+
+    @abstractmethod
+    def contains_behavior(self, behavior: Any) -> bool:
+        """
+        Tell whether TermList contains the given behavior.
+
+        Args:
+            behavior:
+                The behavior in question.
+
+        Returns:
+            True if the behavior satisfies the constraints; false otherwise.
+
+        Raises:
+            ValueError: Not all variables in the constraints were assigned values.
+        """
 
     @abstractmethod
     def elim_vars_by_refining(self: TL_t, context: TL_t, vars_to_elim: List[Var]) -> TL_t:
@@ -653,6 +669,7 @@ class IoContract(Generic[TL_t]):
         guarantees: TL_t = self.g
         logging.debug("Using existing guarantees to aid system-level guarantees")
         guarantees = guarantees.elim_vars_by_refining(other.g | other.a, intvars)
+        logging.debug("Guarantees are %s" % (guarantees))
         logging.debug("Using system-level assumptions to aid quotient guarantees")
         guarantees = guarantees | other.a
         guarantees = guarantees.elim_vars_by_refining(self.a, intvars)

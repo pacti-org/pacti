@@ -543,7 +543,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
             True if the behavior satisfies the constraints; false otherwise.
 
         Raises:
-            ValueError: Not all variables in the constraints were assined values.
+            ValueError: Not all variables in the constraints were assigned values.
         """
         excess_vars = list_diff(self.vars, list(behavior.keys()))
         if excess_vars:
@@ -1114,6 +1114,8 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
 
     @staticmethod
     def _tactic_1(term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, refine: bool):
+        logging.debug("********** Tactic 1")
+        logging.debug("Vars_to_elim %s \nTerm %s \nContext %s " % (vars_to_elim, term, context))
         try:
             matrix_row_terms, forbidden_vars = PolyhedralTermList._get_kaykobad_context(
                 term, context, vars_to_elim, refine
@@ -1135,6 +1137,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
 
     @staticmethod
     def _tactic_2(term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, refine: bool):  # noqa: WPS231
+        logging.debug("************ Tactic 2")
         new_context_list = []
         logging.debug("This is the context")
         logging.debug(context)
@@ -1176,6 +1179,30 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         return result
 
     @staticmethod
+    def _tactic_3(term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, refine: bool):
+        logging.debug("************ Tactic 3")
+        conflict_vars = list_intersection(vars_to_elim, term.vars)
+        conflict_coeff = {var: term.get_coefficient(var) for var in conflict_vars}
+        new_term = term.copy()
+        for var in conflict_vars:  # noqa: VNE002 variable name 'var' should be clarified
+            new_term.remove_variable(var)
+        new_term.variables[Var("_")] = 1
+        # modify the context
+        subst_term_vars = {Var("_"): 1.0 / conflict_coeff[conflict_vars[0]]}
+        for var in conflict_vars:  # noqa: VNE002 variable name 'var' should be clarified
+            if var != conflict_vars[0]:
+                subst_term_vars[var] = -conflict_coeff[var] / conflict_coeff[conflict_vars[0]]
+        subst_term = PolyhedralTerm(variables=subst_term_vars, constant=0)
+        new_context = PolyhedralTermList([el.substitute_variable(conflict_vars[0], subst_term) for el in context.terms])
+        # now we use tactic 1
+        new_elims = list_diff(list_union(vars_to_elim, [Var("_")]), [conflict_vars[0]])
+        try:
+            result = PolyhedralTermList._tactic_1(new_term, new_context, new_elims, refine)
+        except ValueError as e:  # noqa: WPS329 Found useless `except` case
+            raise e
+        return result
+
+    @staticmethod
     def _transform_term(term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, refine: bool):
         logging.debug("Transforming term: %s", term)
         logging.debug("Context: %s", context)
@@ -1184,8 +1211,10 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
             result = PolyhedralTermList._tactic_1(term, context, vars_to_elim, refine)
         except ValueError:
             try:  # noqa: WPS505
-                result = PolyhedralTermList._tactic_2(term, context, vars_to_elim, refine)
-            except ValueError as e:
-                raise ValueError("Could not transform term") from e
-
+                result = PolyhedralTermList._tactic_3(term, context, vars_to_elim, refine)
+            except ValueError:
+                try:  # noqa: WPS505 Found nested `try` block
+                    result = PolyhedralTermList._tactic_2(term, context, vars_to_elim, refine)
+                except ValueError as e:
+                    raise ValueError("Could not transform term") from e
         return result
