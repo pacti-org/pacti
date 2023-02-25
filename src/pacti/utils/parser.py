@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from pacti.terms.polyhedra.polyhedral_contract import StrContract
+from pacti.terms.polyhedra import PolyhedralContract
 
 ASSUMPTIONS_HEADER = "ASSUMPTIONS"
 GUARANTEES_HEADER = "GUARANTEES"
@@ -12,8 +12,8 @@ COMMENT_CHAR = "#"
 DATA_INDENT = 1
 
 
-def parse_contracts(file_path: Path) -> list[StrContract]:
-    contracts: list[StrContract] = []
+def parse_contracts(file_path: Path) -> list[PolyhedralContract]:
+    contracts: list[PolyhedralContract] = []
 
     assumptions: list[str] = []
     guarantees: list[str] = []
@@ -33,7 +33,7 @@ def parse_contracts(file_path: Path) -> list[StrContract]:
             if line == END_CONTRACT:
                 current_header = ""
                 contracts.append(
-                    StrContract(assumptions=assumptions, guarantees=guarantees, inputs=inputs, outputs=outputs)
+                    PolyhedralContract.from_string(assumptions=assumptions, guarantees=guarantees, InputVars=inputs, OutputVars=outputs)
                 )
                 assumptions = []
                 guarantees = []

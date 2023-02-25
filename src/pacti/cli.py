@@ -6,8 +6,7 @@ import os
 
 import click
 
-from pacti.iocontract import IoContract
-from pacti.iocontract.utils import getVarlist
+from pacti.iocontract import IoContract, Var
 from pacti.terms.polyhedra import PolyhedralTerm, PolyhedralTermList
 
 
@@ -17,6 +16,10 @@ class FileDataFormatException(Exception):
 
 class ContractFormatException(FileDataFormatException):
     pass
+
+
+def getVarlist(aList):
+    return list([Var(varstr) for varstr in aList])
 
 
 def check_contract(contract, contract_name):

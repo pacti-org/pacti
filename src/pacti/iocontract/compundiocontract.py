@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import logging
-from typing import List, TypeVar
+from typing import List, TypeVar, Union
 
 from pacti.iocontract.iocontract import TL_t, Var
 from pacti.utils.lists import list_diff, list_intersection, list_union
 
 NTL_t = TypeVar("NTL_t", bound="NestedTermList")
+numeric = Union[int, float]
 
 
 class NestedTermList:
@@ -31,7 +32,7 @@ class NestedTermList:
                     intersection = tli | tlj
                     if not intersection.is_empty():
                         raise ValueError("Terms %s and %s have nonempty intersection" % (tli, tlj))
-        self.nested_termlist = []
+        self.nested_termlist: list[TL_t] = []
         for tl in nested_termlist:
             self.nested_termlist.append(tl.copy())
 
@@ -97,6 +98,28 @@ class NestedTermList:
             Copy of nested termlist.
         """
         return type(self)([tl.copy() for tl in self.nested_termlist])
+
+    def contains_behavior(self, behavior: dict[Var, numeric]) -> bool:
+        """
+        Tell whether constraints contain the given behavior.
+
+        Args:
+            behavior:
+                The behavior in question.
+
+        Returns:
+            True if the behavior satisfies the constraints; false otherwise.
+
+        Raises:
+            ValueError: Not all variables in the constraints were assigned values.
+        """
+        for tl in self.nested_termlist:
+            try:
+                if tl.contains_behavior(behavior):
+                    return True
+            except ValueError as e:
+                raise ValueError from e
+        return False
 
 
 class IoContractCompound:
