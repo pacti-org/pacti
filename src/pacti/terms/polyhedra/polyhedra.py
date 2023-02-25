@@ -543,7 +543,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
             True if the behavior satisfies the constraints; false otherwise.
 
         Raises:
-            ValueError: Not all variables in the constraints were assined values.
+            ValueError: Not all variables in the constraints were assigned values.
         """
         excess_vars = list_diff(self.vars, list(behavior.keys()))
         if excess_vars:

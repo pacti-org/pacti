@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 from pacti.iocontract import IoContract
-from pacti.terms.polyhedra import string_to_polyhedra_contract
-from pacti.terms.polyhedra.polyhedral_contract import StrContract
+from pacti.terms.polyhedra import PolyhedralContract
 
 
 class Tree:
@@ -88,17 +87,11 @@ def composing_multiple_contracts(contracts: list[IoContract]) -> IoContract:
 
 
 if __name__ == "__main__":
-    c1 = StrContract(assumptions=["x <= 1"], guarantees=["y <= 0"], inputs=["x"], outputs=["y"])
-    c2 = StrContract(assumptions=["y <= 0"], guarantees=["z <= 0"], inputs=["y"], outputs=["z"])
-    c3 = StrContract(assumptions=["y <= 0"], guarantees=["q <= 0"], inputs=["y"], outputs=["q"])
-    c4 = StrContract(assumptions=["q <= 0"], guarantees=["v <= 0"], inputs=["q"], outputs=["v"])
-    c5 = StrContract(assumptions=["y <= 0"], guarantees=["v <= 0"], inputs=["y"], outputs=["v"])
-    """c1 relaxes the assumptions of both c2 and c3 => c2 and c3 must be composed first"""
-    c1 = string_to_polyhedra_contract(c1)
-    c2 = string_to_polyhedra_contract(c2)
-    c3 = string_to_polyhedra_contract(c3)
-    c4 = string_to_polyhedra_contract(c4)
-    c5 = string_to_polyhedra_contract(c5)
+    c1 = PolyhedralContract.from_string(assumptions=["x <= 1"], guarantees=["y <= 0"], InputVars=["x"], OutputVars=["y"])
+    c2 = PolyhedralContract.from_string(assumptions=["y <= 0"], guarantees=["z <= 0"], InputVars=["y"], OutputVars=["z"])
+    c3 = PolyhedralContract.from_string(assumptions=["y <= 0"], guarantees=["q <= 0"], InputVars=["y"], OutputVars=["q"])
+    c4 = PolyhedralContract.from_string(assumptions=["q <= 0"], guarantees=["v <= 0"], InputVars=["q"], OutputVars=["v"])
+    c5 = PolyhedralContract.from_string(assumptions=["y <= 0"], guarantees=["v <= 0"], InputVars=["y"], OutputVars=["v"])
 
     contract = composing_multiple_contracts([c1, c2, c3, c4, c5])
     print(contract)
