@@ -68,6 +68,17 @@ class PolyhedralContract(IoContract):
             vars_to_keep = []
         return super().compose(other, [Var(x) for x in vars_to_keep])
 
+    def optimize(self, expr: str, maximize: bool = True):
+        new_expr = expr + " <= 0"
+        variables = serializer.internal_pt_from_string(new_expr)[0].variables
+        constraints: PolyhedralTermList = self.a | self.g
+        return constraints.optimize(objective=variables, maximize=maximize)
+
+    def get_variable_bounds(self, var: str):
+        max = self.optimize(var, True)
+        min = self.optimize(var, False)
+        return min, max
+
 
 class NestedPolyhedra(NestedTermList):
     def __init__(self, nested_termlist: list[PolyhedralTermList]):  # noqa: WPS612 useless overwritten __init__
