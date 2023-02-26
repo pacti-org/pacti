@@ -33,7 +33,9 @@ def parse_contracts(file_path: Path) -> list[PolyhedralContract]:
             if line == END_CONTRACT:
                 current_header = ""
                 contracts.append(
-                    PolyhedralContract.from_string(assumptions=assumptions, guarantees=guarantees, InputVars=inputs, OutputVars=outputs)
+                    PolyhedralContract.from_string(
+                        assumptions=assumptions, guarantees=guarantees, InputVars=inputs, OutputVars=outputs
+                    )
                 )
                 assumptions = []
                 guarantees = []

@@ -757,6 +757,41 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         logging.debug("Ending transformation with simplification")
         self.simplify(context)
 
+    def optimize(self, objective: dict[Var, numeric], maximize: bool = True):
+        """
+        Optimizes a linear expression in the feasible region of the termlist.
+
+        Args:
+            objective:
+                The objective to optimize.
+            maximize:
+                If true, the routine maximizes; it minimizes otherwise.
+
+        Returns:
+            The optimal value of the objective. If the objective is unbounded, None is returned.
+
+        Raises:
+            ValueError: Constraints are likely unfeasible.
+        """
+        obj = PolyhedralTermList([PolyhedralTerm(variables=objective, constant=0)])
+        _, self_mat, self_cons, obj_mat, _ = PolyhedralTermList.termlist_to_polytope(self, obj)  # noqa: WPS236
+        polarity = 1
+        if maximize:
+            polarity = -1
+        res = linprog(c=polarity * obj_mat[0], A_ub=self_mat, b_ub=self_cons, bounds=(None, None))
+        # Linprog's status values
+        # 0 : Optimization proceeding nominally.
+        # 1 : Iteration limit reached.
+        # 2 : Problem appears to be infeasible.
+        # 3 : Problem appears to be unbounded.
+        # 4 : Numerical difficulties encountered.
+        if res["status"] in {1, 2, 4}:
+            raise ValueError("Constraints are unfeasible")
+        elif res["status"] == 3:
+            return None
+        elif res["status"] == 0:
+            return polarity * res["fun"]
+
     @staticmethod
     def termlist_to_polytope(
         terms: PolyhedralTermList, context: PolyhedralTermList
