@@ -87,11 +87,21 @@ def composing_multiple_contracts(contracts: list[IoContract]) -> IoContract:
 
 
 if __name__ == "__main__":
-    c1 = PolyhedralContract.from_string(assumptions=["x <= 1"], guarantees=["y <= 0"], InputVars=["x"], OutputVars=["y"])
-    c2 = PolyhedralContract.from_string(assumptions=["y <= 0"], guarantees=["z <= 0"], InputVars=["y"], OutputVars=["z"])
-    c3 = PolyhedralContract.from_string(assumptions=["y <= 0"], guarantees=["q <= 0"], InputVars=["y"], OutputVars=["q"])
-    c4 = PolyhedralContract.from_string(assumptions=["q <= 0"], guarantees=["v <= 0"], InputVars=["q"], OutputVars=["v"])
-    c5 = PolyhedralContract.from_string(assumptions=["y <= 0"], guarantees=["v <= 0"], InputVars=["y"], OutputVars=["v"])
+    c1 = PolyhedralContract.from_string(
+        assumptions=["x <= 1"], guarantees=["y <= 0"], InputVars=["x"], OutputVars=["y"]
+    )
+    c2 = PolyhedralContract.from_string(
+        assumptions=["y <= 0"], guarantees=["z <= 0"], InputVars=["y"], OutputVars=["z"]
+    )
+    c3 = PolyhedralContract.from_string(
+        assumptions=["y <= 0"], guarantees=["q <= 0"], InputVars=["y"], OutputVars=["q"]
+    )
+    c4 = PolyhedralContract.from_string(
+        assumptions=["q <= 0"], guarantees=["v <= 0"], InputVars=["q"], OutputVars=["v"]
+    )
+    c5 = PolyhedralContract.from_string(
+        assumptions=["y <= 0"], guarantees=["v <= 0"], InputVars=["y"], OutputVars=["v"]
+    )
 
     contract = composing_multiple_contracts([c1, c2, c3, c4, c5])
     print(contract)
