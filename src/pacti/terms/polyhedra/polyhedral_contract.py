@@ -5,6 +5,7 @@ from functools import reduce
 import pacti.terms.polyhedra.serializer as serializer
 from pacti.iocontract import IoContract, IoContractCompound, NestedTermList, Var
 from pacti.terms.polyhedra.polyhedra import PolyhedralTerm, PolyhedralTermList
+from typing import Optional
 
 
 class PolyhedralContract(IoContract):
@@ -61,6 +62,11 @@ class PolyhedralContract(IoContract):
             assumptions=a,
             guarantees=g,
         )
+    
+    def compose(self, other: PolyhedralContract, vars_to_keep : Optional[list[str]] = None):
+        if vars_to_keep is None:
+            vars_to_keep = []
+        return super().compose(other,[Var(x) for x in vars_to_keep])
 
 
 class NestedPolyhedra(NestedTermList):

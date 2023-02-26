@@ -20,7 +20,7 @@ from __future__ import annotations
 import copy
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Generic, List, TypeVar, Union
+from typing import Any, Generic, List, TypeVar, Union, Optional
 
 from pacti.utils.errors import IncompatibleArgsError
 from pacti.utils.lists import list_diff, list_intersection, list_union, lists_equal
@@ -524,7 +524,7 @@ class IoContract(Generic[TL_t]):
             raise IncompatibleArgsError("Contracts do not share IO")
         return (other.a <= self.a) and ((self.g | other.a) <= (other.g | other.a))
 
-    def compose(self, other: IoContract) -> IoContract:  # noqa: WPS231, WPS238
+    def compose(self, other: IoContract, vars_to_keep: Optional[list[Var]] = None) -> IoContract:  # noqa: WPS231, WPS238
         """Compose IO contracts.
 
         Compute the composition of the two given contracts and abstract the
@@ -542,12 +542,21 @@ class IoContract(Generic[TL_t]):
         Raises:
             IncompatibleArgsError: An error occurred during composition.
         """
+        if vars_to_keep is None:
+            vars_to_keep = []
+        conflict_vars = list_diff(vars_to_keep, list_union(self.outputvars, other.outputvars))
+        if conflict_vars:
+            raise IncompatibleArgsError("Asked to keep variables %s, which are not outputs" %(conflict_vars))
+
         logging.debug("Composing contracts \n%s and \n%s", self, other)
         intvars = list_union(
             list_intersection(self.outputvars, other.inputvars), list_intersection(self.inputvars, other.outputvars)
         )
         inputvars = list_diff(list_union(self.inputvars, other.inputvars), intvars)
         outputvars = list_diff(list_union(self.outputvars, other.outputvars), intvars)
+        # remove requested variables
+        intvars = list_diff(intvars, vars_to_keep)
+        outputvars = list_union(outputvars, vars_to_keep)
 
         selfinputconst = self.a.vars
         otherinputconst = other.a.vars
