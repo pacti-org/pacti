@@ -39,8 +39,6 @@ class Grammar:
         for rule_id, rule in self.rules.items():
             if rule.production.symbol_type not in contracts_alternatives.keys():
                 contracts_alternatives[rule.production.symbol_type] = []
-            print(f"\n{rule_id}")
-            print(rule.contract)
             contracts_alternatives[rule.production.symbol_type].append(rule.contract)
 
         return contracts_alternatives

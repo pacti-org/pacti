@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 
 from matplotlib.figure import Figure
 
-from case_studies.uav_topologies_generation.src.contracts_utils.union import ContractsUnions
+from case_studies.uav_topologies.src.contracts_utils.union import ContractsUnions
 from pacti.terms.polyhedra import PolyhedralContract
 from .figures import DirectionsGrid
 from ..tools.plotting import plot_3d_grid
@@ -134,17 +134,11 @@ class LocalState:
         """Creating Contracts"""
         contract_union = ContractsUnions()
         for constraint in constraints:
-            # new_c = StrContract(assumptions=constraint, inputs=list(symbols))
-            # new_c = StrContract(guarantees=constraint, outputs=list(symbols))
-            # print(constraint)
-            # io_contract = string_to_polyhedra_contract(new_c)
-
             io_contract = PolyhedralContract.from_string(
                 OutputVars=list(symbols),
                 InputVars=[],
                 assumptions=[],
                 guarantees=constraint)
-
 
             contract_union.contracts.add(io_contract)
         return contract_union
@@ -313,57 +307,12 @@ class GridBuilder:
 
         return plot_3d_grid(node_xyz, color_xyz)
 
-    # def cleanup(self):
-    #     to_remove: set[Point] = set()
-    #
-    #     for point_l in self.leaves_connectors:
-    #         current_point = point_l
-    #         while len(self.connections.point_to_points[current_point]) == 1:
-    #             to_remove.add(current_point)
-    #             current_point = self.connections.point_to_points[current_point][0]
-    #
-    #     for point, symbol in self.grid.items():
-    #         if symbol.symbol_type == SymbolType.EMPTY or point in to_remove:
-    #             self.grid[point] = Unoccupied()
-    #             self.connections.remove_from_to_point(point)
-    #             print(self.connections)
-    #             print("")
-
-    #
-    # for edge in self.connections.point_to_points:
-    #     if
-    #     if point == edge.s or point == edge.d:
-    #         to_remove_edges.add(edge)
-
     def cleanup(self):
         loose_ends = self.loose_ends.to_remove
         for point, symbol in self.grid.items():
             if symbol.symbol_type == SymbolType.EMPTY or point in loose_ends:
                 self.grid[point] = Unoccupied()
                 self.connections.remove_from_to_point(point)
-                print(f"{point} removed")
-
-    # def cleanup_loose_ends(self):
-    #     """Remove loose ends and empty nodes"""
-    #     removed: set[Point] = set()
-    #     for point, symbol in self.grid.items():
-    #         if symbol.symbol_type == SymbolType.EMPTY or point in self.loose_ends.to_remove:
-    #             self.grid[point] = Unoccupied()
-    #             removed.add(point)
-    #     for point in removed:
-    #         to_remove_edges: set[Edge] = set()
-    #         for edge in self.connections.edges:
-    #             if point == edge.s or point == edge.d:
-    #                 to_remove_edges.add(edge)
-    #         for edge in to_remove_edges:
-    #             self.connections.remove(edge)
-    #     for src, dest in self.loose_ends.get_edges():
-    #         edge = Edge(src, dest)
-    #         if edge in self.connections:
-    #             self.connections.remove(edge)
-    #         edge = Edge(dest, src)
-    #         if edge in self.connections:
-    #             self.connections.remove(edge)
 
     @property
     def plot_with_edges(self) -> Figure:
@@ -386,18 +335,13 @@ class GridBuilder:
 
     def update_current_point(self):
         """choose an 'unoccupied' point around the current_point"""
-        # print(f"{len(self.points_to_visit)}")
         self.current_point = self.points_to_visit.pop()
-        # # DEBUG
-        # if len(self.points_to_visit) > 1:
-        #     self.current_point = sorted(self.points_to_visit)[0]
         self.points_visited.add(self.current_point)
-        # print(f"{len(self.points_to_visit)}")
 
     def apply_rule(self, rule: Rule):
         production = rule.production
         self.grammar_string = f"[{self.current_point}]({rule.name})"
-        # print(self.current_point)
+        print(f"Applying rule {rule.name} to the {self.current_point}")
 
         if production.symbol_type == SymbolType.FUSELAGE:
             self.grid[self.current_point] = Fuselage()
@@ -476,15 +420,3 @@ class GridBuilder:
             top=self.grid[point.top],
             rear=self.grid[point.rear],
         )
-
-
-def delete_loose_end(graph: dict[Point, list[Point]], node: Point):
-    for elem in graph[node]:
-        delete_loose_end(graph, elem)
-
-
-if __name__ == "__main__":
-    new_grid = GridBuilder.generate(half_size=1)
-    new_grid.plot.show()
-    current_node_state = new_grid.local_state(new_grid.current_point)
-    current_node_state.plot.show()
