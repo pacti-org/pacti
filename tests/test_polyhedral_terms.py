@@ -154,4 +154,4 @@ def test_issue171():
 
 
 if __name__ == "__main__":
-    test_polyhedral_var_elim_by_refinement_1()
+    test_polyhedral_var_elim_by_refinement_4()
