@@ -5,6 +5,9 @@ from pacti.terms.polyhedra import PolyhedralContract
 
 
 class Tree:
+    """
+    Helper class to build the dependency tree of the contracts involved in the composition
+    """
     def __init__(self, data=None):
         self.data = data
         self.children = set()
@@ -42,7 +45,19 @@ class Tree:
             child.print_tree(level + 1, is_last_child)
 
 
-def build_dependency_tree(symbol_dict):
+def build_dependency_tree(symbol_dict: dict[str, tuple[list[str], list[str]]]) -> Tree:
+    """
+    Build the dependency tree
+
+    Args:
+        symbol_dict: dictionary of dependencies.
+                    Key: string; Value: tuple where each element is a list of strings.
+                    The tuple represent input/output of the contract in the key.
+
+    Returns:
+        Dependency Tree
+    """
+
     root = Tree()
     symbol_nodes = {}
     for symbol, value in symbol_dict.items():
@@ -61,6 +76,15 @@ def build_dependency_tree(symbol_dict):
 
 
 def composing_multiple_contracts(contracts: list[IoContract]) -> IoContract:
+    """
+    Composition of multiple contracts
+
+    Args:
+        contracts: list of IoContract
+
+    Returns:
+        IoContract representing the composition of 'contracts'
+    """
     symbol_dict: dict[str, tuple[list[str], list[str]]] = {}
     contracts_dict = {}
     for i, contract in enumerate(contracts):
@@ -77,9 +101,6 @@ def composing_multiple_contracts(contracts: list[IoContract]) -> IoContract:
     dependency_tree.print_tree()
     while dependency_tree is not None:
         leaf = dependency_tree.get_leafs().pop()
-        print(main_contract)
-        print("composing with")
-        print(contracts_dict[leaf.data])
         main_contract.compose(contracts_dict[leaf.data])
         dependency_tree.remove_node(leaf)
 
