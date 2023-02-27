@@ -1180,6 +1180,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
     def _tactic_2(term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, refine: bool):  # noqa: WPS231
         logging.debug("************ Tactic 2")
         logging.debug("Vars_to_elim %s \nTerm %s \nContext %s " % (vars_to_elim, term, context))
+        conflict_vars = list_intersection(vars_to_elim, term.vars)
         new_context_list = []
         logging.debug("This is the context")
         logging.debug(context)
@@ -1193,6 +1194,8 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
             logging.debug(el)
         if not new_context_list:
             raise ValueError("No term contains only irrelevant variables")
+        if list_diff(conflict_vars, PolyhedralTermList(new_context_list).vars):
+            raise ValueError("Tactic 2 unsuccessful")
         # now optimize
         retval = PolyhedralTermList.termlist_to_polytope(PolyhedralTermList(new_context_list), PolyhedralTermList([]))
         variables = retval[0]
