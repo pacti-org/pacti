@@ -9,7 +9,7 @@ from pacti.terms.polyhedra.polyhedra import PolyhedralTerm, PolyhedralTermList
 
 
 class PolyhedralContract(IoContract):
-    def rename_variables(self, variable_mappings: list[tuple[str, str]]) -> IoContract:
+    def rename_variables(self, variable_mappings: list[tuple[str, str]]) -> PolyhedralContract:
         new_contract = self.copy()
         for mapping in variable_mappings:
             new_contract = new_contract.rename_variable(Var(mapping[0]), Var(mapping[1]))
