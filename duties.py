@@ -16,8 +16,10 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
+import glob
 import importlib
 import os
+import pathlib
 import re
 import ssl
 import sys
@@ -70,14 +72,14 @@ def update_changelog(
         template_url: The URL to the Jinja template used to render contents.
     """
     from git_changelog.build import Changelog
-    from git_changelog.commit import AngularStyle
+    from git_changelog.commit import AngularConvention
     from jinja2.sandbox import SandboxedEnvironment
 
-    AngularStyle.DEFAULT_RENDER.insert(0, AngularStyle.TYPES["build"])
+    AngularConvention.DEFAULT_RENDER.insert(0, AngularConvention.TYPES["build"])
     env = SandboxedEnvironment(autoescape=False)
     template_text = urlopen(template_url).read().decode("utf8")  # noqa: S310
     template = env.from_string(template_text)
-    changelog = Changelog(".", style="angular")
+    changelog = Changelog(".", convention=AngularConvention)
 
     if len(changelog.versions_list) == 1:
         last_version = changelog.versions_list[0]
@@ -252,6 +254,16 @@ def clean(ctx):
     ctx.run("rm -rf docs/_case_studies")
 
 
+def copy_case_studies(ctx):
+    if os.path.exists("docs/_case_studies"):
+        ctx.run("rm -rf docs/_case_studies")
+
+    ctx.run("cp -r case_studies docs/_case_studies")
+    py_files = glob.glob("docs/_case_studies/**/*.py", recursive=True)
+    for path in py_files:
+        pathlib.Path.unlink(Path(path))
+
+
 @duty
 def docs(ctx):
     """
@@ -273,9 +285,7 @@ def docs_serve(ctx, host="127.0.0.1", port=8000):
         host: The host to serve the docs from.
         port: The port to serve the docs on.
     """
-    if os.path.exists("docs/_case_studies"):
-        ctx.run("rm -rf docs/_case_studies")
-    ctx.run("ln -sf ../case_studies docs/_case_studies")
+    copy_case_studies(ctx)
     ctx.run(f"mkdocs serve -a {host}:{port}", title="Serving documentation", capture=False)
 
 
@@ -287,9 +297,7 @@ def docs_deploy(ctx):
     Arguments:
         ctx: The context instance (passed automatically).
     """
-    if os.path.exists("docs/_case_studies"):
-        ctx.run("rm -f docs/_case_studies")
-    ctx.run("ln -sf ../case_studies docs/_case_studies")
+    copy_case_studies
     ctx.run("mkdocs gh-deploy", title="Deploying documentation")
 
 
