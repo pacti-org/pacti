@@ -20,4 +20,9 @@ A case study on modeling the specifications of biological sensors to construct a
 
 <font size="5">[**Signal processing pipelines in digital ICs**](/pacti/_case_studies/digital_signal_processing/dsp_wl/)</font>
 
-<font size="5">**Generating UAV topologies**</font>
+
+<font size="5">[**Generating UAV topologies**](/pacti/_case_studies/uav_topologies/)</font>
+
+<img src="https://raw.githubusercontent.com/FormalSystems/media/main/case_studies/uav_topologies/grammar-1.png" alt= "uav topologies" width="700"/>
+
+We demonstrate the application of pacti in modeling a context-sensitive grammar for generating three-dimensional topologies for Unmanned Aerial Vehicles (UAVs).
