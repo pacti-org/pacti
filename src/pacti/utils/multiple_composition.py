@@ -8,6 +8,7 @@ class Tree:
     """
     Helper class to build the dependency tree of the contracts involved in the composition
     """
+
     def __init__(self, data=None):
         self.data = data
         self.children = set()
@@ -96,11 +97,12 @@ def composing_multiple_contracts(contracts: list[IoContract]) -> IoContract:
     dependency_tree: Tree = build_dependency_tree(symbol_dict)
     leaf = dependency_tree.get_leafs().pop()
     main_contract = contracts_dict[leaf.data]
-    dependency_tree.print_tree()
     dependency_tree.remove_node(leaf)
     dependency_tree.print_tree()
     while dependency_tree is not None:
         leaf = dependency_tree.get_leafs().pop()
+        if leaf.data is None:
+            break
         main_contract.compose(contracts_dict[leaf.data])
         dependency_tree.remove_node(leaf)
 
@@ -121,7 +123,7 @@ if __name__ == "__main__":
         assumptions=["q <= 0"], guarantees=["v <= 0"], InputVars=["q"], OutputVars=["v"]
     )
     c5 = PolyhedralContract.from_string(
-        assumptions=["y <= 0"], guarantees=["v <= 0"], InputVars=["y"], OutputVars=["v"]
+        assumptions=["y <= 0"], guarantees=["w <= 0"], InputVars=["y"], OutputVars=["w"]
     )
 
     contract = composing_multiple_contracts([c1, c2, c3, c4, c5])
