@@ -20,9 +20,9 @@ system using assume-guarantee specifications, or contracts. Pacti's capabilities
 Suppose we have the following system:
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/source/_static/exports/circuit_series_composition_white.svg" width="250">
-  <source media="(prefers-color-scheme: light)" srcset="docs/source/_static/exports/circuit_series_composition_black.svg" width="250">
-  <img alt="Logo in light and dark mode." src="docs/source/_static/exports/circuit_series_composition_black.svg" width="250">
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/FormalSystems/media/main/doc/source/static/exports/circuit_series_composition_scheme_d.svg" width="250">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/FormalSystems/media/main/doc/source/static/exports/circuit_series_composition_scheme_l.svg" width="250">
+  <img alt="Logo in light and dark mode." src="https://raw.githubusercontent.com/FormalSystems/media/main/doc/source/static/exports/circuit_series_composition_scheme_l.svg" width="250">
 </picture>
 
 
@@ -46,9 +46,9 @@ Pacti places the result of composition in the file result.json. The output is
 Now we consider an example of quotient. Consider the following circuits:
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/source/_static/exports/circuit_series_quotient_white.svg" width="250">
-  <source media="(prefers-color-scheme: light)" srcset="docs/source/_static/exports/circuit_series_quotient_black.svg" width="250">
-  <img alt="Logo in light and dark mode." src="docs/source/_static/exports/circuit_series_quotient_black.svg" width="250">
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/FormalSystems/media/main/doc/source/static/exports/circuit_series_quotient_scheme_d.svg" width="250">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/FormalSystems/media/main/doc/source/static/exports/circuit_series_quotient_scheme_l.svg" width="250">
+  <img alt="Logo in light and dark mode." src="https://raw.githubusercontent.com/FormalSystems/media/main/doc/source/static/exports/circuit_series_quotient_scheme_l.svg" width="250">
 </picture>
 
 We wish to implement a system $M$ with specification $C = (|i| \le 1, o' = 2i + 1)$, and to do this we have available a component $M'$ with specification $C' = (|i| \le 2, o = 2i)$. We use the quotient operation in Pacti to obtain the specification of the component that we are missing so that the resulting object meets the specification $C$. We run the command
@@ -106,32 +106,7 @@ pdm run python src/pacti/cli.py ./examples/example.json ./output.json
 ## Links
 
 - Documentation: `make docs-serve`
-- Source Code: https://github.com/iincer/contractTool
-
-## Troubleshooting
+- Source Code: https://github.com/FormalSystems/pacti
 
 
-### Working with PEP 582
 
-With PEP 582, dependencies will be installed into the __pypackages__ directory under the project root. With PEP 582 enabled
-globally, you can also use the project interpreter to run scripts directly.
-Check [pdm documentation](https://pdm.fming.dev/latest/usage/pep582/) on PEP 582.
-
-To configure VSCode to support PEP 582, open `.vscode/settings.json` (create one if it does not exist) and add the
-following entries:
-
-```json
-{
-  "python.autoComplete.extraPaths": [
-    "__pypackages__/3.10/lib"
-  ],
-  "python.analysis.extraPaths": [
-    "__pypackages__/3.10/lib"
-  ]
-}
-```
-
-To configure PyCharm to support PEP 582, mark the following folders as 'Sources Root':
-
-- `__pypackages__/3.10/lib`
-- `src`
