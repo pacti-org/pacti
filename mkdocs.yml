@@ -28,6 +28,8 @@ nav:
     - Power Viewpoint: _case_studies/space_mission/space_mission_power.ipynb
     - Science & Communication Viewpoint: _case_studies/space_mission/space_mission_science.ipynb
     - Navigation Viewpoint: _case_studies/space_mission/space_mission_navigation.ipynb
+    - Thermal Viewpoint: _case_studies/space_mission/space_mission_thermal.ipynb
+    - Schedulability Analysis with 3 Viewpoints: _case_studies/space_mission/space_mission_3viewpoints.ipynb
   - Mars 2020 Entry-Descent-Landing: _case_studies/mars_entry_descent_landing/mars_edl_2nd_encoding.ipynb
 - API: #reference/
   - IoContract: iocontract.md
