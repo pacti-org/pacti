@@ -262,6 +262,19 @@ def copy_case_studies(ctx):
     py_files = glob.glob("docs/_case_studies/**/*.py", recursive=True)
     for path in py_files:
         pathlib.Path.unlink(Path(path))
+    # get all jupyter files in configuration
+    with open("mkdocs.yml") as f:
+        contents = f.readlines()
+    nb_files_use = []
+    for line in contents:
+        m = re.match("^.*?([^\s]*\.ipynb)", line)
+        if m:
+            nb_files_use.append(Path("docs/"+m.groups()[0]))
+    nb_files = glob.glob("docs/_case_studies/**/*.ipynb", recursive=True)
+    for file in nb_files:
+        path = Path(file)
+        if path not in nb_files_use:
+            pathlib.Path.unlink(path)
 
 
 @duty
