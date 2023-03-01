@@ -153,5 +153,3 @@ def test_issue171():
     assert expected == transformed
 
 
-if __name__ == "__main__":
-    test_polyhedral_var_elim_by_refinement_1()
