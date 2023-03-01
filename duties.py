@@ -269,7 +269,7 @@ def copy_case_studies(ctx):
     for line in contents:
         m = re.match("^.*?([^\s]*\.ipynb)", line)
         if m:
-            nb_files_use.append(Path("docs/"+m.groups()[0]))
+            nb_files_use.append(Path("docs/" + m.groups()[0]))
     nb_files = glob.glob("docs/_case_studies/**/*.ipynb", recursive=True)
     for file in nb_files:
         path = Path(file)
