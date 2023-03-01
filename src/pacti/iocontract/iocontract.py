@@ -410,6 +410,14 @@ class IoContract(Generic[TL_t]):
             + str(self.g)
         )
 
+    def __eq__(self, other):
+        return (
+            self.inputvars == other.inputvars
+            and self.outputvars == self.outputvars
+            and self.a == other.a
+            and self.g == other.g
+        )
+
     def rename_variable(  # noqa: WPS231 too much cognitive complexity
         self: Cont_t, source_var: Var, target_var: Var
     ) -> Cont_t:
