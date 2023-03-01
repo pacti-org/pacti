@@ -62,7 +62,7 @@ class PolyhedralContract(IoContract):
             assumptions=a,
             guarantees=g,
         )
-    
+
     @staticmethod
     def from_file(file_name: str) -> list[PolyhedralContract]:
         return [PolyhedralContract.from_dict(cont) for cont in serializer.read_contract_dict_from_file(file_name)]

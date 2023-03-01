@@ -3,6 +3,7 @@ Consists of loader functions that can read a JSON dictionary contract
 or write a IOContract to a JSON file.
 """
 import json
+import os
 import re
 from typing import Tuple, Union
 
@@ -13,7 +14,7 @@ from typing_extensions import TypedDict
 from pacti.iocontract import IoContract
 from pacti.iocontract.iocontract import Var
 from pacti.terms.polyhedra.polyhedra import PolyhedralTerm
-import os
+
 
 class FileDataFormatException(Exception):
     pass
@@ -21,6 +22,7 @@ class FileDataFormatException(Exception):
 
 class ContractFormatException(FileDataFormatException):
     pass
+
 
 numeric = Union[int, float]
 ser_pt = dict[str, Union[float, dict[str, float]]]
@@ -67,11 +69,12 @@ def check_clause(clause, clause_id):
             if not isinstance(value, dict):
                 raise ContractFormatException(f'The "{kw}" in {clause_id} should be a dictionary')
 
+
 def check_file_data(data):
     if not isinstance(data, dict):
         raise Exception(f"The input should be a dictionary")
-    
-    for k,v in data.items():
+
+    for k, v in data.items():
         check_contract(contract=v, contract_name=k)
 
 

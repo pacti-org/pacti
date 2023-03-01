@@ -1,6 +1,4 @@
-
 from pacti.terms.polyhedra import PolyhedralContract
-from pacti.terms.polyhedra.serializer import write_contract
 
 TEST_DATA_DIR = "tests/test_data/polyhedral_contracts/"
 
@@ -12,6 +10,7 @@ def test_composition_1():
     print(expected)
     print(obtained)
     assert expected == obtained
+
 
 if __name__ == "__main__":
     test_composition_1()
