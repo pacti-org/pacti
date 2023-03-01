@@ -314,7 +314,7 @@ def internal_parse_constant(val: str) -> numeric:
             return n
 
 
-def internal_add_variable(terms: str, variables: dict[Var, numeric], v: str, c: str) -> dict[Var, numeric]:
+def internal_add_variable(terms: str, variables: dict[Var, numeric], v: str, c: str) -> None:
     if variables.__contains__(v):
         raise (ValueError(f"Multiple coefficients involving the same variable: {v} in: {terms}"))
 
