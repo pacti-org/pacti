@@ -1,0 +1,45 @@
+
+{
+    "contract1":{
+        "InputVars":[
+            "i"
+        ],
+        "OutputVars":[
+            "o"
+        ],
+        "assumptions":
+        [
+            {"coefficients":{"i":1},
+            "constant":2},
+            {"coefficients":{"i":-1},
+            "constant":2}
+        ],
+        "guarantees":
+        [
+            {"coefficients":{"i":-1,"o":1},
+            "constant":0},
+            {"coefficients":{"i":1,"o":-2},
+            "constant":2}
+        ]
+    },
+    "contract2":{
+        "InputVars":[
+            "o"
+        ],
+        "OutputVars":[
+            "o_p"
+        ],
+        "assumptions":
+        [
+            {"coefficients":{"o":5},
+            "constant":1},
+            {"coefficients":{"o":-1},
+            "constant":1}
+        ],
+        "guarantees":
+        [
+            {"coefficients":{"o":-1,"o_p":1},
+            "constant":0}
+        ]
+    }
+}

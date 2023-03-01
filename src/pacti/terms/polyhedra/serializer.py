@@ -13,6 +13,14 @@ from typing_extensions import TypedDict
 from pacti.iocontract import IoContract
 from pacti.iocontract.iocontract import Var
 from pacti.terms.polyhedra.polyhedra import PolyhedralTerm
+import os
+
+class FileDataFormatException(Exception):
+    pass
+
+
+class ContractFormatException(FileDataFormatException):
+    pass
 
 numeric = Union[int, float]
 ser_pt = dict[str, Union[float, dict[str, float]]]
@@ -20,6 +28,65 @@ ser_contract = TypedDict(
     "ser_contract",
     {"InputVars": list[str], "OutputVars": list[str], "assumptions": list[ser_pt], "guarantees": list[ser_pt]},
 )
+
+
+def getVarlist(aList):
+    return list([Var(varstr) for varstr in aList])
+
+
+def check_contract(contract, contract_name):
+    if not isinstance(contract, dict):
+        print(contract)
+        raise ContractFormatException(f"Each contract should be a dictionary")
+    keywords = ["assumptions", "guarantees", "InputVars", "OutputVars"]
+    str_list_kw = ["InputVars", "OutputVars"]
+    for kw in keywords:
+        if kw not in contract:
+            raise ContractFormatException(f'Keyword "{kw}" not found in contract {contract_name}')
+        value = contract[kw]
+        if not isinstance(value, list):
+            raise ContractFormatException(f'The "{kw}" in contract {contract_name} should be a list')
+        if kw in str_list_kw:
+            for str_item in value:
+                if not isinstance(str_item, str):
+                    raise ContractFormatException(
+                        f"The Variables in contract {contract_name} should be defined as strings"
+                    )
+        else:
+            for index, clause in enumerate(value):
+                check_clause(clause, f"{contract_name}:{kw}{index}")
+
+
+def check_clause(clause, clause_id):
+    keywords = ["constant", "coefficients"]
+    for kw in keywords:
+        if kw not in clause:
+            ContractFormatException(f'Keyword "{kw}" not found in {clause_id}')
+        value = clause[kw]
+        if kw == "coefficients":
+            if not isinstance(value, dict):
+                raise ContractFormatException(f'The "{kw}" in {clause_id} should be a dictionary')
+
+def check_file_data(data):
+    if not isinstance(data, dict):
+        raise Exception(f"The input should be a dictionary")
+    
+    for k,v in data.items():
+        check_contract(contract=v, contract_name=k)
+
+
+def read_contract_dict_from_file(file_name: str) -> list[dict]:
+    if not os.path.isfile(file_name):
+        raise Exception(f"The path {file_name} is not a file.")
+    with open(file_name) as f:
+        data = json.load(f)
+        check_file_data(data=data)
+    contracts = []
+    contract_names = list(data.keys())
+    contract_names.sort()
+    for contract_name in contract_names:
+        contracts.append(data[contract_name])
+    return contracts
 
 
 def write_contract(
