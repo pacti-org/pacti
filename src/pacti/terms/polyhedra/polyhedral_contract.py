@@ -63,6 +63,10 @@ class PolyhedralContract(IoContract):
             guarantees=g,
         )
 
+    @staticmethod
+    def from_file(file_name: str) -> list[PolyhedralContract]:
+        return [PolyhedralContract.from_dict(cont) for cont in serializer.read_contract_dict_from_file(file_name)]
+
     def compose(self, other: PolyhedralContract, vars_to_keep: Optional[list[str]] = None):
         if vars_to_keep is None:
             vars_to_keep = []
