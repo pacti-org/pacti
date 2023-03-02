@@ -81,8 +81,8 @@ class PolyhedralContract(IoContract):
 
 
 class NestedPolyhedra(NestedTermList):
-    def __init__(self, nested_termlist: list[PolyhedralTermList]):  # noqa: WPS612 useless overwritten __init__
-        super().__init__(nested_termlist)
+    def __init__(self, nested_termlist: list[PolyhedralTermList], force_empty_intersection : bool):  # noqa: WPS612 useless overwritten __init__
+        super().__init__(nested_termlist, force_empty_intersection)
 
 
 class PolyhedralContractCompound(IoContractCompound):
@@ -108,6 +108,6 @@ class PolyhedralContractCompound(IoContractCompound):
         return PolyhedralContractCompound(
             input_vars=[Var(x) for x in InputVars],
             output_vars=[Var(x) for x in OutputVars],
-            assumptions=NestedPolyhedra(a),
-            guarantees=NestedPolyhedra(g),
+            assumptions=NestedPolyhedra(a, force_empty_intersection=True),
+            guarantees=NestedPolyhedra(g, force_empty_intersection=False)
         )
