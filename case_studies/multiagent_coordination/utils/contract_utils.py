@@ -6,7 +6,7 @@ def collision_quadrant_2():
     OutputVars= ["x_A_1", "y_A_1", "x_B_1", "y_B_1", "t_1"]
                  ,
     assumptions=[
-      f"current_distance <= -1",
+      f"-current_distance <= -1",
     ],
     guarantees=[
       f"- x_A_1 + x_B_1 - y_A_1 + y_B_1 <= -1",
@@ -21,7 +21,7 @@ def collision_quadrant_3():
     OutputVars= ["x_A_1", "y_A_1", "x_B_1", "y_B_1", "t_1"]
                  ,
     assumptions=[
-      f"current_distance <= -1",
+      f"-current_distance <= -1",
     ],
     guarantees=[
       f"x_A_1 - x_B_1 - y_A_1 + y_B_1 <= -1",
@@ -36,7 +36,7 @@ def collision_quadrant_4():
     OutputVars= ["x_A_1", "y_A_1", "x_B_1", "y_B_1", "t_1"]
                  ,
     assumptions=[
-      f"current_distance <= -1",
+      f"-current_distance <= -1",
     ],
     guarantees=[
       f"- x_A_1 + x_B_1 + y_A_1 - y_B_1 <= -1",
