@@ -1,2 +1,2 @@
+from .compundiocontract import IoContractCompound, NestedTermList
 from .iocontract import IoContract, Term, TermList, Var
-from .compundiocontract import NestedTermList, IoContractCompound

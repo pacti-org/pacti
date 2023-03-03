@@ -1,10 +1,10 @@
 
 {
     "contract1":{
-        "InputVars":[
+        "input_vars":[
             "u_1", "u_2"
         ],
-        "OutputVars":[
+        "output_vars":[
             "y"
         ],
         "assumptions":
@@ -18,10 +18,10 @@
         ]
     },
     "contract2":{
-        "InputVars":[
+        "input_vars":[
             "u_1", "u_2"
         ],
-        "OutputVars":[
+        "output_vars":[
             "x_1", "x_2"
         ],
         "assumptions":

@@ -5,8 +5,8 @@ FORMAT = "%(asctime)s:%(levelname)s:%(name)s:%(message)s"
 logging.basicConfig(filename="../pacti.log", filemode="w", level=logging.DEBUG, format=FORMAT)
 
 c1 = PolyhedralContract.from_string(
-    InputVars = ["Sal", "aTc"],
-    OutputVars = ["RFP"],
+    input_vars = ["Sal", "aTc"],
+    output_vars = ["RFP"],
     assumptions = [
         "-Sal <= -0.909",
         "Sal <= 42.57",
@@ -19,8 +19,8 @@ c1 = PolyhedralContract.from_string(
 )
 
 c0 = PolyhedralContract.from_string(
-InputVars = ["Sal", "aTc"],
-OutputVars = ["xRFP", "dCas9"],
+input_vars = ["Sal", "aTc"],
+output_vars = ["xRFP", "dCas9"],
 assumptions = [
   "Sal <= 43.0",
   "-Sal <= -0.90",

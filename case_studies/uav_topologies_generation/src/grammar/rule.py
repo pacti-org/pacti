@@ -48,8 +48,8 @@ class Rule:
             print(constraint)
             print(list(symbols))
             io_contract = PolyhedralContract.from_string(
-                InputVars=list(symbols),
-                OutputVars=[],
+                input_vars=list(symbols),
+                output_vars=[],
                 assumptions=constraint,
                 guarantees=[])
 

@@ -1,14 +1,14 @@
 from pacti.terms.polyhedra import PolyhedralContract
 
 contract1 = PolyhedralContract.from_string(
-    InputVars=["i"],
-    OutputVars=["o"],
+    input_vars=["i"],
+    output_vars=["o"],
     assumptions=["|i| <= 2"],
     guarantees=["o - i <= 0", "i - 2o <= 2"])
 
 contract2 = PolyhedralContract.from_string(
-    InputVars=["o"],
-    OutputVars=["o_p"],
+    input_vars=["o"],
+    output_vars=["o_p"],
     assumptions=["o <= 0.2", "-o <= 1"],
     guarantees=["o_p - o <= 0"])
 
