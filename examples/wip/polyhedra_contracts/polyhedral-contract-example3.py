@@ -12,11 +12,11 @@ atmospheric_t_exit = 90.0
 atmospheric_min_deacceleration = abs((atmospheric_v_entry - atmospheric_v_exit) / (atmospheric_t_entry - atmospheric_t_exit))
 
 atmospheric_entry_contract = PolyhedralContract.from_string(
-    InputVars=[
+    input_vars=[
       "t0",           # time @ entry
       "v0"            # velocity @ entry
     ],
-    OutputVars=[
+    output_vars=[
       "t1",           # time @ exit
       "v1"            # velocity @ exit
     ],
@@ -52,11 +52,11 @@ parachute_t_exit = 260.0
 parachute_min_deacceleration = abs((parachute_v_entry - parachute_v_exit) / (parachute_t_entry - parachute_t_exit))
 
 parachute_deployment_contract = PolyhedralContract.from_string(
-    InputVars=[
+    input_vars=[
       "t1",           # entry time
       "v1"            # entry velocity
     ],
-    OutputVars=[
+    output_vars=[
       "t2",           # exit time
       "v2"            # exit velocity
     ],

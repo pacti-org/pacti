@@ -32,7 +32,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 from duty import duty
 
-PY_SRC_PATHS = (Path(_) for _ in ("src", "tests", "duties.py", "docs"))
+PY_SRC_PATHS = (Path(_) for _ in ("src", "tests", "docs"))
 PY_SRC_LIST = tuple(str(_) for _ in PY_SRC_PATHS)
 PY_SRC = " ".join(PY_SRC_LIST)
 TESTING = os.environ.get("TESTING", "0") in {"1", "true"}
@@ -72,14 +72,14 @@ def update_changelog(
         template_url: The URL to the Jinja template used to render contents.
     """
     from git_changelog.build import Changelog
-    from git_changelog.commit import AngularConvention
+    from git_changelog.commit import AngularStyle
     from jinja2.sandbox import SandboxedEnvironment
 
-    AngularConvention.DEFAULT_RENDER.insert(0, AngularConvention.TYPES["build"])
+    AngularStyle.DEFAULT_RENDER.insert(0, AngularStyle.TYPES["build"])
     env = SandboxedEnvironment(autoescape=False)
     template_text = urlopen(template_url).read().decode("utf8")  # noqa: S310
     template = env.from_string(template_text)
-    changelog = Changelog(".", convention=AngularConvention)
+    changelog = Changelog(".", style=AngularStyle)
 
     if len(changelog.versions_list) == 1:
         last_version = changelog.versions_list[0]
@@ -262,6 +262,19 @@ def copy_case_studies(ctx):
     py_files = glob.glob("docs/_case_studies/**/*.py", recursive=True)
     for path in py_files:
         pathlib.Path.unlink(Path(path))
+    # get all jupyter files in configuration
+    with open("mkdocs.yml") as f:
+        contents = f.readlines()
+    nb_files_use = []
+    for line in contents:
+        m = re.match("^.*?([^\s]*\.ipynb)", line)
+        if m:
+            nb_files_use.append(Path("docs/" + m.groups()[0]))
+    nb_files = glob.glob("docs/_case_studies/**/*.ipynb", recursive=True)
+    for file in nb_files:
+        path = Path(file)
+        if path not in nb_files_use:
+            pathlib.Path.unlink(path)
 
 
 @duty
