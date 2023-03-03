@@ -1,3 +1,5 @@
+"""File IO for Pacti."""
+
 import json
 import os
 from typing import Tuple
@@ -6,6 +8,19 @@ import pacti.terms.polyhedra
 
 
 def read_contracts_from_file(file_name: str) -> Tuple[list[pacti.terms.polyhedra.PolyhedralContract], list[str]]:
+    """
+    Read contracts from a file.
+
+    Args:
+        file_name: Name of file to read.
+
+    Raises:
+        ValueError: Unsupported contract attempted to be read.
+        Exception: File does not exist.
+
+    Returns:
+        A list of contracts with the elements of the file.
+    """
     if not os.path.isfile(file_name):
         raise Exception(f"The path {file_name} is not a file.")
     with open(file_name) as f:
@@ -42,6 +57,15 @@ def write_contracts_to_file(
     file_name: str,
     machine_representation: bool = False,
 ) -> None:
+    """
+    Write contracts to a file.
+
+    Args:
+        contracts: The contracts to write.
+        names: The names of the contracts to keep in written file.
+        file_name: Name of file to write.
+        machine_representation: Whether the resulting file should be optimized for machine processing.
+    """
     data = []
     assert len(contracts) == len(names)
     for i, c in enumerate(contracts):

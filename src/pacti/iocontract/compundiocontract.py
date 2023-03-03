@@ -23,7 +23,7 @@ class NestedTermList:
             nested_termlist: A list of terms contained by TermList.
 
         Raises:
-            ValueError: argument has separate polyhedra with nonempty intersection.
+            ValueError: argument has separate termlists with nonempty intersection.
         """
         # make sure the elements of the argument don't intersect
         for i, tli in enumerate(nested_termlist):
@@ -124,7 +124,7 @@ class NestedTermList:
 
 class IoContractCompound:
     """
-    Basic type for an IO contract.
+    Basic type for a compound IO contract.
 
     Attributes:
         inputvars:
@@ -133,9 +133,9 @@ class IoContractCompound:
         outputvars:
             Variables which are outputs of the implementations of the contract.
 
-        a(TermList): Contract assumptions.
+        a: Contract assumptions.
 
-        g(TermList): Contract guarantees.
+        g: Contract guarantees.
     """
 
     def __init__(self, assumptions: NTL_t, guarantees: NTL_t, input_vars: List[Var], output_vars: List[Var]):
