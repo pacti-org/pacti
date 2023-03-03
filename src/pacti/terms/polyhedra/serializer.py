@@ -18,7 +18,20 @@ ser_contract = TypedDict(
 )
 
 
-def validate_contract_dict(contract, contract_name, machine_representation: bool):
+def validate_contract_dict(  # noqa: WPS231 too much cognitive complexity
+    contract, contract_name, machine_representation: bool
+):
+    """
+    Tell whether a contract dictionary can be read as a polyhedral contract.
+
+    Args:
+        contract: a dictionary to be analyzed.
+        contract_name: a name for the contract (used for error reporting).
+        machine_representation: the provided dictionary is machine-optimized.
+
+    Raises:
+        ContractFormatError: the provided contract is not well-formed.
+    """
     if not isinstance(contract, dict):
         print(contract)
         raise ContractFormatError("Each contract should be a dictionary")
@@ -109,7 +122,18 @@ def _lhs_str(term) -> str:  # noqa: WPS231
     return res
 
 
-def internal_pt_to_string(terms: list[PolyhedralTerm]) -> Tuple[str, list[PolyhedralTerm]]:
+def polyhedral_term_list_to_strings(  # noqa: WPS231 too much cognitive complexity
+    terms: list[PolyhedralTerm],
+) -> Tuple[str, list[PolyhedralTerm]]:
+    """
+    Convert a list of polyhedral terms into a list of strings, one term at a time.
+
+    Args:
+        terms: the list of terms.
+
+    Returns:
+        String representation of the first constraint and list of items not yet serialized.
+    """
     if not terms:
         return "", []
 
@@ -130,9 +154,10 @@ def internal_pt_to_string(terms: list[PolyhedralTerm]) -> Tuple[str, list[Polyhe
                 return s, ts
 
             else:
-                if _are_numbers_approximatively_equal(tp.constant, float(0)) & _are_numbers_approximatively_equal(
-                    tn.constant, float(0)
-                ):
+                condition = _are_numbers_approximatively_equal(
+                    tp.constant, float(0)
+                ) and _are_numbers_approximatively_equal(tn.constant, float(0))
+                if condition:
                     # inverse of rule 3
                     # rewrite as 2 terms given input match: | LHS | = 0
                     # pos: LHS <= 0
@@ -185,20 +210,22 @@ internal_polyhedral_term_canonical_pattern = re.compile(
     "$"
 )
 
-internal_polyhedral_term_absolute_less_than_pattern = re.compile(
+internal_polyhedral_term_absolute_less_than_pattern = re.compile(  # noqa: WPS118 Found too long name
     "^"
     r"\s*\|"
-    r"(?P<LHS>([+-]?(\s*(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)?)?\s*\*?\s*[a-zA-Z]\w*(\s*[+-]\s*((\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?\s*\*?)?\s*[a-zA-Z]\w*)*)"
+    r"(?P<LHS>([+-]?(\s*(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)?)?\s*\*?\s*"
+    r"[a-zA-Z]\w*(\s*[+-]\s*((\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?\s*\*?)?\s*[a-zA-Z]\w*)*)"
     r"\s*\|"
     r"\s*<="
     r"\s*(?P<RHS>[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)"
     "$"
 )
 
-internal_polyhedral_term_absolute_zero_pattern = re.compile(
+internal_polyhedral_term_absolute_zero_pattern = re.compile(  # noqa: WPS118 Found too long name
     "^"
     r"\s*\|"
-    r"(?P<LHS>([+-]?(\s*(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)?)?\s*\*?\s*[a-zA-Z]\w*(\s*[+-]\s*((\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?\s*\*?)?\s*[a-zA-Z]\w*)*)"
+    r"(?P<LHS>([+-]?(\s*(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)?)?\s*\*?\s*"
+    r"[a-zA-Z]\w*(\s*[+-]\s*((\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?\s*\*?)?\s*[a-zA-Z]\w*)*)"
     r"\s*\|"
     r"\s*="
     r"\s*0"
@@ -207,7 +234,8 @@ internal_polyhedral_term_absolute_zero_pattern = re.compile(
 
 internal_polyhedral_term_equality_pattern = re.compile(
     "^"
-    r"(?P<LHS>([+-]?(\s*(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)?)?\s*\*?\s*[a-zA-Z]\w*(\s*[+-]\s*((\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?\s*\*?)?\s*[a-zA-Z]\w*)*)"
+    r"(?P<LHS>([+-]?(\s*(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)?)?\s*\*?\s*"
+    r"[a-zA-Z]\w*(\s*[+-]\s*((\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?\s*\*?)?\s*[a-zA-Z]\w*)*)"
     r"\s*="
     r"\s*(?P<RHS>[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)"
     "$"
@@ -341,6 +369,18 @@ def _internal_pt_from_equality_match(m: re.Match[str]) -> list[PolyhedralTerm]:
 
 
 def polyhedral_termlist_from_string(str_rep: str) -> list[PolyhedralTerm]:
+    """
+    Transform a linear expression into a polyhedral termlist.
+
+    Args:
+        str_rep: The linear expression passed as a string.
+
+    Returns:
+        A PolyhedralTermList representing the input expression.
+
+    Raises:
+        ValueError: constraint syntax invalid.
+    """
     m1 = internal_polyhedral_term_canonical_pattern.match(str_rep)
     m2 = internal_polyhedral_term_absolute_less_than_pattern.match(str_rep)
     m3 = internal_polyhedral_term_absolute_zero_pattern.match(str_rep)

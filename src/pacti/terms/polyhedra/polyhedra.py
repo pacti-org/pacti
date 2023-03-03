@@ -476,7 +476,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         str_list = []
         ts = self.terms.copy()
         while ts:
-            s, rest = serializer.internal_pt_to_string(ts)
+            s, rest = serializer.polyhedral_term_list_to_strings(ts)
             str_list.append(s)
             ts = rest
         return str_list
