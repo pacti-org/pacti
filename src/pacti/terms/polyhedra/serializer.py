@@ -15,13 +15,8 @@ from pacti.iocontract import IoContract
 from pacti.iocontract.iocontract import Var
 from pacti.terms.polyhedra.polyhedra import PolyhedralTerm
 
+from pacti.utils.errors import ContractFormatError
 
-class FileDataFormatException(Exception):
-    pass
-
-
-class ContractFormatException(FileDataFormatException):
-    pass
 
 
 numeric = Union[int, float]
@@ -32,29 +27,28 @@ ser_contract = TypedDict(
 )
 
 
-def getVarlist(aList):
-    return list([Var(varstr) for varstr in aList])
 
-
-def check_contract(contract, contract_name):
+def validate_contract_dict(contract, contract_name, machine_representation: bool):
     if not isinstance(contract, dict):
         print(contract)
-        raise ContractFormatException(f"Each contract should be a dictionary")
+        raise ContractFormatError(f"Each contract should be a dictionary")
     keywords = ["assumptions", "guarantees", "InputVars", "OutputVars"]
     str_list_kw = ["InputVars", "OutputVars"]
+    if not machine_representation:
+        str_list_kw += ["assumptions", "guarantees"]
     for kw in keywords:
         if kw not in contract:
-            raise ContractFormatException(f'Keyword "{kw}" not found in contract {contract_name}')
+            raise ContractFormatError(f'Keyword "{kw}" not found in contract {contract_name}')
         value = contract[kw]
         if not isinstance(value, list):
-            raise ContractFormatException(f'The "{kw}" in contract {contract_name} should be a list')
+            raise ContractFormatError(f'The "{kw}" in contract {contract_name} should be a list')
         if kw in str_list_kw:
             for str_item in value:
                 if not isinstance(str_item, str):
-                    raise ContractFormatException(
-                        f"The Variables in contract {contract_name} should be defined as strings"
+                    raise ContractFormatError(
+                        f"The {kw} in contract {contract_name} should be defined as strings"
                     )
-        else:
+        elif machine_representation:
             for index, clause in enumerate(value):
                 check_clause(clause, f"{contract_name}:{kw}{index}")
 
@@ -63,91 +57,12 @@ def check_clause(clause, clause_id):
     keywords = ["constant", "coefficients"]
     for kw in keywords:
         if kw not in clause:
-            ContractFormatException(f'Keyword "{kw}" not found in {clause_id}')
+            ContractFormatError(f'Keyword "{kw}" not found in {clause_id}')
         value = clause[kw]
         if kw == "coefficients":
             if not isinstance(value, dict):
-                raise ContractFormatException(f'The "{kw}" in {clause_id} should be a dictionary')
+                raise ContractFormatError(f'The "{kw}" in {clause_id} should be a dictionary')            
 
-
-def check_file_data(data):
-    if not isinstance(data, dict):
-        raise Exception(f"The input should be a dictionary")
-
-    for k, v in data.items():
-        check_contract(contract=v, contract_name=k)
-
-
-def read_contract_dict_from_file(file_name: str) -> list[dict]:
-    if not os.path.isfile(file_name):
-        raise Exception(f"The path {file_name} is not a file.")
-    with open(file_name) as f:
-        data = json.load(f)
-        check_file_data(data=data)
-    contracts = []
-    contract_names = list(data.keys())
-    contract_names.sort()
-    for contract_name in contract_names:
-        contracts.append(data[contract_name])
-    return contracts
-
-
-def write_contract(
-    contract: Union[IoContract, list[IoContract]], filename: Union[str, None] = None
-) -> list[ser_contract]:
-    """
-    Converts a pacti.IoContract to a dictionary. If a list of iocontracts is passed,
-    then a list of dicts is returned.
-    If a filename is provided, a JSON file is written, otherwise only dictionaries are returned.
-    Arguments:
-        contract: Contract input of type IoContract or list of IoContracts.
-        filename: Name of file to write the output contract, defaults to None in which case,
-            no file is written.
-
-    Returns:
-        contract_dict: A dictionary for the given IoContract.
-    """
-    if isinstance(contract, IoContract):
-        contract = [contract]
-    contract_list = []
-    for c_i in contract:
-        if not isinstance(c_i, IoContract):
-            return ValueError("An IoContract is expected.")
-
-        inputvars = [str(var) for var in c_i.inputvars]
-        outputvars = [str(var) for var in c_i.outputvars]
-
-        assumptions: list[ser_pt] = [
-            {"constant": float(term.constant), "coefficients": {str(k): float(v) for k, v in term.variables.items()}}
-            for term in c_i.a.terms
-        ]
-
-        guarantees: list[ser_pt] = [
-            {"constant": float(term.constant), "coefficients": {str(k): float(v) for k, v in term.variables.items()}}
-            for term in c_i.g.terms
-        ]
-
-        contract_dict: ser_contract = {
-            "InputVars": inputvars,
-            "OutputVars": outputvars,
-            "assumptions": assumptions,
-            "guarantees": guarantees,
-        }
-
-        contract_list.append(contract_dict)
-    if filename:
-        with open(filename, "w+", encoding="utf-8") as f_i:
-            count = 0
-            f_i.write("{\n")
-            for c_dict in contract_list:
-                data = json.dumps(c_dict)
-                f_i.write('"contract' + str(count) + '"' + ":")
-                f_i.write(data)
-                if c_dict != contract_list[-1]:
-                    f_i.write(",\n")
-                count += 1
-            f_i.write("\n}")
-    return contract_list
 
 
 float_closeness_relative_tolerance: float = 1e-05
@@ -173,6 +88,39 @@ def are_numbers_approximatively_equal(v1: numeric, v2: numeric) -> bool:
                 f1, f2, rtol=float_closeness_relative_tolerance, atol=float_closeness_absolute_tolerance, equal_nan=True
             )
         )
+    
+def _lhs_str(term) -> str:  # noqa: WPS231
+    varlist = list(term.variables.items())
+    varlist.sort(key=lambda x: str(x[0]))
+    # res = " + ".join([str(coeff) + "*" + var.name for var, coeff in varlist])
+    # res += " <= " + str(self.constant)
+    res = ""
+    first = True
+    for var, coeff in varlist:  # noqa: VNE002
+        if are_numbers_approximatively_equal(coeff, 1.0):
+            if first:
+                res += var.name
+            else:
+                res += " + " + var.name
+        elif are_numbers_approximatively_equal(coeff, -1.0):
+            if first:
+                res += "-" + var.name
+            else:
+                res += " - " + var.name
+        elif not are_numbers_approximatively_equal(coeff, float(0)):
+            if coeff > 0:
+                if first:
+                    res += number2string(coeff) + " " + var.name
+                else:
+                    res += " + " + number2string(coeff) + " " + var.name
+            else:
+                if first:
+                    res += number2string(coeff) + " " + var.name
+                else:
+                    res += " - " + number2string(-coeff) + " " + var.name
+        first = False
+    # res += " <= " + number2string(self.constant)
+    return res
 
 
 def internal_pt_to_string(terms: list[PolyhedralTerm]) -> Tuple[str, list[PolyhedralTerm]]:
@@ -191,7 +139,7 @@ def internal_pt_to_string(terms: list[PolyhedralTerm]) -> Tuple[str, list[Polyhe
                 # rewrite as 2 terms given input match: LHS = RHS
                 # pos: LHS <= RHS
                 # neg: -(LHS) <= -(RHS)
-                s = tp._lhs_str() + " = " + number2string(tp.constant)
+                s = _lhs_str(tp) + " = " + number2string(tp.constant)
                 ts.remove(tn)
                 return s, ts
 
@@ -203,7 +151,7 @@ def internal_pt_to_string(terms: list[PolyhedralTerm]) -> Tuple[str, list[Polyhe
                     # rewrite as 2 terms given input match: | LHS | = 0
                     # pos: LHS <= 0
                     # neg: -(LHS) <= 0
-                    s = "|" + tp._lhs_str() + "| = 0"
+                    s = "|" + _lhs_str(tp) + "| = 0"
                     ts.remove(tn)
                     return s, ts
                 elif are_numbers_approximatively_equal(tp.constant, tn.constant):
@@ -211,11 +159,11 @@ def internal_pt_to_string(terms: list[PolyhedralTerm]) -> Tuple[str, list[Polyhe
                     # rewrite as 2 terms given input match: | LHS | <= RHS
                     # pos: LHS <= RHS
                     # neg: -(LHS) <= RHS
-                    s = "|" + tp._lhs_str() + "| <= " + number2string(tp.constant)
+                    s = "|" + _lhs_str(tp) + "| <= " + number2string(tp.constant)
                     ts.remove(tn)
                     return s, ts
 
-    s = tp._lhs_str() + " <= " + number2string(tp.constant)
+    s = _lhs_str(tp) + " <= " + number2string(tp.constant)
     return s, ts
 
 
