@@ -8,7 +8,7 @@ $x_i$ are variables and the $a_i$ and $c$ are constants.
 from __future__ import annotations
 
 import logging
-from typing import Any, Tuple, Union
+from typing import Any, Tuple, Union, Optional
 
 import numpy as np
 import sympy
@@ -431,7 +431,7 @@ class PolyhedralTerm(Term):
 class PolyhedralTermList(TermList):  # noqa: WPS338
     """A TermList of PolyhedralTerm instances."""
 
-    def __init__(self, terms: Union[list[PolyhedralTerm], None] = None):
+    def __init__(self, terms: Optional[list[PolyhedralTerm]] = None):
         """
         Constructor for PolyhedralTermList.
 
@@ -641,7 +641,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         termlist.terms = list_diff(termlist.terms, terms_to_elim.terms)
         return termlist
 
-    def simplify(self, context: Union[PolyhedralTermList, None] = None) -> None:
+    def simplify(self, context: Optional[PolyhedralTermList] = None) -> None:
         """
         Remove redundant terms in the PolyhedralTermList using the provided context.
 
@@ -738,7 +738,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         logging.debug("Ending transformation with simplification")
         self.simplify(context)
 
-    def optimize(self, objective: dict[Var, numeric], maximize: bool = True):
+    def optimize(self, objective: dict[Var, numeric], maximize: bool = True) -> Optional[numeric]:
         """
         Optimizes a linear expression in the feasible region of the termlist.
 
@@ -766,12 +766,11 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         # 2 : Problem appears to be infeasible.
         # 3 : Problem appears to be unbounded.
         # 4 : Numerical difficulties encountered.
-        if res["status"] in {1, 2, 4}:
-            raise ValueError("Constraints are unfeasible")
-        elif res["status"] == 3:
+        if res["status"] == 3:
             return None
         elif res["status"] == 0:
             return polarity * res["fun"]
+        raise ValueError("Constraints are unfeasible")
 
     @staticmethod
     def termlist_to_polytope(
@@ -861,7 +860,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
 
     @staticmethod
     def reduce_polytope(  # noqa: WPS231
-        a: np.ndarray, b: np.ndarray, a_help: Union[np.ndarray, None] = None, b_help: Union[np.ndarray, None] = None
+        a: np.ndarray, b: np.ndarray, a_help: Optional[np.ndarray] = None, b_help: Optional[np.ndarray] = None
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Eliminate redundant constraints from a given polytope.
@@ -943,10 +942,10 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
 
     @staticmethod
     def verify_polytope_containment(  # noqa: WPS231
-        a_l: Union[np.ndarray, None] = None,
-        b_l: Union[np.ndarray, None] = None,
-        a_r: Union[np.ndarray, None] = None,
-        b_r: Union[np.ndarray, None] = None,
+        a_l: Optional[np.ndarray] = None,
+        b_l: Optional[np.ndarray] = None,
+        a_r: Optional[np.ndarray] = None,
+        b_r: Optional[np.ndarray] = None,
     ) -> bool:
         """
         Tell whether a polytope is contained in another.
