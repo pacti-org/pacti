@@ -2,13 +2,18 @@
 
 from __future__ import annotations
 
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple, TypedDict, Union
 
 from pacti.iocontract import IoContract, IoContractCompound, NestedTermList, Var
 from pacti.terms.polyhedra import serializer
 from pacti.terms.polyhedra.polyhedra import PolyhedralTerm, PolyhedralTermList
 
 numeric = Union[int, float]
+ser_pt = dict[str, Union[float, dict[str, float]]]
+ser_contract = TypedDict(
+    "ser_contract",
+    {"input_vars": list[str], "output_vars": list[str], "assumptions": list[ser_pt], "guarantees": list[ser_pt]},
+)
 
 
 class PolyhedralContract(IoContract):
@@ -29,35 +34,34 @@ class PolyhedralContract(IoContract):
             new_contract = new_contract.rename_variable(Var(mapping[0]), Var(mapping[1]))
         return new_contract
 
-    def to_machine_dict(self):
+    def to_machine_dict(self) -> ser_contract:
         """
         Map contract into a machine-optimized dictionary.
 
         Returns:
             A dictionary containing the contract's information.
         """
-        c_temp = {}
-        c_temp["input_vars"] = [str(x) for x in self.inputvars]
-        c_temp["output_vars"] = [str(x) for x in self.outputvars]
-
-        c_temp["assumptions"] = [
-            {
-                "constant": float(term.constant),
-                "coefficients": {str(k): float(v) for k, v in term.variables.items()},
-            }
-            for term in self.a.terms
-        ]
-
-        c_temp["guarantees"] = [
-            {
-                "constant": float(term.constant),
-                "coefficients": {str(k): float(v) for k, v in term.variables.items()},
-            }
-            for term in self.g.terms
-        ]
+        c_temp: ser_contract = {
+            "input_vars": [str(x) for x in self.inputvars],
+            "output_vars": [str(x) for x in self.outputvars],
+            "assumptions": [
+                {
+                    "constant": float(term.constant),
+                    "coefficients": {str(k): float(v) for k, v in term.variables.items()},
+                }
+                for term in self.a.terms
+            ],
+            "guarantees": [
+                {
+                    "constant": float(term.constant),
+                    "coefficients": {str(k): float(v) for k, v in term.variables.items()},
+                }
+                for term in self.g.terms
+            ],
+        }
         return c_temp
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         """
         Map contract into a user-readable dictionary.
 
@@ -149,7 +153,7 @@ class PolyhedralContract(IoContract):
             guarantees=g,
         )
 
-    def compose(self, other: PolyhedralContract, vars_to_keep: Optional[list[str]] = None):
+    def compose(self, other: PolyhedralContract, vars_to_keep: Optional[list[str]] = None) -> PolyhedralContract:
         """Compose polyhedral contracts.
 
         Compute the composition of the two given contracts and abstract the
@@ -170,7 +174,7 @@ class PolyhedralContract(IoContract):
             vars_to_keep = []
         return super().compose(other, [Var(x) for x in vars_to_keep])
 
-    def optimize(self, expr: str, maximize: bool = True):
+    def optimize(self, expr: str, maximize: bool = True) -> Optional[numeric]:
         """Optimize linear objective over the contract.
 
         Compute the optima of a linear objective over the assumptions and

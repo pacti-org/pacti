@@ -1,25 +1,19 @@
 """Consists of loader functions that can read a JSON dictionary contract or write a IOContract to a JSON file."""
 import re
-from typing import Tuple, Union
+from typing import Dict, Tuple, Union
 
 import numpy as np
 import sympy
-from typing_extensions import TypedDict
 
 from pacti.iocontract import Var
 from pacti.terms.polyhedra.polyhedra import PolyhedralTerm
 from pacti.utils.errors import ContractFormatError
 
 numeric = Union[int, float]
-ser_pt = dict[str, Union[float, dict[str, float]]]
-ser_contract = TypedDict(
-    "ser_contract",
-    {"input_vars": list[str], "output_vars": list[str], "assumptions": list[ser_pt], "guarantees": list[ser_pt]},
-)
 
 
 def validate_contract_dict(  # noqa: WPS231 too much cognitive complexity
-    contract, contract_name, machine_representation: bool
+    contract: Dict, contract_name: str, machine_representation: bool
 ):
     """
     Tell whether a contract dictionary can be read as a polyhedral contract.
