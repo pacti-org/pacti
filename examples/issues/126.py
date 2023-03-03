@@ -1,6 +1,6 @@
 
 from pacti.terms.polyhedra import PolyhedralContract
-
+from pacti import write_contracts_to_file
 
 contract1 = PolyhedralContract.from_string(
     InputVars=["i"],
@@ -23,4 +23,6 @@ contract1_n = PolyhedralContract.from_string(
     assumptions=["|i| <= 2"],
     guarantees=["|o| <= 3"])
 
-new_system_contract = contract1_n.compose(contract2)
+
+write_contracts_to_file([contract1, contract2], ["c1", "c2"], "hola.json")
+write_contracts_to_file([contract1, contract2], ["c1", "c2"], "hola_n.json", True)

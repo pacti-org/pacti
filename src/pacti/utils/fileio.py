@@ -5,7 +5,7 @@ from typing import Tuple
 import pacti.terms.polyhedra
 
 
-def read_contracts_from_file(file_name: str) -> Tuple[list, list[str]]:
+def read_contracts_from_file(file_name: str) -> Tuple[list[pacti.terms.polyhedra.PolyhedralContract], list[str]]:
     if not os.path.isfile(file_name):
         raise Exception(f"The path {file_name} is not a file.")
     with open(file_name) as f:
@@ -37,7 +37,7 @@ def read_contracts_from_file(file_name: str) -> Tuple[list, list[str]]:
 
 
 def write_contracts_to_file(
-    contracts: list, names: list[str], file_name: str, machine_representation: bool = False
+    contracts: list[pacti.terms.polyhedra.PolyhedralContract], names: list[str], file_name: str, machine_representation: bool = False
 ) -> None:
     data = []
     assert len(contracts) == len(names)
@@ -47,36 +47,11 @@ def write_contracts_to_file(
             entry["name"] = names[i]
             if machine_representation:
                 entry["type"] = "PolyhedralContract_machine"
-                c_temp = {}
-                c_temp["InputVars"] = [str(x) for x in c.inputvars]
-                c_temp["OutputVars"] = [str(x) for x in c.outputvars]
-
-                c_temp["assumptions"] = [
-                    {
-                        "constant": float(term.constant),
-                        "coefficients": {str(k): float(v) for k, v in term.variables.items()},
-                    }
-                    for term in c.a.terms
-                ]
-
-                c_temp["guarantees"] = [
-                    {
-                        "constant": float(term.constant),
-                        "coefficients": {str(k): float(v) for k, v in term.variables.items()},
-                    }
-                    for term in c.g.terms
-                ]
-
-                entry["data"] = c_temp
+                entry["data"] = c.to_machine_dict()
 
             else:
                 entry["type"] = "PolyhedralContract"
-                c_temp = {}
-                c_temp["InputVars"] = [str(x) for x in c.inputvars]
-                c_temp["OutputVars"] = [str(x) for x in c.outputvars]
-                c_temp["assumptions"] = c.a.to_str_list()
-                c_temp["guarantees"] = c.g.to_str_list()
-                entry["data"] = c_temp
+                entry["data"] = c.to_dict()
         else:
             assert False
         data.append(entry)

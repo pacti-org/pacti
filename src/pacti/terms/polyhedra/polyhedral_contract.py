@@ -14,6 +14,36 @@ class PolyhedralContract(IoContract):
         for mapping in variable_mappings:
             new_contract = new_contract.rename_variable(Var(mapping[0]), Var(mapping[1]))
         return new_contract
+    
+    def to_machine_dict(self):
+        c_temp = {}
+        c_temp["InputVars"] = [str(x) for x in self.inputvars]
+        c_temp["OutputVars"] = [str(x) for x in self.outputvars]
+
+        c_temp["assumptions"] = [
+            {
+                "constant": float(term.constant),
+                "coefficients": {str(k): float(v) for k, v in term.variables.items()},
+            }
+            for term in self.a.terms
+        ]
+
+        c_temp["guarantees"] = [
+            {
+                "constant": float(term.constant),
+                "coefficients": {str(k): float(v) for k, v in term.variables.items()},
+            }
+            for term in self.g.terms
+        ]
+        return c_temp
+
+    def to_dict(self):
+        c_temp = {}
+        c_temp["InputVars"] = [str(x) for x in self.inputvars]
+        c_temp["OutputVars"] = [str(x) for x in self.outputvars]
+        c_temp["assumptions"] = self.a.to_str_list()
+        c_temp["guarantees"] = self.g.to_str_list()
+        return c_temp
 
     @staticmethod
     def from_string(

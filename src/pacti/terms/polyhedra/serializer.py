@@ -9,7 +9,6 @@ import numpy as np
 import sympy
 from typing_extensions import TypedDict
 
-from pacti.iocontract.iocontract import Var
 from pacti.terms.polyhedra.polyhedra import PolyhedralTerm
 from pacti.utils.errors import ContractFormatError
 
@@ -256,7 +255,7 @@ def internal_parse_constant(val: str) -> numeric:
             return n
 
 
-def internal_add_variable(terms: str, variables: dict[Var, numeric], v: str, c: str) -> None:
+def internal_add_variable(terms: str, variables: dict[str, numeric], v: str, c: str) -> None:
     if variables.__contains__(v):
         raise (ValueError(f"Multiple coefficients involving the same variable: {v} in: {terms}"))
 
@@ -264,7 +263,7 @@ def internal_add_variable(terms: str, variables: dict[Var, numeric], v: str, c: 
     variables.update({v: n})
 
 
-def internal_parse_variables(variables: dict[Var, numeric], terms: str) -> dict[Var, numeric]:
+def internal_parse_variables(variables: dict[str, numeric], terms: str) -> None:
     t = internal_variable_pattern.match(terms)
     if not t:
         raise (ValueError(f"Polyhedral variable syntax mismatch: {terms}"))
@@ -281,7 +280,7 @@ def internal_parse_variables(variables: dict[Var, numeric], terms: str) -> dict[
 
 
 def internal_pt_from_canonical_match(m: re.Match[str]) -> PolyhedralTerm:
-    variables: dict[Var, numeric] = {}
+    variables: dict[str, numeric] = {}
 
     v = m.group("variable")
     c = m.group("coefficient")
