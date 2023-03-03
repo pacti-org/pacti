@@ -92,11 +92,11 @@ class PolyhedralContract(IoContract):
         """
         a: list[PolyhedralTerm] = []
         if assumptions:
-            a = [item for x in assumptions for item in serializer.internal_pt_from_string(x)]
+            a = [item for x in assumptions for item in serializer.polyhedral_termlist_from_string(x)]
 
         g: list[PolyhedralTerm] = []
         if guarantees:
-            g = [item for x in guarantees for item in serializer.internal_pt_from_string(x)]
+            g = [item for x in guarantees for item in serializer.polyhedral_termlist_from_string(x)]
 
         return PolyhedralContract(
             input_vars=[Var(x) for x in input_vars],
@@ -186,7 +186,7 @@ class PolyhedralContract(IoContract):
             The optimal value of the objective in the context of the contract.
         """
         new_expr = expr + " <= 0"
-        variables = serializer.internal_pt_from_string(new_expr)[0].variables
+        variables = serializer.polyhedral_termlist_from_string(new_expr)[0].variables
         constraints: PolyhedralTermList = self.a | self.g
         return constraints.optimize(objective=variables, maximize=maximize)
 
@@ -261,13 +261,13 @@ class PolyhedralContractCompound(IoContractCompound):
         a: list[PolyhedralTermList] = []
         if assumptions:
             for termlist_str in assumptions:
-                a_termlist = [item for x in termlist_str for item in serializer.internal_pt_from_string(x)]
+                a_termlist = [item for x in termlist_str for item in serializer.polyhedral_termlist_from_string(x)]
                 a.append(PolyhedralTermList(a_termlist))
 
         g: list[PolyhedralTermList] = []
         if guarantees:
             for termlist_str in guarantees:
-                g_termlist = [item for x in termlist_str for item in serializer.internal_pt_from_string(x)]
+                g_termlist = [item for x in termlist_str for item in serializer.polyhedral_termlist_from_string(x)]
                 g.append(PolyhedralTermList(g_termlist))
 
         return PolyhedralContractCompound(
