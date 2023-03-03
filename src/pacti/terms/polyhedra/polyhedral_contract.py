@@ -204,14 +204,17 @@ class PolyhedralContract(IoContract):
 class NestedPolyhedra(NestedTermList):
     """A collection of polyhedral termlists interpreted as their disjunction."""
 
-    def __init__(self, nested_termlist: list[PolyhedralTermList]):  # noqa: WPS612 useless overwritten __init__
+    def __init__(  # noqa: WPS612 useless overwritten __init__
+        self, nested_termlist: list[PolyhedralTermList], force_empty_intersection: bool
+    ):
         """
         Class constructor.
 
         Args:
             nested_termlist: A list of terms contained by TermList.
+            force_empty_intersection: Raise error if the termlists are not disjoint.
         """
-        super().__init__(nested_termlist)
+        super().__init__(nested_termlist, force_empty_intersection)
 
 
 class PolyhedralContractCompound(IoContractCompound):
@@ -264,6 +267,6 @@ class PolyhedralContractCompound(IoContractCompound):
         return PolyhedralContractCompound(
             input_vars=[Var(x) for x in input_vars],
             output_vars=[Var(x) for x in output_vars],
-            assumptions=NestedPolyhedra(a),
-            guarantees=NestedPolyhedra(g),
+            assumptions=NestedPolyhedra(a, force_empty_intersection=True),
+            guarantees=NestedPolyhedra(g, force_empty_intersection=False),
         )

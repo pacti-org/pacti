@@ -723,7 +723,12 @@ class IoContract(Generic[TL_t]):
 
         Returns:
             The result of merging.
+
+        Raises:
+            IncompatibleArgsError: trying to merge different contract types.
         """
+        if isinstance(self, type(other)):
+            raise IncompatibleArgsError("Asked to merge incompatible contracts")
         input_vars = list_union(self.inputvars, other.inputvars)
         output_vars = list_union(self.outputvars, other.outputvars)
         assumptions = self.a | other.a
