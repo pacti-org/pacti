@@ -46,12 +46,13 @@ class NestedTermList:
             return "\nor \n".join(res)
         return "true"
 
-    def simplify(self: NTL_t, context: NTL_t):
+    def simplify(self: NTL_t, context: NTL_t, force_empty_intersection: bool):
         """
         Remove redundant terms in nested termlist.
 
         Args:
             context: Nested termlist serving as context for simplification.
+            force_empty_intersection: Make sure the resulting termlists have empty intersection.
         """
         new_nested_tl = []
         for self_tl in self.nested_termlist:
@@ -62,7 +63,7 @@ class NestedTermList:
                 except ValueError:
                     continue
                 new_nested_tl.append(new_tl)
-        self.nested_termlist = type(self)(new_nested_tl).nested_termlist
+        self.nested_termlist = type(self)(new_nested_tl, force_empty_intersection).nested_termlist
 
     def intersect(self: NTL_t, other: NTL_t, force_empty_intersection: bool) -> NTL_t:
         """

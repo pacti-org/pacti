@@ -48,12 +48,15 @@ class PolyhedralTerm(Term):
         Args:
             variables: A dictionary mapping Var keys to numeric values.
             constant: A numeric value on the right of the inequality.
+
+        Raises:
+            ValueError: Unsupported argument type.
         """
         variable_dict = {}
         for key, value in variables.items():
             if value != 0:
                 if isinstance(key, str):
-                    variable_dict[Var(key)] = float(value)
+                    raise ValueError("Unsupported argument type")
                 else:
                     variable_dict[key] = float(value)
         self.variables = variable_dict
