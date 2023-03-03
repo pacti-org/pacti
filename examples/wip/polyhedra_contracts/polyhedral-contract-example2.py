@@ -1,11 +1,11 @@
 from pacti.terms.polyhedra import *
 
 contract1 = {
-        "InputVars":[
+        "input_vars":[
             "u_1",
             "u_2"
         ],
-        "OutputVars":[
+        "output_vars":[
             "x_1"
         ],
         "assumptions":

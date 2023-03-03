@@ -140,8 +140,8 @@ class LocalState:
             # io_contract = string_to_polyhedra_contract(new_c)
 
             io_contract = PolyhedralContract.from_string(
-                OutputVars=list(symbols),
-                InputVars=[],
+                output_vars=list(symbols),
+                input_vars=[],
                 assumptions=[],
                 guarantees=constraint)
 

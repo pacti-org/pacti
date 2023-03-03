@@ -1,7 +1,4 @@
-"""
-Consists of loader functions that can read a JSON dictionary contract
-or write a IOContract to a JSON file.
-"""
+"""Consists of loader functions that can read a JSON dictionary contract or write a IOContract to a JSON file."""
 import re
 from typing import Tuple, Union
 
@@ -16,16 +13,16 @@ numeric = Union[int, float]
 ser_pt = dict[str, Union[float, dict[str, float]]]
 ser_contract = TypedDict(
     "ser_contract",
-    {"InputVars": list[str], "OutputVars": list[str], "assumptions": list[ser_pt], "guarantees": list[ser_pt]},
+    {"input_vars": list[str], "output_vars": list[str], "assumptions": list[ser_pt], "guarantees": list[ser_pt]},
 )
 
 
 def validate_contract_dict(contract, contract_name, machine_representation: bool):
     if not isinstance(contract, dict):
         print(contract)
-        raise ContractFormatError(f"Each contract should be a dictionary")
-    keywords = ["assumptions", "guarantees", "InputVars", "OutputVars"]
-    str_list_kw = ["InputVars", "OutputVars"]
+        raise ContractFormatError("Each contract should be a dictionary")
+    keywords = ["assumptions", "guarantees", "input_vars", "output_vars"]
+    str_list_kw = ["input_vars", "output_vars"]
     if not machine_representation:
         str_list_kw += ["assumptions", "guarantees"]
     for kw in keywords:
@@ -54,29 +51,27 @@ def check_clause(clause, clause_id):
                 raise ContractFormatError(f'The "{kw}" in {clause_id} should be a dictionary')
 
 
-float_closeness_relative_tolerance: float = 1e-05
-float_closeness_absolute_tolerance: float = 1e-08
+float_closeness_relative_tolerance: float = 1e-5
+float_closeness_absolute_tolerance: float = 1e-8
 
 
 def number2string(n: numeric) -> str:
     if isinstance(n, sympy.core.numbers.Float):
         f: sympy.core.numbers.Float = n
         return str(f.num)
-    else:
-        return str(n)
+    return str(n)
 
 
 def are_numbers_approximatively_equal(v1: numeric, v2: numeric) -> bool:
     if isinstance(v1, int) & isinstance(v2, int):
         return v1 == v2
-    else:
-        f1 = float(v1)
-        f2 = float(v2)
-        return bool(
-            np.isclose(
-                f1, f2, rtol=float_closeness_relative_tolerance, atol=float_closeness_absolute_tolerance, equal_nan=True
-            )
+    f1 = float(v1)
+    f2 = float(v2)
+    return bool(
+        np.isclose(
+            f1, f2, rtol=float_closeness_relative_tolerance, atol=float_closeness_absolute_tolerance, equal_nan=True
         )
+    )
 
 
 def _lhs_str(term) -> str:  # noqa: WPS231
@@ -134,8 +129,8 @@ def internal_pt_to_string(terms: list[PolyhedralTerm]) -> Tuple[str, list[Polyhe
                 return s, ts
 
             else:
-                if are_numbers_approximatively_equal(tp.constant, 0.0) & are_numbers_approximatively_equal(
-                    tn.constant, 0.0
+                if are_numbers_approximatively_equal(tp.constant, float(0)) & are_numbers_approximatively_equal(
+                    tn.constant, float(0)
                 ):
                     # inverse of rule 3
                     # rewrite as 2 terms given input match: | LHS | = 0
@@ -167,7 +162,7 @@ internal_signed_number = re.compile(r"^\s*(?P<sign>[+-])?\s*(?P<float>(\d+(\.\d*
 # Patterns for the syntax of variables with numeric coefficients
 
 internal_variable_pattern = re.compile(
-    r"^"
+    "^"
     r"\s*(?P<coefficient>[+-]\s*((\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)?)"
     r"\s*(?P<multiplication>\*)?"
     r"\s*(?P<variable>[a-zA-Z]\w*)"
@@ -179,42 +174,42 @@ internal_variable_pattern = re.compile(
 # Patterns for polyhedral term syntax
 
 internal_polyhedral_term_canonical_pattern = re.compile(
-    r"^"
+    "^"
     r"\s*(?P<coefficient>([+-]?(\s*(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)?)?)"
     r"\s*(?P<multiplication>\*)?"
     r"\s*(?P<variable>[a-zA-Z]\w*)"
     r"(?P<variables>(\s*[+-]\s*((\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?\s*\*?)?\s*[a-zA-Z]\w*)*)"
     r"\s*<="
     r"\s*(?P<constant>[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)"
-    r"$"
+    "$"
 )
 
 internal_polyhedral_term_absolute_less_than_pattern = re.compile(
-    r"^"
+    "^"
     r"\s*\|"
     r"(?P<LHS>([+-]?(\s*(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)?)?\s*\*?\s*[a-zA-Z]\w*(\s*[+-]\s*((\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?\s*\*?)?\s*[a-zA-Z]\w*)*)"
     r"\s*\|"
     r"\s*<="
     r"\s*(?P<RHS>[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)"
-    r"$"
+    "$"
 )
 
 internal_polyhedral_term_absolute_zero_pattern = re.compile(
-    r"^"
+    "^"
     r"\s*\|"
     r"(?P<LHS>([+-]?(\s*(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)?)?\s*\*?\s*[a-zA-Z]\w*(\s*[+-]\s*((\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?\s*\*?)?\s*[a-zA-Z]\w*)*)"
     r"\s*\|"
     r"\s*="
     r"\s*0"
-    r"$"
+    "$"
 )
 
 internal_polyhedral_term_equality_pattern = re.compile(
-    r"^"
+    "^"
     r"(?P<LHS>([+-]?(\s*(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)?)?\s*\*?\s*[a-zA-Z]\w*(\s*[+-]\s*((\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?\s*\*?)?\s*[a-zA-Z]\w*)*)"
     r"\s*="
     r"\s*(?P<RHS>[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)"
-    r"$"
+    "$"
 )
 
 
@@ -235,28 +230,26 @@ def are_polyhedral_terms_opposite(self: PolyhedralTerm, other: PolyhedralTerm) -
 
 
 def internal_parse_constant(val: str) -> numeric:
-    if "" == val:
+    if val == "":
         return 1.0
     elif internal_plus_pattern.match(val):
         return 1.0
     elif internal_minus_pattern.match(val):
         return -1.0
-    else:
-        m = internal_signed_number.match(val)
-        if not m:
-            raise ValueError(f"Constant syntax mismatch: {val}")
+    m = internal_signed_number.match(val)
+    if not m:
+        raise ValueError(f"Constant syntax mismatch: {val}")
 
-        s = m.group("sign")
-        n = float(m.group("float"))
+    s = m.group("sign")
+    n = float(m.group("float"))
 
-        if s == "-":
-            return -n
-        else:
-            return n
+    if s == "-":
+        return -n
+    return n
 
 
 def internal_add_variable(terms: str, variables: dict[str, numeric], v: str, c: str) -> None:
-    if variables.__contains__(v):
+    if v in variables:
         raise (ValueError(f"Multiple coefficients involving the same variable: {v} in: {terms}"))
 
     n = internal_parse_constant(c)
@@ -363,5 +356,4 @@ def internal_pt_from_string(str_rep: str) -> list[PolyhedralTerm]:
     elif m4:
         return internal_pt_from_equality_match(m4)
 
-    else:
-        raise ValueError(f"Polyhedral term syntax mismatch: {str_rep}")
+    raise ValueError(f"Polyhedral term syntax mismatch: {str_rep}")

@@ -37,7 +37,10 @@ def read_contracts_from_file(file_name: str) -> Tuple[list[pacti.terms.polyhedra
 
 
 def write_contracts_to_file(
-    contracts: list[pacti.terms.polyhedra.PolyhedralContract], names: list[str], file_name: str, machine_representation: bool = False
+    contracts: list[pacti.terms.polyhedra.PolyhedralContract],
+    names: list[str],
+    file_name: str,
+    machine_representation: bool = False,
 ) -> None:
     data = []
     assert len(contracts) == len(names)

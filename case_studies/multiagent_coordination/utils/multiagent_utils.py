@@ -287,8 +287,8 @@ def get_dynamic_collision_contract(robots):
     outputvars = []
 
     contract = {
-        "InputVars": inputvars,
-        "OutputVars": outputvars,
+        "input_vars": inputvars,
+        "output_vars": outputvars,
         "assumptions": [{"constant": -1, "coefficients": {"current_distance": -1}}],
         "guarantees": [{"constant": -1, "coefficients": {delta[0]: -1, delta[1]: -1}} for delta in delta_pairs],
     }
@@ -323,8 +323,8 @@ def get_collision_contracts_robot_pair(robot_1, robot_2, other):
     ]
 
     contract_1 = {
-        "InputVars": inputvars,
-        "OutputVars": outputvars,
+        "input_vars": inputvars,
+        "output_vars": outputvars,
         "assumptions": [{"constant": -1, "coefficients": {"current_distance": -1}}],
         "guarantees": [
             {
@@ -340,8 +340,8 @@ def get_collision_contracts_robot_pair(robot_1, robot_2, other):
     }
 
     contract_2 = {
-        "InputVars": inputvars,
-        "OutputVars": outputvars,
+        "input_vars": inputvars,
+        "output_vars": outputvars,
         "assumptions": [
             # Assume no collision
             {"constant": -1, "coefficients": {"current_distance": -1}}
@@ -360,8 +360,8 @@ def get_collision_contracts_robot_pair(robot_1, robot_2, other):
     }
 
     contract_3 = {
-        "InputVars": inputvars,
-        "OutputVars": outputvars,
+        "input_vars": inputvars,
+        "output_vars": outputvars,
         "assumptions": [
             # Assume no collision
             {"constant": -1, "coefficients": {"current_distance": -1}}
@@ -381,8 +381,8 @@ def get_collision_contracts_robot_pair(robot_1, robot_2, other):
     }
 
     contract_4 = {
-        "InputVars": inputvars,
-        "OutputVars": outputvars,
+        "input_vars": inputvars,
+        "output_vars": outputvars,
         "assumptions": [
             # Assume no collision
             {"constant": -1, "coefficients": {"current_distance": -1}}

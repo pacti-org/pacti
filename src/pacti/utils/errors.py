@@ -6,8 +6,8 @@ class IncompatibleArgsError(ValueError):
 
 
 class FileDataFormatError(Exception):
-    pass
+    """Incorrect format"""
 
 
 class ContractFormatError(FileDataFormatError):
-    pass
+    """Incorrect format"""

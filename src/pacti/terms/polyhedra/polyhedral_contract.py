@@ -1,10 +1,11 @@
+"""Specializes IO contract into contracts with polyhedral assumptions and guarantees."""
+
 from __future__ import annotations
 
-from functools import reduce
 from typing import Optional
 
-import pacti.terms.polyhedra.serializer as serializer
 from pacti.iocontract import IoContract, IoContractCompound, NestedTermList, Var
+from pacti.terms.polyhedra import serializer
 from pacti.terms.polyhedra.polyhedra import PolyhedralTerm, PolyhedralTermList
 
 
@@ -14,11 +15,11 @@ class PolyhedralContract(IoContract):
         for mapping in variable_mappings:
             new_contract = new_contract.rename_variable(Var(mapping[0]), Var(mapping[1]))
         return new_contract
-    
+
     def to_machine_dict(self):
         c_temp = {}
-        c_temp["InputVars"] = [str(x) for x in self.inputvars]
-        c_temp["OutputVars"] = [str(x) for x in self.outputvars]
+        c_temp["input_vars"] = [str(x) for x in self.inputvars]
+        c_temp["output_vars"] = [str(x) for x in self.outputvars]
 
         c_temp["assumptions"] = [
             {
@@ -39,8 +40,8 @@ class PolyhedralContract(IoContract):
 
     def to_dict(self):
         c_temp = {}
-        c_temp["InputVars"] = [str(x) for x in self.inputvars]
-        c_temp["OutputVars"] = [str(x) for x in self.outputvars]
+        c_temp["input_vars"] = [str(x) for x in self.inputvars]
+        c_temp["output_vars"] = [str(x) for x in self.outputvars]
         c_temp["assumptions"] = self.a.to_str_list()
         c_temp["guarantees"] = self.g.to_str_list()
         return c_temp
@@ -49,20 +50,20 @@ class PolyhedralContract(IoContract):
     def from_string(
         assumptions: list[str],
         guarantees: list[str],
-        InputVars: list[str],
-        OutputVars: list[str],
+        input_vars: list[str],
+        output_vars: list[str],
     ) -> PolyhedralContract:
         a: list[PolyhedralTerm] = []
         if assumptions:
-            a = reduce(list.__add__, [serializer.internal_pt_from_string(x) for x in assumptions])
+            a = [item for x in assumptions for item in serializer.internal_pt_from_string(x)]
 
         g: list[PolyhedralTerm] = []
         if guarantees:
-            g = reduce(list.__add__, [serializer.internal_pt_from_string(x) for x in guarantees])
+            g = [item for x in guarantees for item in serializer.internal_pt_from_string(x)]
 
         return PolyhedralContract(
-            input_vars=[Var(x) for x in InputVars],
-            output_vars=[Var(x) for x in OutputVars],
+            input_vars=[Var(x) for x in input_vars],
+            output_vars=[Var(x) for x in output_vars],
             assumptions=PolyhedralTermList(a),
             guarantees=PolyhedralTermList(g),
         )
@@ -74,21 +75,21 @@ class PolyhedralContract(IoContract):
 
         if all(isinstance(x, dict) for x in contract["assumptions"]):
             a = PolyhedralTermList(
-                list(PolyhedralTerm(x["coefficients"], float(x["constant"])) for x in contract["assumptions"])
+                [PolyhedralTerm(x["coefficients"], float(x["constant"])) for x in contract["assumptions"]]
             )
         else:
-            raise ValueError(f"Assumptions must be a list of dicts.")
+            raise ValueError("Assumptions must be a list of dicts.")
 
         if all(isinstance(x, dict) for x in contract["guarantees"]):
             g = PolyhedralTermList(
-                list(PolyhedralTerm(x["coefficients"], float(x["constant"])) for x in contract["guarantees"])
+                [PolyhedralTerm(x["coefficients"], float(x["constant"])) for x in contract["guarantees"]]
             )
         else:
-            raise ValueError(f"Guarantees must be a list of dicts.")
+            raise ValueError("Guarantees must be a list of dicts.")
 
         return PolyhedralContract(
-            input_vars=[Var(x) for x in contract["InputVars"]],
-            output_vars=[Var(x) for x in contract["OutputVars"]],
+            input_vars=[Var(x) for x in contract["input_vars"]],
+            output_vars=[Var(x) for x in contract["output_vars"]],
             assumptions=a,
             guarantees=g,
         )
@@ -104,10 +105,10 @@ class PolyhedralContract(IoContract):
         constraints: PolyhedralTermList = self.a | self.g
         return constraints.optimize(objective=variables, maximize=maximize)
 
-    def get_variable_bounds(self, var: str):
-        max = self.optimize(var, True)
-        min = self.optimize(var, False)
-        return min, max
+    def get_variable_bounds(self, var: str):  # noqa: VNE002 variable 'var' should be clarified
+        maximum = self.optimize(var, maximize=True)
+        minimum = self.optimize(var, maximize=False)
+        return minimum, maximum
 
 
 class NestedPolyhedra(NestedTermList):
@@ -120,24 +121,24 @@ class PolyhedralContractCompound(IoContractCompound):
     def from_string(
         assumptions: list[list[str]],
         guarantees: list[list[str]],
-        InputVars: list[str],
-        OutputVars: list[str],
+        input_vars: list[str],
+        output_vars: list[str],
     ) -> PolyhedralContractCompound:
         a: list[PolyhedralTermList] = []
         if assumptions:
             for termlist_str in assumptions:
-                a_termlist = reduce(list.__add__, [serializer.internal_pt_from_string(x) for x in termlist_str])
+                a_termlist = [item for x in termlist_str for item in serializer.internal_pt_from_string(x)]
                 a.append(PolyhedralTermList(a_termlist))
 
         g: list[PolyhedralTermList] = []
         if guarantees:
             for termlist_str in guarantees:
-                g_termlist = reduce(list.__add__, [serializer.internal_pt_from_string(x) for x in termlist_str])
+                g_termlist = [item for x in termlist_str for item in serializer.internal_pt_from_string(x)]
                 g.append(PolyhedralTermList(g_termlist))
 
         return PolyhedralContractCompound(
-            input_vars=[Var(x) for x in InputVars],
-            output_vars=[Var(x) for x in OutputVars],
+            input_vars=[Var(x) for x in input_vars],
+            output_vars=[Var(x) for x in output_vars],
             assumptions=NestedPolyhedra(a),
             guarantees=NestedPolyhedra(g),
         )

@@ -12,8 +12,8 @@ def create_contracts(num=1) -> list[dict]:
     contracts = []
     for i in range(num):
         c_i = {
-            "InputVars": ["u" + str(i)],
-            "OutputVars": ["x" + str(i)],
+            "input_vars": ["u" + str(i)],
+            "output_vars": ["x" + str(i)],
             "assumptions": [{"coefficients": {"u" + str(i): float(1)}, "constant": float(i)}],
             "guarantees": [{"coefficients": {"x" + str(i): float(1)}, "constant": float(i)}],
         }
@@ -39,6 +39,6 @@ def test_read_contract():
         assert isinstance(io_c, iocontract.IoContract)
         assert validate_iocontract(io_c)
     # Ensure that all contracts are dictionaries
-    c_i = [("InputVars", "u"), ("OutputVars", "x")]
+    c_i = [("input_vars", "u"), ("output_vars", "x")]
     with pytest.raises(ValueError, match="A dict type contract is expected."):
         PolyhedralContract.from_dict(c_i)

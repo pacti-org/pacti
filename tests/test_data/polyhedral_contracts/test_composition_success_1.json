@@ -3,10 +3,10 @@
     "name": "contract1",
     "type": "PolyhedralContract",
     "data": {
-      "InputVars": [
+      "input_vars": [
         "i"
       ],
-      "OutputVars": [
+      "output_vars": [
         "o"
       ],
       "assumptions": [
@@ -22,10 +22,10 @@
     "name": "contract2",
     "type": "PolyhedralContract",
     "data": {
-      "InputVars": [
+      "input_vars": [
         "o"
       ],
-      "OutputVars": [
+      "output_vars": [
         "o_p"
       ],
       "assumptions": [
@@ -41,10 +41,10 @@
     "name": "system_contract",
     "type": "PolyhedralContract",
     "data": {
-      "InputVars": [
+      "input_vars": [
         "i"
       ],
-      "OutputVars": [
+      "output_vars": [
         "o_p"
       ],
       "assumptions": [

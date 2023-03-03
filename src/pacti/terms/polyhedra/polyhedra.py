@@ -464,6 +464,12 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         return res
 
     def to_str_list(self) -> list[str]:
+        """
+        Convert termlist into a list of strings.
+
+        Returns:
+            A list of strings corresponding to the terms of the termlist.
+        """
         str_list = []
         ts = self.terms.copy()
         while ts:
