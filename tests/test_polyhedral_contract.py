@@ -1,51 +1,112 @@
-from pacti.terms.polyhedra import PolyhedralContract
+
+from pacti.utils import read_contracts_from_file
 import glob
+import pytest
+from pacti.utils.errors import IncompatibleArgsError
 
 
 TEST_DATA_DIR = "tests/test_data/polyhedral_contracts"
 
+composition_test_instances = glob.glob(TEST_DATA_DIR+"**/*composition_success*.json", recursive=True)
+
+@pytest.mark.parametrize('test_instance', composition_test_instances)
+def test_composition_success(test_instance):
+    try:
+        c, _ = read_contracts_from_file(test_instance)
+    except:
+        assert False
+    assert len(c) == 3
+    expected = c[2]
+    try:
+        obtained = c[0].compose(c[1])
+    except:
+        assert False
+    assert expected == obtained
 
 
-def test_composition():
-    test_instances = glob.glob(TEST_DATA_DIR+"**/*composition*.json", recursive=True)
-    for test_instance in test_instances:
-        try:
-            c = PolyhedralContract.from_file(test_instance)
-        except:
-            assert False
-        assert len(c) == 3
-        expected = c[2]
-        try:
-            obtained = c[0].compose(c[1])
-        except:
-            assert False
-        assert expected == obtained
+composition_failure_test_instances = glob.glob(TEST_DATA_DIR+"**/*composition_failure*.json", recursive=True)
+
+@pytest.mark.parametrize('test_instance', composition_failure_test_instances)
+def test_composition_failure(test_instance):
+    try:
+        c, _ = read_contracts_from_file(test_instance)
+    except:
+        assert False
+    assert len(c) == 2
+    with pytest.raises(IncompatibleArgsError):
+        _ = c[0].compose(c[1])
 
 
-def test_quotient():
-    test_instances = glob.glob(TEST_DATA_DIR+"**/*quotient*.json", recursive=True)
-    for test_instance in test_instances:
-        c = PolyhedralContract.from_file(test_instance)
-        assert len(c) == 3
-        expected = c[2]
+quotient_test_instances = glob.glob(TEST_DATA_DIR+"**/*quotient_success*.json", recursive=True)
+
+@pytest.mark.parametrize('test_instance', quotient_test_instances)
+def test_quotient_success(test_instance):
+    try:
+        c, _ = read_contracts_from_file(test_instance)
+    except:
+        assert False
+    assert len(c) == 3
+    expected = c[2]
+    try:
         obtained = c[0].quotient(c[1])
-        assert expected == obtained
+    except:
+        assert False
+    assert expected == obtained
 
 
-def test_merging():
-    test_instances = glob.glob(TEST_DATA_DIR+"**/*merging*.json", recursive=True)
-    for test_instance in test_instances:
-        c = PolyhedralContract.from_file(test_instance)
-        assert len(c) == 3
-        expected = c[2]
+quotient_failure_test_instances = glob.glob(TEST_DATA_DIR+"**/*quotient_failure*.json", recursive=True)
+
+@pytest.mark.parametrize('test_instance', quotient_failure_test_instances)
+def test_quotient_failure(test_instance):
+    try:
+        c, _ = read_contracts_from_file(test_instance)
+    except:
+        assert False
+    assert len(c) == 2
+    with pytest.raises(IncompatibleArgsError):
+        _ = c[0].quotient(c[1])
+
+
+merging_test_instances = glob.glob(TEST_DATA_DIR+"**/*merging_success*.json", recursive=True)
+
+@pytest.mark.parametrize('test_instance', merging_test_instances)
+def test_merging_success(test_instance):
+    try:
+        c, _ = read_contracts_from_file(test_instance)
+    except:
+        assert False
+    assert len(c) == 3
+    expected = c[2]
+    try:
         obtained = c[0].merge(c[1])
-        assert expected == obtained
+    except:
+        assert False
+    assert expected == obtained
 
 
-def test_refinement():
-    test_instances = glob.glob(TEST_DATA_DIR+"**/*refinement*.json", recursive=True)
-    for test_instance in test_instances:
-        c = PolyhedralContract.from_file(test_instance)
-        assert len(c) == 2
-        assert c[0] <= c[1]
+merging_failure_test_instances = glob.glob(TEST_DATA_DIR+"**/*merging_failure*.json", recursive=True)
+
+@pytest.mark.parametrize('test_instance', merging_failure_test_instances)
+def test_merging_failure(test_instance):
+    try:
+        c, _ = read_contracts_from_file(test_instance)
+    except:
+        assert False
+    assert len(c) == 2
+    with pytest.raises(IncompatibleArgsError):
+        _ = c[0].merge(c[1])
+
+
+refinement_test_instances = glob.glob(TEST_DATA_DIR+"**/*refinement*.json", recursive=True)
+
+@pytest.mark.parametrize('test_instance', refinement_test_instances)
+def test_refinement(test_instance):
+    try:
+        c, _ = read_contracts_from_file(test_instance)
+    except:
+        assert False
+    assert len(c) == 2
+    assert c[0] <= c[1]
+    if c[0] != c[1]:
+        assert not (c[1] <= c[0])
 

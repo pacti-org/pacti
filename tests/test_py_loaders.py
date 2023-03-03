@@ -3,7 +3,6 @@ from test_iocontract import validate_iocontract
 
 import pacti.iocontract as iocontract
 from pacti.terms.polyhedra import *
-from pacti.terms.polyhedra.serializer import write_contract
 
 
 def create_contracts(num=1) -> list[dict]:
@@ -45,13 +44,3 @@ def test_read_contract():
         PolyhedralContract.from_dict(c_i)
 
 
-def test_write_contract():
-    """
-    Test write_contract
-    """
-    c_i = create_contracts(1)
-    io_c = [PolyhedralContract.from_dict(c) for c in c_i]
-    assert c_i == write_contract(io_c)
-    all_contracts = create_contracts(5)
-    io_contracts = [PolyhedralContract.from_dict(c) for c in all_contracts]
-    assert all_contracts == write_contract(io_contracts)
