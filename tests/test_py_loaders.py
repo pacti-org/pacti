@@ -42,5 +42,3 @@ def test_read_contract():
     c_i = [("InputVars", "u"), ("OutputVars", "x")]
     with pytest.raises(ValueError, match="A dict type contract is expected."):
         PolyhedralContract.from_dict(c_i)
-
-

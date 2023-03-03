@@ -2,8 +2,6 @@
 Consists of loader functions that can read a JSON dictionary contract
 or write a IOContract to a JSON file.
 """
-import json
-import os
 import re
 from typing import Tuple, Union
 
@@ -11,13 +9,9 @@ import numpy as np
 import sympy
 from typing_extensions import TypedDict
 
-from pacti.iocontract import IoContract
 from pacti.iocontract.iocontract import Var
 from pacti.terms.polyhedra.polyhedra import PolyhedralTerm
-
 from pacti.utils.errors import ContractFormatError
-
-
 
 numeric = Union[int, float]
 ser_pt = dict[str, Union[float, dict[str, float]]]
@@ -25,7 +19,6 @@ ser_contract = TypedDict(
     "ser_contract",
     {"InputVars": list[str], "OutputVars": list[str], "assumptions": list[ser_pt], "guarantees": list[ser_pt]},
 )
-
 
 
 def validate_contract_dict(contract, contract_name, machine_representation: bool):
@@ -45,9 +38,7 @@ def validate_contract_dict(contract, contract_name, machine_representation: bool
         if kw in str_list_kw:
             for str_item in value:
                 if not isinstance(str_item, str):
-                    raise ContractFormatError(
-                        f"The {kw} in contract {contract_name} should be defined as strings"
-                    )
+                    raise ContractFormatError(f"The {kw} in contract {contract_name} should be defined as strings")
         elif machine_representation:
             for index, clause in enumerate(value):
                 check_clause(clause, f"{contract_name}:{kw}{index}")
@@ -61,8 +52,7 @@ def check_clause(clause, clause_id):
         value = clause[kw]
         if kw == "coefficients":
             if not isinstance(value, dict):
-                raise ContractFormatError(f'The "{kw}" in {clause_id} should be a dictionary')            
-
+                raise ContractFormatError(f'The "{kw}" in {clause_id} should be a dictionary')
 
 
 float_closeness_relative_tolerance: float = 1e-05
@@ -88,7 +78,8 @@ def are_numbers_approximatively_equal(v1: numeric, v2: numeric) -> bool:
                 f1, f2, rtol=float_closeness_relative_tolerance, atol=float_closeness_absolute_tolerance, equal_nan=True
             )
         )
-    
+
+
 def _lhs_str(term) -> str:  # noqa: WPS231
     varlist = list(term.variables.items())
     varlist.sort(key=lambda x: str(x[0]))

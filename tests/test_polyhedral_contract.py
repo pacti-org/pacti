@@ -1,15 +1,16 @@
+import glob
+
+import pytest
 
 from pacti.utils import read_contracts_from_file
-import glob
-import pytest
 from pacti.utils.errors import IncompatibleArgsError
-
 
 TEST_DATA_DIR = "tests/test_data/polyhedral_contracts"
 
-composition_test_instances = glob.glob(TEST_DATA_DIR+"**/*composition_success*.json", recursive=True)
+composition_test_instances = glob.glob(TEST_DATA_DIR + "**/*composition_success*.json", recursive=True)
 
-@pytest.mark.parametrize('test_instance', composition_test_instances)
+
+@pytest.mark.parametrize("test_instance", composition_test_instances)
 def test_composition_success(test_instance):
     try:
         c, _ = read_contracts_from_file(test_instance)
@@ -24,9 +25,10 @@ def test_composition_success(test_instance):
     assert expected == obtained
 
 
-composition_failure_test_instances = glob.glob(TEST_DATA_DIR+"**/*composition_failure*.json", recursive=True)
+composition_failure_test_instances = glob.glob(TEST_DATA_DIR + "**/*composition_failure*.json", recursive=True)
 
-@pytest.mark.parametrize('test_instance', composition_failure_test_instances)
+
+@pytest.mark.parametrize("test_instance", composition_failure_test_instances)
 def test_composition_failure(test_instance):
     try:
         c, _ = read_contracts_from_file(test_instance)
@@ -37,9 +39,10 @@ def test_composition_failure(test_instance):
         _ = c[0].compose(c[1])
 
 
-quotient_test_instances = glob.glob(TEST_DATA_DIR+"**/*quotient_success*.json", recursive=True)
+quotient_test_instances = glob.glob(TEST_DATA_DIR + "**/*quotient_success*.json", recursive=True)
 
-@pytest.mark.parametrize('test_instance', quotient_test_instances)
+
+@pytest.mark.parametrize("test_instance", quotient_test_instances)
 def test_quotient_success(test_instance):
     try:
         c, _ = read_contracts_from_file(test_instance)
@@ -54,9 +57,10 @@ def test_quotient_success(test_instance):
     assert expected == obtained
 
 
-quotient_failure_test_instances = glob.glob(TEST_DATA_DIR+"**/*quotient_failure*.json", recursive=True)
+quotient_failure_test_instances = glob.glob(TEST_DATA_DIR + "**/*quotient_failure*.json", recursive=True)
 
-@pytest.mark.parametrize('test_instance', quotient_failure_test_instances)
+
+@pytest.mark.parametrize("test_instance", quotient_failure_test_instances)
 def test_quotient_failure(test_instance):
     try:
         c, _ = read_contracts_from_file(test_instance)
@@ -67,9 +71,10 @@ def test_quotient_failure(test_instance):
         _ = c[0].quotient(c[1])
 
 
-merging_test_instances = glob.glob(TEST_DATA_DIR+"**/*merging_success*.json", recursive=True)
+merging_test_instances = glob.glob(TEST_DATA_DIR + "**/*merging_success*.json", recursive=True)
 
-@pytest.mark.parametrize('test_instance', merging_test_instances)
+
+@pytest.mark.parametrize("test_instance", merging_test_instances)
 def test_merging_success(test_instance):
     try:
         c, _ = read_contracts_from_file(test_instance)
@@ -84,9 +89,10 @@ def test_merging_success(test_instance):
     assert expected == obtained
 
 
-merging_failure_test_instances = glob.glob(TEST_DATA_DIR+"**/*merging_failure*.json", recursive=True)
+merging_failure_test_instances = glob.glob(TEST_DATA_DIR + "**/*merging_failure*.json", recursive=True)
 
-@pytest.mark.parametrize('test_instance', merging_failure_test_instances)
+
+@pytest.mark.parametrize("test_instance", merging_failure_test_instances)
 def test_merging_failure(test_instance):
     try:
         c, _ = read_contracts_from_file(test_instance)
@@ -97,9 +103,10 @@ def test_merging_failure(test_instance):
         _ = c[0].merge(c[1])
 
 
-refinement_test_instances = glob.glob(TEST_DATA_DIR+"**/*refinement*.json", recursive=True)
+refinement_test_instances = glob.glob(TEST_DATA_DIR + "**/*refinement*.json", recursive=True)
 
-@pytest.mark.parametrize('test_instance', refinement_test_instances)
+
+@pytest.mark.parametrize("test_instance", refinement_test_instances)
 def test_refinement(test_instance):
     try:
         c, _ = read_contracts_from_file(test_instance)
@@ -109,4 +116,3 @@ def test_refinement(test_instance):
     assert c[0] <= c[1]
     if c[0] != c[1]:
         assert not (c[1] <= c[0])
-

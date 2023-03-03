@@ -462,7 +462,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         res += "\n  ".join(self.to_str_list())
         res += "\n]"
         return res
-    
+
     def to_str_list(self) -> list[str]:
         str_list = []
         ts = self.terms.copy()

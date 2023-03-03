@@ -63,7 +63,6 @@ class PolyhedralContract(IoContract):
             guarantees=g,
         )
 
-
     def compose(self, other: PolyhedralContract, vars_to_keep: Optional[list[str]] = None):
         if vars_to_keep is None:
             vars_to_keep = []
