@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import List, TypeVar, Union
 
-from pacti.iocontract.iocontract import TL_t, Var
+from pacti.iocontract.iocontract import TermList_t, Var
 from pacti.utils.lists import list_diff, list_intersection, list_union
 
 NTL_t = TypeVar("NTL_t", bound="NestedTermList")
@@ -16,7 +16,7 @@ class NestedTermList:
     """A collection of termlists interpreted as their disjunction."""
 
     def __init__(  # noqa: WPS231 too much cognitive complexity
-        self, nested_termlist: list[TL_t], force_empty_intersection: bool
+        self, nested_termlist: list[TermList_t], force_empty_intersection: bool
     ):
         """
         Class constructor.
@@ -36,7 +36,7 @@ class NestedTermList:
                         intersection = tli | tlj
                         if not intersection.is_empty():
                             raise ValueError("Terms %s and %s have nonempty intersection" % (tli, tlj))
-        self.nested_termlist: list[TL_t] = []
+        self.nested_termlist: list[TermList_t] = []
         for tl in nested_termlist:
             self.nested_termlist.append(tl.copy())
 
