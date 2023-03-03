@@ -285,7 +285,7 @@ def internal_pt_from_canonical_match(m: re.Match[str]) -> PolyhedralTerm:
         internal_parse_variables(variables, rest)
 
     constant = float(m.group("constant"))
-    return PolyhedralTerm({Var(k):v for k,v in variables.items()}, constant)
+    return PolyhedralTerm({Var(k): v for k, v in variables.items()}, constant)
 
 
 # rewrite as 2 terms given input match: | LHS | <= RHS

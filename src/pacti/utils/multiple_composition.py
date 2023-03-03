@@ -62,6 +62,15 @@ def _build_dependency_tree(symbol_dict):  # noqa: WPS231 too much cognitive comp
 
 
 def compose_multiple_contracts(contracts: list[IoContract]) -> IoContract:
+    """
+    Compose several contracts, finding the right order to compose them.
+
+    Args:
+        contracts: list of contracts to be composed.
+
+    Returns:
+        A contract corresponding to the ordered composition of the given contracts.
+    """
     symbol_dict: dict[str, tuple[list[str], list[str]]] = {}  # noqa: WPS234 complex annotation
     contracts_dict = {}
     for i, contract in enumerate(contracts):

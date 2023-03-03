@@ -124,14 +124,20 @@ class PolyhedralContract(IoContract):
 
         if all(isinstance(x, dict) for x in contract["assumptions"]):
             a = PolyhedralTermList(
-                [PolyhedralTerm(x["coefficients"], float(x["constant"])) for x in contract["assumptions"]]
+                [
+                    PolyhedralTerm({Var(k): v for k, v in x["coefficients"].items()}, float(x["constant"]))
+                    for x in contract["assumptions"]
+                ]
             )
         else:
             raise ValueError("Assumptions must be a list of dicts.")
 
         if all(isinstance(x, dict) for x in contract["guarantees"]):
             g = PolyhedralTermList(
-                [PolyhedralTerm(x["coefficients"], float(x["constant"])) for x in contract["guarantees"]]
+                [
+                    PolyhedralTerm({Var(k): v for k, v in x["coefficients"].items()}, float(x["constant"]))
+                    for x in contract["guarantees"]
+                ]
             )
         else:
             raise ValueError("Guarantees must be a list of dicts.")
