@@ -690,11 +690,17 @@ class IoContract(Generic[TL_t]):
         logging.debug("Computing quotient guarantees")
         guarantees: TL_t = self.g
         logging.debug("Using existing guarantees to aid system-level guarantees")
-        guarantees = guarantees.elim_vars_by_refining(other.g | other.a, intvars)
+        try:
+            guarantees = guarantees.elim_vars_by_refining(other.g | other.a, intvars)
+        except ValueError:
+            guarantees = self.g
         logging.debug("Guarantees are %s" % (guarantees))
         logging.debug("Using system-level assumptions to aid quotient guarantees")
         guarantees = guarantees | other.a
-        guarantees = guarantees.elim_vars_by_refining(self.a, intvars)
+        try:
+            guarantees = guarantees.elim_vars_by_refining(self.a, intvars)
+        except ValueError:
+            ...
         logging.debug("Guarantees after processing: %s", guarantees)
         conflict_variables = list_intersection(guarantees.vars, intvars)
         if conflict_variables:

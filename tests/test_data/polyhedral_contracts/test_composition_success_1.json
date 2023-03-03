@@ -1,0 +1,59 @@
+[
+  {
+    "name": "contract1",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [
+        "i"
+      ],
+      "output_vars": [
+        "o"
+      ],
+      "assumptions": [
+        "|i| <= 2.0"
+      ],
+      "guarantees": [
+        "-i + o <= 0.0",
+        "i - 2.0 o <= 2.0"
+      ]
+    }
+  },
+  {
+    "name": "contract2",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [
+        "o"
+      ],
+      "output_vars": [
+        "o_p"
+      ],
+      "assumptions": [
+        "o <= 0.2",
+        "-o <= 1.0"
+      ],
+      "guarantees": [
+        "-o + o_p <= 0.0"
+      ]
+    }
+  },
+  {
+    "name": "system_contract",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [
+        "i"
+      ],
+      "output_vars": [
+        "o_p"
+      ],
+      "assumptions": [
+        "i <= 0.19999999999999996",
+        "-0.5 i <= 0.0"
+      ],
+      "guarantees": [
+        "-i + o_p <= 0.0"
+      ]
+    }
+  }
+]

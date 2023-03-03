@@ -1,8 +1,8 @@
 
 {
 "contract1" : {
-    "InputVars": ["x_0", "y_0", "t_0"],
-    "OutputVars": ["x_1", "y_1", "t_1"],
+    "input_vars": ["x_0", "y_0", "t_0"],
+    "output_vars": ["x_1", "y_1", "t_1"],
     "assumptions": [
       {"constant": 3, "coefficients": {"x_0": 1}},
       {"constant": 0, "coefficients": {"x_0": -1}},
@@ -28,8 +28,8 @@
       ]
     },
 "contract2": {
-    "InputVars": ["x_1", "y_1", "t_1"],
-    "OutputVars": ["x_2", "y_2", "t_2"],
+    "input_vars": ["x_1", "y_1", "t_1"],
+    "output_vars": ["x_2", "y_2", "t_2"],
     "assumptions": [{"constant": 3, "coefficients": {"x_1": 1}},
     {"constant": 0, "coefficients": {"x_1": -1}},
     {"constant": 3, "coefficients": {"y_1": 1}},

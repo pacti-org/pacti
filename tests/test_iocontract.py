@@ -13,8 +13,8 @@ def create_contracts(num=1) -> list[dict]:
     contracts = []
     for i in range(num):
         c_i = {
-            "InputVars": ["i" + str(i)],
-            "OutputVars": ["o" + str(i)],
+            "input_vars": ["i" + str(i)],
+            "output_vars": ["o" + str(i)],
             "assumptions": [{"coefficients": {"i" + str(i): 1}, "constant": i}],
             "guarantees": [{"coefficients": {"o" + str(i): 1}, "constant": 1}],
         }

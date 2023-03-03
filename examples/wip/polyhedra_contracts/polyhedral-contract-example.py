@@ -14,8 +14,8 @@ varPrefixes=["t", "soc", "d", "e", "r"]
 
 def connect(c1: IoContract, c2: IoContract, varPrefixes: list[str]) -> IoContract:
     c12 = PolyhedralContract.from_string(
-      InputVars = list(map(lambda x: x.name, c1.outputvars)),
-      OutputVars = list(map(lambda x: x.name, c2.inputvars)),
+      input_vars = list(map(lambda x: x.name, c1.outputvars)),
+      output_vars = list(map(lambda x: x.name, c2.inputvars)),
       assumptions = [],
       guarantees = list(map(lambda i: input2output(i.name, c1.outputvars, varPrefixes), c2.inputvars)))
 
@@ -24,8 +24,8 @@ def connect(c1: IoContract, c2: IoContract, varPrefixes: list[str]) -> IoContrac
 def initial_contract() -> tuple[int, PolyhedralContract]:
   e=1
   spec = PolyhedralContract.from_string(
-    InputVars = [],
-    OutputVars= [
+    input_vars = [],
+    output_vars= [
       f"t{e}",    # Scheduled end time
       f"soc{e}",  # final battery SOC
       f"d{e}",    # final data volume
@@ -46,14 +46,14 @@ def initial_contract() -> tuple[int, PolyhedralContract]:
 def SBO_contract(s: int, duration: float, generation: float, consumption: float, improvement: float) -> tuple[int, PolyhedralContract]:
   e = s+1
   spec = PolyhedralContract.from_string(
-    InputVars = [
+    input_vars = [
       f"t{s}",    # Scheduled start time
       f"soc{s}",  # initial battery SOC
       f"d{s}",    # initial data volume
       f"e{s}",    # initial trajectory error
       f"r{s}",    # initial relative distance
     ],
-    OutputVars = [
+    output_vars = [
       f"t{e}",    # Scheduled end time
       f"soc{e}",  # final battery SOC
       f"d{e}",    # final data volume
