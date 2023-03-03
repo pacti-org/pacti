@@ -4,14 +4,14 @@ from pacti.terms.polyhedra import *
 
 def test_examples():
     contract1 = {
-        "InputVars": ["u_1"],
-        "OutputVars": ["x_1"],
+        "input_vars": ["u_1"],
+        "output_vars": ["x_1"],
         "assumptions": [{"coefficients": {"u_1": -1}, "constant": -1}],
         "guarantees": [{"coefficients": {"x_1": -1}, "constant": -1.5}],
     }
     contract2 = {
-        "InputVars": ["u_2"],
-        "OutputVars": ["x_2"],
+        "input_vars": ["u_2"],
+        "output_vars": ["x_2"],
         "assumptions": [{"coefficients": {"u_2": -1}, "constant": -1}],
         "guarantees": [{"coefficients": {"x_2": -1}, "constant": -0.3}],
     }

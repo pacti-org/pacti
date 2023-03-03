@@ -15,7 +15,9 @@ numeric = Union[int, float]
 class NestedTermList:
     """A collection of termlists interpreted as their disjunction."""
 
-    def __init__(self, nested_termlist: list[TL_t], force_empty_intersection: bool):  # noqa: WPS231 too much cognitive complexity
+    def __init__(  # noqa: WPS231 too much cognitive complexity
+        self, nested_termlist: list[TL_t], force_empty_intersection: bool
+    ):
         """
         Class constructor.
 
@@ -68,6 +70,7 @@ class NestedTermList:
 
         Args:
             other: second argument to intersection.
+            force_empty_intersection: Raise error if termlists are not disjoint.
 
         Returns:
             The nested termlist for the intersection.
@@ -95,6 +98,9 @@ class NestedTermList:
     def copy(self: NTL_t, force_empty_intersection: bool) -> NTL_t:
         """
         Makes copy of nested termlist.
+
+        Args:
+            force_empty_intersection: Raise error if the termlists are not disjoint.
 
         Returns:
             Copy of nested termlist.
@@ -126,7 +132,7 @@ class NestedTermList:
 
 class IoContractCompound:
     """
-    Basic type for an IO contract.
+    Basic type for a compound IO contract.
 
     Attributes:
         inputvars:
@@ -135,9 +141,9 @@ class IoContractCompound:
         outputvars:
             Variables which are outputs of the implementations of the contract.
 
-        a(TermList): Contract assumptions.
+        a: Contract assumptions.
 
-        g(TermList): Contract guarantees.
+        g: Contract guarantees.
     """
 
     def __init__(self, assumptions: NTL_t, guarantees: NTL_t, input_vars: List[Var], output_vars: List[Var]):
@@ -227,6 +233,6 @@ class IoContractCompound:
         """
         input_vars = list_union(self.inputvars, other.inputvars)
         output_vars = list_union(self.outputvars, other.outputvars)
-        assumptions = self.a.intersect(other.a, True)
-        guarantees = self.g.intersect(other.g, False)
+        assumptions = self.a.intersect(other.a, force_empty_intersection=True)
+        guarantees = self.g.intersect(other.g, force_empty_intersection=False)
         return IoContractCompound(assumptions, guarantees, input_vars, output_vars)
