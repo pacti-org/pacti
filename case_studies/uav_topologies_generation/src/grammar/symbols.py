@@ -9,6 +9,7 @@ from ..shared import SymbolType
 @dataclass(frozen=True)
 class Symbol:
     """General Symbol class"""
+
     symbol_type = SymbolType.UNOCCUPIED
 
     @property

@@ -24,7 +24,7 @@ def constraint_str_less_eq_than(symbol: str, n: int) -> str:
 
 
 def from_symbol_directions_to_constraints(
-        symbol_dirs: dict[SymbolType, set[Direction]]
+    symbol_dirs: dict[SymbolType, set[Direction]]
 ) -> tuple[list[list[str]], set[str]]:
     """
     Convert a dictionary of symbol_types -> directions into linear constraints
@@ -61,8 +61,6 @@ def from_symbol_directions_to_constraints(
 
     for or_constraint in or_constraints:
         constraints.append([item for sublist in or_constraint for item in sublist])
-
-
 
     return constraints, symbols
 

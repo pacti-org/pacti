@@ -21,14 +21,14 @@ def to_pt(str_rep):
         if k == 1:
             pass
         elif isinstance(k, sympy.core.symbol.Symbol):
-            variables[str(k)] = v
+            variables[Var(str(k))] = v
         elif isinstance(k, sympy.core.mul.Mul):
             if isinstance(k.args[1], k, sympy.core.symbol.Symbol):
                 print(k.args[0])
-                variables[str(k.args[1])] = k.args[0]
+                variables[Var(str(k.args[1]))] = k.args[0]
             elif isinstance(k.args[0], k, sympy.core.symbol.Symbol):
                 print(k.args[1])
-                variables[str(k.args[0])] = k.args[1]
+                variables[Var(str(k.args[0]))] = k.args[1]
         else:
             raise ValueError
     return PolyhedralTerm(variables, constant)
