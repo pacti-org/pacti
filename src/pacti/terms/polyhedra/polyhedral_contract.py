@@ -41,25 +41,29 @@ class PolyhedralContract(IoContract):
         Returns:
             A dictionary containing the contract's information.
         """
-        c_temp: ser_contract = {
-            "input_vars": [str(x) for x in self.inputvars],
-            "output_vars": [str(x) for x in self.outputvars],
-            "assumptions": [
-                {
-                    "constant": float(term.constant),
-                    "coefficients": {str(k): float(v) for k, v in term.variables.items()},
-                }
-                for term in self.a.terms
-            ],
-            "guarantees": [
-                {
-                    "constant": float(term.constant),
-                    "coefficients": {str(k): float(v) for k, v in term.variables.items()},
-                }
-                for term in self.g.terms
-            ],
+        input_vars = [str(x) for x in self.inputvars]
+        output_vars = [str(x) for x in self.outputvars]
+        assumptions: list[ser_pt] = [
+            {
+                "constant": float(term.constant),
+                "coefficients": {str(k): float(v) for k, v in term.variables.items()},
+            }
+            for term in self.a.terms
+        ]
+        guarantees: list[ser_pt] = [
+            {
+                "constant": float(term.constant),
+                "coefficients": {str(k): float(v) for k, v in term.variables.items()},
+            }
+            for term in self.g.terms
+        ]
+
+        return {
+            "input_vars": input_vars,
+            "output_vars": output_vars,
+            "assumptions": assumptions,
+            "guarantees": guarantees,
         }
-        return c_temp
 
     def to_dict(self) -> dict:
         """
