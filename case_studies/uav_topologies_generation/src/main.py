@@ -14,7 +14,6 @@ max_num_wings = 2
 max_num_rotors = 2
 
 if __name__ == "__main__":
-
     grammar = Grammar.from_json(rules_json_path=rules_path)
 
     directions_assignment = DirectionsAssignment()
@@ -76,7 +75,7 @@ if __name__ == "__main__":
         else:
             rules_compatible_contracts = rule_matching(current_state.contract, rules_allowed_contracts)
         end = datetime.now()
-        time_contracts = (end - start).total_seconds() * 10 ** 6
+        time_contracts = (end - start).total_seconds() * 10**6
         #
         # print(time_search)
         # print(time_contracts)
@@ -120,4 +119,3 @@ if __name__ == "__main__":
     grid.plot_with_edges.savefig("before.pdf")
     grid.cleanup()
     grid.plot_with_edges.savefig("after.pdf")
-    pass
