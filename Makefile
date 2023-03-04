@@ -37,8 +37,10 @@ BASIC_DUTIES = \
 
 QUALITY_DUTIES = \
 	check-quality \
+	check-jn-quality \
 	check-docs \
 	check-types \
+	check-jn-types \
 	test
 
 .PHONY: help
@@ -51,7 +53,7 @@ lock:
 
 .PHONY: check
 check:
-	@$(DUTY) check-quality check-types check-docs check-dependencies
+	@$(DUTY) check-quality check-jn-quality check-types check-jn-types check-docs check-dependencies
 
 .PHONY: uninstall
 uninstall:
