@@ -2,7 +2,7 @@
 
 import json
 import os
-from typing import Tuple
+from typing import Any, Tuple
 
 from pacti.terms import polyhedra
 
@@ -67,7 +67,7 @@ def write_contracts_to_file(
     data = []
     assert len(contracts) == len(names)
     for i, c in enumerate(contracts):
-        entry = {}
+        entry: dict[str, Any] = {}
         if isinstance(c, polyhedra.PolyhedralContract):
             entry["name"] = names[i]
             if machine_representation:
