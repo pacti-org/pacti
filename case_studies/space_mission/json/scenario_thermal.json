@@ -1,3 +1,36 @@
-{
-"contract0":{"InputVars": ["temp1_entry", "duration_tcm_heating4", "duration_tcm_deltav5"], "OutputVars": ["output_temp1", "output_temp2", "output_temp4", "output_temp3", "output_temp5"], "assumptions": [{"constant": -80.0, "coefficients": {"duration_tcm_heating4": -4.5}}, {"constant": 100.0, "coefficients": {"duration_tcm_heating4": 4.7}}, {"constant": 100.0, "coefficients": {"temp1_entry": 1.0}}, {"constant": 0.0, "coefficients": {"temp1_entry": -1.0}}], "guarantees": [{"constant": 0.0, "coefficients": {"output_temp1": 1.0}}, {"constant": 0.0, "coefficients": {"output_temp1": -1.0}}, {"constant": 0.0, "coefficients": {"output_temp2": 1.0}}, {"constant": 0.0, "coefficients": {"output_temp2": -1.0}}, {"constant": 0.0, "coefficients": {"output_temp3": 1.0}}, {"constant": 0.0, "coefficients": {"output_temp3": -1.0}}, {"constant": 0.0, "coefficients": {"output_temp3": -1.0, "duration_tcm_heating4": -4.7, "output_temp4": 1.0}}, {"constant": 0.0, "coefficients": {"output_temp3": 1.0, "duration_tcm_heating4": 4.5, "output_temp4": -1.0}}, {"constant": 0.0, "coefficients": {"output_temp4": 1.0, "duration_tcm_deltav5": -0.2, "output_temp5": -1.0}}, {"constant": 0.0, "coefficients": {"output_temp4": -1.0, "duration_tcm_deltav5": 0.1, "output_temp5": 1.0}}, {"constant": 0.0, "coefficients": {"output_temp5": -1.0}}]}
-}
+[
+  {
+    "name": "scenario_thermal",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [
+        "temp1_entry",
+        "duration_tcm_heating4",
+        "duration_tcm_deltav5"
+      ],
+      "output_vars": [
+        "output_temp1",
+        "output_temp2",
+        "output_temp4",
+        "output_temp3",
+        "output_temp5"
+      ],
+      "assumptions": [
+        "-4.5 duration_tcm_heating4 <= -80.0",
+        "4.7 duration_tcm_heating4 <= 100.0",
+        "temp1_entry <= 100.0",
+        "-temp1_entry <= 0.0"
+      ],
+      "guarantees": [
+        "output_temp1 = 0.0",
+        "output_temp2 = 0.0",
+        "output_temp3 = 0.0",
+        "-4.7 duration_tcm_heating4 - output_temp3 + output_temp4 <= 0.0",
+        "4.5 duration_tcm_heating4 + output_temp3 - output_temp4 <= 0.0",
+        "-0.2 duration_tcm_deltav5 + output_temp4 - output_temp5 <= 0.0",
+        "0.1 duration_tcm_deltav5 - output_temp4 + output_temp5 <= 0.0",
+        "-output_temp5 <= 0.0"
+      ]
+    }
+  }
+]
