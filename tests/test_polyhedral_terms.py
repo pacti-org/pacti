@@ -21,14 +21,14 @@ def to_pt(str_rep):
         if k == 1:
             pass
         elif isinstance(k, sympy.core.symbol.Symbol):
-            variables[str(k)] = v
+            variables[Var(str(k))] = v
         elif isinstance(k, sympy.core.mul.Mul):
             if isinstance(k.args[1], k, sympy.core.symbol.Symbol):
                 print(k.args[0])
-                variables[str(k.args[1])] = k.args[0]
+                variables[Var(str(k.args[1]))] = k.args[0]
             elif isinstance(k.args[0], k, sympy.core.symbol.Symbol):
                 print(k.args[1])
-                variables[str(k.args[0])] = k.args[1]
+                variables[Var(str(k.args[0]))] = k.args[1]
         else:
             raise ValueError
     return PolyhedralTerm(variables, constant)
@@ -145,13 +145,5 @@ def test_issue171():
         ["-1*dt0 - 1*t0 <= 0.0", "-1*t0 <= 0.0", "-1*dt0 - 1*t0 + 1*t1 <= 0.0", "1*dt0 + 1*t0 - 1*t1 <= 0.0"]
     )
     transformed = constraints.elim_vars_by_relaxing(PolyhedralTermList([]), [Var("t0"), Var("dt0")])
-    print("Before transformation")
-    print(constraints)
-    print("After transformation")
-    print(transformed)
     expected = to_pts(["-1*t1 <= 0"])
     assert expected == transformed
-
-
-if __name__ == "__main__":
-    test_polyhedral_var_elim_by_refinement_1()

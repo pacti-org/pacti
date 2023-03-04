@@ -1,28 +1,25 @@
+"""Support for multiple composition."""
 from __future__ import annotations
 
 from pacti.iocontract import IoContract
 from pacti.terms.polyhedra import PolyhedralContract
 
 
-class Tree:
-    """
-    Helper class to build the dependency tree of the contracts involved in the composition
-    """
-
+class _Tree:
     def __init__(self, data=None):
         self.data = data
         self.children = set()
 
-    def add_child(self, child: Tree):
+    def add_child(self, child: _Tree):
         self.children.add(child)
 
-    def get_leafs(self) -> set[Tree]:
+    def get_leafs(self) -> set[_Tree]:
         leafs = set()
-        if not self.children:
-            leafs.add(self)
-        else:
+        if self.children:
             for child in self.children:
                 leafs.update(child.get_leafs())
+        else:
+            leafs.add(self)
         return leafs
 
     def remove_node(self, leaf):
@@ -36,57 +33,45 @@ class Tree:
 
     def print_tree(self, level=0, is_last_sibling=True):
         prefix = "    " * level
-        if not is_last_sibling:
-            prefix += "|-- "
-        else:
+        if is_last_sibling:
             prefix += "`-- "
+        else:
+            prefix += "|-- "
         print(prefix + str(self.data))
         for i, child in enumerate(self.children):
             is_last_child = i == len(self.children) - 1
             child.print_tree(level + 1, is_last_child)
 
 
-def build_dependency_tree(symbol_dict: dict[str, tuple[list[str], list[str]]]) -> Tree:
-    """
-    Build the dependency tree
-
-    Args:
-        symbol_dict: dictionary of dependencies.
-                    Key: string; Value: tuple where each element is a list of strings.
-                    The tuple represent input/output of the contract in the key.
-
-    Returns:
-        Dependency Tree
-    """
-
-    root = Tree()
+def _build_dependency_tree(symbol_dict):  # noqa: WPS231 too much cognitive complexity
+    root = _Tree()
     symbol_nodes = {}
     for symbol, value in symbol_dict.items():
         inputs, outputs = value
         if symbol not in symbol_nodes:
-            symbol_nodes[symbol] = Tree(symbol)
+            symbol_nodes[symbol] = _Tree(symbol)
             root.add_child(symbol_nodes[symbol])
         for output in outputs:
             for dependency, dep_values in symbol_dict.items():
                 if output in dep_values[0]:
                     if dependency not in symbol_nodes:
-                        symbol_nodes[dependency] = Tree(dependency)
+                        symbol_nodes[dependency] = _Tree(dependency)
                         # root.add_child(symbol_nodes[dependency])
                     symbol_nodes[symbol].add_child(symbol_nodes[dependency])
     return root
 
 
-def composing_multiple_contracts(contracts: list[IoContract]) -> IoContract:
+def compose_multiple_contracts(contracts: list[IoContract]) -> IoContract:
     """
-    Composition of multiple contracts
+    Compose several contracts, finding the right order to compose them.
 
     Args:
-        contracts: list of IoContract
+        contracts: list of contracts to be composed.
 
     Returns:
-        IoContract representing the composition of 'contracts'
+        A contract corresponding to the ordered composition of the given contracts.
     """
-    symbol_dict: dict[str, tuple[list[str], list[str]]] = {}
+    symbol_dict: dict[str, tuple[list[str], list[str]]] = {}  # noqa: WPS234 complex annotation
     contracts_dict = {}
     for i, contract in enumerate(contracts):
         input_symbols = [v.name for v in contract.inputvars]
@@ -94,7 +79,7 @@ def composing_multiple_contracts(contracts: list[IoContract]) -> IoContract:
         symbol_dict[f"c{i}"] = (input_symbols, output_symbols)
         contracts_dict[f"c{i}"] = contract
 
-    dependency_tree: Tree = build_dependency_tree(symbol_dict)
+    dependency_tree: _Tree = _build_dependency_tree(symbol_dict)
     leaf = dependency_tree.get_leafs().pop()
     main_contract = contracts_dict[leaf.data]
     dependency_tree.remove_node(leaf)
@@ -111,20 +96,20 @@ def composing_multiple_contracts(contracts: list[IoContract]) -> IoContract:
 
 if __name__ == "__main__":
     c1 = PolyhedralContract.from_string(
-        assumptions=["x <= 1"], guarantees=["y <= 0"], InputVars=["x"], OutputVars=["y"]
+        assumptions=["x <= 1"], guarantees=["y <= 0"], input_vars=["x"], output_vars=["y"]
     )
     c2 = PolyhedralContract.from_string(
-        assumptions=["y <= 0"], guarantees=["z <= 0"], InputVars=["y"], OutputVars=["z"]
+        assumptions=["y <= 0"], guarantees=["z <= 0"], input_vars=["y"], output_vars=["z"]
     )
     c3 = PolyhedralContract.from_string(
-        assumptions=["y <= 0"], guarantees=["q <= 0"], InputVars=["y"], OutputVars=["q"]
+        assumptions=["y <= 0"], guarantees=["q <= 0"], input_vars=["y"], output_vars=["q"]
     )
     c4 = PolyhedralContract.from_string(
-        assumptions=["q <= 0"], guarantees=["v <= 0"], InputVars=["q"], OutputVars=["v"]
+        assumptions=["q <= 0"], guarantees=["v <= 0"], input_vars=["q"], output_vars=["v"]
     )
     c5 = PolyhedralContract.from_string(
-        assumptions=["y <= 0"], guarantees=["w <= 0"], InputVars=["y"], OutputVars=["w"]
+        assumptions=["y <= 0"], guarantees=["v <= 0"], input_vars=["y"], output_vars=["v"]
     )
 
-    contract = composing_multiple_contracts([c1, c2, c3, c4, c5])
+    contract = compose_multiple_contracts([c1, c2, c3, c4, c5])
     print(contract)

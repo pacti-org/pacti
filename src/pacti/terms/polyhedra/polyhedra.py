@@ -8,7 +8,7 @@ $x_i$ are variables and the $a_i$ and $c$ are constants.
 from __future__ import annotations
 
 import logging
-from typing import Any, Tuple, Union
+from typing import Any, Optional, Tuple, Union
 
 import numpy as np
 import sympy
@@ -48,12 +48,15 @@ class PolyhedralTerm(Term):
         Args:
             variables: A dictionary mapping Var keys to numeric values.
             constant: A numeric value on the right of the inequality.
+
+        Raises:
+            ValueError: Unsupported argument type.
         """
         variable_dict = {}
         for key, value in variables.items():
             if value != 0:
                 if isinstance(key, str):
-                    variable_dict[Var(key)] = float(value)
+                    raise ValueError("Unsupported argument type")
                 else:
                     variable_dict[key] = float(value)
         self.variables = variable_dict
@@ -424,44 +427,11 @@ class PolyhedralTerm(Term):
             return {Var(str(key)): PolyhedralTerm.to_term(sols[key]) for key in sols.keys()}
         return {}
 
-    def _lhs_str(self) -> str:  # noqa: WPS231
-        varlist = list(self.variables.items())
-        varlist.sort(key=lambda x: str(x[0]))
-        # res = " + ".join([str(coeff) + "*" + var.name for var, coeff in varlist])
-        # res += " <= " + str(self.constant)
-        res = ""
-        first = True
-        for var, coeff in varlist:  # noqa: VNE002
-            if serializer.are_numbers_approximatively_equal(coeff, 1.0):
-                if first:
-                    res += var.name
-                else:
-                    res += " + " + var.name
-            elif serializer.are_numbers_approximatively_equal(coeff, -1.0):
-                if first:
-                    res += "-" + var.name
-                else:
-                    res += " - " + var.name
-            elif not serializer.are_numbers_approximatively_equal(coeff, float(0)):
-                if coeff > 0:
-                    if first:
-                        res += serializer.number2string(coeff) + " " + var.name
-                    else:
-                        res += " + " + serializer.number2string(coeff) + " " + var.name
-                else:
-                    if first:
-                        res += serializer.number2string(coeff) + " " + var.name
-                    else:
-                        res += " - " + serializer.number2string(-coeff) + " " + var.name
-            first = False
-        # res += " <= " + serializer.number2string(self.constant)
-        return res
-
 
 class PolyhedralTermList(TermList):  # noqa: WPS338
     """A TermList of PolyhedralTerm instances."""
 
-    def __init__(self, terms: Union[list[PolyhedralTerm], None] = None):
+    def __init__(self, terms: Optional[list[PolyhedralTerm]] = None):
         """
         Constructor for PolyhedralTermList.
 
@@ -491,14 +461,25 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
             raise ValueError("PolyhedralTermList constructor argument must be a list of PolyhedralTerms.")
 
     def __str__(self) -> str:
-        res = "["
-        ts = self.terms.copy()
-        while ts:
-            s, rest = serializer.internal_pt_to_string(ts)
-            res += "\n  " + s
-            ts = rest
+        res = "[\n  "
+        res += "\n  ".join(self.to_str_list())
         res += "\n]"
         return res
+
+    def to_str_list(self) -> list[str]:
+        """
+        Convert termlist into a list of strings.
+
+        Returns:
+            A list of strings corresponding to the terms of the termlist.
+        """
+        str_list = []
+        ts = self.terms.copy()
+        while ts:
+            s, rest = serializer.polyhedral_term_list_to_strings(ts)
+            str_list.append(s)
+            ts = rest
+        return str_list
 
     def evaluate(self, var_values: dict[Var, numeric]) -> PolyhedralTermList:  # noqa: WPS231
         """
@@ -660,7 +641,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         termlist.terms = list_diff(termlist.terms, terms_to_elim.terms)
         return termlist
 
-    def simplify(self, context: Union[PolyhedralTermList, None] = None) -> None:
+    def simplify(self, context: Optional[PolyhedralTermList] = None) -> None:
         """
         Remove redundant terms in the PolyhedralTermList using the provided context.
 
@@ -757,7 +738,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         logging.debug("Ending transformation with simplification")
         self.simplify(context)
 
-    def optimize(self, objective: dict[Var, numeric], maximize: bool = True):
+    def optimize(self, objective: dict[Var, numeric], maximize: bool = True) -> Optional[numeric]:
         """
         Optimizes a linear expression in the feasible region of the termlist.
 
@@ -785,12 +766,11 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         # 2 : Problem appears to be infeasible.
         # 3 : Problem appears to be unbounded.
         # 4 : Numerical difficulties encountered.
-        if res["status"] in {1, 2, 4}:
-            raise ValueError("Constraints are unfeasible")
-        elif res["status"] == 3:
+        if res["status"] == 3:
             return None
         elif res["status"] == 0:
             return polarity * res["fun"]
+        raise ValueError("Constraints are unfeasible")
 
     @staticmethod
     def termlist_to_polytope(
@@ -880,7 +860,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
 
     @staticmethod
     def reduce_polytope(  # noqa: WPS231
-        a: np.ndarray, b: np.ndarray, a_help: Union[np.ndarray, None] = None, b_help: Union[np.ndarray, None] = None
+        a: np.ndarray, b: np.ndarray, a_help: Optional[np.ndarray] = None, b_help: Optional[np.ndarray] = None
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Eliminate redundant constraints from a given polytope.
@@ -962,10 +942,10 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
 
     @staticmethod
     def verify_polytope_containment(  # noqa: WPS231
-        a_l: Union[np.ndarray, None] = None,
-        b_l: Union[np.ndarray, None] = None,
-        a_r: Union[np.ndarray, None] = None,
-        b_r: Union[np.ndarray, None] = None,
+        a_l: Optional[np.ndarray] = None,
+        b_l: Optional[np.ndarray] = None,
+        a_r: Optional[np.ndarray] = None,
+        b_r: Optional[np.ndarray] = None,
     ) -> bool:
         """
         Tell whether a polytope is contained in another.

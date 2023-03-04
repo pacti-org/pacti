@@ -1,8 +1,8 @@
 from pacti.terms.polyhedra import PolyhedralContract
 
 contract1 = PolyhedralContract.from_string(
-    InputVars=["i"],
-    OutputVars=["o"],
+    input_vars=["i"],
+    output_vars=["o"],
     assumptions=["|i| <= 2"],
     guarantees=["o - i <= 0", "i - 2o <= 2"])
 

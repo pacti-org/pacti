@@ -135,8 +135,8 @@ class LocalState:
         contract_union = ContractsUnions()
         for constraint in constraints:
             io_contract = PolyhedralContract.from_string(
-                OutputVars=list(symbols),
-                InputVars=[],
+                output_vars=list(symbols),
+                input_vars=[],
                 assumptions=[],
                 guarantees=constraint)
 

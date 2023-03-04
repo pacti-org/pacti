@@ -42,8 +42,8 @@ class Rule:
         contract_union = ContractsUnions(name=self.name)
         for constraint in constraints:
             io_contract = PolyhedralContract.from_string(
-                InputVars=list(symbols),
-                OutputVars=[],
+                input_vars=list(symbols),
+                output_vars=[],
                 assumptions=constraint,
                 guarantees=[])
 
