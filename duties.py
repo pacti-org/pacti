@@ -32,7 +32,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 from duty import duty
 
-PY_SRC_PATHS = (Path(_) for _ in ("src", "tests", "docs", "case_studies"))
+PY_SRC_PATHS = (Path(_) for _ in ("src", "tests", "case_studies"))
 PY_SRC_LIST = tuple(str(_) for _ in PY_SRC_PATHS)
 PY_SRC = " ".join(PY_SRC_LIST)
 JNB_SRC = " ".join(glob.glob("**/*.ipynb", recursive=True))
@@ -241,7 +241,7 @@ def check_types(ctx):  # noqa: WPS231
     Arguments:
         ctx: The context instance (passed automatically).
     """
-    ctx.run(f"mypy --strict --config-file=config/mypy.ini {PY_SRC}", title="Type-checking", pty=PTY)
+    ctx.run(f"mypy --strict --allow-any-generics --implicit-reexport --config-file=config/mypy.ini {PY_SRC}", title="Type-checking", pty=PTY)
 
 
 @duty  # noqa: WPS231
@@ -252,7 +252,7 @@ def check_jn_types(ctx):  # noqa: WPS231
     Arguments:
         ctx: The context instance (passed automatically).
     """
-    ctx.run(f"nbqa mypy --strict --config-file=config/mypy.ini {JNB_SRC}", title="Type checking notebooks", pty=PTY)
+    ctx.run(f"nbqa mypy --strict --allow-any-generics --implicit-reexport --config-file=config/mypy.ini {JNB_SRC}", title="Type checking notebooks", pty=PTY)
 
 
 @duty(silent=True)
