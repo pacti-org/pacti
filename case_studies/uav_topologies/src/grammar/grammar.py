@@ -5,9 +5,9 @@ from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 
-from .rule import Rule
 from ..contracts_utils.union import ContractsUnions
 from ..shared import SymbolType
+from .rule import Rule
 
 
 @dataclass

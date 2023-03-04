@@ -32,7 +32,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 from duty import duty
 
-PY_SRC_PATHS = (Path(_) for _ in ("src", "tests", "docs"))
+PY_SRC_PATHS = (Path(_) for _ in ("src", "tests", "docs", "case_studies"))
 PY_SRC_LIST = tuple(str(_) for _ in PY_SRC_PATHS)
 PY_SRC = " ".join(PY_SRC_LIST)
 TESTING = os.environ.get("TESTING", "0") in {"1", "true"}

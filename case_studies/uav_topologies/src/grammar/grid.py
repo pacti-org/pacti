@@ -7,12 +7,13 @@ from matplotlib.figure import Figure
 
 from case_studies.uav_topologies.src.contracts_utils.union import ContractsUnions
 from pacti.terms.polyhedra import PolyhedralContract
-from .figures import DirectionsGrid
-from ..tools.plotting import plot_3d_grid
-from .rule import Rule
-from .symbols import Symbol, Unoccupied, Fuselage, Empty, Rotor, Wing, Connector
+
 from ..shared import Direction, SymbolType, symbols_colors
 from ..tools.constraints import from_symbol_directions_to_constraints
+from ..tools.plotting import plot_3d_grid
+from .figures import DirectionsGrid
+from .rule import Rule
+from .symbols import Connector, Empty, Fuselage, Rotor, Symbol, Unoccupied, Wing
 
 
 @dataclass
@@ -135,10 +136,8 @@ class LocalState:
         contract_union = ContractsUnions()
         for constraint in constraints:
             io_contract = PolyhedralContract.from_string(
-                output_vars=list(symbols),
-                input_vars=[],
-                assumptions=[],
-                guarantees=constraint)
+                output_vars=list(symbols), input_vars=[], assumptions=[], guarantees=constraint
+            )
 
             contract_union.contracts.add(io_contract)
         return contract_union
@@ -397,8 +396,8 @@ class GridBuilder:
         unoccupied_points = set(
             filter(
                 lambda p: isinstance(self.grid[p], Unoccupied)
-                          and (abs(p.x) < edge and abs(p.y) < edge and abs(p.z) < edge)
-                          and p not in self.points_visited,
+                and (abs(p.x) < edge and abs(p.y) < edge and abs(p.z) < edge)
+                and p not in self.points_visited,
                 [p for p in self.current_point.symmetry_directions],
             )
         )

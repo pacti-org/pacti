@@ -7,10 +7,11 @@ from dataclasses import dataclass
 from matplotlib.figure import Figure
 
 from pacti.terms.polyhedra import PolyhedralContract
-from .figures import DirectionsGrid
+
 from ..contracts_utils.union import ContractsUnions
 from ..shared import Direction, SymbolType, symbols_colors
 from ..tools.constraints import from_symbol_directions_to_constraints
+from .figures import DirectionsGrid
 
 
 @dataclass
@@ -27,14 +28,12 @@ class Rule:
             connection = Direction[rule_dict["production"]["connection"]]
         symbol_name = rule_dict["production"]["ego"]
 
-        pr = Production(symbol_type=getattr(SymbolType, symbol_name),
-                        connection=connection)
+        pr = Production(symbol_type=getattr(SymbolType, symbol_name), connection=connection)
 
         return Rule(conditions=cs, production=pr, name=name)
 
     @property
     def contract(self) -> ContractsUnions:
-
         symbols_dirs = self.conditions.get_all_symbol_types_and_directions()
         constraints, symbols = from_symbol_directions_to_constraints(symbols_dirs)
 
@@ -42,10 +41,8 @@ class Rule:
         contract_union = ContractsUnions(name=self.name)
         for constraint in constraints:
             io_contract = PolyhedralContract.from_string(
-                input_vars=list(symbols),
-                output_vars=[],
-                assumptions=constraint,
-                guarantees=[])
+                input_vars=list(symbols), output_vars=[], assumptions=constraint, guarantees=[]
+            )
 
             contract_union.contracts.add(io_contract)
 
@@ -125,8 +122,7 @@ class ConditionSet:
         # for elem in res:
         #     print(elem)
         for f, b, l, ri, t, re in itertools.product(
-                *[list(self.front), list(self.bottom), list(self.left), list(self.right), list(self.top),
-                  list(self.rear)]
+            *[list(self.front), list(self.bottom), list(self.left), list(self.right), list(self.top), list(self.rear)]
         ):
             conditions.append(Condition(f, b, l, ri, t, re))
         return conditions

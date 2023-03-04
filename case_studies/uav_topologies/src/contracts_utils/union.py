@@ -23,14 +23,14 @@ class ContractsUnions:
     name: str = ""
 
     def get_inverted(self) -> ContractsUnions:
-
         inverted_contracts = ContractsUnions(name=self.name)
 
         for contract in self.contracts:
             from pacti.terms.polyhedra import PolyhedralTermList
-            new_contract = IoContract(assumptions=contract.g,
-                                      guarantees=PolyhedralTermList(), output_vars=[],
-                                      input_vars=contract.outputvars)
+
+            new_contract = IoContract(
+                assumptions=contract.g, guarantees=PolyhedralTermList(), output_vars=[], input_vars=contract.outputvars
+            )
             inverted_contracts.contracts.add(new_contract)
 
         return inverted_contracts
@@ -73,9 +73,8 @@ class ContractsUnions:
         return True
 
     def __str__(self):
-
-        assumptions = [str(c.a).replace('in', '').replace('1*', '') for c in self.contracts]
-        guarantees = [str(c.g).replace('in', '').replace('1*', '') for c in self.contracts]
+        assumptions = [str(c.a).replace("in", "").replace("1*", "") for c in self.contracts]
+        guarantees = [str(c.g).replace("in", "").replace("1*", "") for c in self.contracts]
         a = "\t | \t".join(assumptions)
         g = "\t | \t".join(guarantees)
         return f"A: {a}\nG: {g}"
@@ -124,13 +123,13 @@ class ContractsUnions:
                 try:
                     c = c_self.compose(c_other)
                     print("\n")
-                    print(str(c_self.a).replace('in', '').replace('1*', ''))
-                    print(str(c_other.g).replace('in', '').replace('1*', ''))
+                    print(str(c_self.a).replace("in", "").replace("1*", ""))
+                    print(str(c_other.g).replace("in", "").replace("1*", ""))
                     print("TRUE")
                 except Exception as e:
                     print("\n")
-                    print(str(c_self.a).replace('in', '').replace('1*', ''))
-                    print(str(c_other.g).replace('in', '').replace('1*', ''))
+                    print(str(c_self.a).replace("in", "").replace("1*", ""))
+                    print(str(c_other.g).replace("in", "").replace("1*", ""))
                     print("FALSE")
                     next = True
                     break
