@@ -734,7 +734,7 @@ class IoContract(Generic[TermList_t]):
         Raises:
             IncompatibleArgsError: trying to merge different contract types.
         """
-        if isinstance(self, type(other)):
+        if not isinstance(self, type(other)):
             raise IncompatibleArgsError("Asked to merge incompatible contracts")
         input_vars = list_union(self.inputvars, other.inputvars)
         output_vars = list_union(self.outputvars, other.outputvars)
