@@ -40,5 +40,5 @@ def test_read_contract() -> None:
         assert validate_iocontract(io_c)
     # Ensure that all contracts are dictionaries
     c_n = {"input_vars": "u", "output_vars": "x"}
-    with pytest.raises(ValueError, match="A dict type contract is expected."):
+    with pytest.raises(ValueError, match="Passed dictionary does not have key assumptions."):
         PolyhedralContract.from_dict(c_n)
