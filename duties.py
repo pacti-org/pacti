@@ -231,6 +231,7 @@ def check_docs(ctx):
     """
     Path("htmlcov").mkdir(parents=True, exist_ok=True)
     Path("htmlcov/index.html").touch(exist_ok=True)
+    copy_case_studies(ctx)
     ctx.run("mkdocs build -s", title="Building documentation", pty=PTY)
 
 
@@ -309,6 +310,7 @@ def docs(ctx):
     Arguments:
         ctx: The context instance (passed automatically).
     """
+    copy_case_studies(ctx)
     ctx.run("mkdocs build", title="Building documentation")
 
 
