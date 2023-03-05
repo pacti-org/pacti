@@ -7,20 +7,27 @@ def _read_notebook(filename: str):
     with open(filename) as ff:
         return nbformat.read(ff, nbformat.NO_CONVERT)
 
-j1 = '../../../case_studies/space_mission/scenario_power.json'
-j2 = '../../../case_studies/space_mission/scenario_science.json'
-j3 = '../../../case_studies/space_mission/scenario_navigation.json'
+def _delete_if_exists(filename: str):
+    if os.path.exists(filename):
+        os.remove(filename)
+
+j1 = 'case_studies/space_mission/json/scenario_power.json'
+j2 = 'case_studies/space_mission/json/scenario_science.json'
+j3 = 'case_studies/space_mission/json/scenario_nav.json'
 
 def test_viewpoints():
-    os.remove(j1)
-    nb1 = _read_notebook('../../../case_studies/space_mission/space_mission_power.ipynb')
+    assert os.path.isdir('case_studies/space_mission/json')
 
-    os.remove(j2)
-    nb2 = _read_notebook('../../../case_studies/space_mission/space_mission_science.ipynb')
+    _delete_if_exists(j1)
+    nb1 = _read_notebook('case_studies/space_mission/space_mission_power.ipynb')
+
+    _delete_if_exists(j2)
+    nb2 = _read_notebook('case_studies/space_mission/space_mission_science.ipynb')
     
-    os.remove(j3)
-    nb3 = _read_notebook('../../../case_studies/space_mission/space_mission_navigation.ipynb')
-    nb4 = _read_notebook('../../../case_studies/space_mission/space_mission_3viewpoints.ipynb')
+    _delete_if_exists(j3)
+    nb3 = _read_notebook('case_studies/space_mission/space_mission_navigation.ipynb')
+    
+    nb4 = _read_notebook('case_studies/space_mission/space_mission_3viewpoints.ipynb')
     
     
     ep = ExecutePreprocessor(timeout=600, kernel_name='python3')
