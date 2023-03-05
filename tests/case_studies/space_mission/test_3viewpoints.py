@@ -26,11 +26,11 @@ def test_viewpoints():
     
     _delete_if_exists(j3)
     nb3 = _read_notebook('case_studies/space_mission/space_mission_navigation.ipynb')
-    
+
     nb4 = _read_notebook('case_studies/space_mission/space_mission_3viewpoints.ipynb')
     
-    
-    ep = ExecutePreprocessor(timeout=600, kernel_name='python3')
+    # Use the kernel from the notebook.
+    ep = ExecutePreprocessor(timeout=600)
 
     # Run the 1st notebook and write the scenario
     r1 = ep.preprocess(nb1)
