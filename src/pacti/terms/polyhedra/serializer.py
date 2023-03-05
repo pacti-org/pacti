@@ -1,4 +1,4 @@
-"""Consists of loader functions that can read a JSON dictionary contract or write a IOContract to a JSON file."""
+"""Transformations between polyhedral structures and strings."""
 import re
 from typing import Dict, Tuple, Union
 
@@ -14,7 +14,7 @@ numeric = Union[int, float]
 
 def validate_contract_dict(  # noqa: WPS231 too much cognitive complexity
     contract: Dict, contract_name: str, machine_representation: bool
-):
+) -> None:
     """
     Tell whether a contract dictionary can be read as a polyhedral contract.
 
@@ -48,7 +48,7 @@ def validate_contract_dict(  # noqa: WPS231 too much cognitive complexity
                 _check_clause(clause, f"{contract_name}:{kw}{index}")
 
 
-def _check_clause(clause, clause_id):
+def _check_clause(clause: dict, clause_id: str) -> None:
     keywords = ["constant", "coefficients"]
     for kw in keywords:
         if kw not in clause:
@@ -82,7 +82,7 @@ def _are_numbers_approximatively_equal(v1: numeric, v2: numeric) -> bool:
     )
 
 
-def _lhs_str(term) -> str:  # noqa: WPS231
+def _lhs_str(term: PolyhedralTerm) -> str:  # noqa: WPS231
     varlist = list(term.variables.items())
     varlist.sort(key=lambda x: str(x[0]))
     # res = " + ".join([str(coeff) + "*" + var.name for var, coeff in varlist])

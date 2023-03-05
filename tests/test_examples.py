@@ -2,7 +2,7 @@ import pacti.iocontract as iocontract
 from pacti.terms.polyhedra import *
 
 
-def test_examples():
+def test_examples() -> None:
     contract1 = {
         "input_vars": ["u_1"],
         "output_vars": ["x_1"],
