@@ -129,6 +129,9 @@ class PolyhedralContract(IoContract):
         """
         if not isinstance(contract, dict):
             raise ValueError("A dict type contract is expected.")
+        for kw in ("assumptions", "guarantees", "input_vars", "output_vars"):
+            if kw not in contract:
+                raise ValueError(f"Passed dictionary does not have key {kw}.")
 
         if all(isinstance(x, dict) for x in contract["assumptions"]):
             a = PolyhedralTermList(

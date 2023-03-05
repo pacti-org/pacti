@@ -46,7 +46,7 @@ class NestedTermList:
             return "\nor \n".join(res)
         return "true"
 
-    def simplify(self: NTL_t, context: NTL_t, force_empty_intersection: bool):
+    def simplify(self: NTL_t, context: NTL_t, force_empty_intersection: bool) -> None:
         """
         Remove redundant terms in nested termlist.
 
@@ -202,7 +202,7 @@ class IoContractCompound:
         # simplify the guarantees with the assumptions
         # self.g.simplify(self.a)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (
             "InVars: "
             + "["
