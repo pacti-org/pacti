@@ -11,7 +11,7 @@ composition_test_instances = glob.glob(TEST_DATA_DIR + "**/*composition_success*
 
 
 @pytest.mark.parametrize("test_instance", composition_test_instances)
-def test_composition_success(test_instance):
+def test_composition_success(test_instance: str) -> None:
     try:
         c, _ = read_contracts_from_file(test_instance)
     except:
@@ -29,7 +29,7 @@ composition_failure_test_instances = glob.glob(TEST_DATA_DIR + "**/*composition_
 
 
 @pytest.mark.parametrize("test_instance", composition_failure_test_instances)
-def test_composition_failure(test_instance):
+def test_composition_failure(test_instance: str) -> None:
     try:
         c, _ = read_contracts_from_file(test_instance)
     except:
@@ -43,7 +43,7 @@ quotient_test_instances = glob.glob(TEST_DATA_DIR + "**/*quotient_success*.json"
 
 
 @pytest.mark.parametrize("test_instance", quotient_test_instances)
-def test_quotient_success(test_instance):
+def test_quotient_success(test_instance: str) -> None:
     try:
         c, _ = read_contracts_from_file(test_instance)
     except:
@@ -61,7 +61,7 @@ quotient_failure_test_instances = glob.glob(TEST_DATA_DIR + "**/*quotient_failur
 
 
 @pytest.mark.parametrize("test_instance", quotient_failure_test_instances)
-def test_quotient_failure(test_instance):
+def test_quotient_failure(test_instance: str) -> None:
     try:
         c, _ = read_contracts_from_file(test_instance)
     except:
@@ -75,7 +75,7 @@ merging_test_instances = glob.glob(TEST_DATA_DIR + "**/*merging_success*.json", 
 
 
 @pytest.mark.parametrize("test_instance", merging_test_instances)
-def test_merging_success(test_instance):
+def test_merging_success(test_instance: str) -> None:
     try:
         c, _ = read_contracts_from_file(test_instance)
     except:
@@ -93,7 +93,7 @@ merging_failure_test_instances = glob.glob(TEST_DATA_DIR + "**/*merging_failure*
 
 
 @pytest.mark.parametrize("test_instance", merging_failure_test_instances)
-def test_merging_failure(test_instance):
+def test_merging_failure(test_instance: str) -> None:
     try:
         c, _ = read_contracts_from_file(test_instance)
     except:
@@ -107,7 +107,7 @@ refinement_test_instances = glob.glob(TEST_DATA_DIR + "**/*refinement*.json", re
 
 
 @pytest.mark.parametrize("test_instance", refinement_test_instances)
-def test_refinement(test_instance):
+def test_refinement(test_instance: str) -> None:
     try:
         c, _ = read_contracts_from_file(test_instance)
     except:

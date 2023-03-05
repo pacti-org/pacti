@@ -5,7 +5,7 @@ import pacti.iocontract as iocontract
 from pacti.terms.polyhedra import *
 
 
-def create_contracts(num=1) -> list[dict]:
+def create_contracts(num: int = 1) -> list[dict]:
     """
     Creates `num` number of contracts and returns a list of dicts
     """
@@ -22,7 +22,7 @@ def create_contracts(num=1) -> list[dict]:
     return contracts
 
 
-def test_read_contract():
+def test_read_contract() -> None:
     """
     Test read_contract
     """
@@ -39,6 +39,6 @@ def test_read_contract():
         assert isinstance(io_c, iocontract.IoContract)
         assert validate_iocontract(io_c)
     # Ensure that all contracts are dictionaries
-    c_i = [("input_vars", "u"), ("output_vars", "x")]
+    c_n = {"input_vars": "u", "output_vars": "x"}
     with pytest.raises(ValueError, match="A dict type contract is expected."):
-        PolyhedralContract.from_dict(c_i)
+        PolyhedralContract.from_dict(c_n)
