@@ -1,16 +1,18 @@
 """Support for multiple composition."""
 from __future__ import annotations
 
+from typing import Any, Dict
+
 from pacti.iocontract import IoContract
 from pacti.terms.polyhedra import PolyhedralContract
 
 
 class _Tree:
-    def __init__(self, data=None):
+    def __init__(self, data: Any = None):
         self.data = data
-        self.children = set()
+        self.children: set[Any] = set()
 
-    def add_child(self, child: _Tree):
+    def add_child(self, child: _Tree) -> None:
         self.children.add(child)
 
     def get_leafs(self) -> set[_Tree]:
@@ -22,7 +24,7 @@ class _Tree:
             leafs.add(self)
         return leafs
 
-    def remove_node(self, leaf):
+    def remove_node(self, leaf: Any) -> None:
         if not self.children:
             return
         if leaf in self.children:
@@ -31,7 +33,7 @@ class _Tree:
         for child in self.children:
             child.remove_node(leaf)
 
-    def print_tree(self, level=0, is_last_sibling=True):
+    def print_tree(self, level: int = 0, is_last_sibling: bool = True) -> None:
         prefix = "    " * level
         if is_last_sibling:
             prefix += "`-- "
@@ -43,7 +45,7 @@ class _Tree:
             child.print_tree(level + 1, is_last_child)
 
 
-def _build_dependency_tree(symbol_dict):  # noqa: WPS231 too much cognitive complexity
+def _build_dependency_tree(symbol_dict: Dict) -> _Tree:  # noqa: WPS231 too much cognitive complexity
     root = _Tree()
     symbol_nodes = {}
     for symbol, value in symbol_dict.items():

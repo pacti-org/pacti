@@ -25,6 +25,11 @@ from typing import Any, Generic, List, Optional, TypeVar
 from pacti.utils.errors import IncompatibleArgsError
 from pacti.utils.lists import list_diff, list_intersection, list_union, lists_equal
 
+Var_t = TypeVar("Var_t", bound="Var")
+Term_t = TypeVar("Term_t", bound="Term")
+TermList_t = TypeVar("TermList_t", bound="TermList")
+IoContract_t = TypeVar("IoContract_t", bound="IoContract")
+
 
 class Var:
     """
@@ -51,7 +56,9 @@ class Var:
         """
         return self._name
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, type(self)):
+            raise ValueError()
         return self.name == other.name
 
     def __str__(self) -> str:
@@ -60,11 +67,8 @@ class Var:
     def __hash__(self) -> int:
         return hash(self.name)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<Var {0}>".format(self.name)
-
-
-Term_t = TypeVar("Term_t", bound="Term")
 
 
 class Term(ABC):
@@ -77,7 +81,7 @@ class Term(ABC):
 
     @property
     @abstractmethod
-    def vars(self):  # noqa: A003
+    def vars(self) -> list[Var]:  # noqa: A003
         """Variables contained in the syntax of the term."""
 
     @abstractmethod
@@ -90,7 +94,7 @@ class Term(ABC):
         """
 
     @abstractmethod
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         pass
 
     @abstractmethod
@@ -98,15 +102,15 @@ class Term(ABC):
         pass
 
     @abstractmethod
-    def __hash__(self):
+    def __hash__(self) -> int:
         pass
 
     @abstractmethod
-    def __repr__(self):
+    def __repr__(self) -> str:
         pass
 
     @abstractmethod
-    def copy(self):
+    def copy(self: Term_t) -> Term_t:
         """Returns a copy of term."""
 
     @abstractmethod
@@ -121,9 +125,6 @@ class Term(ABC):
         Returns:
             A term with `source_var` replaced by `target_var`.
         """
-
-
-TermList_t = TypeVar("TermList_t", bound="TermList")
 
 
 class TermList(ABC):
@@ -165,7 +166,9 @@ class TermList(ABC):
             return ", ".join(res)
         return "true"
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, type(self)):
+            raise ValueError()
         return self.terms == other.terms
 
     def get_terms_with_vars(self: TermList_t, variable_list: List[Var]) -> TermList_t:
@@ -184,16 +187,16 @@ class TermList(ABC):
                 terms.append(t)
         return type(self)(terms)
 
-    def __and__(self, other):
+    def __and__(self: TermList_t, other: TermList_t) -> TermList_t:
         return type(self)(list_intersection(self.copy().terms, other.copy().terms))
 
-    def __or__(self, other):
+    def __or__(self: TermList_t, other: TermList_t) -> TermList_t:
         return type(self)(list_union(self.copy().terms, other.copy().terms))
 
-    def __sub__(self, other):
+    def __sub__(self: TermList_t, other: TermList_t) -> TermList_t:
         return type(self)(list_union(self.copy().terms, other.copy().terms))
 
-    def __le__(self, other):
+    def __le__(self: TermList_t, other: TermList_t) -> bool:
         return self.refines(other)
 
     def copy(self: TermList_t) -> TermList_t:
@@ -279,7 +282,7 @@ class TermList(ABC):
         """
 
     @abstractmethod
-    def simplify(self: TermList_t, context: Optional[TermList_t] = None):
+    def simplify(self: TermList_t, context: Optional[TermList_t] = None) -> None:
         """Remove redundant terms in TermList.
 
         Let $S$ be this TermList and suppose $T \\subseteq S$. Let
@@ -314,9 +317,6 @@ class TermList(ABC):
         Returns:
             True if termlist constraints cannot be satisfied.
         """
-
-
-IoContract_t = TypeVar("IoContract_t", bound="IoContract")
 
 
 class IoContract(Generic[TermList_t]):
@@ -398,7 +398,7 @@ class IoContract(Generic[TermList_t]):
         """
         return list_union(self.inputvars, self.outputvars)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (
             "InVars: "
             + "["
@@ -415,7 +415,9 @@ class IoContract(Generic[TermList_t]):
             + str(self.g)
         )
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, type(self)):
+            raise ValueError
         return (
             self.inputvars == other.inputvars
             and self.outputvars == self.outputvars
@@ -475,7 +477,9 @@ class IoContract(Generic[TermList_t]):
         guarantees = self.g.copy()
         return type(self)(assumptions, guarantees, inputvars, outputvars)
 
-    def __le__(self, other):
+    def __le__(self, other: object) -> bool:
+        if not isinstance(other, type(self)):
+            raise ValueError()
         return self.refines(other)
 
     def can_compose_with(self: IoContract_t, other: IoContract_t) -> bool:
@@ -538,7 +542,9 @@ class IoContract(Generic[TermList_t]):
         """
         if not self.shares_io_with(other):
             raise IncompatibleArgsError("Contracts do not share IO")
-        return (other.a <= self.a) and ((self.g | other.a) <= (other.g | other.a))
+        assumptions_check: bool = other.a <= self.a
+        guarantees_check: bool = (self.g | other.a) <= (other.g | other.a)
+        return assumptions_check and guarantees_check
 
     def compose(self: IoContract_t, other: IoContract_t, vars_to_keep: Any = None) -> IoContract_t:  # noqa: WPS231
         """Compose IO contracts.
@@ -734,7 +740,7 @@ class IoContract(Generic[TermList_t]):
         Raises:
             IncompatibleArgsError: trying to merge different contract types.
         """
-        if isinstance(self, type(other)):
+        if not isinstance(self, type(other)):
             raise IncompatibleArgsError("Asked to merge incompatible contracts")
         input_vars = list_union(self.inputvars, other.inputvars)
         output_vars = list_union(self.outputvars, other.outputvars)
