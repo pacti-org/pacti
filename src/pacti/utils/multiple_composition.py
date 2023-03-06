@@ -4,7 +4,6 @@ from __future__ import annotations
 from typing import Any, Dict
 
 from pacti.iocontract import IoContract
-from pacti.terms.polyhedra import PolyhedralContract
 
 
 class _Tree:
