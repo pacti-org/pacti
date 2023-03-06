@@ -84,36 +84,12 @@ def compose_multiple_contracts(contracts: list[IoContract]) -> IoContract:
     dependency_tree: _Tree = _build_dependency_tree(symbol_dict)
     leaf = dependency_tree.get_leafs().pop()
     main_contract = contracts_dict[leaf.data]
-    dependency_tree.print_tree()
     dependency_tree.remove_node(leaf)
-    dependency_tree.print_tree()
     while dependency_tree is not None:
         leaf = dependency_tree.get_leafs().pop()
-        print(main_contract)
-        print("composing with")
-        print(contracts_dict[leaf.data])
+        if leaf.data is None:
+            break
         main_contract.compose(contracts_dict[leaf.data])
         dependency_tree.remove_node(leaf)
 
     return main_contract
-
-
-if __name__ == "__main__":
-    c1 = PolyhedralContract.from_string(
-        assumptions=["x <= 1"], guarantees=["y <= 0"], input_vars=["x"], output_vars=["y"]
-    )
-    c2 = PolyhedralContract.from_string(
-        assumptions=["y <= 0"], guarantees=["z <= 0"], input_vars=["y"], output_vars=["z"]
-    )
-    c3 = PolyhedralContract.from_string(
-        assumptions=["y <= 0"], guarantees=["q <= 0"], input_vars=["y"], output_vars=["q"]
-    )
-    c4 = PolyhedralContract.from_string(
-        assumptions=["q <= 0"], guarantees=["v <= 0"], input_vars=["q"], output_vars=["v"]
-    )
-    c5 = PolyhedralContract.from_string(
-        assumptions=["y <= 0"], guarantees=["v <= 0"], input_vars=["y"], output_vars=["v"]
-    )
-
-    contract = compose_multiple_contracts([c1, c2, c3, c4, c5])
-    print(contract)
