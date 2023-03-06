@@ -2,6 +2,7 @@
 
 from typing import Any
 
+
 def list_intersection(list1: list[Any], list2: list[Any]) -> list[Any]:
     """
     Intersect two lists.

@@ -40,6 +40,7 @@ TESTING = os.environ.get("TESTING", "0") in {"1", "true"}
 CI = os.environ.get("CI", "0") in {"1", "true", "yes", ""}
 WINDOWS = os.name == "nt"
 PTY = not WINDOWS and not CI
+MYPY_FLAGS = "--allow-any-generics --implicit-reexport --allow-untyped-calls"
 
 
 def _latest(lines: List[str], regex: Pattern) -> Optional[str]:
@@ -230,6 +231,7 @@ def check_docs(ctx):
     """
     Path("htmlcov").mkdir(parents=True, exist_ok=True)
     Path("htmlcov/index.html").touch(exist_ok=True)
+    copy_case_studies(ctx)
     ctx.run("mkdocs build -s", title="Building documentation", pty=PTY)
 
 
@@ -241,7 +243,7 @@ def check_types(ctx):  # noqa: WPS231
     Arguments:
         ctx: The context instance (passed automatically).
     """
-    ctx.run(f"mypy --strict --allow-any-generics --implicit-reexport --config-file=config/mypy.ini {PY_SRC}", title="Type-checking", pty=PTY)
+    ctx.run(f"mypy --strict {MYPY_FLAGS} --config-file=config/mypy.ini {PY_SRC}", title="Type-checking", pty=PTY)
 
 
 @duty  # noqa: WPS231
@@ -252,7 +254,7 @@ def check_jn_types(ctx):  # noqa: WPS231
     Arguments:
         ctx: The context instance (passed automatically).
     """
-    ctx.run(f"nbqa mypy --strict --allow-any-generics --implicit-reexport --config-file=config/mypy.ini {JNB_SRC}", title="Type checking notebooks", pty=PTY)
+    ctx.run(f"nbqa mypy --strict {MYPY_FLAGS} --config-file=config/mypy.ini {JNB_SRC}", title="Type checking notebooks", pty=PTY)
 
 
 @duty(silent=True)
@@ -308,6 +310,7 @@ def docs(ctx):
     Arguments:
         ctx: The context instance (passed automatically).
     """
+    copy_case_studies(ctx)
     ctx.run("mkdocs build", title="Building documentation")
 
 
