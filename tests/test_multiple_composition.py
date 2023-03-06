@@ -1,4 +1,3 @@
-from ast import main
 from pacti.terms.polyhedra.polyhedral_contract import PolyhedralContract
 from pacti.utils.multiple_composition import compose_multiple_contracts
 
