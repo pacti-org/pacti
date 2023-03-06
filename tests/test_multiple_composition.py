@@ -2,7 +2,7 @@ from pacti.terms.polyhedra.polyhedral_contract import PolyhedralContract
 from pacti.utils.multiple_composition import compose_multiple_contracts
 
 
-def test_multiple_composition():
+def test_multiple_composition() -> None:
     c1 = PolyhedralContract.from_string(
         assumptions=["x <= 1"], guarantees=["y <= 0"], input_vars=["x"], output_vars=["y"]
     )
