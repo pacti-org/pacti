@@ -22,6 +22,7 @@
         "output_r5"
       ],
       "assumptions": [
+        "-duration_tcm_deltav5 <= 0.0",
         "-duration_sbo3 <= 0.0",
         "-u1_entry <= 0.0",
         "u1_entry <= 100.0",
