@@ -1,5 +1,4 @@
 # Import libraries
-from pacti.iocontract.utils import getVarlist
 import pdb
 from utils import *
 import random
