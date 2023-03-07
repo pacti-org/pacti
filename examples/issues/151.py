@@ -3,8 +3,8 @@ from pacti.terms.polyhedra import PolyhedralContractCompound
 from pacti.iocontract import Var
 
 c1 = PolyhedralContractCompound.from_string(
-    InputVars=["x"],
-    OutputVars=["y"],
+    input_vars=["x"],
+    output_vars=["y"],
     assumptions=[["x <= 2"], ["-x <= -4"]],
     guarantees=[["y <= 2"], ["-y <= -3"]]
     )
@@ -12,8 +12,8 @@ c1 = PolyhedralContractCompound.from_string(
 print(c1)
 
 c2 = PolyhedralContractCompound.from_string(
-    InputVars=["i"],
-    OutputVars=["o"],
+    input_vars=["i"],
+    output_vars=["o"],
     assumptions=[["i <= 5"], ["-i <= -7"]],
     guarantees=[["o - i <= 2"], ["i - o <= -3"]]
     )

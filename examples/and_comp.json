@@ -1,17 +1,17 @@
 
 {
 "contract1" : {
-    "InputVars": ["u_2", "u_1"],
-    "OutputVars": ["x_1", "x_2"],
+    "input_vars": ["u_2", "u_1"],
+    "output_vars": ["x_1", "x_2"],
     "assumptions": [{"constant": -1, "coefficients": {"u_1": -1}},
     {"constant": -1, "coefficients": {"u_2": -1}}],
     "guarantees": [{"constant": -0.3, "coefficients": {"x_2": -1}},
     {"constant": -1.5, "coefficients": {"x_1": -1}}]},
 "contract2": {
-    "InputVars":[
+    "input_vars":[
         "x_1", "x_2"
     ],
-    "OutputVars":[
+    "output_vars":[
         "y"
     ],
     "assumptions":
