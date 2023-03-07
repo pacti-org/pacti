@@ -246,4 +246,3 @@ if __name__=='__main__':
     env_vars, sys_vars, env_init, sys_init, env_safe, sys_safe, env_prog, sys_prog = emptyK(Ncar, xcar, vcar, Vlow, Vhigh, xped)
     Kempty = design_C(env_vars, sys_vars, env_init, sys_init, env_safe, sys_safe, env_prog, sys_prog)
     write_python_case("empty_controller.py", Kempty)
-# -

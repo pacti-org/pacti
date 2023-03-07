@@ -54,69 +54,9 @@ def call_MC(K, K_backup, C, true_env, true_env_type, state_info, M):
     print(M.M)
     return M
 
-def initialize_ped(vmax, MAX_V, true_env_type):
-    Ncar = int(MAX_V*(MAX_V+1)/2 + 2)
-    Vlow =  0
-    Vhigh = vmax
-    x_vmax_stop = vmax*(vmax+1)/2 + 1
-    xcross_start = 2
-    Nped = Ncar - xcross_start + 1
-    if x_vmax_stop >= xcross_start:
-        min_xped = int(x_vmax_stop + 1 - (xcross_start - 1))
-    else:
-        min_xped = 3
-    assert(min_xped > 0)
-    assert(min_xped<= Nped)
-    if min_xped < Nped:
-        xped = np.random.randint(min_xped, Nped)
-    else:
-        xped = int(min_xped)
-    xped = int(min_xped)
-    xcar_stop = xped + xcross_start - 2
-    assert(xcar_stop > 0)
-    state_f = lambda x,v: (Vhigh-Vlow+1)*(x-1)+v
-    bad_states = set()
-    good_state = set()
-
-    def get_formula_states(xcar_stop):
-        bst = set()
-        for vi in range(1,Vhigh+1):
-            state = state_f(xcar_stop, vi)
-            bst |= {"S"+str(state)}
-        gst = {"S" + str(state_f(xcar_stop,0))}
-        bad = "" # Expression for bad states
-        good = "" # Expression for good states
-        for st in list(gst):
-            if good == "":
-                good = good + "\"" + st+"\""
-            else:
-                good = good + "|\""+st+"\""
-        for st in list(bst):
-            if bad == "":
-                bad = bad + "\"" + st+"\""
-            else:
-                bad = bad + "|\""+st+"\""
-        return good, bad, gst, bst
-    good, bad, gst, bst = get_formula_states(xcar_stop)
-    good_state |= gst
-    bad_states |= bst
-    pdb.set_trace()
-    phi1 = "!("+good+")" # This is for empty and obj states --> to keep driving
-    phi2 = "("+good+") | !("+bad # This is to stop if there is a ped
-    for xcar_ii in range(xcar_stop+1, Ncar+1):
-        good, bad, gst, bst = get_formula_states(xcar_ii) # We only want the bad states; ignore the good states output here
-        bad_states |= bst
-        phi2 = phi2 + "|" + bad
-    phi2 = phi2 + ")"
-    if true_env_type == "ped":
-        formula = "P=?[G("+str(phi2)+")]" # Don't reach bad states and eventually reach good states
-    else:
-        formula = "P=?[G("+str(phi1)+")]" # Don't reach the stop state at crosswalk
-    print(formula)
-    return Ncar, Vlow, Vhigh, xped, bad_states, good_state, formula
-
+# +
 # Checking initialization
-def new_initialize_ped(vmax, Ncar, true_env_type):
+def initialize(vmax, Ncar, true_env_type):
     assert vmax*(vmax+1)/2 <= Ncar
     Vlow =  0
     Vhigh = vmax
@@ -171,6 +111,7 @@ def new_initialize_ped(vmax, Ncar, true_env_type):
         formula = "P=?[G !(" + good +")]"
     print(formula)
     return xped, bad_states, good_state, formula
+
 # Construct backup controller:
 def construct_backup_controller(Ncar, Vlow, Vhigh):
     K_backup = dict()
@@ -193,6 +134,9 @@ def construct_backup_controller(Ncar, Vlow, Vhigh):
                     end_st.append((xcar_p, vcar+1))
             K_backup[st] = end_st
     return K_backup
+
+
+# -
 
 # Creating the states of the markov chain for the system:
 # Returns product states S and (pos,vel) to state dictionary
@@ -323,10 +267,6 @@ def plot_probabilities(points, tpped_vals, true_env, vmax, rand =True):
 # Plot probability points:
 def plot_probabilities_bounds(points, tpped_vals, true_env, vmax, Ncar, ubounds, lbounds, rand =True):
     fig, ax = plt.subplots()
-    # ax.set_title(true_env,fontsize=35)
-    # plt.rcParams['text.usetex'] = True
-    # plt.ylabel(r'$\mathbb{P}_{'+str(true_env)+'}$',fontsize=35)
-    # plt.xlabel(r'$TP_{'+str(true_env)+'}$',fontsize=35)
     ax.tick_params(axis='both', which='major', labelsize=35)
     plt.plot(tpped_vals, points, 'b*',label='sampled')
     if ubounds != []:
@@ -456,57 +396,6 @@ def bound_probs_emp(max_probs, min_probs):
     return ub, lb
 
 # +
-def bound_probs_ped(max_probs, min_probs):
-    # Picking the two largest max_probs:
-    sorted_max = sorted(max_probs.items(), key=lambda kv: kv[1])
-    sorted_max = list(reversed(sorted_max))
-    sorted_max = collections.OrderedDict(sorted_max)
-
-    sorted_min = sorted(min_probs.items(), key=lambda kv: kv[1])
-    sorted_min = collections.OrderedDict(sorted_min)
-
-    # Getting the eyeballed lines
-    for tp, prob in max_probs.items():
-        if tp > 0.8:
-            tp_max1 = tp
-            pmax1 = prob
-            break
-    tp_max2, pmax2 = list(sorted_max.items())[0]
-
-    # For the larger case study:
-    tp_max1, pmax1 = list(sorted_max.items())[0]
-    tp_max2, pmax2 = list(sorted_max.items())[-1]
-
-    for tp, prob in min_probs.items():
-        if tp > 0.8:
-            tp_min1 = tp
-            pmin1 = prob
-            break
-    tp_min2, pmin2 = list(sorted_min.items())[-1]
-
-    # For the larger case study
-    for tp, prob in min_probs.items():
-        if tp > 0.8:
-            tp_min1 = tp
-            pmin1 = prob
-            break
-    tp_min2, pmin2 = list(sorted_min.items())[-1]
-
-    # Finding line:
-    ub_m = (pmax1 - pmax2)/(tp_max1 - tp_max2)
-    ub_c = pmax2 - ub_m*tp_max2
-    lb_m = (pmin1 - pmin2)/(tp_min1 - tp_min2)
-    lb_c = pmin2 - lb_m*tp_min2
-    # Picking the two smallest min_probs:
-    try:
-        assert ub_m + ub_c <= 1 + 1e-4
-        assert lb_c + ub_c <= -1e-4
-    except:
-        pdb.set_trace()
-    ub = [ub_m, ub_c]
-    lb = [lb_m, lb_c]
-    return ub, lb
-
 def bound_probs_lp(tpx, proby):
     l = min(tpx)
     u = max(tpx)
@@ -525,7 +414,6 @@ def bound_probs_lp(tpx, proby):
     constraints = [A*m + B*b <=C]
     prob = cp.Problem(cp.Maximize(obj), constraints)
     prob.solve()
-    # pdb.set_trace()
     if prob.status == "infeasible" or prob.status == "unbounded":
         pdb.set_trace()
     else:
@@ -546,21 +434,6 @@ def derive_prob_bounds_lp(fn, true_env):
     return ub, lb, points, tp_vals
 
 
-def derive_prob_bounds(fn, true_env):
-    points_ped, tpped_vals = load_result(fn)
-    lb_ped = min(tpped_vals)
-    ub_ped = max(tpped_vals)
-    result_tuple = [[tpped_vals[i],points_ped[i]] for i in range(len(tpped_vals))]
-    # Finding the max and min probabilities for each true positive value:
-    max_probs, min_probs = find_min_max_probs(result_tuple)
-    if true_env == "ped":
-        ub, lb = bound_probs_lp(tpped_vals, points_ped)
-    elif true_env == "obj":
-        ub, lb = bound_probs_obj(max_probs, min_probs)
-    else:
-        ub, lb = bound_probs_emp(max_probs, min_probs)
-    return ub, lb, points_ped, tpped_vals
-
 
 if __name__=='__main__':
     vmax = 5
@@ -571,7 +444,7 @@ if __name__=='__main__':
     true_env = "ped"
 
     if recompute:
-        xped, bad_states_ped, good_state_ped, formula_ped = new_initialize_ped(vmax, Ncar, true_env)
+        xped, bad_states_ped, good_state_ped, formula_ped = initialize(vmax, Ncar, true_env)
         if true_env == "ped":
             points, tp_vals = gen_points(Ncar, Vlow, Vhigh, xped, bad_states_ped, good_state_ped, formula_ped, vmax)
         elif true_env == "obj":

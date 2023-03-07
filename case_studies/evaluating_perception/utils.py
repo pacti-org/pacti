@@ -243,6 +243,7 @@ class MarkovChain:
                     self.M[Si, Sj] = self.M[Si, Sj] + prob_t
                 else:
                     self.M[Si, Sj] = prob_t
+                    
                 if Sj not in out_states:
                     out_states.append(Sj)
             sum_probs = sum([self.M[Si, Sj] for Sj in out_states])
