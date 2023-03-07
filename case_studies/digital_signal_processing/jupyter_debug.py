@@ -1,34 +1,36 @@
-from gear.terms.polyhedra.loaders import readContract, writeContract
+from gear.terms.polyhedra.loaders import readContract
 from tool import *
-import numpy as np
+
 
 def truncation_error_same_position(pi, po):
-    assert(pi.p == po.p)
+    assert pi.p == po.p
     if pi.n > po.n:
-        return 2 ** po.p * (2 ** (-po.n) - 2 ** (-pi.n))
-    else :
+        return 2**po.p * (2 ** (-po.n) - 2 ** (-pi.n))
+    else:
         return 0
+
 
 def truncate(pi, po):
     # separate the bits into two parts, before binary point and after binary point
-    bits_before_point = pi.value[:pi.p]
-    bits_after_point = pi.value[pi.p:]
-    
-    # truncate or appending 0 
+    bits_before_point = pi.value[: pi.p]
+    bits_after_point = pi.value[pi.p :]
+
+    # truncate or appending 0
     if po.p >= pi.p:
         bits_before_point = ("0" * (po.p - pi.p)) + bits_before_point
     else:
-        bits_before_point = bits_before_point[pi.p - po.p:]
+        bits_before_point = bits_before_point[pi.p - po.p :]
 
     if po.n - po.p >= pi.n - pi.p:
         bits_after_point = bits_after_point + "0" * (po.n - po.p - pi.n + pi.p)
     else:
-        bits_after_point = bits_after_point[:(po.n - po.p)]
+        bits_after_point = bits_after_point[: (po.n - po.p)]
 
     # combine the both parts
     ret = bits_before_point + bits_after_point
-    po.set_value(value = ret)
+    po.set_value(value=ret)
     return po.value
+
 
 def truncation_error(pi, po):
     # remove uneccesary most significant bits
@@ -37,11 +39,13 @@ def truncation_error(pi, po):
     # return the truncation error as in case 1
     return truncation_error_same_position(pi=pi_adjusted, po=po)
 
+
 def get_assumption_value(pi, po):
     if pi.p > po.p:
-        return 2 ** po.p
+        return 2**po.p
     else:
-        return float("inf") # no additional assumption needed
+        return float("inf")  # no additional assumption needed
+
 
 def check_assumption_value(pi, po):
     assumption_value = get_assumption_value(pi, po)
@@ -52,11 +56,13 @@ def check_assumption_value(pi, po):
     else:
         print(f"Assumption Satisfied ({pi.name} = {pi.value_num()} < {assumption_value})")
         return True
-        
-def compute_required_word_length_add(in1: PortWordLength, in2:PortWordLength) -> PortWordLength:
+
+
+def compute_required_word_length_add(in1: PortWordLength, in2: PortWordLength) -> PortWordLength:
     new_n = max(in1.n, in2.n - in2.p + in1.p) - min(0, in1.p - in2.p) + 1
     new_p = max(in1.p, in2.p) + 1
     return PortWordLength(n=new_n, p=new_p)
+
 
 def error_truncation_add(p1, p2, po):
     print(f"Input {p1.name}: (n={p1.n}, p={p1.p})")
@@ -68,11 +74,13 @@ def error_truncation_add(p1, p2, po):
     assumption_value = get_assumption_value(pi=p_ideal, po=po)
     print(f"Assumption: {p1.name} + {p2.name} < {assumption_value}")
     return truncation_error(pi=p_ideal, po=po)
-    
-def compute_required_word_length_mult(in1: PortWordLength, in2:PortWordLength) -> PortWordLength:
+
+
+def compute_required_word_length_mult(in1: PortWordLength, in2: PortWordLength) -> PortWordLength:
     new_n = in1.n + in2.n
     new_p = in1.p + in2.p
     return PortWordLength(n=new_n, p=new_p)
+
 
 def error_truncation_mult(p1, p2, po):
     print(f"Input {p1.name}: (n={p1.n}, p={p1.p})")
@@ -85,73 +93,89 @@ def error_truncation_mult(p1, p2, po):
     print(f"Assumption: {p1.name} * {p2.name} < {assumption_value}")
     return truncation_error(pi=p_ideal, po=po)
 
+
 def error_propagation_add(p1, p2, po):
     return p1.e + p2.e
 
+
 def get_actual_possible_value(in_port: PortWordLength):
-    return (1 - (2 ** -in_port.n) )* 2 ** in_port.p
+    return (1 - (2**-in_port.n)) * 2**in_port.p
+
 
 def error_propagation_mult(p1, p2, po):
     return p1.a * p2.e + p2.a * p1.e + p1.e * p2.e
 
 
-
 def form_contract_add(in_port1, in_port2, out_port):
     ret_contract = {}
     # define input/output vars
-    ret_contract["InputVars"] = [f"{in_port1.name}_a", f"{in_port1.name}_e",
-                                 f"{in_port2.name}_a", f"{in_port2.name}_e"]
-    ret_contract["OutputVars"] = [f"{out_port.name}_a", f"{out_port.name}_e"]
+    ret_contract["input_vars"] = [
+        f"{in_port1.name}_a",
+        f"{in_port1.name}_e",
+        f"{in_port2.name}_a",
+        f"{in_port2.name}_e",
+    ]
+    ret_contract["output_vars"] = [f"{out_port.name}_a", f"{out_port.name}_e"]
     # get assumption
     ideal_out_port = compute_required_word_length_add(in1=in_port1, in2=in_port2)
     assumption_value = get_assumption_value(pi=ideal_out_port, po=out_port)
     # write assumption in the contract
     if assumption_value is not float("inf"):
-        ret_contract["assumptions"] =  [{"coefficients":{f"{in_port1.name}_a":1, f"{in_port2.name}_a":1},
-                                    "constant":assumption_value}]
+        ret_contract["assumptions"] = [
+            {"coefficients": {f"{in_port1.name}_a": 1, f"{in_port2.name}_a": 1}, "constant": assumption_value}
+        ]
     else:
         ret_contract["assumptions"] = []
     # get guarantee
     e_t = truncation_error(pi=ideal_out_port, po=out_port)
 
     # write guarantee in the contract, note the propagation is encoded in the polyhedral constraints
-    ret_contract["guarantees"] =  [{"coefficients":{f"{in_port1.name}_e":-1, f"{in_port2.name}_e":-1, f"{out_port.name}_e": 1},
-                                "constant":e_t},
-                                {"coefficients":{f"{out_port.name}_a": 1}, "constant":out_port.a},
-                                {"coefficients":{f"{out_port.name}_a": 1}, "constant":in_port1.a + in_port2.a},
-                                {"coefficients":{f"{out_port.name}_a": 1, f"{in_port1.name}_a": -1, f"{in_port2.name}_a": -1}, "constant":0}
-                                ]
+    ret_contract["guarantees"] = [
+        {
+            "coefficients": {f"{in_port1.name}_e": -1, f"{in_port2.name}_e": -1, f"{out_port.name}_e": 1},
+            "constant": e_t,
+        },
+        {"coefficients": {f"{out_port.name}_a": 1}, "constant": out_port.a},
+        {"coefficients": {f"{out_port.name}_a": 1}, "constant": in_port1.a + in_port2.a},
+        {"coefficients": {f"{out_port.name}_a": 1, f"{in_port1.name}_a": -1, f"{in_port2.name}_a": -1}, "constant": 0},
+    ]
     return ret_contract
 
 
 def form_contract_mult_const(in_port1, in_port_const, out_port):
     ret_contract = {}
     # define input/output vars
-    ret_contract["InputVars"] = [f"{in_port1.name}_a", f"{in_port1.name}_e"]
-    ret_contract["OutputVars"] = [f"{out_port.name}_a", f"{out_port.name}_e"]
+    ret_contract["input_vars"] = [f"{in_port1.name}_a", f"{in_port1.name}_e"]
+    ret_contract["output_vars"] = [f"{out_port.name}_a", f"{out_port.name}_e"]
     # get assumption
     ideal_out_port = compute_required_word_length_add(in1=in_port1, in2=in_port_const)
     assumption_value = get_assumption_value(pi=ideal_out_port, po=out_port)
     # write assumption in the contract
     if assumption_value is not float("inf"):
-        ret_contract["assumptions"] =  [{"coefficients":{f"{in_port1.name}_a": in_port_const.a},
-                                    "constant":assumption_value}]
+        ret_contract["assumptions"] = [
+            {"coefficients": {f"{in_port1.name}_a": in_port_const.a}, "constant": assumption_value}
+        ]
     else:
         ret_contract["assumptions"] = []
     # get guarantee
     e_t = truncation_error(pi=ideal_out_port, po=out_port)
 
     # write guarantee in the contract, note the propagation is encoded in the polyhedral constraints
-    ret_contract["guarantees"] =  [{"coefficients":
-                                    {   f"{in_port1.name}_e":-in_port_const.a-in_port_const.e, 
-                                        f"{in_port1.name}_a":-in_port_const.e,
-                                        f"{out_port.name}_e": 1},
-                                    "constant":e_t},
-                                    {"coefficients":{f"{out_port.name}_a": 1}, "constant":out_port.a},
-                                    {"coefficients":{f"{out_port.name}_a": 1}, "constant":in_port_const.a * in_port1.a},
-                                    {"coefficients":{f"{out_port.name}_a": 1, f"{in_port1.name}_a": -in_port_const.a}, "constant":0}
-                                    ]
+    ret_contract["guarantees"] = [
+        {
+            "coefficients": {
+                f"{in_port1.name}_e": -in_port_const.a - in_port_const.e,
+                f"{in_port1.name}_a": -in_port_const.e,
+                f"{out_port.name}_e": 1,
+            },
+            "constant": e_t,
+        },
+        {"coefficients": {f"{out_port.name}_a": 1}, "constant": out_port.a},
+        {"coefficients": {f"{out_port.name}_a": 1}, "constant": in_port_const.a * in_port1.a},
+        {"coefficients": {f"{out_port.name}_a": 1, f"{in_port1.name}_a": -in_port_const.a}, "constant": 0},
+    ]
     return ret_contract
+
 
 # p1 = PortWordLength(n=7, p=3, name="p1")
 # p2 = PortWordLength(n=5, p=2, name="p2")
@@ -171,8 +195,8 @@ def form_contract_mult_const(in_port1, in_port_const, out_port):
 
 # # exp
 
-# c1 = {'InputVars': ['p1_a', 'p1_e', 'p2_a', 'p2_e'], 'OutputVars': ['p3_a', 'p3_e'], 'assumptions': [{'coefficients': {'p1_a': 1, 'p2_a': 1}, 'constant': 8}], 'guarantees': [{'coefficients': {'p1_e': -1, 'p2_e': -1, 'p3_e': 1}, 'constant': 0.125}, {'coefficients': {'p3_a': 1}, 'constant': 7.75}, {'coefficients': {'p3_a': 1}, 'constant': 11.625}, {'coefficients': {'p3_a': 1, 'p1_a': -1, 'p2_a': -1}, 'constant': 0}]}
-# c2 = {'InputVars': ['p3_a', 'p3_e', 'p4_a', 'p4_e'], 'OutputVars': ['p5_a', 'p5_e'], 'assumptions': [{'coefficients': {'p3_a': 1, 'p4_a': 1}, 'constant': 8}], 'guarantees': [{'coefficients': {'p3_e': -1, 'p4_e': -1, 'p5_e': 1}, 'constant': 0.0625}, {'coefficients': {'p5_a': 1}, 'constant': 7.875}, {'coefficients': {'p5_a': 1}, 'constant': 15.6875}, {'coefficients': {'p5_a': 1, 'p3_a': -1, 'p4_a': -1}, 'constant': 0}]}
+# c1 = {'input_vars': ['p1_a', 'p1_e', 'p2_a', 'p2_e'], 'output_vars': ['p3_a', 'p3_e'], 'assumptions': [{'coefficients': {'p1_a': 1, 'p2_a': 1}, 'constant': 8}], 'guarantees': [{'coefficients': {'p1_e': -1, 'p2_e': -1, 'p3_e': 1}, 'constant': 0.125}, {'coefficients': {'p3_a': 1}, 'constant': 7.75}, {'coefficients': {'p3_a': 1}, 'constant': 11.625}, {'coefficients': {'p3_a': 1, 'p1_a': -1, 'p2_a': -1}, 'constant': 0}]}
+# c2 = {'input_vars': ['p3_a', 'p3_e', 'p4_a', 'p4_e'], 'output_vars': ['p5_a', 'p5_e'], 'assumptions': [{'coefficients': {'p3_a': 1, 'p4_a': 1}, 'constant': 8}], 'guarantees': [{'coefficients': {'p3_e': -1, 'p4_e': -1, 'p5_e': 1}, 'constant': 0.0625}, {'coefficients': {'p5_a': 1}, 'constant': 7.875}, {'coefficients': {'p5_a': 1}, 'constant': 15.6875}, {'coefficients': {'p5_a': 1, 'p3_a': -1, 'p4_a': -1}, 'constant': 0}]}
 # contract1 = readContract(c1)
 # contract2 = readContract(c2)
 # print(c1)
@@ -182,18 +206,18 @@ def form_contract_mult_const(in_port1, in_port_const, out_port):
 # contract_sys = contract1.compose(contract2)
 # print("Contract Sys:\n" + str(contract_sys))
 # # exp
-# c1 = {'InputVars': [], 
-# 'OutputVars': ['t1', 't2'], 
-# 'assumptions': [], 
-# 'guarantees': [ {'coefficients': {'t1': 1}, 'constant': 0.1}, 
+# c1 = {'input_vars': [],
+# 'output_vars': ['t1', 't2'],
+# 'assumptions': [],
+# 'guarantees': [ {'coefficients': {'t1': 1}, 'constant': 0.1},
 #                 {'coefficients': {'t1': -1}, 'constant': 0.},
-#                 {'coefficients': {'t2': 1}, 'constant': 0.2}, 
+#                 {'coefficients': {'t2': 1}, 'constant': 0.2},
 #                 {'coefficients': {'t2': -1}, 'constant': 0.}
 #               ]}
 
-# c2 = {'InputVars': ['t1', 't2'], 
-# 'OutputVars': ['o1'], 
-# 'assumptions': [], 
+# c2 = {'input_vars': ['t1', 't2'],
+# 'output_vars': ['o1'],
+# 'assumptions': [],
 # 'guarantees': [{'coefficients': {'o1': 1, 't1': 1, 't2':-1}, 'constant': 10}]}
 
 # contract1 = readContract(c1)
@@ -202,8 +226,23 @@ def form_contract_mult_const(in_port1, in_port_const, out_port):
 # print(str(system))
 
 
-c1 = {'InputVars': [], 'OutputVars': ['p5_a', 'p5_e'], 'assumptions': [], 'guarantees': [{'coefficients': {'p5_a': 1}, 'constant': 6.0}, {'coefficients': {'p5_e': 1}, 'constant': 0.1}]}
-c2 = {'InputVars': [], 'OutputVars': ['p1_a', 'p1_e'], 'assumptions': [], 'guarantees': [{'coefficients': {'p1_a': 1}, 'constant': 2.0}, {'coefficients': {'p1_a': -1}, 'constant': 0}, {'coefficients': {'p1_e': 1}, 'constant': 0}, {'coefficients': {'p1_e': -1}, 'constant': 0}]}
+c1 = {
+    "input_vars": [],
+    "output_vars": ["p5_a", "p5_e"],
+    "assumptions": [],
+    "guarantees": [{"coefficients": {"p5_a": 1}, "constant": 6.0}, {"coefficients": {"p5_e": 1}, "constant": 0.1}],
+}
+c2 = {
+    "input_vars": [],
+    "output_vars": ["p1_a", "p1_e"],
+    "assumptions": [],
+    "guarantees": [
+        {"coefficients": {"p1_a": 1}, "constant": 2.0},
+        {"coefficients": {"p1_a": -1}, "constant": 0},
+        {"coefficients": {"p1_e": 1}, "constant": 0},
+        {"coefficients": {"p1_e": -1}, "constant": 0},
+    ],
+}
 contract1 = readContract(c1)
 contract2 = readContract(c2)
 print(contract1)

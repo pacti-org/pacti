@@ -1,0 +1,38 @@
+[
+  {
+    "name": "contract1",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [
+        "i"
+      ],
+      "output_vars": [
+        "o_p"
+      ],
+      "assumptions": [
+        "|i| <= 1.0"
+      ],
+      "guarantees": [
+        "-2.0 i + o_p = 1.0"
+      ]
+    }
+  },
+  {
+    "name": "contract2",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [
+        "i"
+      ],
+      "output_vars": [
+        "o"
+      ],
+      "assumptions": [
+        "|i| <= 2.0"
+      ],
+      "guarantees": [
+        "o = 0.0"
+      ]
+    }
+  }
+]

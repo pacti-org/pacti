@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import List, TypeVar, Union
 
-from pacti.iocontract.iocontract import TL_t, Var
+from pacti.iocontract.iocontract import TermList_t, Var
 from pacti.utils.lists import list_diff, list_intersection, list_union
 
 NTL_t = TypeVar("NTL_t", bound="NestedTermList")
@@ -15,24 +15,28 @@ numeric = Union[int, float]
 class NestedTermList:
     """A collection of termlists interpreted as their disjunction."""
 
-    def __init__(self, nested_termlist: list[TL_t]):  # noqa: WPS231 too much cognitive complexity
+    def __init__(  # noqa: WPS231 too much cognitive complexity
+        self, nested_termlist: list[TermList_t], force_empty_intersection: bool
+    ):
         """
         Class constructor.
 
         Args:
             nested_termlist: A list of terms contained by TermList.
+            force_empty_intersection: Raise error if the termlists are not disjoint.
 
         Raises:
-            ValueError: argument has separate polyhedra with nonempty intersection.
+            ValueError: argument has separate termlists with nonempty intersection.
         """
         # make sure the elements of the argument don't intersect
-        for i, tli in enumerate(nested_termlist):
-            for j, tlj in enumerate(nested_termlist):
-                if j > i:
-                    intersection = tli | tlj
-                    if not intersection.is_empty():
-                        raise ValueError("Terms %s and %s have nonempty intersection" % (tli, tlj))
-        self.nested_termlist: list[TL_t] = []
+        if force_empty_intersection:
+            for i, tli in enumerate(nested_termlist):
+                for j, tlj in enumerate(nested_termlist):
+                    if j > i:
+                        intersection = tli | tlj
+                        if not intersection.is_empty():
+                            raise ValueError("Terms %s and %s have nonempty intersection" % (tli, tlj))
+        self.nested_termlist: list[TermList_t] = []
         for tl in nested_termlist:
             self.nested_termlist.append(tl.copy())
 
@@ -42,12 +46,13 @@ class NestedTermList:
             return "\nor \n".join(res)
         return "true"
 
-    def simplify(self: NTL_t, context: NTL_t):
+    def simplify(self: NTL_t, context: NTL_t, force_empty_intersection: bool) -> None:
         """
         Remove redundant terms in nested termlist.
 
         Args:
             context: Nested termlist serving as context for simplification.
+            force_empty_intersection: Make sure the resulting termlists have empty intersection.
         """
         new_nested_tl = []
         for self_tl in self.nested_termlist:
@@ -58,14 +63,15 @@ class NestedTermList:
                 except ValueError:
                     continue
                 new_nested_tl.append(new_tl)
-        self.nested_termlist = NestedTermList(new_nested_tl).nested_termlist
+        self.nested_termlist = type(self)(new_nested_tl, force_empty_intersection).nested_termlist
 
-    def intersect(self: NTL_t, other: NTL_t) -> NTL_t:
+    def intersect(self: NTL_t, other: NTL_t, force_empty_intersection: bool) -> NTL_t:
         """
         Semantically intersect two nested termlists.
 
         Args:
             other: second argument to intersection.
+            force_empty_intersection: Raise error if termlists are not disjoint.
 
         Returns:
             The nested termlist for the intersection.
@@ -76,7 +82,7 @@ class NestedTermList:
                 new_tl = self_tl | other_tl
                 if not new_tl.is_empty():
                     new_nested_tl.append(new_tl)
-        return type(self)(new_nested_tl)
+        return type(self)(new_nested_tl, force_empty_intersection)
 
     @property
     def vars(self) -> list[Var]:  # noqa: A003
@@ -90,14 +96,17 @@ class NestedTermList:
             varlist = list_union(varlist, tl.vars)
         return varlist
 
-    def copy(self: NTL_t) -> NTL_t:
+    def copy(self: NTL_t, force_empty_intersection: bool) -> NTL_t:
         """
         Makes copy of nested termlist.
+
+        Args:
+            force_empty_intersection: Raise error if the termlists are not disjoint.
 
         Returns:
             Copy of nested termlist.
         """
-        return type(self)([tl.copy() for tl in self.nested_termlist])
+        return type(self)([tl.copy() for tl in self.nested_termlist], force_empty_intersection)
 
     def contains_behavior(self, behavior: dict[Var, numeric]) -> bool:
         """
@@ -124,7 +133,7 @@ class NestedTermList:
 
 class IoContractCompound:
     """
-    Basic type for an IO contract.
+    Basic type for a compound IO contract.
 
     Attributes:
         inputvars:
@@ -133,9 +142,9 @@ class IoContractCompound:
         outputvars:
             Variables which are outputs of the implementations of the contract.
 
-        a(TermList): Contract assumptions.
+        a: Contract assumptions.
 
-        g(TermList): Contract guarantees.
+        g: Contract guarantees.
     """
 
     def __init__(self, assumptions: NTL_t, guarantees: NTL_t, input_vars: List[Var], output_vars: List[Var]):
@@ -186,14 +195,14 @@ class IoContractCompound:
                 % (list_diff(guarantees.vars, list_union(input_vars, output_vars)), input_vars, output_vars, guarantees)
             )
 
-        self.a: NTL_t = assumptions.copy()
-        self.g: NTL_t = guarantees.copy()
+        self.a: NTL_t = assumptions.copy(True)
+        self.g: NTL_t = guarantees.copy(False)
         self.inputvars = input_vars.copy()
         self.outputvars = output_vars.copy()
         # simplify the guarantees with the assumptions
         # self.g.simplify(self.a)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (
             "InVars: "
             + "["
@@ -225,6 +234,6 @@ class IoContractCompound:
         """
         input_vars = list_union(self.inputvars, other.inputvars)
         output_vars = list_union(self.outputvars, other.outputvars)
-        assumptions = self.a.intersect(other.a)
-        guarantees = self.g.intersect(other.g)
+        assumptions = self.a.intersect(other.a, force_empty_intersection=True)
+        guarantees = self.g.intersect(other.g, force_empty_intersection=False)
         return IoContractCompound(assumptions, guarantees, input_vars, output_vars)

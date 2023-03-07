@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 
 import numpy as np
-from ..shared import direction_to_coordinates
 
+from ..shared import direction_to_coordinates
 from ..tools.plotting import plot_3d_grid
 
 
