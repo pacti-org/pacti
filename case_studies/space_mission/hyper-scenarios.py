@@ -1,3 +1,4 @@
+import time
 from joblib import Parallel, delayed
 from base64 import b64decode
 from pacti import write_contracts_to_file
@@ -103,7 +104,7 @@ def generate_power_scenario(
 # Now, let's apply the Latin hypercube generator to sample the scenario hyperparameters.
 from scipy.stats import qmc
 
-n=100
+n=200
 
 mean_sampler = qmc.LatinHypercube(d=5)
 mean_sample = mean_sampler.random(n=n)
@@ -148,7 +149,9 @@ def make_scenario(means, devs) -> PolyhedralContract:
 
 # print(results)
 
+t0=time.time()
 scenarios = Parallel(n_jobs=16)(delayed(make_scenario)(mean, dev) for mean, dev in zip(scaled_mean_sample, dev_sample))
+print(time.time() - t0)
 print(scenarios)
 #print([make_scenario(mean, dev) for mean, dev in zip(scaled_mean_sample, dev_sample)])
 
