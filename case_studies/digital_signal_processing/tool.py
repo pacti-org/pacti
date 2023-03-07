@@ -82,7 +82,7 @@ class PortWordLength(object):
         Set known source error to the port
 
         Args:
-            e: The known error source to the port
+            val: The known error source to the port
         """
         self._e = val
 
@@ -102,7 +102,7 @@ class PortWordLength(object):
         Set name of the port
 
         Args:
-            name: The name of the port
+            val: The name of the port
         """
         self._name = val
 
@@ -122,7 +122,7 @@ class PortWordLength(object):
         Set constant value for the port
 
         Args:
-            value: the constant value to be set for the port
+            val: the constant value to be set for the port
         """
         self._value = val
 
