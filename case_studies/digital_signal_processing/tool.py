@@ -76,6 +76,16 @@ class PortWordLength(object):
         """
         return self._e
 
+    @e.setter
+    def e(self, val: float) -> None:
+        """
+        Set known source error to the port
+
+        Args:
+            e: The known error source to the port
+        """
+        self._e = val
+
     @property
     def name(self) -> str:
         """
@@ -85,6 +95,16 @@ class PortWordLength(object):
             The name of the port
         """
         return self._name
+
+    @name.setter
+    def name(self, val: str) -> None:
+        """
+        Set name of the port
+
+        Args:
+            name: The name of the port
+        """
+        self._name = val
 
     @property
     def value(self) -> str | None:
@@ -97,34 +117,14 @@ class PortWordLength(object):
         return self._value
 
     @value.setter
-    def value(self, value: str) -> None:
+    def value(self, val: str) -> None:
         """
         Set constant value for the port
 
         Args:
             value: the constant value to be set for the port
         """
-        self._value = value
-
-    @e.setter
-    def e(self, e: float) -> None:
-        """
-        Set known source error to the port
-
-        Args:
-            e: The known error source to the port
-        """
-        self._e = e
-
-    @name.setter
-    def name(self, name: str) -> None:
-        """
-        Set name of the port
-
-        Args:
-            name: The name of the port
-        """
-        self._name = name
+        self._value = val
 
     def to_string(self) -> str:
         """
