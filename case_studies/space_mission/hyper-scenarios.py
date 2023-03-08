@@ -25,6 +25,9 @@ def reset_nb_counts():
     global nb_compose
     nb_compose = 0
 
+def print_counts():
+    print(f"{nb_contracts} contracts; {nb_compose} compositions; {nb_merge} merges.")
+
 # Power viewpoint
 
 # Parameters:
@@ -521,6 +524,35 @@ def make_scenario(s: int, means, devs, rename_outputs: bool = False) -> Polyhedr
     return scenario_pwr.merge(scenario_sci).merge(scenario_nav)
 
 
+# tl0a=time.time()
+# ss=make_scenario(
+#         s=1,
+#         means=[
+#             3.0,  # power: min dns cons
+#             2.5,  # power: min chrg gen
+#             0.5,  # power: min sbo cons
+#             0.5,  # power: min tcm_h cons
+#             0.5,  # power: min tcm_dv cons
+#             5.0,  # science: min dsn speed
+#             3.0,  # science: min sbo gen
+#             1.0,  # nav: min dsn noise
+#             1.0,  # nav: min chrg noise
+#             0.3,  # nav: min sbo imp
+#             1.2,  # nav: min tcm_dv noise
+#             0.3,  # nav: min tcm_dv progress
+#         ],
+#         devs=[0.1] * 12,
+#     )
+# tl1a=time.time()
+# print(ss)
+# print(f"1 short scenario in {tl1a-tl0a} seconds")
+# print_counts()
+
+nb_contracts5 = 23
+nb_compose5 = 12
+nb_merge5 = 10
+
+
 all_variables = power_variables + science_variables + navigation_variables
 
 
@@ -540,7 +572,7 @@ def long_scenario(means, devs) -> PolyhedralContract:
     return l1234
 
 
-# tl0=time.time()
+# tl0b=time.time()
 # ls=long_scenario(
 #         means=[
 #             3.0,  # power: min dns cons
@@ -558,11 +590,15 @@ def long_scenario(means, devs) -> PolyhedralContract:
 #         ],
 #         devs=[0.1] * 12,
 #     )
-# tl1=time.time()
+# tl1b=time.time()
 # print(ls)
-# print(f"1 long scenario in {tl1-tl0} seconds")
+# print(f"1 long scenario in {tl1b-tl0b} seconds")
+# print_counts()
 
-reset_nb_counts()
+nb_contracts20 = 115
+nb_compose20 = 63
+nb_merge20 = 50
+
 
 t0a = time.time()
 scenarios5 = Parallel(n_jobs=32)(
@@ -571,7 +607,7 @@ scenarios5 = Parallel(n_jobs=32)(
 t1a = time.time()
 print(f"All {n5} 5-step scenarios generated in {t1a-t0a} seconds.")
 print(
-    f"Total count of Pacti operations: {nb_contracts} contracts; {nb_merge} merges; and {nb_compose} compositions."
+    f"Total count of Pacti operations: {nb_contracts5} contracts; {nb_merge5} merges; and {nb_compose5} compositions."
 )
 
 reset_nb_counts()
@@ -583,7 +619,7 @@ scenarios20 = Parallel(n_jobs=32)(
 t1b = time.time()
 print(f"All {n20} 20-step scenarios generated in {t1b-t0b} seconds.")
 print(
-    f"Total count of Pacti operations: {nb_contracts} contracts; {nb_merge} merges; and {nb_compose} compositions."
+    f"Total count of Pacti operations: {nb_contracts20} contracts; {nb_merge20} merges; and {nb_compose20} compositions."
 )
 
 
@@ -652,6 +688,7 @@ def schedulability_analysis5(scenario: PolyhedralContract, reqs):
 
 
 import itertools
+import pickle
 
 t2a = time.time()
 all_results5 = Parallel(n_jobs=32)(
@@ -663,6 +700,8 @@ print(
     f"Found {len(results5)} admissible schedules out of {m*n5} combinations generated from {m} variations of operational requirements for each of the {n5} scenarios in {t3a-t2a} seconds."
 )
 
+f5 = open('results5.data', 'wb')
+pickle.dump(results5, f5)
 
 def make_op_requirements20(reqs) -> PolyhedralContract:
     return PolyhedralContract.from_string(
@@ -750,4 +789,5 @@ print(
     f"Found {len(results20)} admissible schedules out of {m*n20} combinations generated from {m} variations of operational requirements for each of the {n20} scenarios in {t3b-t2b} seconds."
 )
 
-# # pickle store the data...
+f20 = open('results20.data', 'wb')
+pickle.dump(results20, f20)
