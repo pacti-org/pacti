@@ -13,9 +13,9 @@ import pdb
 from matplotlib.collections import PatchCollection
 from contract_utils import *
 
-nb_contracts=0
-nb_merge=0
-nb_compose=0
+nb_contracts = 0
+nb_merge = 0
+nb_compose = 0
 
 # Power viewpoint
 
@@ -82,31 +82,41 @@ def power_consumer(s: int, task: str, consumption: tuple[float, float]) -> Polyh
     )
     return spec
 
-nb_contracts+=5
-nb_compose+=4
+
+nb_contracts += 5
+nb_compose += 4
+
+power_variables = ["soc"]
+
+
 def generate_power_scenario(
+    s: int,
     dsn_cons: tuple[float, float],
     chrg_gen: tuple[float, float],
     sbo_cons: tuple[float, float],
     tcmh_cons: tuple[float, float],
     tcmdv_cons: tuple[float, float],
+    rename_outputs: bool = False,
 ) -> PolyhedralContract:
-    s1 = power_consumer(s=1, task="dsn", consumption=dsn_cons)
-    s2 = CHRG_power(s=2, generation=chrg_gen)
-    s3 = power_consumer(s=3, task="sbo", consumption=sbo_cons)
-    s4 = power_consumer(s=4, task="tcm_h", consumption=tcmh_cons)
-    s5 = power_consumer(s=5, task="tcm_dv", consumption=tcmdv_cons)
+    s1 = power_consumer(s=s, task="dsn", consumption=dsn_cons)
+    s2 = CHRG_power(s=s + 1, generation=chrg_gen)
+    s3 = power_consumer(s=s + 2, task="sbo", consumption=sbo_cons)
+    s4 = power_consumer(s=s + 3, task="tcm_h", consumption=tcmh_cons)
+    s5 = power_consumer(s=s + 4, task="tcm_dv", consumption=tcmdv_cons)
 
-    steps2 = scenario_sequence(c1=s1, c2=s2, variables=["soc"], c1index=1)
-    steps3 = scenario_sequence(c1=steps2, c2=s3, variables=["soc"], c1index=2)
-    steps4 = scenario_sequence(c1=steps3, c2=s4, variables=["soc"], c1index=3)
-    steps5 = scenario_sequence(c1=steps4, c2=s5, variables=["soc"], c1index=4).rename_variables(
-        [("soc5_exit", "output_soc5")]
-    )
-    return steps5
+    steps2 = scenario_sequence(c1=s1, c2=s2, variables=power_variables, c1index=s)
+    steps3 = scenario_sequence(c1=steps2, c2=s3, variables=power_variables, c1index=s + 1)
+    steps4 = scenario_sequence(c1=steps3, c2=s4, variables=power_variables, c1index=s + 2)
+    steps5 = scenario_sequence(c1=steps4, c2=s5, variables=power_variables, c1index=s + 3)
+
+    if rename_outputs:
+        return steps5.rename_variables([(f"soc{s+4}_exit", f"output_soc{s+4}")])
+    else:
+        return steps5
 
 
 # Science & communication viewpoint
+
 
 # - s: start index of the timeline variables
 # - speed: (min, max) downlink rate during the task instance
@@ -192,28 +202,46 @@ def SBO_science_comulative(s: int, generation: tuple[float, float]) -> Polyhedra
     )
     return spec
 
-nb_contracts+=10
-nb_merge+=5
-nb_compose+=4
-def generate_science_scenario(dsn_speed: tuple[float, float], sbo_gen: tuple[float, float]) -> PolyhedralContract:
-    s1 = DSN_data(s=1, speed=dsn_speed).merge(nochange_contract(s=1, name="c"))
-    s2 = nochange_contract(s=2, name="d").merge(nochange_contract(s=2, name="c"))
-    s3 = SBO_science_storage(s=3, generation=sbo_gen).merge(SBO_science_comulative(s=3, generation=sbo_gen))
-    s4 = nochange_contract(s=4, name="d").merge(nochange_contract(s=4, name="c"))
-    s5 = nochange_contract(s=5, name="d").merge(nochange_contract(s=5, name="c"))
 
-    steps2 = scenario_sequence(c1=s1, c2=s2, variables=["d", "c"], c1index=1)
-    steps3 = scenario_sequence(c1=steps2, c2=s3, variables=["d", "c"], c1index=2)
-    steps4 = scenario_sequence(c1=steps3, c2=s4, variables=["d", "c"], c1index=3)
-    steps5 = scenario_sequence(c1=steps4, c2=s5, variables=["d", "c"], c1index=4).rename_variables(
-        [("d4_exit", "output_d4"), ("c4_exit", "output_c4"), ("d5_exit", "output_d5"), ("c5_exit", "output_c5")]
-    )
-    return steps5
+nb_contracts += 10
+nb_merge += 5
+nb_compose += 4
+
+science_variables = ["d", "c"]
+
+
+def generate_science_scenario(
+    s: int, dsn_speed: tuple[float, float], sbo_gen: tuple[float, float], rename_outputs: bool = False
+) -> PolyhedralContract:
+    s1 = DSN_data(s=s, speed=dsn_speed).merge(nochange_contract(s=s, name="c"))
+    s2 = nochange_contract(s=s + 1, name="d").merge(nochange_contract(s=s + 1, name="c"))
+    s3 = SBO_science_storage(s=s + 2, generation=sbo_gen).merge(SBO_science_comulative(s=s + 2, generation=sbo_gen))
+    s4 = nochange_contract(s=s + 3, name="d").merge(nochange_contract(s=s + 3, name="c"))
+    s5 = nochange_contract(s=s + 4, name="d").merge(nochange_contract(s=s + 4, name="c"))
+
+    steps2 = scenario_sequence(c1=s1, c2=s2, variables=science_variables, c1index=s)
+    steps3 = scenario_sequence(c1=steps2, c2=s3, variables=science_variables, c1index=s + 1)
+    steps4 = scenario_sequence(c1=steps3, c2=s4, variables=science_variables, c1index=s + 2)
+    steps5 = scenario_sequence(c1=steps4, c2=s5, variables=science_variables, c1index=s + 3)
+
+    if rename_outputs:
+        return steps5.rename_variables(
+            [
+                (f"d{s+3}_exit", f"output_d{s+3}"),
+                (f"c{s+3}_exit", f"output_c{s+3}"),
+                (f"d{s+4}_exit", f"output_d{s+4}"),
+                (f"c{s+4}_exit", f"output_c{s+4}"),
+            ]
+        )
+    else:
+        return steps5
+
 
 # Verify we get the same contract as the notebook...
 # print(generate_science_scenario(dsn_speed=(5.2, 5.5), sbo_gen=(3.0, 4.0)))
 
 # Navigation viewpoint
+
 
 def uncertainty_generating_nav(s: int, noise: tuple[float, float]) -> PolyhedralContract:
     spec = PolyhedralContract.from_string(
@@ -245,6 +273,7 @@ def uncertainty_generating_nav(s: int, noise: tuple[float, float]) -> Polyhedral
     )
     return spec
 
+
 # Parameters:
 # - s: start index of the timeline variables
 # - improvement: rate of trajectory estimation uncertainty improvement during the task instance
@@ -275,6 +304,7 @@ def SBO_nav_uncertainty(s: int, improvement: tuple[float, float]) -> PolyhedralC
     )
     return spec
 
+
 def TCM_navigation_deltav_uncertainty(s: int, noise: tuple[float, float]) -> PolyhedralContract:
     spec = PolyhedralContract.from_string(
         input_vars=[
@@ -301,6 +331,7 @@ def TCM_navigation_deltav_uncertainty(s: int, noise: tuple[float, float]) -> Pol
     )
     return spec
 
+
 def TCM_navigation_deltav_progress(s: int, progress: tuple[float, float]) -> PolyhedralContract:
     spec = PolyhedralContract.from_string(
         input_vars=[
@@ -324,31 +355,48 @@ def TCM_navigation_deltav_progress(s: int, progress: tuple[float, float]) -> Pol
     )
     return spec
 
-nb_contracts+=8
-nb_merge+=3
-nb_compose+=4
+
+nb_contracts += 8
+nb_merge += 3
+nb_compose += 4
+
+navigation_variables = ["u", "r"]
+
+
 def generate_navigation_scenario(
+    s: int,
     dsn_noise: tuple[float, float],
     chrg_noise: tuple[float, float],
     sbo_imp: tuple[float, float],
     tcm_dv_noise: tuple[float, float],
     tcm_dv_progress: tuple[float, float],
+    rename_outputs: bool = False,
 ) -> PolyhedralContract:
-    s1 = uncertainty_generating_nav(s=1, noise=dsn_noise)
-    s2 = uncertainty_generating_nav(s=2, noise=chrg_noise)
-    s3 = SBO_nav_uncertainty(s=3, improvement=sbo_imp).merge(nochange_contract(s=3, name="r"))
-    s4 = nochange_contract(s=4, name="u").merge(nochange_contract(s=4, name="r"))
-    s5 = TCM_navigation_deltav_uncertainty(s=5, noise=tcm_dv_noise).merge(
-        TCM_navigation_deltav_progress(s=5, progress=tcm_dv_progress)
+    s1 = uncertainty_generating_nav(s=s, noise=dsn_noise)
+    s2 = uncertainty_generating_nav(s=s + 1, noise=chrg_noise)
+    s3 = SBO_nav_uncertainty(s=s + 2, improvement=sbo_imp).merge(nochange_contract(s=s + 2, name="r"))
+    s4 = nochange_contract(s=s + 3, name="u").merge(nochange_contract(s=s + 3, name="r"))
+    s5 = TCM_navigation_deltav_uncertainty(s=s + 4, noise=tcm_dv_noise).merge(
+        TCM_navigation_deltav_progress(s=s + 4, progress=tcm_dv_progress)
     )
 
-    steps2 = scenario_sequence(c1=s1, c2=s2, variables=["u", "r"], c1index=1)
-    steps3 = scenario_sequence(c1=steps2, c2=s3, variables=["u", "r"], c1index=2)
-    steps4 = scenario_sequence(c1=steps3, c2=s4, variables=["u", "r"], c1index=3)
-    steps5 = scenario_sequence(c1=steps4, c2=s5, variables=["u", "r"], c1index=4).rename_variables(
-        [("u4_exit", "output_u4"), ("r4_exit", "output_r4"), ("u5_exit", "output_u5"), ("r5_exit", "output_r5")]
-    )
-    return steps5
+    steps2 = scenario_sequence(c1=s1, c2=s2, variables=navigation_variables, c1index=s)
+    steps3 = scenario_sequence(c1=steps2, c2=s3, variables=navigation_variables, c1index=s + 1)
+    steps4 = scenario_sequence(c1=steps3, c2=s4, variables=navigation_variables, c1index=s + 2)
+    steps5 = scenario_sequence(c1=steps4, c2=s5, variables=navigation_variables, c1index=s + 3)
+
+    if rename_outputs:
+        return steps5.rename_variables(
+            [
+                (f"u{s+3}_exit", f"output_u{s+3}"),
+                (f"r{s+3}_exit", f"output_r{s+3}"),
+                (f"u{s+4}_exit", f"output_u{s+4}"),
+                (f"r{s+4}_exit", f"output_r{s+4}"),
+            ]
+        )
+    else:
+        return steps5
+
 
 # print(
 #     generate_navigation_scenario(
@@ -364,10 +412,12 @@ def generate_navigation_scenario(
 from scipy.stats import qmc
 
 d = 12
-n = 200
+n5 = 200
+n20 = 200
 
 mean_sampler = qmc.LatinHypercube(d=d)
-mean_sample = mean_sampler.random(n=n)
+mean_sample5 = mean_sampler.random(n=n5)
+mean_sample20 = mean_sampler.random(n=n20)
 l_bounds = [
     3.0,  # power: min dns cons
     2.5,  # power: min chrg gen
@@ -396,120 +446,273 @@ u_bounds = [
     1.8,  # nav: max tcm_dv noise
     0.8,  # nav: max tcm_dv progress
 ]
-scaled_mean_sample = qmc.scale(sample=mean_sample, l_bounds=l_bounds, u_bounds=u_bounds)
+scaled_mean_sample5 = qmc.scale(sample=mean_sample5, l_bounds=l_bounds, u_bounds=u_bounds)
+scaled_mean_sample20 = qmc.scale(sample=mean_sample20, l_bounds=l_bounds, u_bounds=u_bounds)
 
+o5 = 200
+o20 = 20
 dev_sampler = qmc.LatinHypercube(d=d)
-dev_sample = dev_sampler.random(n=n)
+dev_sample5 = dev_sampler.random(n=o5)
+dev_sample20 = dev_sampler.random(n=o20)
+
 
 def make_range(mean: float, dev: float) -> tuple[float, float]:
     delta = mean * dev
     return (mean - delta, mean + delta)
 
+
 # 23 contracts
 # 12 compose
 # 8 merge
-def make_scenario(means, devs) -> PolyhedralContract:
+def make_scenario(s: int, means, devs, rename_outputs: bool = False) -> PolyhedralContract:
     scenario_pwr = generate_power_scenario(
+        s,
         dsn_cons=make_range(means[0], devs[0]),
         chrg_gen=make_range(means[1], devs[1]),
         sbo_cons=make_range(means[2], devs[2]),
         tcmh_cons=make_range(means[3], devs[3]),
         tcmdv_cons=make_range(means[4], devs[4]),
+        rename_outputs=rename_outputs,
     )
 
     scenario_sci = generate_science_scenario(
-        dsn_speed=make_range(means[5], devs[5]), 
-        sbo_gen=make_range(means[6], devs[6])
+        s, dsn_speed=make_range(means[5], devs[5]), sbo_gen=make_range(means[6], devs[6]), rename_outputs=rename_outputs
     )
 
     scenario_nav = generate_navigation_scenario(
+        s,
         dsn_noise=make_range(means[7], devs[7]),
         chrg_noise=make_range(means[8], devs[8]),
         sbo_imp=make_range(means[9], devs[9]),
         tcm_dv_noise=make_range(means[10], devs[10]),
         tcm_dv_progress=make_range(means[11], devs[11]),
+        rename_outputs=rename_outputs,
     )
 
     return scenario_pwr.merge(scenario_sci).merge(scenario_nav)
 
 
-t0 = time.time()
-scenarios = Parallel(n_jobs=32)(delayed(make_scenario)(mean, dev) for mean, dev in zip(scaled_mean_sample, dev_sample))
-t1 = time.time()
-print(f"All {n} scenarios generated in {t1-t0} seconds.")
-print(f"Each scenario required creating {nb_contracts} contracts combined via {nb_merge} merge and {nb_compose} compose operations.")
+all_variables = power_variables + science_variables + navigation_variables
 
-# print(scenarios)
-# print([make_scenario(mean, dev) for mean, dev in zip(scaled_mean_sample, dev_sample)])
 
-def make_op_requirements(reqs) -> PolyhedralContract:
+def long_scenario(means, devs) -> PolyhedralContract:
+    l1 = make_scenario(s=1, means=means, devs=devs, rename_outputs=False)
+    l2 = make_scenario(s=6, means=means, devs=devs, rename_outputs=False)
+    l3 = make_scenario(s=11, means=means, devs=devs, rename_outputs=False)
+    l4 = make_scenario(s=16, means=means, devs=devs, rename_outputs=True)
+
+    l12 = scenario_sequence(c1=l1, c2=l2, variables=all_variables, c1index=5)
+    l123 = scenario_sequence(c1=l12, c2=l3, variables=all_variables, c1index=10)
+    l1234 = scenario_sequence(c1=l123, c2=l4, variables=all_variables, c1index=15)
+
+    return l1234
+
+
+# tl0=time.time()
+# ls=long_scenario(
+#         means=[
+#             3.0,  # power: min dns cons
+#             2.5,  # power: min chrg gen
+#             0.5,  # power: min sbo cons
+#             0.5,  # power: min tcm_h cons
+#             0.5,  # power: min tcm_dv cons
+#             5.0,  # science: min dsn speed
+#             3.0,  # science: min sbo gen
+#             1.0,  # nav: min dsn noise
+#             1.0,  # nav: min chrg noise
+#             0.3,  # nav: min sbo imp
+#             1.2,  # nav: min tcm_dv noise
+#             0.3,  # nav: min tcm_dv progress
+#         ],
+#         devs=[0.1] * 12,
+#     )
+# tl1=time.time()
+# print(ls)
+# print(f"1 long scenario in {tl1-tl0} seconds")
+
+
+t0a = time.time()
+scenarios5 = Parallel(n_jobs=32)(
+    delayed(make_scenario)(1, mean, dev) for mean, dev in zip(scaled_mean_sample5, dev_sample5)
+)
+t1a = time.time()
+print(f"All {n5} 5-step scenarios generated in {t1a-t0a} seconds.")
+print(
+    f"Each scenario required creating {nb_contracts} contracts combined via {nb_merge} merge and {nb_compose} compose operations."
+)
+
+t0b = time.time()
+scenarios20 = Parallel(n_jobs=32)(
+    delayed(long_scenario)(mean, dev) for mean, dev in zip(scaled_mean_sample20, dev_sample20)
+)
+t1b = time.time()
+print(f"All {n20} 20-step scenarios generated in {t1b-t0b} seconds.")
+print(
+    f"Each scenario required creating {nb_contracts} contracts combined via {4*nb_merge} merge and {3+4*nb_compose} compose operations."
+)
+
+
+m = 200
+op_sampler = qmc.LatinHypercube(d=4)
+op_sample = op_sampler.random(n=m)
+op_l_bounds = [
+    60.0,  # power: min soc
+    10.0,  # alloc: min delta t
+    60.0,  # sci: min d
+    40.0,  # nav: min u
+]
+op_u_bounds = [
+    90.0,  # power: max soc
+    50.0,  # alloc: max delta t
+    100.0,  # sci: max d
+    90.0,  # nav: max u
+]
+scaled_op_sample = qmc.scale(sample=op_sample, l_bounds=op_l_bounds, u_bounds=op_u_bounds)
+
+
+def make_op_requirements5(reqs) -> PolyhedralContract:
     return PolyhedralContract.from_string(
-    input_vars=[
-        "soc1_entry",
-        "duration_dsn1",
-        "duration_charging2",
-        "duration_sbo3",
-        "duration_tcm_heating4",
-        "duration_tcm_deltav5",
-        "c1_entry",
-        "d1_entry",
-        "u1_entry",
-        "r1_entry",
-    ],
-    output_vars=[
-        "output_c5",
-        "output_d5",
-    ],
-    assumptions=[
-        f"soc1_entry={reqs[0]}",
-        f"-duration_dsn1 <= -{reqs[1]}",
-        f"-duration_charging2 <= -{reqs[1]}",
-        f"-duration_sbo3 <= -{reqs[1]}",
-        f"-duration_tcm_heating4 <= -{reqs[1]}",
-        f"-duration_tcm_deltav5 <= -{reqs[1]}",
-        "c1_entry=0",
-        f"d1_entry={reqs[2]}",
-        f"u1_entry={reqs[3]}",
-        "r1_entry=100",
-    ],
-    guarantees=[])
+        input_vars=[
+            "duration_dsn1",
+            "duration_charging2",
+            "duration_sbo3",
+            "duration_tcm_h4",
+            "duration_tcm_dv5",
+            "soc1_entry",
+            "c1_entry",
+            "d1_entry",
+            "u1_entry",
+            "r1_entry",
+        ],
+        output_vars=[],
+        assumptions=[
+            f"soc1_entry={reqs[0]}",
+            f"-duration_dsn1 <= -{reqs[1]}",
+            f"-duration_charging2 <= -{reqs[1]}",
+            f"-duration_sbo3 <= -{reqs[1]}",
+            f"-duration_tcm_h4 <= -{reqs[1]}",
+            f"-duration_tcm_dv5 <= -{reqs[1]}",
+            "c1_entry=0",
+            f"d1_entry={reqs[2]}",
+            f"u1_entry={reqs[3]}",
+            "r1_entry=100",
+        ],
+        guarantees=[],
+    )
 
-def schedulability_analysis(scenario: PolyhedralContract, reqs):
-    op_req=make_op_requirements(reqs)
+
+def schedulability_analysis5(scenario: PolyhedralContract, reqs):
+    op_req = make_op_requirements5(reqs)
+    fsoc=" + ".join([f"0.05 output_soc{i}" for i in range(1,5)])
     try:
         c = scenario.merge(op_req)
-        max_soc = c.optimize("0.2 output_soc1 + 0.2 output_soc2 + 0.2 output_soc3 + 0.2 output_soc4 + 0.2 output_soc5", maximize=True)
-        min_soc = c.optimize("0.2 output_soc1 + 0.2 output_soc2 + 0.2 output_soc3 + 0.2 output_soc4 + 0.2 output_soc5", maximize=False)
+        max_soc = c.optimize(fsoc, maximize=True)
+        min_soc = c.optimize(fsoc, maximize=False)
         u = c.get_variable_bounds("output_u5")
         r = c.get_variable_bounds("output_r5")
         c = c.get_variable_bounds("output_c5")
         return (scenario, reqs, min_soc, max_soc, u, r, c)
-    except (ValueError):
+    except ValueError:
         return None
-    
-m=200
-op_sampler = qmc.LatinHypercube(d=4)
-op_sample = op_sampler.random(n=m)
-op_l_bounds = [
-    60.0,   # power: min soc
-    10.0,   # alloc: min delta t
-    60.0,   # sci: min d
-    40.0,   # nav: min u
-]
-op_u_bounds = [
-    90.0,   # power: max soc
-    50.0,   # alloc: max delta t
-    100.0,  # sci: max d
-    90.0,   # nav: max u
-]
-scaled_op_sample = qmc.scale(sample=op_sample, l_bounds=op_l_bounds, u_bounds=op_u_bounds)
+
 
 import itertools
 
-t2=time.time()
-all_results = Parallel(n_jobs=32)(delayed(schedulability_analysis)(scenario, req) for scenario in scenarios for req in scaled_op_sample)
-t3=time.time()
-results = [ x for x in all_results if x is not None ]
-print(f"Found {len(results)} admissible schedules out of {m*n} combinations generated from {m} variations of operational requirements for each of the {n} scenarios in {t3-t1} seconds.")
+t2a = time.time()
+all_results5 = Parallel(n_jobs=32)(
+    delayed(schedulability_analysis5)(scenario, req) for scenario in scenarios5 for req in scaled_op_sample
+)
+t3a = time.time()
+results5 = [x for x in all_results5 if x is not None]
+print(
+    f"Found {len(results5)} admissible schedules out of {m*n5} combinations generated from {m} variations of operational requirements for each of the {n5} scenarios in {t3a-t2a} seconds."
+)
 
-# pickle store the data...
+
+def make_op_requirements20(reqs) -> PolyhedralContract:
+    return PolyhedralContract.from_string(
+        input_vars=[
+            "duration_dsn1",
+            "duration_charging2",
+            "duration_sbo3",
+            "duration_tcm_h4",
+            "duration_tcm_dv5",
+            "duration_dsn6",
+            "duration_charging7",
+            "duration_sbo8",
+            "duration_tcm_h9",
+            "duration_tcm_dv10",
+            "duration_dsn11",
+            "duration_charging12",
+            "duration_sbo13",
+            "duration_tcm_h14",
+            "duration_tcm_dv15",
+            "duration_dsn16",
+            "duration_charging17",
+            "duration_sbo18",
+            "duration_tcm_h19",
+            "duration_tcm_dv20",
+            "soc1_entry",
+            "c1_entry",
+            "d1_entry",
+            "u1_entry",
+            "r1_entry",
+        ],
+        output_vars=[],
+        assumptions=[
+            f"-duration_dsn1 <= -{reqs[1]}",
+            f"-duration_charging2 <= -{reqs[1]}",
+            f"-duration_sbo3 <= -{reqs[1]}",
+            f"-duration_tcm_h4 <= -{reqs[1]}",
+            f"-duration_tcm_dv5 <= -{reqs[1]}",
+            f"-duration_dsn6 <= -{reqs[1]}",
+            f"-duration_charging7 <= -{reqs[1]}",
+            f"-duration_sbo8 <= -{reqs[1]}",
+            f"-duration_tcm_h9 <= -{reqs[1]}",
+            f"-duration_tcm_dv10 <= -{reqs[1]}",
+            f"-duration_dsn11 <= -{reqs[1]}",
+            f"-duration_charging12 <= -{reqs[1]}",
+            f"-duration_sbo13 <= -{reqs[1]}",
+            f"-duration_tcm_h14 <= -{reqs[1]}",
+            f"-duration_tcm_dv15 <= -{reqs[1]}",
+            f"-duration_dsn16 <= -{reqs[1]}",
+            f"-duration_charging17 <= -{reqs[1]}",
+            f"-duration_sbo18 <= -{reqs[1]}",
+            f"-duration_tcm_h19 <= -{reqs[1]}",
+            f"-duration_tcm_dv20 <= -{reqs[1]}",
+            f"soc1_entry={reqs[0]}",
+            "c1_entry=0",
+            f"d1_entry={reqs[2]}",
+            f"u1_entry={reqs[3]}",
+            "r1_entry=100",
+        ],
+        guarantees=[],
+    )
+
+
+def schedulability_analysis20(scenario: PolyhedralContract, reqs):
+    op_req = make_op_requirements5(reqs)
+    fsoc=" + ".join([f"0.05 output_soc{i}" for i in range(1,20)])
+    try:
+        c = scenario.merge(op_req)
+        max_soc = c.optimize(fsoc, maximize=True)
+        min_soc = c.optimize(fsoc, maximize=False)
+        u = c.get_variable_bounds("output_u20")
+        r = c.get_variable_bounds("output_r20")
+        c = c.get_variable_bounds("output_c20")
+        return (scenario, reqs, min_soc, max_soc, u, r, c)
+    except ValueError:
+        return None
+
+
+t2b = time.time()
+all_results20 = Parallel(n_jobs=32)(
+    delayed(schedulability_analysis20)(scenario, req) for scenario in scenarios20 for req in scaled_op_sample
+)
+t3b = time.time()
+results20 = [x for x in all_results20 if x is not None]
+print(
+    f"Found {len(results20)} admissible schedules out of {m*n20} combinations generated from {m} variations of operational requirements for each of the {n20} scenarios in {t3b-t2b} seconds."
+)
+
+# # pickle store the data...
