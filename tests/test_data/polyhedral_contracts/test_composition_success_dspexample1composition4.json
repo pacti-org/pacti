@@ -1,0 +1,56 @@
+[
+  {
+    "name": "contract1",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [],
+      "output_vars": [
+        "p4_a",
+        "p4_e"
+      ],
+      "assumptions": [],
+      "guarantees": [
+        "p4_a <= 0.0625",
+        "-p4_a <= 0.0",
+        "p4_e = 0.0"
+      ]
+    }
+  },
+  {
+    "name": "contract2",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [
+        "p4_a",
+        "p4_e"
+      ],
+      "output_vars": [
+        "p5_a",
+        "p5_e"
+      ],
+      "assumptions": [
+        "p4_a <= 0.25"
+      ],
+      "guarantees": [
+        "-p4_a + p5_a <= 5.75",
+        "-p4_e + p5_e <= 0.1875"
+      ]
+    }
+  },
+  {
+    "name": "contractsys",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [],
+      "output_vars": [
+        "p5_a",
+        "p5_e"
+      ],
+      "assumptions": [],
+      "guarantees": [
+        "p5_a <= 5.8125",
+        "p5_e <= 0.1875"
+      ]
+    }
+  }
+]
