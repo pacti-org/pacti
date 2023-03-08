@@ -524,29 +524,30 @@ def make_scenario(s: int, means, devs, rename_outputs: bool = False) -> Polyhedr
     return scenario_pwr.merge(scenario_sci).merge(scenario_nav)
 
 
-# tl0a=time.time()
-# ss=make_scenario(
-#         s=1,
-#         means=[
-#             3.0,  # power: min dns cons
-#             2.5,  # power: min chrg gen
-#             0.5,  # power: min sbo cons
-#             0.5,  # power: min tcm_h cons
-#             0.5,  # power: min tcm_dv cons
-#             5.0,  # science: min dsn speed
-#             3.0,  # science: min sbo gen
-#             1.0,  # nav: min dsn noise
-#             1.0,  # nav: min chrg noise
-#             0.3,  # nav: min sbo imp
-#             1.2,  # nav: min tcm_dv noise
-#             0.3,  # nav: min tcm_dv progress
-#         ],
-#         devs=[0.1] * 12,
-#     )
-# tl1a=time.time()
-# print(ss)
-# print(f"1 short scenario in {tl1a-tl0a} seconds")
-# print_counts()
+tl0a=time.time()
+ss=make_scenario(
+        s=1,
+        means=[
+            3.0,  # power: min dns cons
+            2.5,  # power: min chrg gen
+            0.5,  # power: min sbo cons
+            0.5,  # power: min tcm_h cons
+            0.5,  # power: min tcm_dv cons
+            5.0,  # science: min dsn speed
+            3.0,  # science: min sbo gen
+            1.0,  # nav: min dsn noise
+            1.0,  # nav: min chrg noise
+            0.3,  # nav: min sbo imp
+            1.2,  # nav: min tcm_dv noise
+            0.3,  # nav: min tcm_dv progress
+        ],
+        devs=[0.1] * 12,
+    )
+tl1a=time.time()
+print("\n\n=======Short scenario")
+print(ss)
+print(f"1 short scenario in {tl1a-tl0a} seconds")
+print_counts()
 
 nb_contracts5 = 23
 nb_compose5 = 12
@@ -572,222 +573,227 @@ def long_scenario(means, devs) -> PolyhedralContract:
     return l1234
 
 
-# tl0b=time.time()
-# ls=long_scenario(
-#         means=[
-#             3.0,  # power: min dns cons
-#             2.5,  # power: min chrg gen
-#             0.5,  # power: min sbo cons
-#             0.5,  # power: min tcm_h cons
-#             0.5,  # power: min tcm_dv cons
-#             5.0,  # science: min dsn speed
-#             3.0,  # science: min sbo gen
-#             1.0,  # nav: min dsn noise
-#             1.0,  # nav: min chrg noise
-#             0.3,  # nav: min sbo imp
-#             1.2,  # nav: min tcm_dv noise
-#             0.3,  # nav: min tcm_dv progress
+
+tl0b=time.time()
+ls=long_scenario(
+        means=[
+            3.0,  # power: min dns cons
+            2.5,  # power: min chrg gen
+            0.5,  # power: min sbo cons
+            0.5,  # power: min tcm_h cons
+            0.5,  # power: min tcm_dv cons
+            5.0,  # science: min dsn speed
+            3.0,  # science: min sbo gen
+            1.0,  # nav: min dsn noise
+            1.0,  # nav: min chrg noise
+            0.3,  # nav: min sbo imp
+            1.2,  # nav: min tcm_dv noise
+            0.3,  # nav: min tcm_dv progress
+        ],
+        devs=[0.1] * 12,
+    )
+tl1b=time.time()
+print("\n\n=======Long scenario")
+print(ls)
+print(f"1 long scenario in {tl1b-tl0b} seconds")
+print_counts()
+
+# nb_contracts20 = 115
+# nb_compose20 = 63
+# nb_merge20 = 50
+
+
+# t0a = time.time()
+# scenarios5 = Parallel(n_jobs=32)(
+#     delayed(make_scenario)(1, mean, dev) for mean, dev in zip(scaled_mean_sample5, dev_sample5)
+# )
+# t1a = time.time()
+# print(f"All {n5} 5-step scenarios generated in {t1a-t0a} seconds.")
+# print(
+#     f"Total count of Pacti operations: {nb_contracts5} contracts; {nb_merge5} merges; and {nb_compose5} compositions."
+# )
+
+# reset_nb_counts()
+
+# t0b = time.time()
+# scenarios20 = Parallel(n_jobs=32)(
+#     delayed(long_scenario)(mean, dev) for mean, dev in zip(scaled_mean_sample20, dev_sample20)
+# )
+# t1b = time.time()
+# print(f"All {n20} 20-step scenarios generated in {t1b-t0b} seconds.")
+# print(
+#     f"Total count of Pacti operations: {nb_contracts20} contracts; {nb_merge20} merges; and {nb_compose20} compositions."
+# )
+
+
+# m = 300
+# op_sampler = qmc.LatinHypercube(d=4)
+# op_sample = op_sampler.random(n=m)
+# op_l_bounds = [
+#     60.0,  # power: min soc
+#     10.0,  # alloc: min delta t
+#     60.0,  # sci: min d
+#     40.0,  # nav: min u
+# ]
+# op_u_bounds = [
+#     90.0,  # power: max soc
+#     50.0,  # alloc: max delta t
+#     100.0,  # sci: max d
+#     90.0,  # nav: max u
+# ]
+# scaled_op_sample = qmc.scale(sample=op_sample, l_bounds=op_l_bounds, u_bounds=op_u_bounds)
+
+
+# def make_op_requirements5(reqs) -> PolyhedralContract:
+#     return PolyhedralContract.from_string(
+#         input_vars=[
+#             "duration_dsn1",
+#             "duration_charging2",
+#             "duration_sbo3",
+#             "duration_tcm_h4",
+#             "duration_tcm_dv5",
+#             "soc1_entry",
+#             "c1_entry",
+#             "d1_entry",
+#             "u1_entry",
+#             "r1_entry",
 #         ],
-#         devs=[0.1] * 12,
+#         output_vars=[],
+#         assumptions=[
+#             f"soc1_entry={reqs[0]}",
+#             f"-duration_dsn1 <= -{reqs[1]}",
+#             f"-duration_charging2 <= -{reqs[1]}",
+#             f"-duration_sbo3 <= -{reqs[1]}",
+#             f"-duration_tcm_h4 <= -{reqs[1]}",
+#             f"-duration_tcm_dv5 <= -{reqs[1]}",
+#             "c1_entry=0",
+#             f"d1_entry={reqs[2]}",
+#             f"u1_entry={reqs[3]}",
+#             "r1_entry=100",
+#         ],
+#         guarantees=[],
 #     )
-# tl1b=time.time()
-# print(ls)
-# print(f"1 long scenario in {tl1b-tl0b} seconds")
-# print_counts()
-
-nb_contracts20 = 115
-nb_compose20 = 63
-nb_merge20 = 50
 
 
-t0a = time.time()
-scenarios5 = Parallel(n_jobs=32)(
-    delayed(make_scenario)(1, mean, dev) for mean, dev in zip(scaled_mean_sample5, dev_sample5)
-)
-t1a = time.time()
-print(f"All {n5} 5-step scenarios generated in {t1a-t0a} seconds.")
-print(
-    f"Total count of Pacti operations: {nb_contracts5} contracts; {nb_merge5} merges; and {nb_compose5} compositions."
-)
-
-reset_nb_counts()
-
-t0b = time.time()
-scenarios20 = Parallel(n_jobs=32)(
-    delayed(long_scenario)(mean, dev) for mean, dev in zip(scaled_mean_sample20, dev_sample20)
-)
-t1b = time.time()
-print(f"All {n20} 20-step scenarios generated in {t1b-t0b} seconds.")
-print(
-    f"Total count of Pacti operations: {nb_contracts20} contracts; {nb_merge20} merges; and {nb_compose20} compositions."
-)
+# def schedulability_analysis5(scenario: PolyhedralContract, reqs):
+#     op_req = make_op_requirements5(reqs)
+#     fsoc=" + ".join([f"0.05 output_soc{i}" for i in range(1,5)])
+#     try:
+#         c = scenario.merge(op_req)
+#         max_soc = c.optimize(fsoc, maximize=True)
+#         min_soc = c.optimize(fsoc, maximize=False)
+#         u = c.get_variable_bounds("output_u5")
+#         r = c.get_variable_bounds("output_r5")
+#         c = c.get_variable_bounds("output_c5")
+#         return (scenario, op_req, min_soc, max_soc, u, r, c)
+#     except ValueError:
+#         return None
 
 
-m = 300
-op_sampler = qmc.LatinHypercube(d=4)
-op_sample = op_sampler.random(n=m)
-op_l_bounds = [
-    60.0,  # power: min soc
-    10.0,  # alloc: min delta t
-    60.0,  # sci: min d
-    40.0,  # nav: min u
-]
-op_u_bounds = [
-    90.0,  # power: max soc
-    50.0,  # alloc: max delta t
-    100.0,  # sci: max d
-    90.0,  # nav: max u
-]
-scaled_op_sample = qmc.scale(sample=op_sample, l_bounds=op_l_bounds, u_bounds=op_u_bounds)
+# import itertools
+# import pickle
+
+# t2a = time.time()
+# all_results5 = Parallel(n_jobs=32)(
+#     delayed(schedulability_analysis5)(scenario, req) for scenario in scenarios5 for req in scaled_op_sample
+# )
+# t3a = time.time()
+# results5 = [x for x in all_results5 if x is not None]
+# print(
+#     f"Found {len(results5)} admissible schedules out of {m*n5} combinations generated from {m} variations of operational requirements for each of the {n5} scenarios in {t3a-t2a} seconds."
+# )
+
+# f5 = open('case_studies/space_mission/data/results5.data', 'wb')
+# pickle.dump(results5, f5)
+# f5.close()
+
+# def make_op_requirements20(reqs) -> PolyhedralContract:
+#     return PolyhedralContract.from_string(
+#         input_vars=[
+#             "duration_dsn1",
+#             "duration_charging2",
+#             "duration_sbo3",
+#             "duration_tcm_h4",
+#             "duration_tcm_dv5",
+#             "duration_dsn6",
+#             "duration_charging7",
+#             "duration_sbo8",
+#             "duration_tcm_h9",
+#             "duration_tcm_dv10",
+#             "duration_dsn11",
+#             "duration_charging12",
+#             "duration_sbo13",
+#             "duration_tcm_h14",
+#             "duration_tcm_dv15",
+#             "duration_dsn16",
+#             "duration_charging17",
+#             "duration_sbo18",
+#             "duration_tcm_h19",
+#             "duration_tcm_dv20",
+#             "soc1_entry",
+#             "c1_entry",
+#             "d1_entry",
+#             "u1_entry",
+#             "r1_entry",
+#         ],
+#         output_vars=[],
+#         assumptions=[
+#             f"-duration_dsn1 <= -{reqs[1]}",
+#             f"-duration_charging2 <= -{reqs[1]}",
+#             f"-duration_sbo3 <= -{reqs[1]}",
+#             f"-duration_tcm_h4 <= -{reqs[1]}",
+#             f"-duration_tcm_dv5 <= -{reqs[1]}",
+#             f"-duration_dsn6 <= -{reqs[1]}",
+#             f"-duration_charging7 <= -{reqs[1]}",
+#             f"-duration_sbo8 <= -{reqs[1]}",
+#             f"-duration_tcm_h9 <= -{reqs[1]}",
+#             f"-duration_tcm_dv10 <= -{reqs[1]}",
+#             f"-duration_dsn11 <= -{reqs[1]}",
+#             f"-duration_charging12 <= -{reqs[1]}",
+#             f"-duration_sbo13 <= -{reqs[1]}",
+#             f"-duration_tcm_h14 <= -{reqs[1]}",
+#             f"-duration_tcm_dv15 <= -{reqs[1]}",
+#             f"-duration_dsn16 <= -{reqs[1]}",
+#             f"-duration_charging17 <= -{reqs[1]}",
+#             f"-duration_sbo18 <= -{reqs[1]}",
+#             f"-duration_tcm_h19 <= -{reqs[1]}",
+#             f"-duration_tcm_dv20 <= -{reqs[1]}",
+#             f"soc1_entry={reqs[0]}",
+#             "c1_entry=0",
+#             f"d1_entry={reqs[2]}",
+#             f"u1_entry={reqs[3]}",
+#             "r1_entry=100",
+#         ],
+#         guarantees=[],
+#     )
 
 
-def make_op_requirements5(reqs) -> PolyhedralContract:
-    return PolyhedralContract.from_string(
-        input_vars=[
-            "duration_dsn1",
-            "duration_charging2",
-            "duration_sbo3",
-            "duration_tcm_h4",
-            "duration_tcm_dv5",
-            "soc1_entry",
-            "c1_entry",
-            "d1_entry",
-            "u1_entry",
-            "r1_entry",
-        ],
-        output_vars=[],
-        assumptions=[
-            f"soc1_entry={reqs[0]}",
-            f"-duration_dsn1 <= -{reqs[1]}",
-            f"-duration_charging2 <= -{reqs[1]}",
-            f"-duration_sbo3 <= -{reqs[1]}",
-            f"-duration_tcm_h4 <= -{reqs[1]}",
-            f"-duration_tcm_dv5 <= -{reqs[1]}",
-            "c1_entry=0",
-            f"d1_entry={reqs[2]}",
-            f"u1_entry={reqs[3]}",
-            "r1_entry=100",
-        ],
-        guarantees=[],
-    )
+# def schedulability_analysis20(scenario: PolyhedralContract, reqs):
+#     op_req = make_op_requirements5(reqs)
+#     fsoc=" + ".join([f"0.05 output_soc{i}" for i in range(1,20)])
+#     try:
+#         c = scenario.merge(op_req)
+#         max_soc = c.optimize(fsoc, maximize=True)
+#         min_soc = c.optimize(fsoc, maximize=False)
+#         u = c.get_variable_bounds("output_u20")
+#         r = c.get_variable_bounds("output_r20")
+#         c = c.get_variable_bounds("output_c20")
+#         return (scenario, op_req, min_soc, max_soc, u, r, c)
+#     except ValueError:
+#         return None
 
 
-def schedulability_analysis5(scenario: PolyhedralContract, reqs):
-    op_req = make_op_requirements5(reqs)
-    fsoc=" + ".join([f"0.05 output_soc{i}" for i in range(1,5)])
-    try:
-        c = scenario.merge(op_req)
-        max_soc = c.optimize(fsoc, maximize=True)
-        min_soc = c.optimize(fsoc, maximize=False)
-        u = c.get_variable_bounds("output_u5")
-        r = c.get_variable_bounds("output_r5")
-        c = c.get_variable_bounds("output_c5")
-        return (scenario, reqs, min_soc, max_soc, u, r, c)
-    except ValueError:
-        return None
+# t2b = time.time()
+# all_results20 = Parallel(n_jobs=32)(
+#     delayed(schedulability_analysis20)(scenario, req) for scenario in scenarios20 for req in scaled_op_sample
+# )
+# t3b = time.time()
+# results20 = [x for x in all_results20 if x is not None]
+# print(
+#     f"Found {len(results20)} admissible schedules out of {m*n20} combinations generated from {m} variations of operational requirements for each of the {n20} scenarios in {t3b-t2b} seconds."
+# )
 
+# f20 = open('case_studies/space_mission/data/results20.data', 'wb')
+# pickle.dump(results20, f20)
+# f20.close()
 
-import itertools
-import pickle
-
-t2a = time.time()
-all_results5 = Parallel(n_jobs=32)(
-    delayed(schedulability_analysis5)(scenario, req) for scenario in scenarios5 for req in scaled_op_sample
-)
-t3a = time.time()
-results5 = [x for x in all_results5 if x is not None]
-print(
-    f"Found {len(results5)} admissible schedules out of {m*n5} combinations generated from {m} variations of operational requirements for each of the {n5} scenarios in {t3a-t2a} seconds."
-)
-
-f5 = open('results5.data', 'wb')
-pickle.dump(results5, f5)
-
-def make_op_requirements20(reqs) -> PolyhedralContract:
-    return PolyhedralContract.from_string(
-        input_vars=[
-            "duration_dsn1",
-            "duration_charging2",
-            "duration_sbo3",
-            "duration_tcm_h4",
-            "duration_tcm_dv5",
-            "duration_dsn6",
-            "duration_charging7",
-            "duration_sbo8",
-            "duration_tcm_h9",
-            "duration_tcm_dv10",
-            "duration_dsn11",
-            "duration_charging12",
-            "duration_sbo13",
-            "duration_tcm_h14",
-            "duration_tcm_dv15",
-            "duration_dsn16",
-            "duration_charging17",
-            "duration_sbo18",
-            "duration_tcm_h19",
-            "duration_tcm_dv20",
-            "soc1_entry",
-            "c1_entry",
-            "d1_entry",
-            "u1_entry",
-            "r1_entry",
-        ],
-        output_vars=[],
-        assumptions=[
-            f"-duration_dsn1 <= -{reqs[1]}",
-            f"-duration_charging2 <= -{reqs[1]}",
-            f"-duration_sbo3 <= -{reqs[1]}",
-            f"-duration_tcm_h4 <= -{reqs[1]}",
-            f"-duration_tcm_dv5 <= -{reqs[1]}",
-            f"-duration_dsn6 <= -{reqs[1]}",
-            f"-duration_charging7 <= -{reqs[1]}",
-            f"-duration_sbo8 <= -{reqs[1]}",
-            f"-duration_tcm_h9 <= -{reqs[1]}",
-            f"-duration_tcm_dv10 <= -{reqs[1]}",
-            f"-duration_dsn11 <= -{reqs[1]}",
-            f"-duration_charging12 <= -{reqs[1]}",
-            f"-duration_sbo13 <= -{reqs[1]}",
-            f"-duration_tcm_h14 <= -{reqs[1]}",
-            f"-duration_tcm_dv15 <= -{reqs[1]}",
-            f"-duration_dsn16 <= -{reqs[1]}",
-            f"-duration_charging17 <= -{reqs[1]}",
-            f"-duration_sbo18 <= -{reqs[1]}",
-            f"-duration_tcm_h19 <= -{reqs[1]}",
-            f"-duration_tcm_dv20 <= -{reqs[1]}",
-            f"soc1_entry={reqs[0]}",
-            "c1_entry=0",
-            f"d1_entry={reqs[2]}",
-            f"u1_entry={reqs[3]}",
-            "r1_entry=100",
-        ],
-        guarantees=[],
-    )
-
-
-def schedulability_analysis20(scenario: PolyhedralContract, reqs):
-    op_req = make_op_requirements5(reqs)
-    fsoc=" + ".join([f"0.05 output_soc{i}" for i in range(1,20)])
-    try:
-        c = scenario.merge(op_req)
-        max_soc = c.optimize(fsoc, maximize=True)
-        min_soc = c.optimize(fsoc, maximize=False)
-        u = c.get_variable_bounds("output_u20")
-        r = c.get_variable_bounds("output_r20")
-        c = c.get_variable_bounds("output_c20")
-        return (scenario, reqs, min_soc, max_soc, u, r, c)
-    except ValueError:
-        return None
-
-
-t2b = time.time()
-all_results20 = Parallel(n_jobs=32)(
-    delayed(schedulability_analysis20)(scenario, req) for scenario in scenarios20 for req in scaled_op_sample
-)
-t3b = time.time()
-results20 = [x for x in all_results20 if x is not None]
-print(
-    f"Found {len(results20)} admissible schedules out of {m*n20} combinations generated from {m} variations of operational requirements for each of the {n20} scenarios in {t3b-t2b} seconds."
-)
-
-f20 = open('results20.data', 'wb')
-pickle.dump(results20, f20)
