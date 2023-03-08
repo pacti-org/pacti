@@ -706,10 +706,10 @@ import pickle
 
 t0a = time.time()
 scenarios5: Optional[list[tuple[list[tuple2float], PolyhedralContract]]] = Parallel(n_jobs=32)(
-    delayed(make_scenario)(1, mean, dev) for mean, dev in zip(scaled_mean_sample5, dev_sample5)
+    delayed(make_scenario)(1, mean, dev, True) for mean, dev in zip(scaled_mean_sample5, dev_sample5)
 )
 t1a = time.time()
-    
+
 print(f"All {n5} 5-step scenarios generated in {t1a-t0a} seconds.")
 print(
     f"Total count of Pacti operations: {nb_contracts5} contracts; {nb_merge5} merges; and {nb_compose5} compositions."
