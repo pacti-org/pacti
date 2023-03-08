@@ -418,7 +418,8 @@ def make_scenario(means, devs) -> PolyhedralContract:
     )
 
     scenario_sci = generate_science_scenario(
-        dsn_speed=make_range(means[5], devs[5]), sbo_gen=make_range(means[6], devs[6])
+        dsn_speed=make_range(means[5], devs[5]), 
+        sbo_gen=make_range(means[6], devs[6])
     )
 
     scenario_nav = generate_navigation_scenario(
@@ -481,7 +482,8 @@ def schedulability_analysis(scenario: PolyhedralContract, reqs):
         min_soc = c.optimize("0.2 output_soc1 + 0.2 output_soc2 + 0.2 output_soc3 + 0.2 output_soc4 + 0.2 output_soc5", maximize=False)
         u = c.get_variable_bounds("output_u5")
         r = c.get_variable_bounds("output_r5")
-        return (scenario, reqs, min_soc, max_soc, u, r)
+        c = c.get_variable_bounds("output_c5")
+        return (scenario, reqs, min_soc, max_soc, u, r, c)
     except (ValueError):
         return None
     
@@ -510,4 +512,4 @@ t3=time.time()
 results = [ x for x in all_results if x is not None ]
 print(f"Found {len(results)} admissible schedules out of {m*n} combinations generated from {m} variations of operational requirements for each of the {n} scenarios in {t3-t1} seconds.")
 
-
+# pickle store the data...
