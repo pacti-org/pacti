@@ -17,13 +17,22 @@ nb_contracts = 0
 nb_merge = 0
 nb_compose = 0
 
-# Power viewpoint
+def reset_nb_counts():
+    global nb_contracts
+    nb_contracts = 0
+    global nb_merge
+    nb_merge = 0
+    global nb_compose
+    nb_compose = 0
 
+# Power viewpoint
 
 # Parameters:
 # - s: index of the timeline variables
 # - generation: (min, max) rate of battery charge during the task instance
 def CHRG_power(s: int, generation: tuple[float, float]) -> PolyhedralContract:
+    global nb_contracts
+    nb_contracts += 1
     spec = PolyhedralContract.from_string(
         input_vars=[
             f"soc{s}_entry",  # initial battery SOC
@@ -56,6 +65,8 @@ def CHRG_power(s: int, generation: tuple[float, float]) -> PolyhedralContract:
 # - s: start index of the timeline variables
 # - consumption: (min, max) rate of battery discharge during the task instance
 def power_consumer(s: int, task: str, consumption: tuple[float, float]) -> PolyhedralContract:
+    global nb_contracts
+    nb_contracts += 1
     spec = PolyhedralContract.from_string(
         input_vars=[
             f"soc{s}_entry",  # initial battery SOC
@@ -82,12 +93,7 @@ def power_consumer(s: int, task: str, consumption: tuple[float, float]) -> Polyh
     )
     return spec
 
-
-nb_contracts += 5
-nb_compose += 4
-
 power_variables = ["soc"]
-
 
 def generate_power_scenario(
     s: int,
@@ -98,6 +104,9 @@ def generate_power_scenario(
     tcmdv_cons: tuple[float, float],
     rename_outputs: bool = False,
 ) -> PolyhedralContract:
+    global nb_compose
+    nb_compose += 4 # scenario_sequence
+
     s1 = power_consumer(s=s, task="dsn", consumption=dsn_cons)
     s2 = CHRG_power(s=s + 1, generation=chrg_gen)
     s3 = power_consumer(s=s + 2, task="sbo", consumption=sbo_cons)
@@ -121,6 +130,8 @@ def generate_power_scenario(
 # - s: start index of the timeline variables
 # - speed: (min, max) downlink rate during the task instance
 def DSN_data(s: int, speed: tuple[float, float]) -> PolyhedralContract:
+    global nb_contracts
+    nb_contracts += 1
     spec = PolyhedralContract.from_string(
         input_vars=[
             f"d{s}_entry",  # initial data volume
@@ -152,6 +163,8 @@ def DSN_data(s: int, speed: tuple[float, float]) -> PolyhedralContract:
 # - s: start index of the timeline variables
 # - generation: (min, max) rate of small body observations during the task instance
 def SBO_science_storage(s: int, generation: tuple[float, float]) -> PolyhedralContract:
+    global nb_contracts
+    nb_contracts += 1
     spec = PolyhedralContract.from_string(
         input_vars=[
             f"d{s}_entry",  # initial data storage volume
@@ -180,6 +193,8 @@ def SBO_science_storage(s: int, generation: tuple[float, float]) -> PolyhedralCo
 
 
 def SBO_science_comulative(s: int, generation: tuple[float, float]) -> PolyhedralContract:
+    global nb_contracts
+    nb_contracts += 1
     spec = PolyhedralContract.from_string(
         input_vars=[
             f"c{s}_entry",  # initial cumulative data volume
@@ -203,16 +218,19 @@ def SBO_science_comulative(s: int, generation: tuple[float, float]) -> Polyhedra
     return spec
 
 
-nb_contracts += 10
-nb_merge += 5
-nb_compose += 4
-
 science_variables = ["d", "c"]
 
 
 def generate_science_scenario(
     s: int, dsn_speed: tuple[float, float], sbo_gen: tuple[float, float], rename_outputs: bool = False
 ) -> PolyhedralContract:
+    global nb_contracts
+    nb_contracts += 7 # nochange_contract
+    global nb_merge
+    nb_merge += 5
+    global nb_compose
+    nb_compose += 4 # scenario_sequence
+
     s1 = DSN_data(s=s, speed=dsn_speed).merge(nochange_contract(s=s, name="c"))
     s2 = nochange_contract(s=s + 1, name="d").merge(nochange_contract(s=s + 1, name="c"))
     s3 = SBO_science_storage(s=s + 2, generation=sbo_gen).merge(SBO_science_comulative(s=s + 2, generation=sbo_gen))
@@ -244,6 +262,8 @@ def generate_science_scenario(
 
 
 def uncertainty_generating_nav(s: int, noise: tuple[float, float]) -> PolyhedralContract:
+    global nb_contracts
+    nb_contracts += 1
     spec = PolyhedralContract.from_string(
         input_vars=[
             f"u{s}_entry",  # initial trajectory estimation uncertainty
@@ -278,6 +298,8 @@ def uncertainty_generating_nav(s: int, noise: tuple[float, float]) -> Polyhedral
 # - s: start index of the timeline variables
 # - improvement: rate of trajectory estimation uncertainty improvement during the task instance
 def SBO_nav_uncertainty(s: int, improvement: tuple[float, float]) -> PolyhedralContract:
+    global nb_contracts
+    nb_contracts += 1
     spec = PolyhedralContract.from_string(
         input_vars=[
             f"u{s}_entry",  # initial trajectory uncertainty
@@ -306,6 +328,8 @@ def SBO_nav_uncertainty(s: int, improvement: tuple[float, float]) -> PolyhedralC
 
 
 def TCM_navigation_deltav_uncertainty(s: int, noise: tuple[float, float]) -> PolyhedralContract:
+    global nb_contracts
+    nb_contracts += 1
     spec = PolyhedralContract.from_string(
         input_vars=[
             f"u{s}_entry",  # initial trajectory estimation uncertainty
@@ -333,6 +357,8 @@ def TCM_navigation_deltav_uncertainty(s: int, noise: tuple[float, float]) -> Pol
 
 
 def TCM_navigation_deltav_progress(s: int, progress: tuple[float, float]) -> PolyhedralContract:
+    global nb_contracts
+    nb_contracts += 1
     spec = PolyhedralContract.from_string(
         input_vars=[
             f"r{s}_entry",  # initial trajectory relative distance
@@ -356,9 +382,6 @@ def TCM_navigation_deltav_progress(s: int, progress: tuple[float, float]) -> Pol
     return spec
 
 
-nb_contracts += 8
-nb_merge += 3
-nb_compose += 4
 
 navigation_variables = ["u", "r"]
 
@@ -372,6 +395,12 @@ def generate_navigation_scenario(
     tcm_dv_progress: tuple[float, float],
     rename_outputs: bool = False,
 ) -> PolyhedralContract:
+    global nb_contracts
+    nb_contracts += 3 # nochange_contract
+    global nb_merge 
+    nb_merge += 3
+    global nb_compose
+    nb_compose += 4 # scenario_sequence
     s1 = uncertainty_generating_nav(s=s, noise=dsn_noise)
     s2 = uncertainty_generating_nav(s=s + 1, noise=chrg_noise)
     s3 = SBO_nav_uncertainty(s=s + 2, improvement=sbo_imp).merge(nochange_contract(s=s + 2, name="r"))
@@ -461,10 +490,10 @@ def make_range(mean: float, dev: float) -> tuple[float, float]:
     return (mean - delta, mean + delta)
 
 
-# 23 contracts
-# 12 compose
-# 8 merge
 def make_scenario(s: int, means, devs, rename_outputs: bool = False) -> PolyhedralContract:
+    global nb_merge
+    nb_merge+=2
+
     scenario_pwr = generate_power_scenario(
         s,
         dsn_cons=make_range(means[0], devs[0]),
@@ -496,6 +525,9 @@ all_variables = power_variables + science_variables + navigation_variables
 
 
 def long_scenario(means, devs) -> PolyhedralContract:
+    global nb_compose
+    nb_compose += 3 # scenario_sequence
+
     l1 = make_scenario(s=1, means=means, devs=devs, rename_outputs=False)
     l2 = make_scenario(s=6, means=means, devs=devs, rename_outputs=False)
     l3 = make_scenario(s=11, means=means, devs=devs, rename_outputs=False)
@@ -530,6 +562,7 @@ def long_scenario(means, devs) -> PolyhedralContract:
 # print(ls)
 # print(f"1 long scenario in {tl1-tl0} seconds")
 
+reset_nb_counts()
 
 t0a = time.time()
 scenarios5 = Parallel(n_jobs=32)(
@@ -538,8 +571,10 @@ scenarios5 = Parallel(n_jobs=32)(
 t1a = time.time()
 print(f"All {n5} 5-step scenarios generated in {t1a-t0a} seconds.")
 print(
-    f"Each scenario required creating {nb_contracts} contracts combined via {nb_merge} merge and {nb_compose} compose operations."
+    f"Total count of Pacti operations: {nb_contracts} contracts; {nb_merge} merges; and {nb_compose} compositions."
 )
+
+reset_nb_counts()
 
 t0b = time.time()
 scenarios20 = Parallel(n_jobs=32)(
@@ -548,11 +583,11 @@ scenarios20 = Parallel(n_jobs=32)(
 t1b = time.time()
 print(f"All {n20} 20-step scenarios generated in {t1b-t0b} seconds.")
 print(
-    f"Each scenario required creating {nb_contracts} contracts combined via {4*nb_merge} merge and {3+4*nb_compose} compose operations."
+    f"Total count of Pacti operations: {nb_contracts} contracts; {nb_merge} merges; and {nb_compose} compositions."
 )
 
 
-m = 200
+m = 300
 op_sampler = qmc.LatinHypercube(d=4)
 op_sample = op_sampler.random(n=m)
 op_l_bounds = [
