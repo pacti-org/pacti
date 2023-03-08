@@ -302,6 +302,8 @@ def uncertainty_generating_nav(s: int, noise: tuple[float, float]) -> Polyhedral
             f"-u{s}_exit + u{s}_entry <= -{noise[0]}",
             # no change to relative trajectory distance
             f"r{s}_exit - r{s}_entry = 0",
+            # Lower-bound on the trajectory estimation uncertainty
+            f"-u{s}_exit <= 0",
         ],
     )
     return spec
@@ -364,6 +366,8 @@ def TCM_navigation_deltav_uncertainty(s: int, noise: tuple[float, float]) -> Pol
             # noise(min) <= u{exit} - u{entry} <= noise(max)
             f" u{s}_exit - u{s}_entry - {noise[1]} duration_tcm_dv{s} <= 0",
             f"-u{s}_exit + u{s}_entry + {noise[0]} duration_tcm_dv{s} <= 0",
+            # Lower-bound on the trajectory estimation uncertainty
+            f"-u{s}_exit <= 0",
         ],
     )
     return spec
@@ -385,6 +389,8 @@ def TCM_navigation_deltav_progress(s: int, progress: tuple[float, float]) -> Pol
             f"r{s}_entry <= 100",
         ],
         guarantees=[
+            # upper bound r{s}_exit <= 100
+            f"r{s}_exit <= 100",
             # duration*improvement(min) <= r{entry} - r{exit} <= duration*improvement(max)
             f" r{s}_entry - r{s}_exit - {progress[1]}*duration_tcm_dv{s} <= 0",
             f"-r{s}_entry + r{s}_exit + {progress[0]}*duration_tcm_dv{s} <= 0",
@@ -680,7 +686,7 @@ def check_tuple(t: tuple2) -> tuple2:
 
 def schedulability_analysis5(scenario: tuple[list[tuple2float], PolyhedralContract], reqs: np.ndarray):
     op_req = make_op_requirements5(reqs)
-    fsoc = " + ".join([f"0.05 output_soc{i}" for i in range(1, 5)])
+    fsoc = " + ".join([f"0.05 output_soc{i}" for i in range(1, 6)])
     try:
         c = scenario[1].merge(op_req)
         max_soc = c.optimize(fsoc, maximize=True)
@@ -793,7 +799,7 @@ def make_op_requirements20(reqs: np.ndarray) -> PolyhedralContract:
 
 def schedulability_analysis20(scenario: tuple[list[tuple2float], PolyhedralContract], reqs: np.ndarray):
     op_req = make_op_requirements20(reqs)
-    fsoc = " + ".join([f"0.05 output_soc{i}" for i in range(1, 20)])
+    fsoc = " + ".join([f"0.05 output_soc{i}" for i in range(1, 21)])
     try:
         c = scenario[1].merge(op_req)
         max_soc = c.optimize(fsoc, maximize=True)
