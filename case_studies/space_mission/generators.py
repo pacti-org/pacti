@@ -17,6 +17,7 @@ from typing import Tuple, Union
 
 numeric = Union[int, float]
 
+
 nb_contracts = 0
 nb_merge = 0
 nb_compose = 0
@@ -55,7 +56,9 @@ def CHRG_power(s: int, generation: tuple[float, float]) -> PolyhedralContract:
         assumptions=[
             # Task has a positive scheduled duration
             f"-duration_charging{s} <= 0",
-            # Battery SOC must be positive
+            # Upper bound on entry soc
+            f"soc{s}_entry <= 100.0",
+            # Lower bound on entry soc
             f"-soc{s}_entry <= 0",
         ],
         guarantees=[
@@ -89,6 +92,10 @@ def power_consumer(s: int, task: str, consumption: tuple[float, float]) -> Polyh
         assumptions=[
             # Task has a positive scheduled duration
             f"-duration_{task}{s} <= 0",
+            # Upper bound on entry soc
+            f"soc{s}_entry <= 100.0",
+            # Lower bound on entry soc
+            f"-soc{s}_entry <= 0",
             # Battery has enough energy for worst-case consumption throughout the task instance
             f"-soc{s}_entry + {consumption[1]}*duration_{task}{s} <= 0",
         ],
@@ -135,6 +142,7 @@ def generate_power_scenario(
         return steps5.rename_variables([(f"soc{s+4}_exit", f"output_soc{s+4}")])
     else:
         return steps5
+
 
 
 # Science & communication viewpoint
@@ -444,71 +452,66 @@ def generate_navigation_scenario(
     else:
         return steps5
 
-
-# print(
-#     generate_navigation_scenario(
-#         dsn_noise=(1.0, 2.0),
-#         chrg_noise=(1.0, 2.0),
-#         sbo_imp=(0.4, 0.6),
-#         tcm_dv_noise=(1.5, 1.6),
-#         tcm_dv_progress=(0.4, 0.5),
-#     )
-# )
-
-# Now, let's apply the Latin hypercube generator to sample the scenario hyperparameters.
-from scipy.stats import qmc
-
-d = 12
-n5 = 200
-n20 = 200
-
-mean_sampler = qmc.LatinHypercube(d=d)
-mean_sample5: np.ndarray = mean_sampler.random(n=n5)
-mean_sample20: np.ndarray = mean_sampler.random(n=n20)
-l_bounds = [
-    3.0,  # power: min dns cons
-    2.5,  # power: min chrg gen
-    0.5,  # power: min sbo cons
-    0.5,  # power: min tcm_h cons
-    0.5,  # power: min tcm_dv cons
-    5.0,  # science: min dsn speed
-    3.0,  # science: min sbo gen
-    1.0,  # nav: min dsn noise
-    1.0,  # nav: min chrg noise
-    0.3,  # nav: min sbo imp
-    1.2,  # nav: min tcm_dv noise
-    0.3,  # nav: min tcm_dv progress
-]
-u_bounds = [
-    5.0,  # power: max dns cons
-    5.0,  # power: max chrg gen
-    1.5,  # power: max sbo cons
-    1.5,  # power: max tcm_h cons
-    1.5,  # power: max tcm_dv cons
-    6.0,  # science: max dsn speed
-    4.0,  # science: max sbo gen
-    2.0,  # nav: max dsn noise
-    2.0,  # nav: max chrg noise
-    0.8,  # nav: max sbo imp
-    1.8,  # nav: max tcm_dv noise
-    0.8,  # nav: max tcm_dv progress
-]
-scaled_mean_sample5: np.ndarray = qmc.scale(sample=mean_sample5, l_bounds=l_bounds, u_bounds=u_bounds)
-scaled_mean_sample20: np.ndarray = qmc.scale(sample=mean_sample20, l_bounds=l_bounds, u_bounds=u_bounds)
-
-o5 = 20
-o20 = 20
-dev_sampler = qmc.LatinHypercube(d=d)
-dev_sample5: np.ndarray = dev_sampler.random(n=o5)
-dev_sample20: np.ndarray = dev_sampler.random(n=o20)
-
 tuple2float = tuple[float, float]
+
 
 
 def make_range(mean: float, dev: float) -> tuple2float:
     delta = mean * dev
     return (mean - delta, mean + delta)
 
+def generate_power_scenario_experiment(
+    s: int,
+    dsn_cons: tuple[float, float],
+    chrg_gen: tuple[float, float],
+    sbo_cons: tuple[float, float],
+    tcmh_cons: tuple[float, float],
+    tcmdv_cons: tuple[float, float],
+    rename_outputs: bool = False,
+) -> PolyhedralContract:
+    global nb_compose
+    nb_compose += 4  # scenario_sequence
+
+    s1 = power_consumer(s=s, task="dsn", consumption=dsn_cons)
+    s2 = CHRG_power(s=s + 1, generation=chrg_gen)
+    s3 = power_consumer(s=s + 2, task="sbo", consumption=sbo_cons)
+    s4 = power_consumer(s=s + 3, task="tcm_h", consumption=tcmh_cons)
+    s5 = power_consumer(s=s + 4, task="tcm_dv", consumption=tcmdv_cons)
+
+    steps2 = scenario_sequence(c1=s1, c2=s2, variables=power_variables, c1index=s)
+    steps3 = scenario_sequence(c1=steps2, c2=s3, variables=power_variables, c1index=s + 1)
+    # steps4 = scenario_sequence(c1=steps3, c2=s4, variables=power_variables, c1index=s + 2)
+    # steps5 = scenario_sequence(c1=steps4, c2=s5, variables=power_variables, c1index=s + 3)
+
+    # if rename_outputs:
+    #     return steps5.rename_variables([(f"soc{s+4}_exit", f"output_soc{s+4}")])
+    # else:
+    #     return steps5
+
+    write_contracts_to_file(
+        contracts=[steps2, s3, steps3], 
+        names=["dsn_charging", "sbo", "dsn_charging_sbo"],
+        file_name="power_composition_problem.json")
+    return steps3
+
+def make_power_scenario(
+    s: int, means: np.ndarray, devs: np.ndarray, rename_outputs: bool = False
+) -> tuple[list[tuple2float], PolyhedralContract]:
+    global nb_merge
+    nb_merge += 2
+
+    ranges = [make_range(m, d) for (m, d) in zip(means, devs)]
+    scenario_pwr = generate_power_scenario_experiment(
+        s,
+        dsn_cons=ranges[0],
+        chrg_gen=ranges[1],
+        sbo_cons=ranges[2],
+        tcmh_cons=ranges[3],
+        tcmdv_cons=ranges[4],
+        rename_outputs=rename_outputs,
+    )
+
+    return (ranges, scenario_pwr)
 
 def make_scenario(
     s: int, means: np.ndarray, devs: np.ndarray, rename_outputs: bool = False
@@ -541,37 +544,6 @@ def make_scenario(
 
     return (ranges, scenario_pwr.merge(scenario_sci).merge(scenario_nav))
 
-
-# tl0a=time.time()
-# ss=make_scenario(
-#         s=1,
-#         means=[
-#             3.0,  # power: min dns cons
-#             2.5,  # power: min chrg gen
-#             0.5,  # power: min sbo cons
-#             0.5,  # power: min tcm_h cons
-#             0.5,  # power: min tcm_dv cons
-#             5.0,  # science: min dsn speed
-#             3.0,  # science: min sbo gen
-#             1.0,  # nav: min dsn noise
-#             1.0,  # nav: min chrg noise
-#             0.3,  # nav: min sbo imp
-#             1.2,  # nav: min tcm_dv noise
-#             0.3,  # nav: min tcm_dv progress
-#         ],
-#         devs=[0.1] * 12,
-#     )
-# tl1a=time.time()
-# print("\n\n=======Short scenario")
-# print(ss)
-# print(f"1 short scenario in {tl1a-tl0a} seconds")
-# print_counts()
-
-nb_contracts5 = 23
-nb_compose5 = 12
-nb_merge5 = 10
-
-
 all_variables = power_variables + science_variables + navigation_variables
 
 
@@ -591,255 +563,3 @@ def long_scenario(means: np.ndarray, devs: np.ndarray) -> tuple[list[tuple2float
     return (ranges, l1234)
 
 
-# tl0b=time.time()
-# ls=long_scenario(
-#         means=[
-#             3.0,  # power: min dns cons
-#             2.5,  # power: min chrg gen
-#             0.5,  # power: min sbo cons
-#             0.5,  # power: min tcm_h cons
-#             0.5,  # power: min tcm_dv cons
-#             5.0,  # science: min dsn speed
-#             3.0,  # science: min sbo gen
-#             1.0,  # nav: min dsn noise
-#             1.0,  # nav: min chrg noise
-#             0.3,  # nav: min sbo imp
-#             1.2,  # nav: min tcm_dv noise
-#             0.3,  # nav: min tcm_dv progress
-#         ],
-#         devs=[0.1] * 12,
-#     )
-# tl1b=time.time()
-# print("\n\n=======Long scenario")
-# print(ls)
-# print(f"1 long scenario in {tl1b-tl0b} seconds")
-# print_counts()
-
-nb_contracts20 = 115
-nb_compose20 = 63
-nb_merge20 = 50
-
-
-m = 30  # 300
-op_sampler: qmc.LatinHypercube = qmc.LatinHypercube(d=5)
-op_sample: np.ndarray = op_sampler.random(n=m)
-op_l_bounds = [
-    60.0,  # power: low range of initial soc
-    10.0,  # power: low range of exit soc at each step
-    10.0,  # alloc: low range of delta t
-    60.0,  # sci: low range of d
-    40.0,  # nav: low range of u
-]
-op_u_bounds = [
-    90.0,  # power: high range of initial soc
-    50.0,  # power: low range of exit soc at each step
-    50.0,  # alloc: high range of delta t
-    100.0,  # sci: high range of  d
-    90.0,  # nav: high range of  u
-]
-scaled_op_sample: np.ndarray = qmc.scale(sample=op_sample, l_bounds=op_l_bounds, u_bounds=op_u_bounds)
-
-
-def make_op_requirements5(reqs: np.ndarray) -> PolyhedralContract:
-    return PolyhedralContract.from_string(
-        input_vars=[
-            "duration_dsn1",
-            "duration_charging2",
-            "duration_sbo3",
-            "duration_tcm_h4",
-            "duration_tcm_dv5",
-            "soc1_entry",
-            "c1_entry",
-            "d1_entry",
-            "u1_entry",
-            "r1_entry",
-        ],
-        output_vars=[f"output_soc{i}" for i in range(1, 6)],
-        assumptions=[
-            f"soc1_entry={reqs[0]}",
-            f"-duration_dsn1 <= -{reqs[2]}",
-            f"-duration_charging2 <= -{reqs[2]}",
-            f"-duration_sbo3 <= -{reqs[2]}",
-            f"-duration_tcm_h4 <= -{reqs[2]}",
-            f"-duration_tcm_dv5 <= -{reqs[2]}",
-            "c1_entry=0",
-            f"d1_entry={reqs[3]}",
-            f"u1_entry={reqs[4]}",
-            "r1_entry=100",
-        ],
-        guarantees=[f"-output_soc{i} <= -{reqs[1]}" for i in range(1, 6)],
-    )
-
-
-tuple2 = Tuple[Optional[numeric], Optional[numeric]]
-
-
-def check_tuple(t: tuple2) -> tuple2:
-    if t[0] is None:
-        a = -1
-    else:
-        a = t[0]
-    if t[1] is None:
-        b = -1
-    else:
-        b = t[1]
-    return (a, b)
-
-
-def schedulability_analysis5(scenario: tuple[list[tuple2float], PolyhedralContract], reqs: np.ndarray):
-    op_req = make_op_requirements5(reqs)
-    fsoc = " + ".join([f"0.05 output_soc{i}" for i in range(1, 6)])
-    try:
-        c = scenario[1].merge(op_req)
-        max_soc = c.optimize(fsoc, maximize=True)
-        if max_soc is None:
-            max_soc = -1
-
-        min_soc = c.optimize(fsoc, maximize=False)
-        if min_soc is None:
-            min_soc = -1
-
-        u = check_tuple(c.get_variable_bounds("output_u5"))
-        r = check_tuple(c.get_variable_bounds("output_r5"))
-        c = check_tuple(c.get_variable_bounds("output_c5"))
-
-        return (scenario[0], reqs, scenario[1], op_req, min_soc, max_soc, u, r, c)
-    except ValueError:
-        return None
-
-
-import itertools
-import pickle
-
-
-t0a = time.time()
-scenarios5: Optional[list[tuple[list[tuple2float], PolyhedralContract]]] = Parallel(n_jobs=32)(
-    delayed(make_scenario)(1, mean, dev, True) for mean, dev in zip(scaled_mean_sample5, dev_sample5)
-)
-t1a = time.time()
-
-print(f"All {n5} hyperparameter variations of the 5-step scenario sequence generated in {t1a-t0a} seconds.")
-print(
-    f"Total count of Pacti operations: {nb_contracts5} contracts; {nb_merge5} merges; and {nb_compose5} compositions."
-)
-
-t2a = time.time()
-all_results5: Optional[list[tuple[list[tuple2float], PolyhedralContract]]] = Parallel(n_jobs=32)(
-    delayed(schedulability_analysis5)(scenario, req) for scenario in scenarios5 for req in scaled_op_sample
-)
-t3a = time.time()
-results5 = [x for x in all_results5 if x is not None]
-print(
-    f"Found {len(results5)} admissible schedules out of {m*n5} combinations generated from {m} variations of operational requirements for each of the {n5} scenarios in {t3a-t2a} seconds."
-)
-
-f5 = open("case_studies/space_mission/data/results5.data", "wb")
-pickle.dump(results5, f5)
-f5.close()
-
-
-def make_op_requirements20(reqs: np.ndarray) -> PolyhedralContract:
-    return PolyhedralContract.from_string(
-        input_vars=[
-            "duration_dsn1",
-            "duration_charging2",
-            "duration_sbo3",
-            "duration_tcm_h4",
-            "duration_tcm_dv5",
-            "duration_dsn6",
-            "duration_charging7",
-            "duration_sbo8",
-            "duration_tcm_h9",
-            "duration_tcm_dv10",
-            "duration_dsn11",
-            "duration_charging12",
-            "duration_sbo13",
-            "duration_tcm_h14",
-            "duration_tcm_dv15",
-            "duration_dsn16",
-            "duration_charging17",
-            "duration_sbo18",
-            "duration_tcm_h19",
-            "duration_tcm_dv20",
-            "soc1_entry",
-            "c1_entry",
-            "d1_entry",
-            "u1_entry",
-            "r1_entry",
-        ],
-        output_vars=[f"output_soc{i}" for i in range(1, 21)],
-        assumptions=[
-            f"-duration_dsn1 <= -{reqs[2]}",
-            f"-duration_charging2 <= -{reqs[2]}",
-            f"-duration_sbo3 <= -{reqs[2]}",
-            f"-duration_tcm_h4 <= -{reqs[2]}",
-            f"-duration_tcm_dv5 <= -{reqs[2]}",
-            f"-duration_dsn6 <= -{reqs[2]}",
-            f"-duration_charging7 <= -{reqs[2]}",
-            f"-duration_sbo8 <= -{reqs[2]}",
-            f"-duration_tcm_h9 <= -{reqs[2]}",
-            f"-duration_tcm_dv10 <= -{reqs[2]}",
-            f"-duration_dsn11 <= -{reqs[2]}",
-            f"-duration_charging12 <= -{reqs[2]}",
-            f"-duration_sbo13 <= -{reqs[2]}",
-            f"-duration_tcm_h14 <= -{reqs[2]}",
-            f"-duration_tcm_dv15 <= -{reqs[2]}",
-            f"-duration_dsn16 <= -{reqs[2]}",
-            f"-duration_charging17 <= -{reqs[2]}",
-            f"-duration_sbo18 <= -{reqs[2]}",
-            f"-duration_tcm_h19 <= -{reqs[2]}",
-            f"-duration_tcm_dv20 <= -{reqs[2]}",
-            f"soc1_entry={reqs[0]}",
-            "c1_entry=0",
-            f"d1_entry={reqs[2]}",
-            f"u1_entry={reqs[3]}",
-            "r1_entry=100",
-        ],
-        guarantees=[f"-output_soc{i} <= -{reqs[1]}" for i in range(1, 21)],
-    )
-
-
-def schedulability_analysis20(scenario: tuple[list[tuple2float], PolyhedralContract], reqs: np.ndarray):
-    op_req = make_op_requirements20(reqs)
-    fsoc = " + ".join([f"0.05 output_soc{i}" for i in range(1, 21)])
-    try:
-        c = scenario[1].merge(op_req)
-        max_soc = c.optimize(fsoc, maximize=True)
-        if max_soc is None:
-            max_soc = -1
-
-        min_soc = c.optimize(fsoc, maximize=False)
-        if min_soc is None:
-            min_soc = -1
-
-        u = check_tuple(c.get_variable_bounds("output_u20"))
-        r = check_tuple(c.get_variable_bounds("output_r20"))
-        c = check_tuple(c.get_variable_bounds("output_c20"))
-        return (scenario[0], reqs, scenario[1], op_req, min_soc, max_soc, u, r, c)
-    except ValueError:
-        return None
-
-
-t0b = time.time()
-scenarios20: Optional[list[tuple[list[tuple2float], PolyhedralContract]]] = Parallel(n_jobs=32)(
-    delayed(long_scenario)(mean, dev) for mean, dev in zip(scaled_mean_sample20, dev_sample20)
-)
-t1b = time.time()
-print(f"All {n20} hyperparameter variations of the 20-step scenario sequence generated in {t1b-t0b} seconds.")
-print(
-    f"Total count of Pacti operations: {nb_contracts20} contracts; {nb_merge20} merges; and {nb_compose20} compositions."
-)
-
-t2b = time.time()
-all_results20 = Parallel(n_jobs=32)(
-    delayed(schedulability_analysis20)(scenario, req) for scenario in scenarios20 for req in scaled_op_sample
-)
-t3b = time.time()
-results20 = [x for x in all_results20 if x is not None]
-print(
-    f"Found {len(results20)} admissible schedules out of {m*n20} combinations generated from {m} variations of operational requirements for each of the {n20} scenarios in {t3b-t2b} seconds."
-)
-
-f20 = open("case_studies/space_mission/data/results20.data", "wb")
-pickle.dump(results20, f20)
-f20.close()
