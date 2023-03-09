@@ -460,58 +460,58 @@ def make_range(mean: float, dev: float) -> tuple2float:
     delta = mean * dev
     return (mean - delta, mean + delta)
 
-def generate_power_scenario_experiment(
-    s: int,
-    dsn_cons: tuple[float, float],
-    chrg_gen: tuple[float, float],
-    sbo_cons: tuple[float, float],
-    tcmh_cons: tuple[float, float],
-    tcmdv_cons: tuple[float, float],
-    rename_outputs: bool = False,
-) -> PolyhedralContract:
-    global nb_compose
-    nb_compose += 4  # scenario_sequence
+# def generate_power_scenario_experiment(
+#     s: int,
+#     dsn_cons: tuple[float, float],
+#     chrg_gen: tuple[float, float],
+#     sbo_cons: tuple[float, float],
+#     tcmh_cons: tuple[float, float],
+#     tcmdv_cons: tuple[float, float],
+#     rename_outputs: bool = False,
+# ) -> PolyhedralContract:
+#     global nb_compose
+#     nb_compose += 4  # scenario_sequence
 
-    s1 = power_consumer(s=s, task="dsn", consumption=dsn_cons)
-    s2 = CHRG_power(s=s + 1, generation=chrg_gen)
-    s3 = power_consumer(s=s + 2, task="sbo", consumption=sbo_cons)
-    s4 = power_consumer(s=s + 3, task="tcm_h", consumption=tcmh_cons)
-    s5 = power_consumer(s=s + 4, task="tcm_dv", consumption=tcmdv_cons)
+#     s1 = power_consumer(s=s, task="dsn", consumption=dsn_cons)
+#     s2 = CHRG_power(s=s + 1, generation=chrg_gen)
+#     s3 = power_consumer(s=s + 2, task="sbo", consumption=sbo_cons)
+#     s4 = power_consumer(s=s + 3, task="tcm_h", consumption=tcmh_cons)
+#     s5 = power_consumer(s=s + 4, task="tcm_dv", consumption=tcmdv_cons)
 
-    steps2 = scenario_sequence(c1=s1, c2=s2, variables=power_variables, c1index=s)
-    steps3 = scenario_sequence(c1=steps2, c2=s3, variables=power_variables, c1index=s + 1)
-    # steps4 = scenario_sequence(c1=steps3, c2=s4, variables=power_variables, c1index=s + 2)
-    # steps5 = scenario_sequence(c1=steps4, c2=s5, variables=power_variables, c1index=s + 3)
+#     steps2 = scenario_sequence(c1=s1, c2=s2, variables=power_variables, c1index=s)
+#     steps3 = scenario_sequence(c1=steps2, c2=s3, variables=power_variables, c1index=s + 1)
+#     # steps4 = scenario_sequence(c1=steps3, c2=s4, variables=power_variables, c1index=s + 2)
+#     # steps5 = scenario_sequence(c1=steps4, c2=s5, variables=power_variables, c1index=s + 3)
 
-    # if rename_outputs:
-    #     return steps5.rename_variables([(f"soc{s+4}_exit", f"output_soc{s+4}")])
-    # else:
-    #     return steps5
+#     # if rename_outputs:
+#     #     return steps5.rename_variables([(f"soc{s+4}_exit", f"output_soc{s+4}")])
+#     # else:
+#     #     return steps5
 
-    write_contracts_to_file(
-        contracts=[steps2, s3, steps3], 
-        names=["dsn_charging", "sbo", "dsn_charging_sbo"],
-        file_name="power_composition_problem.json")
-    return steps3
+#     write_contracts_to_file(
+#         contracts=[steps2, s3, steps3], 
+#         names=["dsn_charging", "sbo", "dsn_charging_sbo"],
+#         file_name="power_composition_problem.json")
+#     return steps3
 
-def make_power_scenario(
-    s: int, means: np.ndarray, devs: np.ndarray, rename_outputs: bool = False
-) -> tuple[list[tuple2float], PolyhedralContract]:
-    global nb_merge
-    nb_merge += 2
+# def make_power_scenario(
+#     s: int, means: np.ndarray, devs: np.ndarray, rename_outputs: bool = False
+# ) -> tuple[list[tuple2float], PolyhedralContract]:
+#     global nb_merge
+#     nb_merge += 2
 
-    ranges = [make_range(m, d) for (m, d) in zip(means, devs)]
-    scenario_pwr = generate_power_scenario_experiment(
-        s,
-        dsn_cons=ranges[0],
-        chrg_gen=ranges[1],
-        sbo_cons=ranges[2],
-        tcmh_cons=ranges[3],
-        tcmdv_cons=ranges[4],
-        rename_outputs=rename_outputs,
-    )
+#     ranges = [make_range(m, d) for (m, d) in zip(means, devs)]
+#     scenario_pwr = generate_power_scenario_experiment(
+#         s,
+#         dsn_cons=ranges[0],
+#         chrg_gen=ranges[1],
+#         sbo_cons=ranges[2],
+#         tcmh_cons=ranges[3],
+#         tcmdv_cons=ranges[4],
+#         rename_outputs=rename_outputs,
+#     )
 
-    return (ranges, scenario_pwr)
+#     return (ranges, scenario_pwr)
 
 def make_scenario(
     s: int, means: np.ndarray, devs: np.ndarray, rename_outputs: bool = False

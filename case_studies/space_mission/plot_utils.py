@@ -16,7 +16,7 @@ def plot_phases(phase_bounds : list[Tuple[float, float]], phase_names : list[str
     ax = fig.add_subplot(1, 1, 1, aspect="auto")
     x_lims = ax.get_xlim()
     y_lims = ax.get_ylim()
-    ax.set_xticks(list(range(1,N+1)), labels=phase_names)
+    ax.set_xticks(list(range(1,N+1)), labels=phase_names, rotation=90)
     aspect = (x_lims[1] - x_lims[0]) / (y_lims[1] - y_lims[0])
     print(aspect)
     #ax.set_aspect(aspect)
