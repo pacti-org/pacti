@@ -621,19 +621,21 @@ nb_merge20 = 50
 
 
 m = 30  # 300
-op_sampler: qmc.LatinHypercube = qmc.LatinHypercube(d=4)
+op_sampler: qmc.LatinHypercube = qmc.LatinHypercube(d=5)
 op_sample: np.ndarray = op_sampler.random(n=m)
 op_l_bounds = [
-    60.0,  # power: min soc
-    10.0,  # alloc: min delta t
-    60.0,  # sci: min d
-    40.0,  # nav: min u
+    60.0,  # power: low range of initial soc
+    10.0,  # power: low range of exit soc at each step
+    10.0,  # alloc: low range of delta t
+    60.0,  # sci: low range of d
+    40.0,  # nav: low range of u
 ]
 op_u_bounds = [
-    90.0,  # power: max soc
-    50.0,  # alloc: max delta t
-    100.0,  # sci: max d
-    90.0,  # nav: max u
+    90.0,  # power: high range of initial soc
+    50.0,  # power: low range of exit soc at each step
+    50.0,  # alloc: high range of delta t
+    100.0,  # sci: high range of  d
+    90.0,  # nav: high range of  u
 ]
 scaled_op_sample: np.ndarray = qmc.scale(sample=op_sample, l_bounds=op_l_bounds, u_bounds=op_u_bounds)
 
@@ -652,20 +654,20 @@ def make_op_requirements5(reqs: np.ndarray) -> PolyhedralContract:
             "u1_entry",
             "r1_entry",
         ],
-        output_vars=[],
+        output_vars=[f"output_soc{i}" for i in range(1, 6)],
         assumptions=[
             f"soc1_entry={reqs[0]}",
-            f"-duration_dsn1 <= -{reqs[1]}",
-            f"-duration_charging2 <= -{reqs[1]}",
-            f"-duration_sbo3 <= -{reqs[1]}",
-            f"-duration_tcm_h4 <= -{reqs[1]}",
-            f"-duration_tcm_dv5 <= -{reqs[1]}",
+            f"-duration_dsn1 <= -{reqs[2]}",
+            f"-duration_charging2 <= -{reqs[2]}",
+            f"-duration_sbo3 <= -{reqs[2]}",
+            f"-duration_tcm_h4 <= -{reqs[2]}",
+            f"-duration_tcm_dv5 <= -{reqs[2]}",
             "c1_entry=0",
-            f"d1_entry={reqs[2]}",
-            f"u1_entry={reqs[3]}",
+            f"d1_entry={reqs[3]}",
+            f"u1_entry={reqs[4]}",
             "r1_entry=100",
         ],
-        guarantees=[],
+        guarantees=[f"-output_soc{i} <= -{reqs[1]}" for i in range(1, 6)],
     )
 
 
@@ -716,7 +718,7 @@ scenarios5: Optional[list[tuple[list[tuple2float], PolyhedralContract]]] = Paral
 )
 t1a = time.time()
 
-print(f"All {n5} 5-step scenarios generated in {t1a-t0a} seconds.")
+print(f"All {n5} hyperparameter variations of the 5-step scenario sequence generated in {t1a-t0a} seconds.")
 print(
     f"Total count of Pacti operations: {nb_contracts5} contracts; {nb_merge5} merges; and {nb_compose5} compositions."
 )
@@ -765,35 +767,35 @@ def make_op_requirements20(reqs: np.ndarray) -> PolyhedralContract:
             "u1_entry",
             "r1_entry",
         ],
-        output_vars=[],
+        output_vars=[f"output_soc{i}" for i in range(1, 21)],
         assumptions=[
-            f"-duration_dsn1 <= -{reqs[1]}",
-            f"-duration_charging2 <= -{reqs[1]}",
-            f"-duration_sbo3 <= -{reqs[1]}",
-            f"-duration_tcm_h4 <= -{reqs[1]}",
-            f"-duration_tcm_dv5 <= -{reqs[1]}",
-            f"-duration_dsn6 <= -{reqs[1]}",
-            f"-duration_charging7 <= -{reqs[1]}",
-            f"-duration_sbo8 <= -{reqs[1]}",
-            f"-duration_tcm_h9 <= -{reqs[1]}",
-            f"-duration_tcm_dv10 <= -{reqs[1]}",
-            f"-duration_dsn11 <= -{reqs[1]}",
-            f"-duration_charging12 <= -{reqs[1]}",
-            f"-duration_sbo13 <= -{reqs[1]}",
-            f"-duration_tcm_h14 <= -{reqs[1]}",
-            f"-duration_tcm_dv15 <= -{reqs[1]}",
-            f"-duration_dsn16 <= -{reqs[1]}",
-            f"-duration_charging17 <= -{reqs[1]}",
-            f"-duration_sbo18 <= -{reqs[1]}",
-            f"-duration_tcm_h19 <= -{reqs[1]}",
-            f"-duration_tcm_dv20 <= -{reqs[1]}",
+            f"-duration_dsn1 <= -{reqs[2]}",
+            f"-duration_charging2 <= -{reqs[2]}",
+            f"-duration_sbo3 <= -{reqs[2]}",
+            f"-duration_tcm_h4 <= -{reqs[2]}",
+            f"-duration_tcm_dv5 <= -{reqs[2]}",
+            f"-duration_dsn6 <= -{reqs[2]}",
+            f"-duration_charging7 <= -{reqs[2]}",
+            f"-duration_sbo8 <= -{reqs[2]}",
+            f"-duration_tcm_h9 <= -{reqs[2]}",
+            f"-duration_tcm_dv10 <= -{reqs[2]}",
+            f"-duration_dsn11 <= -{reqs[2]}",
+            f"-duration_charging12 <= -{reqs[2]}",
+            f"-duration_sbo13 <= -{reqs[2]}",
+            f"-duration_tcm_h14 <= -{reqs[2]}",
+            f"-duration_tcm_dv15 <= -{reqs[2]}",
+            f"-duration_dsn16 <= -{reqs[2]}",
+            f"-duration_charging17 <= -{reqs[2]}",
+            f"-duration_sbo18 <= -{reqs[2]}",
+            f"-duration_tcm_h19 <= -{reqs[2]}",
+            f"-duration_tcm_dv20 <= -{reqs[2]}",
             f"soc1_entry={reqs[0]}",
             "c1_entry=0",
             f"d1_entry={reqs[2]}",
             f"u1_entry={reqs[3]}",
             "r1_entry=100",
         ],
-        guarantees=[],
+        guarantees=[f"-output_soc{i} <= -{reqs[1]}" for i in range(1, 21)],
     )
 
 
@@ -823,7 +825,7 @@ scenarios20: Optional[list[tuple[list[tuple2float], PolyhedralContract]]] = Para
     delayed(long_scenario)(mean, dev) for mean, dev in zip(scaled_mean_sample20, dev_sample20)
 )
 t1b = time.time()
-print(f"All {n20} 20-step scenarios generated in {t1b-t0b} seconds.")
+print(f"All {n20} hyperparameter variations of the 20-step scenario sequence generated in {t1b-t0b} seconds.")
 print(
     f"Total count of Pacti operations: {nb_contracts20} contracts; {nb_merge20} merges; and {nb_compose20} compositions."
 )
