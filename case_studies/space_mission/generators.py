@@ -60,6 +60,8 @@ def CHRG_power(s: int, generation: tuple[float, float]) -> PolyhedralContract:
             f"soc{s}_entry <= 100.0",
             # Lower bound on entry soc
             f"-soc{s}_entry <= 0",
+            # Battery should not overcharge
+            f"soc{s}_entry + {generation[1]}*duration_charging{s} <= 100",
         ],
         guarantees=[
             # duration*generation(min) <= soc{exit} - soc{entry} <= duration*generation(max)
