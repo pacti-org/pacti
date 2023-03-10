@@ -32,13 +32,15 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 from duty import duty
 
-PY_SRC_PATHS = (Path(_) for _ in ("src", "tests", "docs"))
+PY_SRC_PATHS = (Path(_) for _ in ("src", "tests", "case_studies"))
 PY_SRC_LIST = tuple(str(_) for _ in PY_SRC_PATHS)
 PY_SRC = " ".join(PY_SRC_LIST)
+JNB_SRC = " ".join(glob.glob("**/*.ipynb", recursive=True))
 TESTING = os.environ.get("TESTING", "0") in {"1", "true"}
 CI = os.environ.get("CI", "0") in {"1", "true", "yes", ""}
 WINDOWS = os.name == "nt"
 PTY = not WINDOWS and not CI
+MYPY_FLAGS = "--allow-any-generics --implicit-reexport --allow-untyped-calls"
 
 
 def _latest(lines: List[str], regex: Pattern) -> Optional[str]:
@@ -147,6 +149,17 @@ def check_quality(ctx, files=PY_SRC):
     """Latest Flake8 cause problems with dependencies. Suppress for now."""
     ctx.run(f"flake8 --config=config/flake8.ini {files}", title="Checking code quality", pty=PTY)
 
+@duty  # noqa: WPS231
+def check_jn_quality(ctx):  # noqa: WPS231
+    """
+    Check notebook quality.
+
+    Arguments:
+        ctx: The context instance (passed automatically).
+        files: The files to check.
+    """
+    """Latest Flake8 cause problems with dependencies. Suppress for now."""
+    ctx.run(f"nbqa flake8 --config=config/flake8.ini {JNB_SRC}", title="Type checking notebooks", pty=PTY)
 
 @duty
 def tox(ctx):
@@ -218,6 +231,7 @@ def check_docs(ctx):
     """
     Path("htmlcov").mkdir(parents=True, exist_ok=True)
     Path("htmlcov/index.html").touch(exist_ok=True)
+    copy_case_studies(ctx)
     ctx.run("mkdocs build -s", title="Building documentation", pty=PTY)
 
 
@@ -229,7 +243,18 @@ def check_types(ctx):  # noqa: WPS231
     Arguments:
         ctx: The context instance (passed automatically).
     """
-    ctx.run(f"mypy --config-file config/mypy.ini {PY_SRC}", title="Type-checking", pty=PTY)
+    ctx.run(f"mypy --strict {MYPY_FLAGS} --config-file=config/mypy.ini {PY_SRC}", title="Type-checking", pty=PTY)
+
+
+@duty  # noqa: WPS231
+def check_jn_types(ctx):  # noqa: WPS231
+    """
+    Check that notebooks are correctly typed.
+
+    Arguments:
+        ctx: The context instance (passed automatically).
+    """
+    ctx.run(f"nbqa mypy --strict {MYPY_FLAGS} --config-file=config/mypy.ini {JNB_SRC}", title="Type checking notebooks", pty=PTY)
 
 
 @duty(silent=True)
@@ -285,6 +310,7 @@ def docs(ctx):
     Arguments:
         ctx: The context instance (passed automatically).
     """
+    copy_case_studies(ctx)
     ctx.run("mkdocs build", title="Building documentation")
 
 
@@ -329,6 +355,14 @@ def format(ctx):
     )
     ctx.run(f"isort {PY_SRC}", title="Ordering imports", pty=PTY)
     ctx.run(f"black {PY_SRC}", title="Formatting code", pty=PTY)
+    ############
+    ctx.run(
+        f"nbqa autoflake -ir --ignore-init-module-imports --remove-all-unused-imports {PY_SRC}",
+        title="Removing unused imports",
+        pty=PTY,
+    )
+    ctx.run(f"nbqa isort {PY_SRC}", title="Ordering imports", pty=PTY)
+    ctx.run(f"nbqa black {PY_SRC}", title="Formatting code", pty=PTY)
 
 
 @duty

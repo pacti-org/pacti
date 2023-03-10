@@ -8,7 +8,7 @@ $x_i$ are variables and the $a_i$ and $c$ are constants.
 from __future__ import annotations
 
 import logging
-from typing import Any, Tuple, Union
+from typing import Any, Optional, Tuple, Union
 
 import numpy as np
 import sympy
@@ -48,18 +48,23 @@ class PolyhedralTerm(Term):
         Args:
             variables: A dictionary mapping Var keys to numeric values.
             constant: A numeric value on the right of the inequality.
+
+        Raises:
+            ValueError: Unsupported argument type.
         """
         variable_dict = {}
         for key, value in variables.items():
             if value != 0:
                 if isinstance(key, str):
-                    variable_dict[Var(key)] = float(value)
+                    raise ValueError("Unsupported argument type")
                 else:
                     variable_dict[key] = float(value)
         self.variables = variable_dict
         self.constant = float(constant)
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, type(self)):
+            raise ValueError()
         match = self.variables.keys() == other.variables.keys()
         if match:
             for k, v in self.variables.items():
@@ -73,13 +78,15 @@ class PolyhedralTerm(Term):
         res += " <= " + str(self.constant)
         return res
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(str(self))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<Term {0}>".format(self)
 
-    def __add__(self, other):
+    def __add__(self, other: object) -> PolyhedralTerm:
+        if not isinstance(other, type(self)):
+            raise ValueError()
         varlist = list_union(self.vars, other.vars)
         variables = {}
         for var in varlist:  # noqa: VNE002
@@ -240,7 +247,7 @@ class PolyhedralTerm(Term):
                     break
         return variable_list
 
-    def remove_variable(self, var: Var):  # noqa: VNE002
+    def remove_variable(self, var: Var) -> None:  # noqa: VNE002
         """
         Eliminates a variable from a term.
 
@@ -336,7 +343,7 @@ class PolyhedralTerm(Term):
         Returns:
             PolyhedralTerm corresponding to sympy expression.
         """
-        expression_coefficients = expression.as_coefficients_dict()
+        expression_coefficients: dict = expression.as_coefficients_dict()
         logging.debug(expression_coefficients)
         keys = list(expression_coefficients.keys())
         variable_dict = {}
@@ -428,7 +435,7 @@ class PolyhedralTerm(Term):
 class PolyhedralTermList(TermList):  # noqa: WPS338
     """A TermList of PolyhedralTerm instances."""
 
-    def __init__(self, terms: Union[list[PolyhedralTerm], None] = None):
+    def __init__(self, terms: Optional[list[PolyhedralTerm]] = None):
         """
         Constructor for PolyhedralTermList.
 
@@ -473,7 +480,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         str_list = []
         ts = self.terms.copy()
         while ts:
-            s, rest = serializer.internal_pt_to_string(ts)
+            s, rest = serializer.polyhedral_term_list_to_strings(ts)
             str_list.append(s)
             ts = rest
         return str_list
@@ -638,7 +645,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         termlist.terms = list_diff(termlist.terms, terms_to_elim.terms)
         return termlist
 
-    def simplify(self, context: Union[PolyhedralTermList, None] = None) -> None:
+    def simplify(self, context: Optional[PolyhedralTermList] = None) -> None:
         """
         Remove redundant terms in the PolyhedralTermList using the provided context.
 
@@ -715,7 +722,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         logging.debug("Polytope is \n%s", self_mat)
         return PolyhedralTermList.is_polytope_empty(self_mat, self_cons)
 
-    def _transform(self, context: PolyhedralTermList, vars_to_elim: list, refine: bool):
+    def _transform(self, context: PolyhedralTermList, vars_to_elim: list, refine: bool) -> None:
         logging.debug("Transforming: %s", self)
         logging.debug("Context terms: %s", context)
         logging.debug("Variables to eliminate: %s", vars_to_elim)
@@ -735,7 +742,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         logging.debug("Ending transformation with simplification")
         self.simplify(context)
 
-    def optimize(self, objective: dict[Var, numeric], maximize: bool = True):
+    def optimize(self, objective: dict[Var, numeric], maximize: bool = True) -> Optional[numeric]:
         """
         Optimizes a linear expression in the feasible region of the termlist.
 
@@ -763,12 +770,12 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         # 2 : Problem appears to be infeasible.
         # 3 : Problem appears to be unbounded.
         # 4 : Numerical difficulties encountered.
-        if res["status"] in {1, 2, 4}:
-            raise ValueError("Constraints are unfeasible")
-        elif res["status"] == 3:
+        if res["status"] == 3:
             return None
         elif res["status"] == 0:
-            return polarity * res["fun"]
+            fun_val: float = res["fun"]
+            return polarity * fun_val
+        raise ValueError("Constraints are unfeasible")
 
     @staticmethod
     def termlist_to_polytope(
@@ -858,7 +865,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
 
     @staticmethod
     def reduce_polytope(  # noqa: WPS231
-        a: np.ndarray, b: np.ndarray, a_help: Union[np.ndarray, None] = None, b_help: Union[np.ndarray, None] = None
+        a: np.ndarray, b: np.ndarray, a_help: Optional[np.ndarray] = None, b_help: Optional[np.ndarray] = None
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Eliminate redundant constraints from a given polytope.
@@ -940,10 +947,10 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
 
     @staticmethod
     def verify_polytope_containment(  # noqa: WPS231
-        a_l: Union[np.ndarray, None] = None,
-        b_l: Union[np.ndarray, None] = None,
-        a_r: Union[np.ndarray, None] = None,
-        b_r: Union[np.ndarray, None] = None,
+        a_l: Optional[np.ndarray] = None,
+        b_l: Optional[np.ndarray] = None,
+        a_r: Optional[np.ndarray] = None,
+        b_r: Optional[np.ndarray] = None,
     ) -> bool:
         """
         Tell whether a polytope is contained in another.
@@ -1053,7 +1060,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
     @staticmethod
     def _get_kaykobad_context(  # noqa: WPS231
         term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, refine: bool
-    ):
+    ) -> Tuple[list[PolyhedralTerm], list[Var]]:
         forbidden_vars = list_intersection(vars_to_elim, term.vars)
         other_forbibben_vars = list_diff(vars_to_elim, term.vars)
         n = len(forbidden_vars)
@@ -1120,13 +1127,14 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
             if not row_found:
                 raise ValueError("Could not find the {}th row of matrix".format(i))
         if (not matrix_contains_others) and len(list_diff(term.vars, vars_to_elim)) == 0:
-            logging.debug("Hola2")
             raise ValueError("Found context will produce empty transformation")
         logging.debug("Matrix row terms %s", matrix_row_terms)
         return matrix_row_terms, forbidden_vars
 
     @staticmethod
-    def _tactic_1(term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, refine: bool):
+    def _tactic_1(
+        term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, refine: bool
+    ) -> PolyhedralTerm:
         logging.debug("********** Tactic 1")
         logging.debug("Vars_to_elim %s \nTerm %s \nContext %s " % (vars_to_elim, term, context))
         try:
@@ -1136,8 +1144,8 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         except ValueError:
             logging.debug("Could not transform %s using Tactic 1", term)
             raise ValueError("Could not transform term {}".format(term))
-        matrix_row_terms = PolyhedralTermList(list(matrix_row_terms))
-        sols = PolyhedralTerm.solve_for_variables(matrix_row_terms, list(forbidden_vars))
+        matrix_row_terms_tl = PolyhedralTermList(list(matrix_row_terms))
+        sols = PolyhedralTerm.solve_for_variables(matrix_row_terms_tl, list(forbidden_vars))
         logging.debug("Sols %s", sols)
 
         result = term.copy()
@@ -1149,7 +1157,9 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         return result
 
     @staticmethod
-    def _tactic_2(term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, refine: bool):  # noqa: WPS231
+    def _tactic_2(  # noqa: WPS231
+        term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, refine: bool
+    ) -> PolyhedralTerm:
         logging.debug("************ Tactic 2")
         new_context_list = []
         logging.debug("This is the context")
@@ -1192,7 +1202,9 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         return result
 
     @staticmethod
-    def _tactic_3(term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, refine: bool):
+    def _tactic_3(
+        term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, refine: bool
+    ) -> PolyhedralTerm:
         logging.debug("************ Tactic 3")
         conflict_vars = list_intersection(vars_to_elim, term.vars)
         conflict_coeff = {var: term.get_coefficient(var) for var in conflict_vars}
@@ -1216,7 +1228,9 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         return result
 
     @staticmethod
-    def _transform_term(term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, refine: bool):
+    def _transform_term(
+        term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, refine: bool
+    ) -> PolyhedralTerm:
         logging.debug("Transforming term: %s", term)
         logging.debug("Context: %s", context)
 

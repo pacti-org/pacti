@@ -2,13 +2,18 @@
 
 from __future__ import annotations
 
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple, TypedDict, Union
 
 from pacti.iocontract import IoContract, IoContractCompound, NestedTermList, Var
 from pacti.terms.polyhedra import serializer
 from pacti.terms.polyhedra.polyhedra import PolyhedralTerm, PolyhedralTermList
 
 numeric = Union[int, float]
+ser_pt = dict[str, Union[float, dict[str, float]]]
+ser_contract = TypedDict(
+    "ser_contract",
+    {"input_vars": list[str], "output_vars": list[str], "assumptions": list[ser_pt], "guarantees": list[ser_pt]},
+)
 
 
 class PolyhedralContract(IoContract):
@@ -29,35 +34,38 @@ class PolyhedralContract(IoContract):
             new_contract = new_contract.rename_variable(Var(mapping[0]), Var(mapping[1]))
         return new_contract
 
-    def to_machine_dict(self):
+    def to_machine_dict(self) -> ser_contract:
         """
         Map contract into a machine-optimized dictionary.
 
         Returns:
             A dictionary containing the contract's information.
         """
-        c_temp = {}
-        c_temp["input_vars"] = [str(x) for x in self.inputvars]
-        c_temp["output_vars"] = [str(x) for x in self.outputvars]
-
-        c_temp["assumptions"] = [
+        input_vars = [str(x) for x in self.inputvars]
+        output_vars = [str(x) for x in self.outputvars]
+        assumptions: list[ser_pt] = [
             {
                 "constant": float(term.constant),
                 "coefficients": {str(k): float(v) for k, v in term.variables.items()},
             }
             for term in self.a.terms
         ]
-
-        c_temp["guarantees"] = [
+        guarantees: list[ser_pt] = [
             {
                 "constant": float(term.constant),
                 "coefficients": {str(k): float(v) for k, v in term.variables.items()},
             }
             for term in self.g.terms
         ]
-        return c_temp
 
-    def to_dict(self):
+        return {
+            "input_vars": input_vars,
+            "output_vars": output_vars,
+            "assumptions": assumptions,
+            "guarantees": guarantees,
+        }
+
+    def to_dict(self) -> dict:
         """
         Map contract into a user-readable dictionary.
 
@@ -92,11 +100,11 @@ class PolyhedralContract(IoContract):
         """
         a: list[PolyhedralTerm] = []
         if assumptions:
-            a = [item for x in assumptions for item in serializer.internal_pt_from_string(x)]
+            a = [item for x in assumptions for item in serializer.polyhedral_termlist_from_string(x)]
 
         g: list[PolyhedralTerm] = []
         if guarantees:
-            g = [item for x in guarantees for item in serializer.internal_pt_from_string(x)]
+            g = [item for x in guarantees for item in serializer.polyhedral_termlist_from_string(x)]
 
         return PolyhedralContract(
             input_vars=[Var(x) for x in input_vars],
@@ -121,17 +129,26 @@ class PolyhedralContract(IoContract):
         """
         if not isinstance(contract, dict):
             raise ValueError("A dict type contract is expected.")
+        for kw in ("assumptions", "guarantees", "input_vars", "output_vars"):
+            if kw not in contract:
+                raise ValueError(f"Passed dictionary does not have key {kw}.")
 
         if all(isinstance(x, dict) for x in contract["assumptions"]):
             a = PolyhedralTermList(
-                [PolyhedralTerm(x["coefficients"], float(x["constant"])) for x in contract["assumptions"]]
+                [
+                    PolyhedralTerm({Var(k): v for k, v in x["coefficients"].items()}, float(x["constant"]))
+                    for x in contract["assumptions"]
+                ]
             )
         else:
             raise ValueError("Assumptions must be a list of dicts.")
 
         if all(isinstance(x, dict) for x in contract["guarantees"]):
             g = PolyhedralTermList(
-                [PolyhedralTerm(x["coefficients"], float(x["constant"])) for x in contract["guarantees"]]
+                [
+                    PolyhedralTerm({Var(k): v for k, v in x["coefficients"].items()}, float(x["constant"]))
+                    for x in contract["guarantees"]
+                ]
             )
         else:
             raise ValueError("Guarantees must be a list of dicts.")
@@ -143,7 +160,7 @@ class PolyhedralContract(IoContract):
             guarantees=g,
         )
 
-    def compose(self, other: PolyhedralContract, vars_to_keep: Optional[list[str]] = None):
+    def compose(self, other: PolyhedralContract, vars_to_keep: Optional[list[str]] = None) -> PolyhedralContract:
         """Compose polyhedral contracts.
 
         Compute the composition of the two given contracts and abstract the
@@ -164,7 +181,7 @@ class PolyhedralContract(IoContract):
             vars_to_keep = []
         return super().compose(other, [Var(x) for x in vars_to_keep])
 
-    def optimize(self, expr: str, maximize: bool = True):
+    def optimize(self, expr: str, maximize: bool = True) -> Optional[numeric]:
         """Optimize linear objective over the contract.
 
         Compute the optima of a linear objective over the assumptions and
@@ -180,7 +197,7 @@ class PolyhedralContract(IoContract):
             The optimal value of the objective in the context of the contract.
         """
         new_expr = expr + " <= 0"
-        variables = serializer.internal_pt_from_string(new_expr)[0].variables
+        variables = serializer.polyhedral_termlist_from_string(new_expr)[0].variables
         constraints: PolyhedralTermList = self.a | self.g
         return constraints.optimize(objective=variables, maximize=maximize)
 
@@ -255,13 +272,13 @@ class PolyhedralContractCompound(IoContractCompound):
         a: list[PolyhedralTermList] = []
         if assumptions:
             for termlist_str in assumptions:
-                a_termlist = [item for x in termlist_str for item in serializer.internal_pt_from_string(x)]
+                a_termlist = [item for x in termlist_str for item in serializer.polyhedral_termlist_from_string(x)]
                 a.append(PolyhedralTermList(a_termlist))
 
         g: list[PolyhedralTermList] = []
         if guarantees:
             for termlist_str in guarantees:
-                g_termlist = [item for x in termlist_str for item in serializer.internal_pt_from_string(x)]
+                g_termlist = [item for x in termlist_str for item in serializer.polyhedral_termlist_from_string(x)]
                 g.append(PolyhedralTermList(g_termlist))
 
         return PolyhedralContractCompound(

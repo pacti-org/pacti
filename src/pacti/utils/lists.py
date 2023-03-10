@@ -1,7 +1,9 @@
 """Some list operations."""
 
+from typing import Any
 
-def list_intersection(list1: list, list2: list) -> list:
+
+def list_intersection(list1: list[Any], list2: list[Any]) -> list[Any]:
     """
     Intersect two lists.
 
@@ -15,7 +17,7 @@ def list_intersection(list1: list, list2: list) -> list:
     return [el for el in list1 if el in list2]
 
 
-def list_diff(list1: list, list2: list) -> list:
+def list_diff(list1: list[Any], list2: list[Any]) -> list[Any]:
     """
     Compute difference between lists.
 
@@ -29,7 +31,7 @@ def list_diff(list1: list, list2: list) -> list:
     return [el for el in list1 if (el not in list2)]
 
 
-def list_union(list1: list, list2: list) -> list:
+def list_union(list1: list[Any], list2: list[Any]) -> list[Any]:
     """
     Compute the union of two lists.
 
@@ -43,7 +45,7 @@ def list_union(list1: list, list2: list) -> list:
     return list1 + [el for el in list2 if (el not in list1)]
 
 
-def lists_equal(list1: list, list2: list) -> bool:
+def lists_equal(list1: list[Any], list2: list[Any]) -> bool:
     """
     Tells whether two lists have the same elements.
 

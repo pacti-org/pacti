@@ -25,6 +25,11 @@ from typing import Any, Generic, List, Optional, TypeVar
 from pacti.utils.errors import IncompatibleArgsError
 from pacti.utils.lists import list_diff, list_intersection, list_union, lists_equal
 
+Var_t = TypeVar("Var_t", bound="Var")
+Term_t = TypeVar("Term_t", bound="Term")
+TermList_t = TypeVar("TermList_t", bound="TermList")
+IoContract_t = TypeVar("IoContract_t", bound="IoContract")
+
 
 class Var:
     """
@@ -51,7 +56,9 @@ class Var:
         """
         return self._name
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, type(self)):
+            raise ValueError()
         return self.name == other.name
 
     def __str__(self) -> str:
@@ -60,7 +67,7 @@ class Var:
     def __hash__(self) -> int:
         return hash(self.name)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<Var {0}>".format(self.name)
 
 
@@ -74,7 +81,7 @@ class Term(ABC):
 
     @property
     @abstractmethod
-    def vars(self):  # noqa: A003
+    def vars(self) -> list[Var]:  # noqa: A003
         """Variables contained in the syntax of the term."""
 
     @abstractmethod
@@ -87,7 +94,7 @@ class Term(ABC):
         """
 
     @abstractmethod
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         pass
 
     @abstractmethod
@@ -95,19 +102,19 @@ class Term(ABC):
         pass
 
     @abstractmethod
-    def __hash__(self):
+    def __hash__(self) -> int:
         pass
 
     @abstractmethod
-    def __repr__(self):
+    def __repr__(self) -> str:
         pass
 
     @abstractmethod
-    def copy(self):
+    def copy(self: Term_t) -> Term_t:
         """Returns a copy of term."""
 
     @abstractmethod
-    def rename_variable(self, source_var: Var, target_var: Var):
+    def rename_variable(self: Term_t, source_var: Var, target_var: Var) -> Term_t:
         """
         Rename a variable in a term.
 
@@ -118,9 +125,6 @@ class Term(ABC):
         Returns:
             A term with `source_var` replaced by `target_var`.
         """
-
-
-TL_t = TypeVar("TL_t", bound="TermList")
 
 
 class TermList(ABC):
@@ -162,10 +166,12 @@ class TermList(ABC):
             return ", ".join(res)
         return "true"
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, type(self)):
+            raise ValueError()
         return self.terms == other.terms
 
-    def get_terms_with_vars(self: TL_t, variable_list: List[Var]) -> TL_t:
+    def get_terms_with_vars(self: TermList_t, variable_list: List[Var]) -> TermList_t:
         """
         Returns the list of terms which contain any of the variables indicated.
 
@@ -181,19 +187,19 @@ class TermList(ABC):
                 terms.append(t)
         return type(self)(terms)
 
-    def __and__(self, other):
+    def __and__(self: TermList_t, other: TermList_t) -> TermList_t:
         return type(self)(list_intersection(self.copy().terms, other.copy().terms))
 
-    def __or__(self, other):
+    def __or__(self: TermList_t, other: TermList_t) -> TermList_t:
         return type(self)(list_union(self.copy().terms, other.copy().terms))
 
-    def __sub__(self, other):
+    def __sub__(self: TermList_t, other: TermList_t) -> TermList_t:
         return type(self)(list_union(self.copy().terms, other.copy().terms))
 
-    def __le__(self, other):
+    def __le__(self: TermList_t, other: TermList_t) -> bool:
         return self.refines(other)
 
-    def copy(self: TL_t) -> TL_t:
+    def copy(self: TermList_t) -> TermList_t:
         """
         Makes copy of termlist.
 
@@ -202,7 +208,7 @@ class TermList(ABC):
         """
         return type(self)([term.copy() for term in self.terms])
 
-    def rename_variable(self: TL_t, source_var: Var, target_var: Var) -> TL_t:
+    def rename_variable(self: TermList_t, source_var: Var, target_var: Var) -> TermList_t:
         """
         Rename a variable in a termlist.
 
@@ -232,7 +238,7 @@ class TermList(ABC):
         """
 
     @abstractmethod
-    def elim_vars_by_refining(self: TL_t, context: TL_t, vars_to_elim: List[Var]) -> TL_t:
+    def elim_vars_by_refining(self: TermList_t, context: TermList_t, vars_to_elim: List[Var]) -> TermList_t:
         """
         Eliminate variables from termlist by refining it in a context.
 
@@ -254,7 +260,7 @@ class TermList(ABC):
         """
 
     @abstractmethod
-    def elim_vars_by_relaxing(self: TL_t, context: TL_t, vars_to_elim: List[Var]) -> TL_t:
+    def elim_vars_by_relaxing(self: TermList_t, context: TermList_t, vars_to_elim: List[Var]) -> TermList_t:
         """
         Eliminate variables from termlist by relaxing it in a context
 
@@ -276,7 +282,7 @@ class TermList(ABC):
         """
 
     @abstractmethod
-    def simplify(self: TL_t, context: Optional[TL_t] = None):
+    def simplify(self: TermList_t, context: Optional[TermList_t] = None) -> None:
         """Remove redundant terms in TermList.
 
         Let $S$ be this TermList and suppose $T \\subseteq S$. Let
@@ -291,7 +297,7 @@ class TermList(ABC):
         """
 
     @abstractmethod
-    def refines(self: TL_t, other: TL_t) -> bool:
+    def refines(self: TermList_t, other: TermList_t) -> bool:
         """
         Tell whether the argument is a larger specification.
 
@@ -313,10 +319,7 @@ class TermList(ABC):
         """
 
 
-Cont_t = TypeVar("Cont_t", bound="IoContract")
-
-
-class IoContract(Generic[TL_t]):
+class IoContract(Generic[TermList_t]):
     """
     Basic type for an IO contract.
 
@@ -332,7 +335,9 @@ class IoContract(Generic[TL_t]):
         g(TermList): Contract guarantees.
     """
 
-    def __init__(self, assumptions: TL_t, guarantees: TL_t, input_vars: List[Var], output_vars: List[Var]) -> None:
+    def __init__(
+        self, assumptions: TermList_t, guarantees: TermList_t, input_vars: List[Var], output_vars: List[Var]
+    ) -> None:
         """
         Class constructor.
 
@@ -376,8 +381,8 @@ class IoContract(Generic[TL_t]):
                 % (list_diff(guarantees.vars, list_union(input_vars, output_vars)), input_vars, output_vars, guarantees)
             )
 
-        self.a: TL_t = assumptions.copy()
-        self.g: TL_t = guarantees.copy()
+        self.a: TermList_t = assumptions.copy()
+        self.g: TermList_t = guarantees.copy()
         self.inputvars = input_vars.copy()
         self.outputvars = output_vars.copy()
         # simplify the guarantees with the assumptions
@@ -393,7 +398,7 @@ class IoContract(Generic[TL_t]):
         """
         return list_union(self.inputvars, self.outputvars)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (
             "InVars: "
             + "["
@@ -410,7 +415,9 @@ class IoContract(Generic[TL_t]):
             + str(self.g)
         )
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, type(self)):
+            raise ValueError
         return (
             self.inputvars == other.inputvars
             and self.outputvars == self.outputvars
@@ -419,8 +426,8 @@ class IoContract(Generic[TL_t]):
         )
 
     def rename_variable(  # noqa: WPS231 too much cognitive complexity
-        self: Cont_t, source_var: Var, target_var: Var
-    ) -> Cont_t:
+        self: IoContract_t, source_var: Var, target_var: Var
+    ) -> IoContract_t:
         """
         Rename a variable in a contract.
 
@@ -457,7 +464,7 @@ class IoContract(Generic[TL_t]):
                 guarantees = guarantees.rename_variable(source_var, target_var)
         return type(self)(assumptions, guarantees, inputvars, outputvars)
 
-    def copy(self: Cont_t) -> Cont_t:
+    def copy(self: IoContract_t) -> IoContract_t:
         """
         Makes copy of contract.
 
@@ -470,10 +477,12 @@ class IoContract(Generic[TL_t]):
         guarantees = self.g.copy()
         return type(self)(assumptions, guarantees, inputvars, outputvars)
 
-    def __le__(self, other):
+    def __le__(self, other: object) -> bool:
+        if not isinstance(other, type(self)):
+            raise ValueError()
         return self.refines(other)
 
-    def can_compose_with(self: Cont_t, other: Cont_t) -> bool:
+    def can_compose_with(self: IoContract_t, other: IoContract_t) -> bool:
         """
         Tell whether the contract can be composed with another contract.
 
@@ -488,7 +497,7 @@ class IoContract(Generic[TL_t]):
         # make sure lists of output variables don't intersect
         return len(list_intersection(self.outputvars, other.outputvars)) == 0
 
-    def can_quotient_by(self: Cont_t, other: Cont_t) -> bool:
+    def can_quotient_by(self: IoContract_t, other: IoContract_t) -> bool:
         """
         Tell whether the contract can quotiented by another contract.
 
@@ -504,7 +513,7 @@ class IoContract(Generic[TL_t]):
         # component
         return len(list_intersection(list_diff(self.outputvars, other.outputvars), other.inputvars)) == 0
 
-    def shares_io_with(self: Cont_t, other: Cont_t) -> bool:
+    def shares_io_with(self: IoContract_t, other: IoContract_t) -> bool:
         """
         Tell whether two contracts have the same IO signature.
 
@@ -516,7 +525,7 @@ class IoContract(Generic[TL_t]):
         """
         return lists_equal(self.inputvars, other.inputvars) & lists_equal(self.outputvars, other.outputvars)
 
-    def refines(self: Cont_t, other: Cont_t) -> bool:
+    def refines(self: IoContract_t, other: IoContract_t) -> bool:
         """
         Tell whether the given contract is a refinement of another.
 
@@ -533,9 +542,11 @@ class IoContract(Generic[TL_t]):
         """
         if not self.shares_io_with(other):
             raise IncompatibleArgsError("Contracts do not share IO")
-        return (other.a <= self.a) and ((self.g | other.a) <= (other.g | other.a))
+        assumptions_check: bool = other.a <= self.a
+        guarantees_check: bool = (self.g | other.a) <= (other.g | other.a)
+        return assumptions_check and guarantees_check
 
-    def compose(self: Cont_t, other: Cont_t, vars_to_keep: Any = None) -> Cont_t:  # noqa: WPS231, WPS238
+    def compose(self: IoContract_t, other: IoContract_t, vars_to_keep: Any = None) -> IoContract_t:  # noqa: WPS231
         """Compose IO contracts.
 
         Compute the composition of the two given contracts and abstract the
@@ -592,7 +603,7 @@ class IoContract(Generic[TL_t]):
             raise IncompatibleArgsError("Cannot compose contracts due to feedback")
         elif self_helps_other and not other_helps_self:
             logging.debug("Assumption computation: self provides context for other")
-            new_a: TL_t = other.a.elim_vars_by_refining(self.a | self.g, assumptions_forbidden_vars)
+            new_a: TermList_t = other.a.elim_vars_by_refining(self.a | self.g, assumptions_forbidden_vars)
             conflict_variables = list_intersection(new_a.vars, assumptions_forbidden_vars)
             if conflict_variables:
                 raise IncompatibleArgsError(
@@ -635,7 +646,9 @@ class IoContract(Generic[TL_t]):
 
         return type(self)(assumptions, allguarantees, inputvars, outputvars)
 
-    def quotient(self: Cont_t, other: Cont_t, additional_inputs: Optional[List[Var]] = None) -> Cont_t:
+    def quotient(
+        self: IoContract_t, other: IoContract_t, additional_inputs: Optional[List[Var]] = None
+    ) -> IoContract_t:
         """Compute the contract quotient.
 
         Compute the quotient self/other of the two given contracts and refine
@@ -688,7 +701,7 @@ class IoContract(Generic[TL_t]):
 
         # get guarantees
         logging.debug("Computing quotient guarantees")
-        guarantees: TL_t = self.g
+        guarantees: TermList_t = self.g
         logging.debug("Using existing guarantees to aid system-level guarantees")
         try:
             guarantees = guarantees.elim_vars_by_refining(other.g | other.a, intvars)
@@ -711,7 +724,7 @@ class IoContract(Generic[TL_t]):
 
         return type(self)(assumptions, guarantees, inputvars, outputvars)
 
-    def merge(self: Cont_t, other: Cont_t) -> Cont_t:
+    def merge(self: IoContract_t, other: IoContract_t) -> IoContract_t:
         """
         Compute the merging operation for two contracts.
 
@@ -727,7 +740,7 @@ class IoContract(Generic[TL_t]):
         Raises:
             IncompatibleArgsError: trying to merge different contract types.
         """
-        if isinstance(self, type(other)):
+        if not isinstance(self, type(other)):
             raise IncompatibleArgsError("Asked to merge incompatible contracts")
         input_vars = list_union(self.inputvars, other.inputvars)
         output_vars = list_union(self.outputvars, other.outputvars)
