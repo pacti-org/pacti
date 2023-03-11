@@ -613,7 +613,7 @@ class IoContract(Generic[TermList_t]):
                 )
             assumptions = new_a | self.a
         elif other_helps_self and not self_helps_other:
-            logging.debug("Assumption computation: other provides context for self")
+            logging.debug("****** Assumption computation: other provides context for self")
             new_a = self.a.elim_vars_by_refining(other.a | other.g, assumptions_forbidden_vars)
             conflict_variables = list_intersection(new_a.vars, assumptions_forbidden_vars)
             if conflict_variables:
@@ -627,7 +627,7 @@ class IoContract(Generic[TermList_t]):
             assumptions = new_a | other.a
         # contracts can't help each other
         else:
-            logging.debug("Assumption computation: other provides context for self")
+            logging.debug("****** Assumption computation: other provides context for self")
             assumptions = self.a | other.a
         logging.debug("Assumption computation: computed assumptions:\n%s", assumptions)
         assumptions.simplify()

@@ -674,14 +674,14 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         self_cons = result[2]
         ctx_mat = result[3]
         ctx_cons = result[4]
-        logging.debug("Polytope is \n%s", self_mat)
+        #logging.debug("Polytope is \n%s", self_mat)
         try:
             a_red, b_red = PolyhedralTermList.reduce_polytope(self_mat, self_cons, ctx_mat, ctx_cons)
         except ValueError as e:
             raise ValueError(
                 "The constraints \n{}\n".format(self) + "are unsatisfiable in context \n{}".format(context)
             ) from e
-        logging.debug("Reduction: \n%s", a_red)
+        #logging.debug("Reduction: \n%s", a_red)
         self.terms = PolyhedralTermList.polytope_to_termlist(a_red, b_red, variables).terms
         logging.debug("Back to terms: \n%s", self)
 
@@ -826,7 +826,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
             a_h_ret = np.array([[]])
         else:
             a_h_ret = np.array(a_h)
-        logging.debug("a is \n%s", a)
+        #logging.debug("a is \n%s", a)
         return variables, np.array(a), np.array(b), a_h_ret, np.array(b_h)
 
     @staticmethod
@@ -847,9 +847,8 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
             The PolyhedralTermList corresponding to the given data.
         """
         term_list = []
-        logging.debug("&&&&&&&&&&")
         # logging.debug("Poly is " + str(polytope))
-        logging.debug("matrix is %s", matrix)
+        #logging.debug("matrix is %s", matrix)
         if len(matrix.shape) > 1:
             n, m = matrix.shape
             assert m == len(variables)
@@ -916,11 +915,11 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         while i < n:
             objective = a_temp[i, :] * -1
             b_temp[i] += 1
-            logging.debug("Optimization objective: \n%s", objective)
-            logging.debug("a_temp is \n%s", a_temp)
-            logging.debug("a_help is \n%s", a_help)
-            logging.debug("b_temp is \n%s", b_temp)
-            logging.debug("b_help is \n%s", b_help)
+            #logging.debug("Optimization objective: \n%s", objective)
+            #logging.debug("a_temp is \n%s", a_temp)
+            #logging.debug("a_help is \n%s", a_help)
+            #logging.debug("b_temp is \n%s", b_temp)
+            #logging.debug("b_help is \n%s", b_help)
             if helper_present:
                 a_opt = np.concatenate((a_temp, a_help), axis=0)
                 b_opt = np.concatenate((b_temp, b_help))
@@ -930,8 +929,9 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
             res = linprog(c=objective, A_ub=a_opt, b_ub=b_opt, bounds=(None, None))  # ,options={'tol':0.000001})
             b_temp[i] -= 1
             if res["fun"]:
-                logging.debug("Optimal value: %s", -res["fun"])
-            logging.debug("Results: %s", res)
+                ""
+                #logging.debug("Optimal value: %s", -res["fun"])
+            #logging.debug("Results: %s", res)
             # if res["success"] and -res["fun"] <= b_temp[i]:
             if res["status"] != 2 and -res["fun"] <= b_temp[i]:  # noqa: WPS309
                 logging.debug("Can remove")
@@ -1231,6 +1231,9 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
     def _transform_term(
         term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, refine: bool
     ) -> PolyhedralTerm:
+        if not list_intersection(term.vars, vars_to_elim):
+            return term
+
         logging.debug("Transforming term: %s", term)
         logging.debug("Context: %s", context)
 
