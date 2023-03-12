@@ -565,18 +565,17 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         Raises:
             ValueError: Self has empty intersection with its context.
         """
-        termlist = self.copy()
         logging.debug("Refining from terms: %s", self)
         logging.debug("Context: %s", context)
         logging.debug("Vars to elim: %s", vars_to_elim)
         try:
-            termlist.simplify(context)
+            termlist = self.simplify(context)
         except ValueError as e:
             raise ValueError(
                 "Provided constraints \n{}\n".format(self) + "are unsatisfiable in context \n{}".format(context)
             ) from e
         try:
-            termlist._transform(context=context, vars_to_elim=vars_to_elim, refine=True)
+            return termlist._transform(context=context, vars_to_elim=vars_to_elim, refine=True)
         except ValueError as e:
             raise ValueError(
                 "The elimination of variables \n{}\n".format(vars_to_elim)
@@ -584,7 +583,6 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
                 + "in context \n{}\n".format(context)
                 + "was not possible"
             ) from e
-        return termlist
 
     def lacks_constraints(self) -> bool:
         """
@@ -620,19 +618,18 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         Raises:
             ValueError: Constraints have empty intersection with context.
         """
-        termlist = self.copy()
         logging.debug("Relaxing with context")
         logging.debug("Relaxing from terms %s", self)
         logging.debug("Context: %s", context)
         logging.debug("Vars to elim: %s", vars_to_elim)
         try:
-            termlist.simplify(context)
+            termlist = self.simplify(context)
         except ValueError as e:
             raise ValueError(
                 "Provided constraints \n{}\n".format(self) + "are unsatisfiable in context \n{}".format(context)
             ) from e
         try:
-            termlist._transform(context=context, vars_to_elim=vars_to_elim, refine=False)
+            termlist = termlist._transform(context=context, vars_to_elim=vars_to_elim, refine=False)
         except ValueError as e:
             raise ValueError(
                 "The elimination of variables \n{}\n".format(vars_to_elim)
@@ -645,7 +642,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         termlist.terms = list_diff(termlist.terms, terms_to_elim.terms)
         return termlist
 
-    def simplify(self, context: Optional[PolyhedralTermList] = None) -> None:
+    def simplify(self, context: Optional[PolyhedralTermList] = None) -> PolyhedralTermList:
         """
         Remove redundant terms in the PolyhedralTermList using the provided context.
 
@@ -682,8 +679,9 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
                 "The constraints \n{}\n".format(self) + "are unsatisfiable in context \n{}".format(context)
             ) from e
         logging.debug("Reduction: \n%s", a_red)
-        self.terms = PolyhedralTermList.polytope_to_termlist(a_red, b_red, variables).terms
-        logging.debug("Back to terms: \n%s", self)
+        simplified = PolyhedralTermList.polytope_to_termlist(a_red, b_red, variables)
+        logging.debug("Back to terms: \n%s", simplified)
+        return simplified
 
     def refines(self, other: PolyhedralTermList) -> bool:
         """
@@ -722,7 +720,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         logging.debug("Polytope is \n%s", self_mat)
         return PolyhedralTermList.is_polytope_empty(self_mat, self_cons)
 
-    def _transform(self, context: PolyhedralTermList, vars_to_elim: list, refine: bool) -> None:
+    def _transform(self, context: PolyhedralTermList, vars_to_elim: list, refine: bool) -> PolyhedralTermList:
         logging.debug("Transforming: %s", self)
         logging.debug("Context terms: %s", context)
         logging.debug("Variables to eliminate: %s", vars_to_elim)
@@ -736,11 +734,12 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
                 new_term = term
             new_terms.append(new_term)
 
-        self.terms = list(new_terms)
+        that = PolyhedralTermList(new_terms)
 
         # the last step needs to be a simplification
         logging.debug("Ending transformation with simplification")
-        self.simplify(context)
+        transformed = that.simplify(context)
+        return transformed
 
     def optimize(self, objective: dict[Var, numeric], maximize: bool = True) -> Optional[numeric]:
         """
