@@ -97,13 +97,22 @@ class PolyhedralTerm(Term):
 
     def copy(self) -> PolyhedralTerm:
         """
-        Generates copy of polyhedral term.
+        Generates copy of polyhedral term with a new pacti_id
 
         Returns:
             Copy of term.
         """
         return PolyhedralTerm(self.variables, self.constant)
 
+    def duplicate(self) -> PolyhedralTerm:
+        """
+        Generates copy of polyhedral term with the same pacti_id
+
+        Returns:
+            Duplicate copy of term.
+        """
+        return PolyhedralTerm(self.variables, self.constant, self.pacti_id)
+    
     def rename_variable(self, source_var: Var, target_var: Var) -> PolyhedralTerm:
         """
         Rename a variable in a term.
@@ -468,7 +477,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         if terms is None:
             self.terms = []
         elif all(isinstance(t, PolyhedralTerm) for t in terms):
-            self.terms = terms.copy()
+            self.terms = [t.duplicate() for t in terms]
         else:
             raise ValueError("PolyhedralTermList constructor argument must be a list of PolyhedralTerms.")
 

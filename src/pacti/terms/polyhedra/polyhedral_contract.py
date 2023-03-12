@@ -1,12 +1,14 @@
 """Specializes IO contract into contracts with polyhedral assumptions and guarantees."""
-
 from __future__ import annotations
 
-from typing import Optional, Tuple, TypedDict, Union
+from typing import List, Optional, Tuple, TypedDict, Union
 
-from pacti.iocontract import pacti_id_t, IoContract, IoContractCompound, NestedTermList, Var
+from pacti.iocontract import IoContract, IoContractCompound, NestedTermList, Var
+from pacti.iocontract.iocontract import generate_id_unless_provided, pacti_id_t
 from pacti.terms.polyhedra import serializer
 from pacti.terms.polyhedra.polyhedra import PolyhedralTerm, PolyhedralTermList
+
+import uuid
 
 numeric = Union[int, float]
 ser_pt = dict[str, Union[float, dict[str, float]]]
@@ -77,7 +79,7 @@ class PolyhedralContract(IoContract):
         c_temp["output_vars"] = [str(x) for x in self.outputvars]
         c_temp["assumptions"] = self.a.to_str_list()
         c_temp["guarantees"] = self.g.to_str_list()
-        c_temp["pacti_id"] = self.pacti_id
+        c_temp["pacti_id"] = [str(self.pacti_id[0]), self.pacti_id[1]]
         return c_temp
 
     @staticmethod
@@ -157,12 +159,18 @@ class PolyhedralContract(IoContract):
         else:
             raise ValueError("Guarantees must be a list of dicts.")
 
+        contract_id = contract.get("pacti_id")
+        if isinstance(contract_id, List):
+            pacti_id = (uuid.UUID(contract_id[0]), contract_id[1])
+        else:
+            pacti_id = generate_id_unless_provided()
+
         return PolyhedralContract(
             input_vars=[Var(x) for x in contract["input_vars"]],
             output_vars=[Var(x) for x in contract["output_vars"]],
             assumptions=a,
             guarantees=g,
-            pacti_id=contract.get("pacti_id"),
+            pacti_id=pacti_id,
         )
 
     def compose(self, other: PolyhedralContract, vars_to_keep: Optional[list[str]] = None) -> PolyhedralContract:

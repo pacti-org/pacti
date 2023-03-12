@@ -4,6 +4,7 @@ from typing import Dict, Tuple, Union
 
 import numpy as np
 import sympy
+import uuid
 
 from pacti.iocontract import Var
 from pacti.terms.polyhedra.polyhedra import PolyhedralTerm
@@ -193,6 +194,7 @@ internal_variable_pattern = re.compile(
 
 # Patterns for polyhedral term syntax
 
+# Rule 1a: LHS <= number
 internal_polyhedral_term_canonical_pattern = re.compile(
     "^"
     r"\s*(?P<coefficient>([+-]?(\s*(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)?)?)"
@@ -204,6 +206,7 @@ internal_polyhedral_term_canonical_pattern = re.compile(
     "$"
 )
 
+# Rule 2a: | LHS | <= number
 internal_polyhedral_term_absolute_less_than_pattern = re.compile(  # noqa: WPS118 Found too long name
     "^"
     r"\s*\|"
@@ -215,6 +218,8 @@ internal_polyhedral_term_absolute_less_than_pattern = re.compile(  # noqa: WPS11
     "$"
 )
 
+# Rule 2b: | LHS | = RHS
+# This is a special case where RHS == 0
 internal_polyhedral_term_absolute_zero_pattern = re.compile(  # noqa: WPS118 Found too long name
     "^"
     r"\s*\|"
@@ -226,6 +231,7 @@ internal_polyhedral_term_absolute_zero_pattern = re.compile(  # noqa: WPS118 Fou
     "$"
 )
 
+# Rule 3a: LHS = number
 internal_polyhedral_term_equality_pattern = re.compile(
     "^"
     r"(?P<LHS>([+-]?(\s*(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)?)?\s*\*?\s*"
@@ -291,11 +297,11 @@ def _internal_parse_variables(variables: dict[str, numeric], terms: str) -> None
     rest = t.group("variables")
     if rest:
         _internal_parse_variables(variables, rest)
-    else:
-        variables
 
 
-def _internal_pt_from_canonical_match(m: re.Match[str]) -> PolyhedralTerm:
+# Rule 1a
+# LHS <= number
+def _internal_pt_from_canonical_match(m: re.Match[str], rule: str) -> PolyhedralTerm:
     variables: dict[str, numeric] = {}
 
     v = m.group("variable")
@@ -307,9 +313,12 @@ def _internal_pt_from_canonical_match(m: re.Match[str]) -> PolyhedralTerm:
         _internal_parse_variables(variables, rest)
 
     constant = float(m.group("constant"))
-    return PolyhedralTerm({Var(k): v for k, v in variables.items()}, constant)
+    return PolyhedralTerm(
+        variables={Var(k): v for k, v in variables.items()}, constant=constant, pacti_id=(uuid.uuid4(), rule)
+    )
 
 
+# Rule 2a:
 # rewrite as 2 terms given input match: | LHS | <= RHS
 # pos: LHS <= RHS
 # neg: -(LHS) <= RHS
@@ -320,13 +329,15 @@ def _internal_pt_from_absolute_less_than_match(m: re.Match[str]) -> list[Polyhed
     if not m1:
         raise ValueError(f"Invalid 'LHS <= RHS' syntax in: {s1}")
 
-    pos: PolyhedralTerm = _internal_pt_from_canonical_match(m1)
+    pos: PolyhedralTerm = _internal_pt_from_canonical_match(m1, "Rule2a.left")
     neg: PolyhedralTerm = pos.copy()
+    neg.pacti_id = (pos.pacti_id[0], "Rule2a.right")
     for key, value in neg.variables.items():
         neg.variables.update({key: -value})
     return [pos, neg]
 
 
+# Rule 2b:
 # rewrite as 2 terms given input match: | LHS | = 0
 # pos: LHS <= 0
 # neg: -(LHS) <= 0
@@ -337,13 +348,15 @@ def _internal_pt_from_absolute_zero_match(m: re.Match[str]) -> list[PolyhedralTe
     if not m1:
         raise ValueError(f"Invalid 'LHS <= 0' syntax in: {s1}")
 
-    pos: PolyhedralTerm = _internal_pt_from_canonical_match(m1)
+    pos: PolyhedralTerm = _internal_pt_from_canonical_match(m1, "Rule2b.left")
     neg: PolyhedralTerm = pos.copy()
+    neg.pacti_id = (pos.pacti_id[0], "Rule2b.right")
     for key, value in neg.variables.items():
         neg.variables.update({key: -value})
     return [pos, neg]
 
 
+# Rule 3a
 # rewrite as 2 terms given input match: LHS = RHS
 # pos: LHS <= RHS
 # neg: -(LHS) <= -(RHS)
@@ -354,8 +367,9 @@ def _internal_pt_from_equality_match(m: re.Match[str]) -> list[PolyhedralTerm]:
     if not m1:
         raise ValueError(f"Invalid 'LHS <= RHS' syntax in: {s1}")
 
-    pos: PolyhedralTerm = _internal_pt_from_canonical_match(m1)
+    pos: PolyhedralTerm = _internal_pt_from_canonical_match(m1, "Rule3a.left")
     neg: PolyhedralTerm = pos.copy()
+    neg.pacti_id = (pos.pacti_id[0], "Rule3a.right")
     for key, value in neg.variables.items():
         neg.variables.update({key: -value})
     neg.constant = -neg.constant
@@ -375,20 +389,21 @@ def polyhedral_termlist_from_string(str_rep: str) -> list[PolyhedralTerm]:
     Raises:
         ValueError: constraint syntax invalid.
     """
-    m1 = internal_polyhedral_term_canonical_pattern.match(str_rep)
-    m2 = internal_polyhedral_term_absolute_less_than_pattern.match(str_rep)
-    m3 = internal_polyhedral_term_absolute_zero_pattern.match(str_rep)
-    m4 = internal_polyhedral_term_equality_pattern.match(str_rep)
-    if m1:
-        return [_internal_pt_from_canonical_match(m1)]
+    m1a = internal_polyhedral_term_canonical_pattern.match(str_rep)
+    m2a = internal_polyhedral_term_absolute_less_than_pattern.match(str_rep)
+    m2b = internal_polyhedral_term_absolute_zero_pattern.match(str_rep)
+    m3a = internal_polyhedral_term_equality_pattern.match(str_rep)
 
-    elif m2:
-        return _internal_pt_from_absolute_less_than_match(m2)
+    if m1a:
+        return [_internal_pt_from_canonical_match(m1a, "Rule1a")]
 
-    elif m3:
-        return _internal_pt_from_absolute_zero_match(m3)
+    elif m2a:
+        return _internal_pt_from_absolute_less_than_match(m2a)
 
-    elif m4:
-        return _internal_pt_from_equality_match(m4)
+    elif m2b:
+        return _internal_pt_from_absolute_zero_match(m2b)
+
+    elif m3a:
+        return _internal_pt_from_equality_match(m3a)
 
     raise ValueError(f"Polyhedral term syntax mismatch: {str_rep}")

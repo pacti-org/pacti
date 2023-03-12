@@ -141,7 +141,11 @@ class Term(ABC):
 
     @abstractmethod
     def copy(self: Term_t) -> Term_t:
-        """Returns a copy of term."""
+        """Returns a copy of term with a new pacti_id."""
+
+    @abstractmethod
+    def duplicate(self: Term_t) -> Term_t:
+        """Returns a copy of term with the same pacti_id."""
 
     @abstractmethod
     def rename_variable(self: Term_t, source_var: Var, target_var: Var) -> Term_t:
@@ -231,12 +235,21 @@ class TermList(ABC):
 
     def copy(self: TermList_t) -> TermList_t:
         """
-        Makes copy of termlist.
+        Makes copy of termlist with new pacti_ids.
 
         Returns:
             Copy of termlist.
         """
         return type(self)([term.copy() for term in self.terms])
+
+    def duplicate(self: TermList_t) -> TermList_t:
+        """
+        Makes copy of termlist, preserving the pacti_ids.
+
+        Returns:
+            Copy of termlist.
+        """
+        return type(self)([term.duplicate() for term in self.terms])
 
     def rename_variable(self: TermList_t, source_var: Var, target_var: Var) -> TermList_t:
         """
@@ -421,7 +434,7 @@ class IoContract(Generic[TermList_t]):
                 % (list_diff(guarantees.vars, list_union(input_vars, output_vars)), input_vars, output_vars, guarantees)
             )
 
-        self.a: TermList_t = assumptions.copy()
+        self.a: TermList_t = assumptions.duplicate()
         self.inputvars = input_vars.copy()
         self.outputvars = output_vars.copy()
         # simplify the guarantees with the assumptions
