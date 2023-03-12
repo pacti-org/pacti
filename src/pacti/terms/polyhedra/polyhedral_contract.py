@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Optional, Tuple, TypedDict, Union
 
-from pacti.iocontract import IoContract, IoContractCompound, NestedTermList, Var
+from pacti.iocontract import pacti_id_t, IoContract, IoContractCompound, NestedTermList, Var
 from pacti.terms.polyhedra import serializer
 from pacti.terms.polyhedra.polyhedra import PolyhedralTerm, PolyhedralTermList
 
@@ -77,6 +77,7 @@ class PolyhedralContract(IoContract):
         c_temp["output_vars"] = [str(x) for x in self.outputvars]
         c_temp["assumptions"] = self.a.to_str_list()
         c_temp["guarantees"] = self.g.to_str_list()
+        c_temp["pacti_id"] = self.pacti_id
         return c_temp
 
     @staticmethod
@@ -85,6 +86,7 @@ class PolyhedralContract(IoContract):
         guarantees: list[str],
         input_vars: list[str],
         output_vars: list[str],
+        pacti_id: Optional[pacti_id_t] = None,
     ) -> PolyhedralContract:
         """
         Create contract from several lists of strings.
@@ -94,6 +96,7 @@ class PolyhedralContract(IoContract):
             guarantees: contract's guarantees.
             input_vars: input variables of contract.
             output_vars: output variables of contract.
+            pacti_id: A randomly-generated Pacti identifier for this contract unless provided.
 
         Returns:
             A polyhedral contract built from the arguments provided.
@@ -111,6 +114,7 @@ class PolyhedralContract(IoContract):
             output_vars=[Var(x) for x in output_vars],
             assumptions=PolyhedralTermList(a),
             guarantees=PolyhedralTermList(g),
+            pacti_id=pacti_id,
         )
 
     @staticmethod
@@ -158,6 +162,7 @@ class PolyhedralContract(IoContract):
             output_vars=[Var(x) for x in contract["output_vars"]],
             assumptions=a,
             guarantees=g,
+            pacti_id=contract.get("pacti_id"),
         )
 
     def compose(self, other: PolyhedralContract, vars_to_keep: Optional[list[str]] = None) -> PolyhedralContract:
@@ -248,6 +253,8 @@ class PolyhedralContractCompound(IoContractCompound):
         a: Contract assumptions.
 
         g: Contract guarantees.
+
+        pacti_id: A randomly-generated Pacti identifier for this compound contract unless provided.
     """
 
     @staticmethod
@@ -256,6 +263,7 @@ class PolyhedralContractCompound(IoContractCompound):
         guarantees: list[list[str]],
         input_vars: list[str],
         output_vars: list[str],
+        pacti_id: Optional[pacti_id_t] = None,
     ) -> PolyhedralContractCompound:
         """
         Create contract from several lists of strings.
@@ -265,6 +273,7 @@ class PolyhedralContractCompound(IoContractCompound):
             guarantees: contract's guarantees.
             input_vars: input variables of contract.
             output_vars: output variables of contract.
+            pacti_id: A randomly-generated Pacti identifier for this compound contract unless provided.
 
         Returns:
             A polyhedral contract built from the arguments provided.
@@ -286,4 +295,5 @@ class PolyhedralContractCompound(IoContractCompound):
             output_vars=[Var(x) for x in output_vars],
             assumptions=NestedPolyhedra(a, force_empty_intersection=True),
             guarantees=NestedPolyhedra(g, force_empty_intersection=False),
+            pacti_id=pacti_id,
         )

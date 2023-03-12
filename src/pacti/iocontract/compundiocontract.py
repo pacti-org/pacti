@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import logging
-from typing import List, TypeVar, Union
+from typing import List, Optional, TypeVar, Union
 
-from pacti.iocontract.iocontract import TermList_t, Var
+from pacti.iocontract.iocontract import generate_id_unless_provided, pacti_id_t, TermList_t, Var
 from pacti.utils.lists import list_diff, list_intersection, list_union
 
 NTL_t = TypeVar("NTL_t", bound="NestedTermList")
@@ -148,9 +148,18 @@ class IoContractCompound:
         a: Contract assumptions.
 
         g: Contract guarantees.
+
+        pacti_id: A randomly-generated Pacti identifier for this compound contract unless provided.
     """
 
-    def __init__(self, assumptions: NTL_t, guarantees: NTL_t, input_vars: List[Var], output_vars: List[Var]):
+    def __init__(
+        self,
+        assumptions: NTL_t,
+        guarantees: NTL_t,
+        input_vars: List[Var],
+        output_vars: List[Var],
+        pacti_id: Optional[pacti_id_t] = None,
+    ):
         """
         Class constructor.
 
@@ -159,10 +168,13 @@ class IoContractCompound:
             guarantees: The guarantees of the contract.
             input_vars: The input variables of the contract.
             output_vars: The output variables of the contract.
+            pacti_id: A randomly-generated Pacti identifier for this compound contract unless provided.
 
         Raises:
             ValueError: Arguments provided does not produce a valid IO contract.
         """
+        self.pacti_id = generate_id_unless_provided(pacti_id)
+
         logging.debug("Constructor assumptions")
         logging.debug(assumptions)
         logging.debug("Constructor guarantees")

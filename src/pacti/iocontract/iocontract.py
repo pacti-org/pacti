@@ -19,8 +19,9 @@ from __future__ import annotations
 
 import copy
 import logging
+import uuid
 from abc import ABC, abstractmethod
-from typing import Any, Generic, List, Optional, TypeVar
+from typing import Any, Generic, List, Optional, Tuple, TypeVar
 
 from pacti.utils.errors import IncompatibleArgsError
 from pacti.utils.lists import list_diff, list_intersection, list_union, lists_equal
@@ -29,6 +30,23 @@ Var_t = TypeVar("Var_t", bound="Var")
 Term_t = TypeVar("Term_t", bound="Term")
 TermList_t = TypeVar("TermList_t", bound="TermList")
 IoContract_t = TypeVar("IoContract_t", bound="IoContract")
+
+pacti_id_t = Tuple[uuid.UUID, str]
+
+
+def generate_id_unless_provided(pacti_id: Optional[pacti_id_t] = None) -> pacti_id_t:
+    """
+    A randomly-generated Pacti identifier unless provided.
+
+    Args:
+        pacti_id: An optional Pacti identifier
+
+    Returns:
+        The provided identifier, otherwise a randomly-generated one.
+    """
+    if pacti_id:
+        return pacti_id
+    return (uuid.uuid4(), "")
 
 
 class Var:
@@ -77,7 +95,19 @@ class Term(ABC):
 
     Term is an abstract class that must be extended in order to support specific
     constraint languages.
+
+    Attributes:
+        pacti_id: A randomly-generated Pacti identifier for this term unless provided.
     """
+
+    def __init__(self, pacti_id: Optional[pacti_id_t] = None):
+        """
+        Constructor for Term.
+
+        Args:
+            pacti_id: If provided, the value for Term.pacti_id, which will default to Python's object id otherwise.
+        """
+        self.pacti_id = generate_id_unless_provided(pacti_id)
 
     @property
     @abstractmethod
@@ -333,10 +363,17 @@ class IoContract(Generic[TermList_t]):
         a(TermList): Contract assumptions.
 
         g(TermList): Contract guarantees.
+
+        pacti_id: A randomly-generated Pacti identifier for this contract unless provided.
     """
 
     def __init__(
-        self, assumptions: TermList_t, guarantees: TermList_t, input_vars: List[Var], output_vars: List[Var]
+        self,
+        assumptions: TermList_t,
+        guarantees: TermList_t,
+        input_vars: List[Var],
+        output_vars: List[Var],
+        pacti_id: Optional[pacti_id_t] = None,
     ) -> None:
         """
         Class constructor.
@@ -346,10 +383,13 @@ class IoContract(Generic[TermList_t]):
             guarantees: The guarantees of the contract.
             input_vars: The input variables of the contract.
             output_vars: The output variables of the contract.
+            pacti_id: A randomly-generated Pacti identifier for this term unless provided.
 
         Raises:
             IncompatibleArgsError: Arguments provided does not produce a valid IO contract.
         """
+        self.pacti_id = generate_id_unless_provided(pacti_id)
+
         # make sure the input and output variables have no repeated entries
         if len(input_vars) != len(set(input_vars)):
             raise IncompatibleArgsError(

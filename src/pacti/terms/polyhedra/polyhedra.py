@@ -15,7 +15,7 @@ import sympy
 from scipy.optimize import linprog
 
 import pacti.terms.polyhedra.serializer as serializer  # noqa: I250, WPS301
-from pacti.iocontract import Term, TermList, Var
+from pacti.iocontract import pacti_id_t, Term, TermList, Var
 from pacti.utils.lists import list_diff, list_intersection, list_union
 
 numeric = Union[int, float]
@@ -28,7 +28,7 @@ class PolyhedralTerm(Term):
     # values are the coefficients of those variables in the term, and (b) a
     # constant. The term is assumed to be in the form \Sigma_i a_i v_i +
     # constant <= 0
-    def __init__(self, variables: dict[Var, numeric], constant: numeric):
+    def __init__(self, variables: dict[Var, numeric], constant: numeric, pacti_id: Optional[pacti_id_t] = None):
         """
         Constructor for PolyhedralTerm.
 
@@ -48,10 +48,12 @@ class PolyhedralTerm(Term):
         Args:
             variables: A dictionary mapping Var keys to numeric values.
             constant: A numeric value on the right of the inequality.
+            pacti_id: A randomly-generated Pacti identifier for this contract unless provided.
 
         Raises:
             ValueError: Unsupported argument type.
         """
+        super().__init__(pacti_id)
         variable_dict = {}
         for key, value in variables.items():
             if value != 0:
