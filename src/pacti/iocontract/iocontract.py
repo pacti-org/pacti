@@ -291,7 +291,7 @@ class TermList(ABC):
                 the TermList.
 
         Returns:
-            Let $S$ be this TermList. Simplify will return $S_T = S \\setminus T$ 
+            Let $S$ be this TermList. Simplify will return $S_T = S \\setminus T$
             where $T \\subseteq S$ is a maximal subset such that $\\frac{\\Gamma, S_T\\colon \\;
             \\top}{\\Gamma, S_T\\colon \\; \\wedge_{t \\in T} t}$.
         """

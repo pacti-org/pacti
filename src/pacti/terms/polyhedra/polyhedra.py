@@ -247,7 +247,7 @@ class PolyhedralTerm(Term):
                     break
         return variable_list
 
-    def remove_variable(self, var: Var) -> PolyhedralTerm:  # noqa: VNE002
+    def remove_variable(self, var: Var) -> PolyhedralTerm:
         """
         Eliminates a variable from a term.
 
@@ -662,6 +662,9 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
             context:
                 The TermList providing the context for the simplification.
 
+        Returns:
+            A new PolyhedralTermList with redundant terms removed using the provided context.
+
         Raises:
             ValueError: The intersection of self and context is empty.
         """
@@ -745,8 +748,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
 
         # the last step needs to be a simplification
         logging.debug("Ending transformation with simplification")
-        transformed = that.simplify(context)
-        return transformed
+        return that.simplify(context)
 
     def optimize(self, objective: dict[Var, numeric], maximize: bool = True) -> Optional[numeric]:
         """

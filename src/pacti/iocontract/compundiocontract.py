@@ -54,7 +54,7 @@ class NestedTermList:
             context: Nested termlist serving as context for simplification.
             force_empty_intersection: Make sure the resulting termlists have empty intersection.
 
-        Return:
+        Returns:
             A contract with redundant terms removed in nested termlist.
         """
         new_nested_tl = []
