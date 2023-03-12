@@ -118,7 +118,7 @@ class PolyhedralTerm(Term):
             if target_var not in self.vars:
                 new_term.variables[target_var] = 0
             new_term.variables[target_var] += new_term.variables[source_var]
-            new_term.remove_variable(source_var)
+            new_term = new_term.remove_variable(source_var)
         return new_term
 
     @property
@@ -247,15 +247,22 @@ class PolyhedralTerm(Term):
                     break
         return variable_list
 
-    def remove_variable(self, var: Var) -> None:  # noqa: VNE002
+    def remove_variable(self, var: Var) -> PolyhedralTerm:  # noqa: VNE002
         """
         Eliminates a variable from a term.
 
         Args:
             var: variable to be eliminated.
+
+        Returns:
+            A new term with the variable eliminated.
         """
         if self.contains_var(var):
-            self.variables.pop(var)
+            that = self.copy()
+            that.variables.pop(var)
+            return that
+        else:
+            return self.copy()
 
     def multiply(self, factor: numeric) -> PolyhedralTerm:
         """Multiplies a term by a constant factor.
@@ -293,9 +300,9 @@ class PolyhedralTerm(Term):
         if self.contains_var(var):
             term = subst_with_term.multiply(self.get_coefficient(var))
             logging.debug("Term is %s", term)
-            self.remove_variable(var)
-            logging.debug(self)
-            return self + term
+            that = self.remove_variable(var)
+            logging.debug(that)
+            return that + term
         return self.copy()
 
     @staticmethod
@@ -1193,7 +1200,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         # replace the irrelevant variables with new findings in term
         result = term.copy()
         for var in vars_to_elim:  # noqa: VNE002
-            result.remove_variable(var)
+            result = result.remove_variable(var)
         result.constant -= replacement
         # check vacuity
         if not result.vars:
@@ -1209,7 +1216,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         conflict_coeff = {var: term.get_coefficient(var) for var in conflict_vars}
         new_term = term.copy()
         for var in conflict_vars:  # noqa: VNE002 variable name 'var' should be clarified
-            new_term.remove_variable(var)
+            new_term = new_term.remove_variable(var)
         new_term.variables[Var("_")] = 1
         # modify the context
         subst_term_vars = {Var("_"): 1.0 / conflict_coeff[conflict_vars[0]]}
