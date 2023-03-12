@@ -482,6 +482,9 @@ class IoContract(Generic[TermList_t]):
             raise ValueError()
         return self.refines(other)
 
+    def __repr__(self) -> str:
+        return "<Var {0}>".format(self)
+
     def can_compose_with(self: IoContract_t, other: IoContract_t) -> bool:
         """
         Tell whether the contract can be composed with another contract.
@@ -633,6 +636,7 @@ class IoContract(Generic[TermList_t]):
         assumptions.simplify()
 
         # process guarantees
+        logging.debug("****** Computing guarantees")
         g1_t = self.g.copy()
         g2_t = other.g.copy()
         g1 = g1_t.elim_vars_by_relaxing(g2_t, intvars)
