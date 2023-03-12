@@ -46,24 +46,27 @@ class NestedTermList:
             return "\nor \n".join(res)
         return "true"
 
-    def simplify(self: NTL_t, context: NTL_t, force_empty_intersection: bool) -> None:
+    def simplify(self: NTL_t, context: NTL_t, force_empty_intersection: bool) -> NTL_t:
         """
         Remove redundant terms in nested termlist.
 
         Args:
             context: Nested termlist serving as context for simplification.
             force_empty_intersection: Make sure the resulting termlists have empty intersection.
+
+        Returns:
+            A contract with redundant terms removed in nested termlist.
         """
         new_nested_tl = []
         for self_tl in self.nested_termlist:
             for context_tl in context.nested_termlist:
-                new_tl = self_tl.copy()
                 try:
-                    new_tl.simplify(context_tl)
+                    new_tl = self_tl.simplify(context_tl)
                 except ValueError:
+                    new_tl = self_tl.copy()
                     continue
                 new_nested_tl.append(new_tl)
-        self.nested_termlist = type(self)(new_nested_tl, force_empty_intersection).nested_termlist
+        return type(self)(new_nested_tl, force_empty_intersection)
 
     def intersect(self: NTL_t, other: NTL_t, force_empty_intersection: bool) -> NTL_t:
         """
@@ -200,7 +203,7 @@ class IoContractCompound:
         self.inputvars = input_vars.copy()
         self.outputvars = output_vars.copy()
         # simplify the guarantees with the assumptions
-        # self.g.simplify(self.a)
+        # self.g = self.g.simplify(self.a)
 
     def __str__(self) -> str:
         return (
