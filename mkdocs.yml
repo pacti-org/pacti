@@ -111,5 +111,5 @@ plugins:
 
 extra:
   social:
-  - icon: fontawesome/brands/github
-    link: https://github.com/FormalSystems
+  #- icon: fontawesome/brands/github
+  #  link: https://github.com/FormalSystems
