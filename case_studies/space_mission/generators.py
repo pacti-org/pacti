@@ -17,6 +17,7 @@ from typing import Tuple, Union
 
 numeric = Union[int, float]
 
+epsilon = 1e-8
 
 nb_contracts = 0
 nb_merge = 0
@@ -311,7 +312,7 @@ def uncertainty_generating_nav(s: int, noise: tuple[float, float]) -> Polyhedral
             f" u{s}_exit - u{s}_entry <=  {noise[1]}",
             f"-u{s}_exit + u{s}_entry <= -{noise[0]}",
             # no change to relative trajectory distance
-            f"r{s}_exit - r{s}_entry = 0",
+            f"| r{s}_exit - r{s}_entry | <= {epsilon}",
             # Lower-bound on the trajectory estimation uncertainty
             f"-u{s}_exit <= 0",
         ],
