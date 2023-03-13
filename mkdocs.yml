@@ -38,6 +38,8 @@ theme:
   - navigation.tabs.sticky
   - navigation.top
 #  - toc.integrate
+  icon:
+    repo: fontawesome/brands/github
   font:
     #text: Eczar
     #text: Alegreya Sans
