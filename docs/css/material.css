@@ -18,3 +18,8 @@
 .jupyter-wrapper .zeroclipboard-container {
   z-index: 0 !important;
 }
+
+
+html {
+  scroll-padding-top: 4rem;
+}
