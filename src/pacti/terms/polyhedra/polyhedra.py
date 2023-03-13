@@ -112,7 +112,7 @@ class PolyhedralTerm(Term):
             Duplicate copy of term.
         """
         return PolyhedralTerm(self.variables, self.constant, self.pacti_id)
-    
+
     def rename_variable(self, source_var: Var, target_var: Var) -> PolyhedralTerm:
         """
         Rename a variable in a term.
@@ -399,7 +399,9 @@ class PolyhedralTerm(Term):
         return coeffs, term.constant
 
     @staticmethod
-    def polytope_to_term(poly: list[numeric], const: numeric, variables: list[Var]) -> PolyhedralTerm:
+    def polytope_to_term(
+        poly: list[numeric], const: numeric, variables: list[Var], pacti_id: Optional[pacti_id_t] = None
+    ) -> PolyhedralTerm:
         """
         Transform a list of coefficients and variables into a PolyhedralTerm.
 
@@ -407,6 +409,7 @@ class PolyhedralTerm(Term):
             poly: An ordered list of coefficients.
             const: The term's coefficient.
             variables: The variables corresponding to the list of coefficients.
+            pacti_id: The optional pacti_id_t for the term.
 
         Returns:
             A PolyhedralTerm corresponding to the provided data.
@@ -415,7 +418,7 @@ class PolyhedralTerm(Term):
         variable_dict = {}
         for i, var in enumerate(variables):  # noqa: VNE002
             variable_dict[var] = poly[i]
-        return PolyhedralTerm(variable_dict, const)
+        return PolyhedralTerm(variable_dict, const, pacti_id)
 
     @staticmethod
     def solve_for_variables(context: PolyhedralTermList, vars_to_elim: list[Var]) -> dict:
@@ -687,19 +690,20 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
             result = PolyhedralTermList.termlist_to_polytope(self, PolyhedralTermList())
 
         variables = result[0]
-        self_mat = result[1]
-        self_cons = result[2]
-        ctx_mat = result[3]
-        ctx_cons = result[4]
+        self_ids = result[1]
+        self_mat = result[2]
+        self_cons = result[3]
+        ctx_mat = result[4]
+        ctx_cons = result[5]
         # logging.debug("Polytope is \n%s", self_mat)
         try:
-            a_red, b_red = PolyhedralTermList.reduce_polytope(self_mat, self_cons, ctx_mat, ctx_cons)
+            a_red, a_ids, b_red = PolyhedralTermList.reduce_polytope(self_ids, self_mat, self_cons, ctx_mat, ctx_cons)
         except ValueError as e:
             raise ValueError(
                 "The constraints \n{}\n".format(self) + "are unsatisfiable in context \n{}".format(context)
             ) from e
         logging.debug("Reduction: \n%s", a_red)
-        simplified = PolyhedralTermList.polytope_to_termlist(a_red, b_red, variables)
+        simplified = PolyhedralTermList.polytope_to_termlist(a_red, a_ids, b_red, variables)
         logging.debug("Back to terms: \n%s", simplified)
         return simplified
 
@@ -721,7 +725,14 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
             return True
         if self.lacks_constraints():
             return False
-        variables, self_mat, self_cons, ctx_mat, ctx_cons = PolyhedralTermList.termlist_to_polytope(  # noqa: WPS236
+        (
+            variables,
+            _,
+            self_mat,
+            self_cons,
+            ctx_mat,
+            ctx_cons,
+        ) = PolyhedralTermList.termlist_to_polytope(  # noqa: WPS236
             self, other
         )
         logging.debug("Polytope is \n%s", self_mat)
@@ -734,7 +745,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         Returns:
             True if constraints cannot be satisfied.
         """
-        _, self_mat, self_cons, _, _ = PolyhedralTermList.termlist_to_polytope(  # noqa: WPS236
+        _, _, self_mat, self_cons, _, _ = PolyhedralTermList.termlist_to_polytope(  # noqa: WPS236
             self, PolyhedralTermList([])
         )
         logging.debug("Polytope is \n%s", self_mat)
@@ -778,7 +789,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
             ValueError: Constraints are likely unfeasible.
         """
         obj = PolyhedralTermList([PolyhedralTerm(variables=objective, constant=0)])
-        _, self_mat, self_cons, obj_mat, _ = PolyhedralTermList.termlist_to_polytope(self, obj)  # noqa: WPS236
+        _, _, self_mat, self_cons, obj_mat, _ = PolyhedralTermList.termlist_to_polytope(self, obj)  # noqa: WPS236
         polarity = 1
         if maximize:
             polarity = -1
@@ -799,7 +810,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
     @staticmethod
     def termlist_to_polytope(
         terms: PolyhedralTermList, context: PolyhedralTermList
-    ) -> Tuple[list[Var], np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    ) -> Tuple[list[Var], list[pacti_id_t], np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """
         Converts a list of terms with its context into matrix-vector pairs.
 
@@ -823,8 +834,9 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
                 Context terms to convert to matrix-vector form.
 
         Returns:
-            A tuple `variables, A, b, a_h, b_h` consisting of the variable
-            order and the matrix-vector pairs for the terms and the context.
+            A tuple `variables, ids, A, b, a_h, b_h` consisting of the variable
+            order and the matrix-vector pairs for the terms and the context
+            with ids being the list of each pacti_id in terms.
         """
         variables = list(list_union(terms.vars, context.vars))
         a = []
@@ -845,17 +857,23 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
             a_h_ret = np.array([[]])
         else:
             a_h_ret = np.array(a_h)
+
+        ids = [t.pacti_id for t in terms.terms]
         # logging.debug("a is \n%s", a)
-        return variables, np.array(a), np.array(b), a_h_ret, np.array(b_h)
+        return variables, ids, np.array(a), np.array(b), a_h_ret, np.array(b_h)
 
     @staticmethod
-    def polytope_to_termlist(matrix: np.ndarray, vector: np.ndarray, variables: list[Var]) -> PolyhedralTermList:
+    def polytope_to_termlist(
+        matrix: np.ndarray, ids: list[pacti_id_t], vector: np.ndarray, variables: list[Var]
+    ) -> PolyhedralTermList:
         """
         Transforms a matrix-vector pair into a PolyhedralTermList.
 
         Args:
             matrix:
                 The matrix of the pair.
+            ids:
+                The pacti_id_t for each term corresponding to a matrix row.
             vector:
                 The vector of the pair.
             variables:
@@ -877,18 +895,24 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         for i in range(n):
             row = list(matrix[i])
             const = vector[i]
-            term = PolyhedralTerm.polytope_to_term(row, const, variables)
+            term = PolyhedralTerm.polytope_to_term(row, const, variables, ids[i])
             term_list.append(term)
         return PolyhedralTermList(list(term_list))
 
     @staticmethod
     def reduce_polytope(  # noqa: WPS231
-        a: np.ndarray, b: np.ndarray, a_help: Optional[np.ndarray] = None, b_help: Optional[np.ndarray] = None
-    ) -> Tuple[np.ndarray, np.ndarray]:
+        a_ids: list[pacti_id_t],
+        a: np.ndarray,
+        b: np.ndarray,
+        a_help: Optional[np.ndarray] = None,
+        b_help: Optional[np.ndarray] = None,
+    ) -> Tuple[np.ndarray, list[pacti_id_t], np.ndarray]:
         """
         Eliminate redundant constraints from a given polytope.
 
         Args:
+            a_ids:
+                List of pacti_id for the a terms
             a:
                 Matrix of H-representation of polytope to reduce.
             b:
@@ -903,6 +927,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
 
         Returns:
             a_temp: Matrix of H-representation of reduced polytope.
+            a_temp_ids: List of pacti_id corresponding to the rows of a that have been kept.
             b_temp: Vector of H-representation of reduced polytope.
         """
         if not isinstance(a_help, np.ndarray):
@@ -924,12 +949,13 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         if helper_present and m > 0:
             assert m_h == m
         if n == 0:
-            return a, b
+            return a, a_ids, b
         if n == 1 and not helper_present:
-            return a, b
+            return a, a_ids, b
 
         i = 0
         a_temp = np.copy(a)
+        a_temp_ids = a_ids.copy()
         b_temp = np.copy(b)
         while i < n:
             objective = a_temp[i, :] * -1
@@ -955,6 +981,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
             if res["status"] != 2 and -res["fun"] <= b_temp[i]:  # noqa: WPS309
                 logging.debug("Can remove")
                 a_temp = np.delete(a_temp, i, 0)
+                a_temp_ids.pop(i)
                 b_temp = np.delete(b_temp, i)
                 n -= 1
             else:
@@ -962,7 +989,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
             if res["status"] == 2:
                 raise ValueError("The constraints are unsatisfiable")
 
-        return a_temp, b_temp
+        return a_temp, a_temp_ids, b_temp
 
     @staticmethod
     def verify_polytope_containment(  # noqa: WPS231
@@ -1196,8 +1223,8 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         # now optimize
         retval = PolyhedralTermList.termlist_to_polytope(PolyhedralTermList(new_context_list), PolyhedralTermList([]))
         variables = retval[0]
-        new_context_mat = retval[1]
-        new_context_cons = retval[2]
+        new_context_mat = retval[2]
+        new_context_cons = retval[3]
         polarity = 1
         if refine:
             polarity = -1

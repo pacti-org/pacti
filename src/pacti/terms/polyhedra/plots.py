@@ -190,8 +190,8 @@ def _plot_constraints(
     # Now we plot the polygon
     res_tuple = PolyhedralTermList.termlist_to_polytope(plot_tl, PolyhedralTermList([]))
     variables = res_tuple[0]
-    a_mat = res_tuple[1]
-    b = res_tuple[2]
+    a_mat = res_tuple[2]
+    b = res_tuple[3]
     if variables[0] == y_var:
         # place the x variable in first row
         a_mat[:, [0, 1]] = a_mat[:, [1, 0]]  # noqa: WPS359 Found an iterable unpacking to list
