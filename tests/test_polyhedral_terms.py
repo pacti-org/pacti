@@ -81,6 +81,46 @@ def test_polyhedral_var_elim_by_refinement_6() -> None:
     reference = reference.elim_vars_by_refining(context, vars_elim)
     assert reference.terms == expected.terms
 
+def test_polyhedral_var_elim_by_refinement_7() -> None:
+    # a term that can be simplified with one element of the context
+    x = Var("soc2_exit")
+    reference = to_pts(["1.8326033352452644 duration_sbo3 - soc2_exit <= 0.0"])
+    context = to_pts([
+        "-duration_charging2 <= 0.0",
+        "3.807706401697026 duration_charging2 - 3.05877199128224 duration_dsn1 + soc1_entry <= 100.0",
+        "-duration_dsn1 <= 0.0",
+        "soc1_entry <= 100.0",
+        "4.325975663494785 duration_dsn1 - soc1_entry <= 0.0",
+        "-4.325975663494785 duration_dsn1 - output_soc1 + soc1_entry <= 0.0",
+        "3.058771991282236 duration_dsn1 + output_soc1 - soc1_entry <= 0.0",
+        "-3.807706401697026 duration_charging2 - output_soc1 + soc2_exit <= 0.0",
+        "3.0049617464042018 duration_charging2 + output_soc1 - soc2_exit <= 0.0"
+    ])
+    print(reference)
+    #expected = to_pts([""])
+    vars_elim = [x]
+    reference = reference.elim_vars_by_refining(context, vars_elim)
+    print(reference)
+    assert reference.terms == expected.terms
+
+
+
+[
+  "-duration_charging2 <= 0.0",
+  "3.807706401697026 duration_charging2 - 3.05877199128224 duration_dsn1 + soc1_entry <= 100.0",
+  "-duration_dsn1 <= 0.0",
+  "soc1_entry <= 100.0",
+  "4.325975663494785 duration_dsn1 - soc1_entry <= 0.0",
+  "-4.325975663494785 duration_dsn1 - output_soc1 + soc1_entry <= 0.0",
+  "3.058771991282236 duration_dsn1 + output_soc1 - soc1_entry <= 0.0",
+  "-3.807706401697026 duration_charging2 - output_soc1 + soc2_exit <= 0.0",
+  "3.0049617464042018 duration_charging2 + output_soc1 - soc2_exit <= 0.0"
+]
+
+
+
+
+
 
 def test_polyhedral_var_elim_by_relaxation_7() -> None:
     # a term that can be simplified with one element of the context
@@ -109,3 +149,7 @@ def test_issue171() -> None:
     transformed = constraints.elim_vars_by_relaxing(PolyhedralTermList([]), [Var("t0"), Var("dt0")])
     expected = to_pts(["-1*t1 <= 0"])
     assert expected == transformed
+
+
+if __name__ == "__main__":
+    test_polyhedral_var_elim_by_refinement_7()
