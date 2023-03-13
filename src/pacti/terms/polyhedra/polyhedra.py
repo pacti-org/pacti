@@ -725,16 +725,10 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
             return True
         if self.lacks_constraints():
             return False
-        (
-            variables,
-            _,
-            self_mat,
-            self_cons,
-            ctx_mat,
-            ctx_cons,
-        ) = PolyhedralTermList.termlist_to_polytope(  # noqa: WPS236
+        _, _, self_mat, self_cons, ctx_mat, ctx_cons = PolyhedralTermList.termlist_to_polytope(  # noqa: WPS236
             self, other
         )
+
         logging.debug("Polytope is \n%s", self_mat)
         return PolyhedralTermList.verify_polytope_containment(self_mat, self_cons, ctx_mat, ctx_cons)
 
@@ -860,7 +854,15 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
 
         ids = [t.pacti_id for t in terms.terms]
         # logging.debug("a is \n%s", a)
-        return variables, ids, np.array(a), np.array(b), a_h_ret, np.array(b_h)
+        result: Tuple[list[Var], list[pacti_id_t], np.ndarray, np.ndarray, np.ndarray, np.ndarray] = (
+            variables,
+            ids,
+            np.array(a),
+            np.array(b),
+            a_h_ret,
+            np.array(b_h),
+        )
+        return result # noqa WPS331
 
     @staticmethod
     def polytope_to_termlist(
