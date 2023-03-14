@@ -17,6 +17,7 @@ from typing import Tuple, Union
 
 numeric = Union[int, float]
 
+epsilon = 1e-8
 
 nb_contracts = 0
 nb_merge = 0
@@ -60,6 +61,8 @@ def CHRG_power(s: int, generation: tuple[float, float]) -> PolyhedralContract:
             f"soc{s}_entry <= 100.0",
             # Lower bound on entry soc
             f"-soc{s}_entry <= 0",
+            # Battery should not overcharge
+            f"soc{s}_entry + {generation[1]}*duration_charging{s} <= 100",
         ],
         guarantees=[
             # duration*generation(min) <= soc{exit} - soc{entry} <= duration*generation(max)
@@ -309,7 +312,7 @@ def uncertainty_generating_nav(s: int, noise: tuple[float, float]) -> Polyhedral
             f" u{s}_exit - u{s}_entry <=  {noise[1]}",
             f"-u{s}_exit + u{s}_entry <= -{noise[0]}",
             # no change to relative trajectory distance
-            f"r{s}_exit - r{s}_entry = 0",
+            f"| r{s}_exit - r{s}_entry | <= {epsilon}",
             # Lower-bound on the trajectory estimation uncertainty
             f"-u{s}_exit <= 0",
         ],

@@ -1,0 +1,53 @@
+[
+  {
+    "name": "c1",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [
+        "soc1_entry",
+        "duration_dsn1",
+        "duration_charging2"
+      ],
+      "output_vars": [
+        "soc2_exit",
+        "output_soc1"
+      ],
+      "assumptions": [
+        "-duration_charging2 <= 0.0",
+        "3.807706401697026 duration_charging2 - 3.05877199128224 duration_dsn1 + soc1_entry <= 100.0",
+        "-duration_dsn1 <= 0.0",
+        "soc1_entry <= 100.0",
+        "4.325975663494785 duration_dsn1 - soc1_entry <= 0.0"
+      ],
+      "guarantees": [
+        "-4.325975663494785 duration_dsn1 - output_soc1 + soc1_entry <= 0.0",
+        "3.058771991282236 duration_dsn1 + output_soc1 - soc1_entry <= 0.0",
+        "-3.807706401697026 duration_charging2 - output_soc1 + soc2_exit <= 0.0",
+        "3.0049617464042018 duration_charging2 + output_soc1 - soc2_exit <= 0.0"
+      ]
+    }
+  },
+  {
+    "name": "c2",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [
+        "duration_sbo3",
+        "soc2_exit"
+      ],
+      "output_vars": [
+        "soc3_exit"
+      ],
+      "assumptions": [
+        "-duration_sbo3 <= 0.0",
+        "soc2_exit <= 100.0",
+        "-soc2_exit <= 0.0",
+        "1.8326033352452644 duration_sbo3 - soc2_exit <= 0.0"
+      ],
+      "guarantees": [
+        "-1.8326033352452644 duration_sbo3 + soc2_exit - soc3_exit <= 0.0",
+        "0.03950731857471168 duration_sbo3 - soc2_exit + soc3_exit <= 0.0"
+      ]
+    }
+  }
+]

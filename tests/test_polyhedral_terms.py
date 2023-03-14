@@ -55,8 +55,8 @@ def test_polyhedral_var_elim_by_refinement_4() -> None:
     context = to_pts(["-x + y <= 0"])
     expected = to_pts(["x <= -1"])
     vars_elim = [x]
-    with pytest.raises(ValueError) as e_info:
-        reference = reference.elim_vars_by_refining(context, vars_elim)
+    reference = reference.elim_vars_by_refining(context, vars_elim)
+    assert reference.terms == expected.terms
 
 
 def test_polyhedral_var_elim_by_refinement_5() -> None:
@@ -109,3 +109,7 @@ def test_issue171() -> None:
     transformed = constraints.elim_vars_by_relaxing(PolyhedralTermList([]), [Var("t0"), Var("dt0")])
     expected = to_pts(["-1*t1 <= 0"])
     assert expected == transformed
+
+
+if __name__ == "__main__":
+    test_polyhedral_var_elim_by_refinement_4()

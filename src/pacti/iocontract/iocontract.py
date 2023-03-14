@@ -609,9 +609,9 @@ class IoContract(Generic[TermList_t]):
             conflict_variables = list_intersection(new_a.vars, assumptions_forbidden_vars)
             if conflict_variables:
                 raise IncompatibleArgsError(
-                    "Could not eliminate variables {}\n".format([str(x) for x in conflict_variables])
+                    "Could not eliminate variables {}\n".format([str(x) for x in assumptions_forbidden_vars])
                     + "by refining the assumptions \n{}\n".format(new_a.get_terms_with_vars(assumptions_forbidden_vars))
-                    + "using guarantees \n{}\n".format(self.g)
+                    + "using guarantees \n{}\n".format(self.a | self.g)
                 )
             assumptions = new_a | self.a
         elif other_helps_self and not self_helps_other:
@@ -620,7 +620,7 @@ class IoContract(Generic[TermList_t]):
             conflict_variables = list_intersection(new_a.vars, assumptions_forbidden_vars)
             if conflict_variables:
                 raise IncompatibleArgsError(
-                    "Could not eliminate variables {}".format([str(x) for x in conflict_variables])
+                    "Could not eliminate variables {}".format([str(x) for x in assumptions_forbidden_vars])
                     + " by refining the assumptions \n{}\n".format(
                         new_a.get_terms_with_vars(assumptions_forbidden_vars)
                     )
