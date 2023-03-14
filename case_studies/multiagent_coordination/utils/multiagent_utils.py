@@ -1,8 +1,11 @@
 import random
 from itertools import combinations
+
 import numpy as np
 from pacti.terms.polyhedra import PolyhedralContractCompound
 from pacti.iocontract import Var
+from pacti.terms.polyhedra import PolyhedralContract
+
 
 # coordinate class
 class Coord:
@@ -33,8 +36,9 @@ def distance(candidate, goal):
 
     return distance
 
+
 def indiv_distance(move, goal):
-    distance = np.abs(move[0]-goal.x)+np.abs(move[1]-goal.y)
+    distance = np.abs(move[0] - goal.x) + np.abs(move[1] - goal.y)
     return distance
 
 
@@ -57,6 +61,7 @@ def strategy(move_candidates, goal):
 
     move = random.choice(min_dist[min(sorted(min_dist.keys()))])
     return move
+
 
 def strategy_multiple_simple(move_candidates, goal):
     """
@@ -85,13 +90,13 @@ def strategy_multiple_simple(move_candidates, goal):
 
 
 def strategy_multiple(move_candidates, goal, cur_pos, last_pos):
-    '''
+    """
     Function to return a chosen move for all robots.
-    '''
+    """
     min_dist = {}
     for candidate in move_candidates:
         candidate_list = []
-        dist = distance(candidate,goal)
+        dist = distance(candidate, goal)
 
         if dist in min_dist.keys():
             for entry in min_dist[dist]:
@@ -102,8 +107,8 @@ def strategy_multiple(move_candidates, goal, cur_pos, last_pos):
 
     best_move = random.choice(min_dist[min(sorted(min_dist.keys()))])
 
-    best_dist = distance(best_move,goal)
-    cur_dist = distance(cur_pos,goal)
+    best_dist = distance(best_move, goal)
+    cur_dist = distance(cur_pos, goal)
 
     if best_dist < cur_dist:
         move_options = []
@@ -114,32 +119,36 @@ def strategy_multiple(move_candidates, goal, cur_pos, last_pos):
         moves = []
         for move in move_options:
             move_ok = True
-            for i in range(len(cur_pos)): # keep robots at goal at goal
-                if indiv_distance(cur_pos[i],goal[i]) < indiv_distance(move[i],goal[i]):#indiv_distance(cur_pos[i],goal[i]) < indiv_distance(move[i],goal[i]):
+            for i in range(len(cur_pos)):  # keep robots at goal at goal
+                if indiv_distance(cur_pos[i], goal[i]) < indiv_distance(
+                    move[i], goal[i]
+                ):  # indiv_distance(cur_pos[i],goal[i]) < indiv_distance(move[i],goal[i]):
                     move_ok = False
             if move_ok and move not in moves:
                 moves = moves + [move]
 
-        if random.random() < 0.1: # take the best move 10% of the time
+        if random.random() < 0.1:  # take the best move 10% of the time
             move = random.choice(min_dist[min(sorted(min_dist.keys()))])
-        else: # take a random good move
+        else:  # take a random good move
             move = random.choice(moves)
     # check that other moves are possible
     elif best_dist == cur_dist:
         moves = []
         for move in move_candidates:
             move_ok = True
-            if move == cur_pos: # remove staying in the same position
+            if move == cur_pos:  # remove staying in the same position
                 move_ok = False
-            if move == last_pos: # remove going back to previous position
+            if move == last_pos:  # remove going back to previous position
                 move_ok = False
-            for i in range(len(cur_pos)): # keep robots at goal at goal
-                if indiv_distance(cur_pos[i],goal[i]) == 0 and indiv_distance(move[i],goal[i]) != 0:#indiv_distance(cur_pos[i],goal[i]) < indiv_distance(move[i],goal[i]):
+            for i in range(len(cur_pos)):  # keep robots at goal at goal
+                if (
+                    indiv_distance(cur_pos[i], goal[i]) == 0 and indiv_distance(move[i], goal[i]) != 0
+                ):  # indiv_distance(cur_pos[i],goal[i]) < indiv_distance(move[i],goal[i]):
                     move_ok = False
-            if move_ok and move not in moves: # add move to possible moves
+            if move_ok and move not in moves:  # add move to possible moves
                 moves = moves + [move]
 
-        move = random.choice(moves) # take a random move
+        move = random.choice(moves)  # take a random move
 
     return move
 
@@ -148,7 +157,7 @@ def find_move_candidates_three(n, m, robots, T_0, contract):
     '''
     Evaluate the contracts for possible next positions
     of the robots to find allowed moves.
-    '''
+    """
     x_A_0 = Var("x_A_0")
     y_A_0 = Var("y_A_0")
     x_B_0 = Var("x_B_0")
@@ -199,14 +208,29 @@ def find_move_candidates_three(n, m, robots, T_0, contract):
                             del_x_B_C = (x_b - x_c) * (X_B_0 - X_C_0)
                             del_y_B_C = (y_b - y_c) * (Y_B_0 - Y_C_0)
 
-                            var_dict = {x_A_0: X_A_0, y_A_0: Y_A_0, x_B_0: X_B_0, \
-                               y_B_0: Y_B_0, x_C_0: X_C_0, y_C_0: Y_C_0, \
-                               current_distance: cur_dist, \
-                               t_0: T_0, t_1: T_1, x_A_1: x_a, y_A_1: y_a, \
-                               x_B_1: x_b, y_B_1: y_b, x_C_1: x_c, y_C_1: y_c,\
-                               delta_x_A_B: del_x_A_B, delta_y_A_B: del_y_A_B, \
-                               delta_x_A_C: del_x_A_C, delta_y_A_C: del_y_A_C, \
-                               delta_x_B_C: del_x_B_C, delta_y_B_C: del_y_B_C}
+                            var_dict = {
+                                x_A_0: X_A_0,
+                                y_A_0: Y_A_0,
+                                x_B_0: X_B_0,
+                                y_B_0: Y_B_0,
+                                x_C_0: X_C_0,
+                                y_C_0: Y_C_0,
+                                current_distance: cur_dist,
+                                t_0: T_0,
+                                t_1: T_1,
+                                x_A_1: x_a,
+                                y_A_1: y_a,
+                                x_B_1: x_b,
+                                y_B_1: y_b,
+                                x_C_1: x_c,
+                                y_C_1: y_c,
+                                delta_x_A_B: del_x_A_B,
+                                delta_y_A_B: del_y_A_B,
+                                delta_x_A_C: del_x_A_C,
+                                delta_y_A_C: del_y_A_C,
+                                delta_x_B_C: del_x_B_C,
+                                delta_y_B_C: del_y_B_C,
+                            }
 
                             if contract.a.contains_behavior(var_dict) and \
                                 contract.g.contains_behavior(var_dict):
@@ -216,9 +240,9 @@ def find_move_candidates_three(n, m, robots, T_0, contract):
 
 
 def robots_move(robots, move):
-    '''
+    """
     Apply next move and update positions.
-    '''
+    """
     for i in range(len(robots)):
         robots[i].move(move[i])
 

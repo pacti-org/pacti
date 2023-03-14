@@ -20,4 +20,13 @@ A case study on modeling the specifications of biological sensors to construct a
 
 <font size="5">[**Signal processing pipelines in digital ICs**](/pacti/_case_studies/digital_signal_processing/dsp_wl/)</font>
 
+A case study on word length analysis and optimization for digital signal processing circuit design.
+<img src="https://github.com/FormalSystems/media/blob/main/case_studies/digital_signal_processing/digital_filter_flow.png?raw=True" alt= "DSP figure" width="700"/>
+
 <font size="5">**Generating UAV topologies**</font>
+
+# Space Mission
+
+A case study on modeling the specifications of autonomous tasks for a planning/scheduling onboard of a space mission system.
+<font size="5">[**Signal processing pipelines in digital ICs**](/pacti/_case_studies/digital_signal_processing/dsp_wl/)</font>
+

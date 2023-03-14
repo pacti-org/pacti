@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import List, TypeVar, Union
 
-from pacti.iocontract.iocontract import TL_t, Var
+from pacti.iocontract.iocontract import TermList_t, Var
 from pacti.utils.lists import list_diff, list_intersection, list_union
 
 NTL_t = TypeVar("NTL_t", bound="NestedTermList")
@@ -16,7 +16,7 @@ class NestedTermList:
     """A collection of termlists interpreted as their disjunction."""
 
     def __init__(  # noqa: WPS231 too much cognitive complexity
-        self, nested_termlist: list[TL_t], force_empty_intersection: bool
+        self, nested_termlist: list[TermList_t], force_empty_intersection: bool
     ):
         """
         Class constructor.
@@ -36,7 +36,7 @@ class NestedTermList:
                         intersection = tli | tlj
                         if not intersection.is_empty():
                             raise ValueError("Terms %s and %s have nonempty intersection" % (tli, tlj))
-        self.nested_termlist: list[TL_t] = []
+        self.nested_termlist: list[TermList_t] = []
         for tl in nested_termlist:
             self.nested_termlist.append(tl.copy())
 
@@ -46,23 +46,27 @@ class NestedTermList:
             return "\nor \n".join(res)
         return "true"
 
-    def simplify(self: NTL_t, context: NTL_t):
+    def simplify(self: NTL_t, context: NTL_t, force_empty_intersection: bool) -> NTL_t:
         """
         Remove redundant terms in nested termlist.
 
         Args:
             context: Nested termlist serving as context for simplification.
+            force_empty_intersection: Make sure the resulting termlists have empty intersection.
+
+        Returns:
+            A contract with redundant terms removed in nested termlist.
         """
         new_nested_tl = []
         for self_tl in self.nested_termlist:
             for context_tl in context.nested_termlist:
-                new_tl = self_tl.copy()
                 try:
-                    new_tl.simplify(context_tl)
+                    new_tl = self_tl.simplify(context_tl)
                 except ValueError:
+                    new_tl = self_tl.copy()
                     continue
                 new_nested_tl.append(new_tl)
-        self.nested_termlist = type(self)(new_nested_tl).nested_termlist
+        return type(self)(new_nested_tl, force_empty_intersection)
 
     def intersect(self: NTL_t, other: NTL_t, force_empty_intersection: bool) -> NTL_t:
         """
@@ -199,9 +203,9 @@ class IoContractCompound:
         self.inputvars = input_vars.copy()
         self.outputvars = output_vars.copy()
         # simplify the guarantees with the assumptions
-        # self.g.simplify(self.a)
+        # self.g = self.g.simplify(self.a)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (
             "InVars: "
             + "["

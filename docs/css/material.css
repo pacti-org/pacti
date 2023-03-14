@@ -12,3 +12,14 @@
 .md-grid {
   max-width: 100%;
 }
+
+
+/* this property was set to 1000, preventing the header from hiding the copy button */
+.jupyter-wrapper .zeroclipboard-container {
+  z-index: 0 !important;
+}
+
+
+html {
+  scroll-padding-top: 4rem;
+}

@@ -1,8 +1,7 @@
-import matplotlib
 import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
 import numpy as np
 from IPython.display import HTML
+from matplotlib.animation import FuncAnimation
 from matplotlib.patches import Circle, Rectangle
 from utils.multiagent_utils import Coord
 

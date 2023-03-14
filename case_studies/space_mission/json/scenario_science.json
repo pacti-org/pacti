@@ -1,0 +1,48 @@
+[
+  {
+    "name": "scenario_science",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [
+        "d1_entry",
+        "duration_dsn1",
+        "c1_entry",
+        "duration_sbo3"
+      ],
+      "output_vars": [
+        "output_d1",
+        "output_c1",
+        "output_d2",
+        "output_c2",
+        "output_d4",
+        "output_c4",
+        "output_d3",
+        "output_c3",
+        "output_d5",
+        "output_c5"
+      ],
+      "assumptions": [
+        "-duration_sbo3 <= 0.0",
+        "-duration_dsn1 <= 0.0",
+        "d1_entry <= 100.0",
+        "-d1_entry <= 0.0"
+      ],
+      "guarantees": [
+        "d1_entry - 5.5 duration_dsn1 - output_d1 <= 0.0",
+        "-d1_entry + 5.2 duration_dsn1 + output_d1 <= 0.0",
+        "-output_d1 <= 0.0",
+        "-c1_entry + output_c1 = 0.0",
+        "-output_d1 + output_d2 = 0.0",
+        "-output_c1 + output_c2 = 0.0",
+        "-4.0 duration_sbo3 - output_d2 + output_d3 <= 0.0",
+        "3.0 duration_sbo3 + output_d2 - output_d3 <= 0.0",
+        "-4.0 duration_sbo3 - output_c2 + output_c3 <= 0.0",
+        "3.0 duration_sbo3 + output_c2 - output_c3 <= 0.0",
+        "-output_d3 + output_d4 = 0.0",
+        "-output_c3 + output_c4 = 0.0",
+        "-output_d4 + output_d5 = 0.0",
+        "-output_c4 + output_c5 = 0.0"
+      ]
+    }
+  }
+]

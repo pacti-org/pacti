@@ -1,0 +1,76 @@
+[
+  {
+    "name": "c1",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [
+        "soc1_entry",
+        "duration_dsn1"
+      ],
+      "output_vars": [
+        "soc1_exit"
+      ],
+      "assumptions": [
+        "-duration_dsn1 <= 0.0",
+        "soc1_entry <= 100.0",
+        "-soc1_entry <= 0.0",
+        "5.216612506625804 duration_dsn1 - soc1_entry <= 0.0"
+      ],
+      "guarantees": [
+        "-5.216612506625804 duration_dsn1 + soc1_entry - soc1_exit <= 0.0",
+        "1.513962128608989 duration_dsn1 - soc1_entry + soc1_exit <= 0.0"
+      ]
+    }
+  },
+  {
+    "name": "c2_with_inputs_renamed",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [
+        "duration_charging2",
+        "soc1_exit"
+      ],
+      "output_vars": [
+        "soc2_exit"
+      ],
+      "assumptions": [
+        "-duration_charging2 <= 0.0",
+        "soc1_exit <= 100.0",
+        "-soc1_exit <= 0.0",
+        "5.604821979031521 duration_charging2 + soc1_exit <= 100.0"
+      ],
+      "guarantees": [
+        "-5.604821979031521 duration_charging2 - soc1_exit + soc2_exit <= 0.0",
+        "2.1727035334442464 duration_charging2 + soc1_exit - soc2_exit <= 0.0"
+      ]
+    }
+  },
+  {
+    "name": "c12_with_outputs_kept",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [
+        "soc1_entry",
+        "duration_dsn1",
+        "duration_charging2"
+      ],
+      "output_vars": [
+        "soc2_exit",
+        "soc1_exit"
+      ],
+      "assumptions": [
+        "-duration_charging2 <= 0.0",
+        "5.604821979031521 duration_charging2 - 1.51396212860899 duration_dsn1 + soc1_entry <= 100.0",
+        "-duration_dsn1 <= 0.0",
+        "soc1_entry <= 100.0",
+        "5.216612506625804 duration_dsn1 - soc1_entry <= 0.0"
+      ],
+      "guarantees": [
+        "-5.216612506625804 duration_dsn1 + soc1_entry - soc1_exit <= 0.0",
+        "1.513962128608989 duration_dsn1 - soc1_entry + soc1_exit <= 0.0",
+        "-5.604821979031521 duration_charging2 - soc1_exit + soc2_exit <= 0.0",
+        "2.1727035334442464 duration_charging2 + soc1_exit - soc2_exit <= 0.0"
+      ]
+    }
+  }
+]
