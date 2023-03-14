@@ -7,6 +7,10 @@ from pacti.utils.errors import IncompatibleArgsError
 
 TEST_DATA_DIR = "tests/test_data/polyhedral_contracts"
 
+import logging
+FORMAT = "%(asctime)s:%(levelname)s:%(name)s:%(message)s"
+logging.basicConfig(filename="../pacti.log", filemode="w", level=logging.DEBUG, format=FORMAT)
+
 composition_test_instances = glob.glob(TEST_DATA_DIR + "**/*composition_success*.json", recursive=True)
 
 
@@ -22,6 +26,14 @@ def test_composition_success(test_instance: str) -> None:
         obtained = c[0].compose(c[1])
     except:
         assert False
+    print("*** Arg1")
+    print(c[0])
+    print("*** Arg2")
+    print(c[1])
+    print("*** Expected")
+    print(expected)
+    print("*** Obtained")
+    print(obtained)
     assert expected == obtained
 
 
@@ -116,3 +128,8 @@ def test_refinement(test_instance: str) -> None:
     assert c[0] <= c[1]
     if c[0] != c[1]:
         assert not (c[1] <= c[0])
+
+
+if __name__ == "__main__":
+    file = r"tests\test_data\polyhedral_contracts\test_composition_success_dspexample2composition11.json"
+    test_composition_success(file)

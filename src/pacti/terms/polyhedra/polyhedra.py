@@ -742,7 +742,8 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         term_list = list(self.terms)
         new_terms = self.copy()
         for i, term in enumerate(term_list):
-            helpers = (context | new_terms) - PolyhedralTermList([term])
+            helpers = (context | new_terms)
+            del helpers.terms[len(context.terms) + i]
             try:
                 new_term = PolyhedralTermList._transform_term(term, helpers, vars_to_elim, refine)
             except ValueError:
@@ -1178,8 +1179,6 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         logging.debug("Vars_to_elim %s \nTerm %s \nContext %s " % (vars_to_elim, term, context))
         conflict_vars = list_intersection(vars_to_elim, term.vars)
         new_context_list = []
-        logging.debug("This is the context")
-        logging.debug(context)
         # Extract from context the terms that only contain forbidden vars
         for context_term in context.terms:
             if not list_diff(context_term.vars, vars_to_elim):
@@ -1253,6 +1252,8 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
     def _tactic_4(term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, refine: bool, no_vars: list[Var]):
         logging.debug("************ Tactic 4")
         logging.debug("Vars_to_elim %s \nTerm %s \nContext %s " % (vars_to_elim, term, context))
+        if not refine:
+            raise ValueError("Only refinement is supported")
         conflict_vars = list_intersection(vars_to_elim, term.vars)
         if len(conflict_vars) > 1:
             raise ValueError("Tactic 4 unsuccessful")
