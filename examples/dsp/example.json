@@ -1,9 +1,9 @@
 {
     "contract1":{
-        "InputVars":[
+        "input_vars":[
             "a1", "a2", "e1", "e2"
         ],
-        "OutputVars":[
+        "output_vars":[
             "a3", "e3"
         ],
         "assumptions":
@@ -19,10 +19,10 @@
     },
 
     "contract2":{
-        "InputVars":[
+        "input_vars":[
             "a3", "a4", "e3", "e4"
         ],
-        "OutputVars":[
+        "output_vars":[
             "a5", "e5"
         ],
         "assumptions":

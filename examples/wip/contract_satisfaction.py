@@ -4,8 +4,8 @@ from pacti.iocontract import Var
 
 
 contract = PolyhedralContract.from_string(
-    InputVars=["x"],
-    OutputVars=["y"],
+    input_vars=["x"],
+    output_vars=["y"],
     assumptions=["x <= 2"],
     guarantees=["2x + 3y <= 7", "2y - 3x <= 8"])
 print(contract)

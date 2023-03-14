@@ -39,7 +39,7 @@ pacti.egg-info
 .venv
 .vscode
 *_case_studies*
-
+.history
 
 .idea/
 __pycache__/
@@ -72,6 +72,10 @@ output/
 Icon
 
 ./output/*
+
+# VS Code local history
+# https://marketplace.visualstudio.com/items?itemName=xyz.local-history
+.history
 
 # Thumbnails
 ._*
@@ -270,3 +274,6 @@ fabric.properties
 # pyenv
 .python-version
 examples/.ipynb_checkpoints/*
+
+# Draw.io
+*.bkp

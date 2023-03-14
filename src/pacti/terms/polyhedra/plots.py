@@ -100,12 +100,13 @@ def _substitute_in_termlist(  # noqa: WPS231
 ) -> PolyhedralTermList:
     plot_list = []
     for term in constraints.terms:
+        term_bk = term.copy()
         for var, val in var_values.items():  # noqa: VNE002
             term = term.substitute_variable(var=var, subst_with_term=PolyhedralTerm(variables={}, constant=-val))
         # we may have eliminated all variables after substitution
         if not term.vars:
             if term.constant < 0:
-                raise ValueError("Constraints are unfeasible")
+                raise ValueError("Constraint %s is violated by assignment" % (term_bk))
             else:
                 continue  # noqa: WPS503 Found useless returning `else` statement
         plot_list.append(term)
@@ -216,8 +217,8 @@ def _plot_constraints(
 
 if __name__ == "__main__":
     contract1 = {
-        "InputVars": ["u_1", "u_2"],
-        "OutputVars": ["x_1"],
+        "input_vars": ["u_1", "u_2"],
+        "output_vars": ["x_1"],
         "assumptions": [
             {"coefficients": {"u_1": -1, "u_2": 0}, "constant": 0},
             {"coefficients": {"u_1": 1, "u_2": 0}, "constant": 1},
@@ -235,8 +236,8 @@ if __name__ == "__main__":
     )
 
     contract2 = {
-        "InputVars": ["t0", "v0"],
-        "OutputVars": ["t1", "v1"],
+        "input_vars": ["t0", "v0"],
+        "output_vars": ["t1", "v1"],
         "assumptions": [{"coefficients": {"v0": 1}, "constant": 20000}],
         "guarantees": [
             {"coefficients": {"t1": -1}, "constant": -90},
@@ -254,8 +255,8 @@ if __name__ == "__main__":
     )
 
     contract3 = {
-        "InputVars": ["t10", "soc10", "d10", "e10", "r10"],
-        "OutputVars": ["t11", "soc11", "d11", "e11", "r11"],
+        "input_vars": ["t10", "soc10", "d10", "e10", "r10"],
+        "output_vars": ["t11", "soc11", "d11", "e11", "r11"],
         "assumptions": [
             {"constant": -6.0, "coefficients": {"soc10": -1.0}},
             {"constant": -1.0, "coefficients": {"d10": -1.0}},
