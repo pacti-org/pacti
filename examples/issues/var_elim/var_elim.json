@@ -1,52 +1,180 @@
 [
   {
     "name": "c1",
-    "type": "PolyhedralContract",
+    "type": "PolyhedralContract_machine",
     "data": {
       "input_vars": [
-        "soc1_entry",
+        "d1_entry",
         "duration_dsn1",
-        "duration_charging2"
+        "c1_entry"
       ],
       "output_vars": [
-        "soc2_exit",
-        "output_soc1"
+        "d2_exit",
+        "c2_exit",
+        "output_d1",
+        "output_c1"
       ],
       "assumptions": [
-        "-duration_charging2 <= 0.0",
-        "3.807706401697026 duration_charging2 - 3.05877199128224 duration_dsn1 + soc1_entry <= 100.0",
-        "-duration_dsn1 <= 0.0",
-        "soc1_entry <= 100.0",
-        "4.325975663494785 duration_dsn1 - soc1_entry <= 0.0"
+        {
+          "constant": 0.0,
+          "coefficients": {
+            "duration_dsn1": -1.0
+          }
+        },
+        {
+          "constant": 100.0,
+          "coefficients": {
+            "d1_entry": 1.0
+          }
+        },
+        {
+          "constant": 0.0,
+          "coefficients": {
+            "d1_entry": -1.0
+          }
+        }
       ],
       "guarantees": [
-        "-4.325975663494785 duration_dsn1 - output_soc1 + soc1_entry <= 0.0",
-        "3.058771991282236 duration_dsn1 + output_soc1 - soc1_entry <= 0.0",
-        "-3.807706401697026 duration_charging2 - output_soc1 + soc2_exit <= 0.0",
-        "3.0049617464042018 duration_charging2 + output_soc1 - soc2_exit <= 0.0"
+        {
+          "constant": 0.0,
+          "coefficients": {
+            "d1_entry": 1.0,
+            "duration_dsn1": -11.002354318354415,
+            "output_d1": -1.0
+          }
+        },
+        {
+          "constant": 0.0,
+          "coefficients": {
+            "d1_entry": -1.0,
+            "duration_dsn1": 0.4420684545266216,
+            "output_d1": 1.0
+          }
+        },
+        {
+          "constant": 0.0,
+          "coefficients": {
+            "output_d1": -1.0
+          }
+        },
+        {
+          "constant": 0,
+          "coefficients": {
+            "c1_entry": -1.0,
+            "output_c1": 1.0
+          }
+        },
+        {
+          "constant": 0,
+          "coefficients": {
+            "c1_entry": 1.0,
+            "output_c1": -1.0
+          }
+        },
+        {
+          "constant": 0,
+          "coefficients": {
+            "output_d1": -1.0,
+            "d2_exit": 1.0
+          }
+        },
+        {
+          "constant": 0,
+          "coefficients": {
+            "output_d1": 1.0,
+            "d2_exit": -1.0
+          }
+        },
+        {
+          "constant": 0,
+          "coefficients": {
+            "output_c1": -1.0,
+            "c2_exit": 1.0
+          }
+        },
+        {
+          "constant": 0,
+          "coefficients": {
+            "output_c1": 1.0,
+            "c2_exit": -1.0
+          }
+        }
       ]
     }
   },
   {
     "name": "c2",
-    "type": "PolyhedralContract",
+    "type": "PolyhedralContract_machine",
     "data": {
       "input_vars": [
         "duration_sbo3",
-        "soc2_exit"
+        "d2_exit",
+        "c2_exit"
       ],
       "output_vars": [
-        "soc3_exit"
+        "d3_exit",
+        "c3_exit"
       ],
       "assumptions": [
-        "-duration_sbo3 <= 0.0",
-        "soc2_exit <= 100.0",
-        "-soc2_exit <= 0.0",
-        "1.8326033352452644 duration_sbo3 - soc2_exit <= 0.0"
+        {
+          "constant": 0.0,
+          "coefficients": {
+            "duration_sbo3": -1.0
+          }
+        },
+        {
+          "constant": 100.0,
+          "coefficients": {
+            "duration_sbo3": 6.052065010639488,
+            "d2_exit": 1.0
+          }
+        },
+        {
+          "constant": 0.0,
+          "coefficients": {
+            "d2_exit": -1.0
+          }
+        },
+        {
+          "constant": 0.0,
+          "coefficients": {
+            "c2_exit": -1.0
+          }
+        }
       ],
       "guarantees": [
-        "-1.8326033352452644 duration_sbo3 + soc2_exit - soc3_exit <= 0.0",
-        "0.03950731857471168 duration_sbo3 - soc2_exit + soc3_exit <= 0.0"
+        {
+          "constant": 0.0,
+          "coefficients": {
+            "d3_exit": 1.0,
+            "duration_sbo3": -6.052065010639488,
+            "d2_exit": -1.0
+          }
+        },
+        {
+          "constant": 0.0,
+          "coefficients": {
+            "d3_exit": -1.0,
+            "duration_sbo3": 0.9168832092663171,
+            "d2_exit": 1.0
+          }
+        },
+        {
+          "constant": 0.0,
+          "coefficients": {
+            "duration_sbo3": -6.052065010639488,
+            "c3_exit": 1.0,
+            "c2_exit": -1.0
+          }
+        },
+        {
+          "constant": 0.0,
+          "coefficients": {
+            "duration_sbo3": 0.9168832092663171,
+            "c3_exit": -1.0,
+            "c2_exit": 1.0
+          }
+        }
       ]
     }
   }
