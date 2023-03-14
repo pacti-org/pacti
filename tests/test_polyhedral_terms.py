@@ -99,7 +99,7 @@ def test_simplify_1() -> None:
     reference = to_pts(["-0.5i <= -1.5", "3*i <= 1", "-1*i <= 2", "1*i <= 2"])
     expected = to_pts(["-0.5*i <= -1.5", "3*i <= 1"])
     with pytest.raises(ValueError):
-        reference.simplify()
+        _ = reference.simplify()
 
 
 def test_issue171() -> None:

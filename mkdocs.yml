@@ -46,6 +46,8 @@ theme:
   - navigation.tabs.sticky
   - navigation.top
 #  - toc.integrate
+  icon:
+    repo: fontawesome/brands/github
   font:
     #text: Eczar
     #text: Alegreya Sans
@@ -117,5 +119,5 @@ plugins:
 
 extra:
   social:
-  - icon: fontawesome/brands/github
-    link: https://github.com/FormalSystems
+  #- icon: fontawesome/brands/github
+  #  link: https://github.com/FormalSystems

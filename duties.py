@@ -32,15 +32,18 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 from duty import duty
 
-PY_SRC_PATHS = (Path(_) for _ in ("src", "tests", "case_studies"))
+DIR_SEARCH = ["src", "tests", "case_studies", "docs"]
+PY_SRC_PATHS = (Path(_) for _ in DIR_SEARCH)
 PY_SRC_LIST = tuple(str(_) for _ in PY_SRC_PATHS)
 PY_SRC = " ".join(PY_SRC_LIST)
-JNB_SRC = " ".join(glob.glob("**/*.ipynb", recursive=True))
+JNB_SRC = " ".join([el for src in DIR_SEARCH for el in glob.glob(src+"/**/*.ipynb", recursive=True)])
 TESTING = os.environ.get("TESTING", "0") in {"1", "true"}
 CI = os.environ.get("CI", "0") in {"1", "true", "yes", ""}
 WINDOWS = os.name == "nt"
 PTY = not WINDOWS and not CI
 MYPY_FLAGS = "--allow-any-generics --implicit-reexport --allow-untyped-calls"
+FLAKE8_FLAGS_JN = "--ignore=D100,WPS226,WPS421,WPS111,BLK100 "
+#FLAKE8_FLAGS_JN = ""
 
 
 def _latest(lines: List[str], regex: Pattern) -> Optional[str]:
@@ -159,7 +162,7 @@ def check_jn_quality(ctx):  # noqa: WPS231
         files: The files to check.
     """
     """Latest Flake8 cause problems with dependencies. Suppress for now."""
-    ctx.run(f"nbqa flake8 --config=config/flake8.ini {JNB_SRC}", title="Type checking notebooks", pty=PTY)
+    ctx.run(f"nbqa flake8 {FLAKE8_FLAGS_JN} --config=config/flake8.ini {JNB_SRC}", title="Checking notebook quality", pty=PTY)
 
 @duty
 def tox(ctx):
