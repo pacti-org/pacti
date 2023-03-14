@@ -3,7 +3,7 @@ from pacti.terms.polyhedra import PolyhedralContract
 
 from pacti import write_contracts_to_file, read_contracts_from_file
 from typing import Optional
-
+import json
 
 epsilon = 1e-8
 
