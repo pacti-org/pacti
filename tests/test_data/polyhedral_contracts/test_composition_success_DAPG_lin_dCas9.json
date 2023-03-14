@@ -1,0 +1,65 @@
+[
+  {
+    "name": "contract_DAPG_lin",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [
+        "DAPG"
+      ],
+      "output_vars": [
+        "xRFP"
+      ],
+      "assumptions": [
+        "DAPG <= 1.7",
+        "-DAPG <= -0.03"
+      ],
+      "guarantees": [
+        "1.1961077844311379 DAPG - xRFP = -0.03338323353293415"
+      ]
+    }
+  },
+  {
+    "name": "dCas9_contract_on",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [
+        "xRFP",
+        "dCas9"
+      ],
+      "output_vars": [
+        "RFP"
+      ],
+      "assumptions": [
+        "-xRFP <= -0.3",
+        "xRFP <= 1.0",
+        "-dCas9 <= -0.1",
+        "dCas9 <= 0.8"
+      ],
+      "guarantees": [
+        "RFP + 0.1 dCas9 + 2.0 xRFP <= 5.0"
+      ]
+    }
+  },
+  {
+    "name": "successful_comp_DAPG",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [
+        "DAPG",
+        "dCas9"
+      ],
+      "output_vars": [
+        "RFP"
+      ],
+      "assumptions": [
+        "-1.19610778443114 DAPG <= -0.2666167664670658",
+        "1.19610778443114 DAPG <= 0.966616766467066",
+        "-dCas9 <= -0.09999999999999998",
+        "dCas9 <= 0.8"
+      ],
+      "guarantees": [
+        "2.39221556886228 DAPG + RFP + 0.1 dCas9 <= 4.933233532934132"
+      ]
+    }
+  }
+]
