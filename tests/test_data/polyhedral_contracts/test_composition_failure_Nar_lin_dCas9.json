@@ -1,0 +1,43 @@
+[
+  {
+    "name": "contract_Nar_lin",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [
+        "Nar"
+      ],
+      "output_vars": [
+        "xRFP"
+      ],
+      "assumptions": [
+        "Nar <= 95.0",
+        "-Nar <= -2.0"
+      ],
+      "guarantees": [
+        "0.002113978494623656 Nar - xRFP = -0.0008279569892473138"
+      ]
+    }
+  },
+  {
+    "name": "dCas9_contract_on",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [
+        "xRFP",
+        "dCas9"
+      ],
+      "output_vars": [
+        "RFP"
+      ],
+      "assumptions": [
+        "-xRFP <= -0.3",
+        "xRFP <= 1.0",
+        "-dCas9 <= -0.1",
+        "dCas9 <= 0.8"
+      ],
+      "guarantees": [
+        "RFP + 0.1 dCas9 + 2.0 xRFP <= 5.0"
+      ]
+    }
+  }
+]
