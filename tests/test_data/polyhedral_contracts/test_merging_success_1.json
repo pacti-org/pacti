@@ -1,0 +1,53 @@
+[
+  {
+    "name": "c1",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [
+        "d2_entry"
+      ],
+      "output_vars": [
+        "d2_exit"
+      ],
+      "assumptions": [],
+      "guarantees": [
+        "-d2_entry + d2_exit = 0.0"
+      ]
+    }
+  },
+  {
+    "name": "c2",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [
+        "c2_entry"
+      ],
+      "output_vars": [
+        "c2_exit"
+      ],
+      "assumptions": [],
+      "guarantees": [
+        "-c2_entry + c2_exit = 0.0"
+      ]
+    }
+  },
+  {
+    "name": "c12",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [
+        "d2_entry",
+        "c2_entry"
+      ],
+      "output_vars": [
+        "d2_exit",
+        "c2_exit"
+      ],
+      "assumptions": [],
+      "guarantees": [
+        "-d2_entry + d2_exit = 0.0",
+        "-c2_entry + c2_exit = 0.0"
+      ]
+    }
+  }
+]

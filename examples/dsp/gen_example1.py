@@ -4,9 +4,9 @@ import json
 
 def form_contract(in_port1, in_port2, out_port, operation):
     ret_contract = {}
-    ret_contract["InputVars"] = [f"{in_port1.name}_a", f"{in_port1.name}_e",
+    ret_contract["input_vars"] = [f"{in_port1.name}_a", f"{in_port1.name}_e",
                                  f"{in_port2.name}_a", f"{in_port2.name}_e"]
-    ret_contract["OutputVars"] = [f"{out_port.name}_a", f"{out_port.name}_e"]
+    ret_contract["output_vars"] = [f"{out_port.name}_a", f"{out_port.name}_e"]
     a_bound = get_assumption_bound(in_port_1=in_port1, in_port_2=in_port2, out_port=out_port, operation_length_fn=operation)
     ret_contract["assumptions"] =  [{"coefficients":{f"{in_port1.name}_a":1, f"{in_port2.name}_a":1},
                                    "constant":a_bound}]

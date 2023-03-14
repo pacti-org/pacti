@@ -32,13 +32,18 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 from duty import duty
 
-PY_SRC_PATHS = (Path(_) for _ in ("src", "tests", "duties.py", "docs"))
+DIR_SEARCH = ["src", "tests", "case_studies", "docs"]
+PY_SRC_PATHS = (Path(_) for _ in DIR_SEARCH)
 PY_SRC_LIST = tuple(str(_) for _ in PY_SRC_PATHS)
 PY_SRC = " ".join(PY_SRC_LIST)
+JNB_SRC = " ".join([el for src in DIR_SEARCH for el in glob.glob(src+"/**/*.ipynb", recursive=True)])
 TESTING = os.environ.get("TESTING", "0") in {"1", "true"}
 CI = os.environ.get("CI", "0") in {"1", "true", "yes", ""}
 WINDOWS = os.name == "nt"
 PTY = not WINDOWS and not CI
+MYPY_FLAGS = "--allow-any-generics --implicit-reexport --allow-untyped-calls"
+FLAKE8_FLAGS_JN = "--ignore=D100,WPS226,WPS421,WPS111,BLK100 "
+#FLAKE8_FLAGS_JN = ""
 
 
 def _latest(lines: List[str], regex: Pattern) -> Optional[str]:
@@ -72,14 +77,14 @@ def update_changelog(
         template_url: The URL to the Jinja template used to render contents.
     """
     from git_changelog.build import Changelog
-    from git_changelog.commit import AngularConvention
+    from git_changelog.commit import AngularStyle
     from jinja2.sandbox import SandboxedEnvironment
 
-    AngularConvention.DEFAULT_RENDER.insert(0, AngularConvention.TYPES["build"])
+    AngularStyle.DEFAULT_RENDER.insert(0, AngularStyle.TYPES["build"])
     env = SandboxedEnvironment(autoescape=False)
     template_text = urlopen(template_url).read().decode("utf8")  # noqa: S310
     template = env.from_string(template_text)
-    changelog = Changelog(".", convention=AngularConvention)
+    changelog = Changelog(".", style=AngularStyle)
 
     if len(changelog.versions_list) == 1:
         last_version = changelog.versions_list[0]
@@ -147,6 +152,17 @@ def check_quality(ctx, files=PY_SRC):
     """Latest Flake8 cause problems with dependencies. Suppress for now."""
     ctx.run(f"flake8 --config=config/flake8.ini {files}", title="Checking code quality", pty=PTY)
 
+@duty  # noqa: WPS231
+def check_jn_quality(ctx):  # noqa: WPS231
+    """
+    Check notebook quality.
+
+    Arguments:
+        ctx: The context instance (passed automatically).
+        files: The files to check.
+    """
+    """Latest Flake8 cause problems with dependencies. Suppress for now."""
+    ctx.run(f"nbqa flake8 {FLAKE8_FLAGS_JN} --config=config/flake8.ini {JNB_SRC}", title="Checking notebook quality", pty=PTY)
 
 @duty
 def tox(ctx):
@@ -218,6 +234,7 @@ def check_docs(ctx):
     """
     Path("htmlcov").mkdir(parents=True, exist_ok=True)
     Path("htmlcov/index.html").touch(exist_ok=True)
+    copy_case_studies(ctx)
     ctx.run("mkdocs build -s", title="Building documentation", pty=PTY)
 
 
@@ -229,7 +246,18 @@ def check_types(ctx):  # noqa: WPS231
     Arguments:
         ctx: The context instance (passed automatically).
     """
-    ctx.run(f"mypy --config-file config/mypy.ini {PY_SRC}", title="Type-checking", pty=PTY)
+    ctx.run(f"mypy --strict {MYPY_FLAGS} --config-file=config/mypy.ini {PY_SRC}", title="Type-checking", pty=PTY)
+
+
+@duty  # noqa: WPS231
+def check_jn_types(ctx):  # noqa: WPS231
+    """
+    Check that notebooks are correctly typed.
+
+    Arguments:
+        ctx: The context instance (passed automatically).
+    """
+    ctx.run(f"nbqa mypy --strict {MYPY_FLAGS} --config-file=config/mypy.ini {JNB_SRC}", title="Type checking notebooks", pty=PTY)
 
 
 @duty(silent=True)
@@ -262,6 +290,19 @@ def copy_case_studies(ctx):
     py_files = glob.glob("docs/_case_studies/**/*.py", recursive=True)
     for path in py_files:
         pathlib.Path.unlink(Path(path))
+    # get all jupyter files in configuration
+    with open("mkdocs.yml") as f:
+        contents = f.readlines()
+    nb_files_use = []
+    for line in contents:
+        m = re.match("^.*?([^\s]*\.ipynb)", line)
+        if m:
+            nb_files_use.append(Path("docs/" + m.groups()[0]))
+    nb_files = glob.glob("docs/_case_studies/**/*.ipynb", recursive=True)
+    for file in nb_files:
+        path = Path(file)
+        if path not in nb_files_use:
+            pathlib.Path.unlink(path)
 
 
 @duty
@@ -272,6 +313,7 @@ def docs(ctx):
     Arguments:
         ctx: The context instance (passed automatically).
     """
+    copy_case_studies(ctx)
     ctx.run("mkdocs build", title="Building documentation")
 
 
@@ -316,6 +358,14 @@ def format(ctx):
     )
     ctx.run(f"isort {PY_SRC}", title="Ordering imports", pty=PTY)
     ctx.run(f"black {PY_SRC}", title="Formatting code", pty=PTY)
+    ############
+    ctx.run(
+        f"nbqa autoflake -ir --ignore-init-module-imports --remove-all-unused-imports {PY_SRC}",
+        title="Removing unused imports",
+        pty=PTY,
+    )
+    ctx.run(f"nbqa isort {PY_SRC}", title="Ordering imports", pty=PTY)
+    ctx.run(f"nbqa black {PY_SRC}", title="Formatting code", pty=PTY)
 
 
 @duty

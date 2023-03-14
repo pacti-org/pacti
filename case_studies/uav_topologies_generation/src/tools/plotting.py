@@ -3,6 +3,7 @@ from matplotlib import pyplot as plt
 from matplotlib.figure import Figure
 from numpy.typing import NDArray
 
+
 def generate_empty_grid(n_half: int):
     node_xyz = []
     color_xyz = []
@@ -54,7 +55,7 @@ def plot_3d_grid(
     return fig
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # g = generate_empty_grid(1)
     # g.savefig("empty_1", format="svg")
     new_grid = GridBuilder.generate(half_size=1)

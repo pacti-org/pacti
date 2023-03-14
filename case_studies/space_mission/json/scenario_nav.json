@@ -1,0 +1,55 @@
+[
+  {
+    "name": "scenario_nav",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [
+        "u1_entry",
+        "r1_entry",
+        "duration_sbo3",
+        "duration_tcm_deltav5"
+      ],
+      "output_vars": [
+        "output_u1",
+        "output_r1",
+        "output_u2",
+        "output_r2",
+        "output_u4",
+        "output_r4",
+        "output_u3",
+        "output_r3",
+        "output_u5",
+        "output_r5"
+      ],
+      "assumptions": [
+        "-duration_tcm_deltav5 <= 0.0",
+        "-duration_sbo3 <= 0.0",
+        "-u1_entry <= 0.0",
+        "u1_entry <= 100.0",
+        "-r1_entry <= 0.0",
+        "r1_entry <= 100.0"
+      ],
+      "guarantees": [
+        "output_u1 - u1_entry <= 2.0",
+        "-output_u1 + u1_entry <= -1.0",
+        "output_r1 - r1_entry = 0.0",
+        "output_u2 <= 100.0",
+        "-output_u1 + output_u2 <= 2.0",
+        "output_u1 - output_u2 <= -1.0",
+        "-output_r1 + output_r2 = 0.0",
+        "-0.6 duration_sbo3 + output_u2 - output_u3 <= 0.0",
+        "0.4 duration_sbo3 - output_u2 + output_u3 <= 0.0",
+        "-output_u3 <= 0.0",
+        "-output_r2 + output_r3 = 0.0",
+        "-output_u3 + output_u4 = 0.0",
+        "-output_r3 + output_r4 = 0.0",
+        "output_u5 <= 100.0",
+        "-1.6 duration_tcm_deltav5 - output_u4 + output_u5 <= 0.0",
+        "1.5 duration_tcm_deltav5 + output_u4 - output_u5 <= 0.0",
+        "-0.5 duration_tcm_deltav5 + output_r4 - output_r5 <= 0.0",
+        "0.4 duration_tcm_deltav5 - output_r4 + output_r5 <= 0.0",
+        "-output_r5 <= 0.0"
+      ]
+    }
+  }
+]
