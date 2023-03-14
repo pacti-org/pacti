@@ -624,7 +624,7 @@ class IoContract(Generic[TermList_t]):
                     + " by refining the assumptions \n{}\n".format(
                         new_a.get_terms_with_vars(assumptions_forbidden_vars)
                     )
-                    + "using guarantees \n{}\n".format(other.g)
+                    + "using guarantees \n{}\n".format(other.a | other.g)
                 )
             assumptions = new_a | other.a
         # contracts can't help each other
