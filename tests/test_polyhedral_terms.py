@@ -98,24 +98,11 @@ def test_polyhedral_var_elim_by_refinement_7() -> None:
     ])
     print(reference)
     #expected = to_pts([""])
-    vars_elim = [x]
+    vars_elim = [x, Var('output_soc1')]
     reference = reference.elim_vars_by_refining(context, vars_elim)
     print(reference)
     assert reference.terms == expected.terms
 
-
-
-[
-  "-duration_charging2 <= 0.0",
-  "3.807706401697026 duration_charging2 - 3.05877199128224 duration_dsn1 + soc1_entry <= 100.0",
-  "-duration_dsn1 <= 0.0",
-  "soc1_entry <= 100.0",
-  "4.325975663494785 duration_dsn1 - soc1_entry <= 0.0",
-  "-4.325975663494785 duration_dsn1 - output_soc1 + soc1_entry <= 0.0",
-  "3.058771991282236 duration_dsn1 + output_soc1 - soc1_entry <= 0.0",
-  "-3.807706401697026 duration_charging2 - output_soc1 + soc2_exit <= 0.0",
-  "3.0049617464042018 duration_charging2 + output_soc1 - soc2_exit <= 0.0"
-]
 
 
 
