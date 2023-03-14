@@ -410,6 +410,14 @@ class IoContract(Generic[TL_t]):
             + str(self.g)
         )
 
+    def __eq__(self, other):
+        return (
+            self.inputvars == other.inputvars
+            and self.outputvars == self.outputvars
+            and self.a == other.a
+            and self.g == other.g
+        )
+
     def rename_variable(  # noqa: WPS231 too much cognitive complexity
         self: Cont_t, source_var: Var, target_var: Var
     ) -> Cont_t:
@@ -682,11 +690,17 @@ class IoContract(Generic[TL_t]):
         logging.debug("Computing quotient guarantees")
         guarantees: TL_t = self.g
         logging.debug("Using existing guarantees to aid system-level guarantees")
-        guarantees = guarantees.elim_vars_by_refining(other.g | other.a, intvars)
+        try:
+            guarantees = guarantees.elim_vars_by_refining(other.g | other.a, intvars)
+        except ValueError:
+            guarantees = self.g
         logging.debug("Guarantees are %s" % (guarantees))
         logging.debug("Using system-level assumptions to aid quotient guarantees")
         guarantees = guarantees | other.a
-        guarantees = guarantees.elim_vars_by_refining(self.a, intvars)
+        try:
+            guarantees = guarantees.elim_vars_by_refining(self.a, intvars)
+        except ValueError:
+            ...
         logging.debug("Guarantees after processing: %s", guarantees)
         conflict_variables = list_intersection(guarantees.vars, intvars)
         if conflict_variables:
@@ -709,7 +723,12 @@ class IoContract(Generic[TL_t]):
 
         Returns:
             The result of merging.
+
+        Raises:
+            IncompatibleArgsError: trying to merge different contract types.
         """
+        if isinstance(self, type(other)):
+            raise IncompatibleArgsError("Asked to merge incompatible contracts")
         input_vars = list_union(self.inputvars, other.inputvars)
         output_vars = list_union(self.outputvars, other.outputvars)
         assumptions = self.a | other.a

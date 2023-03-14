@@ -2,7 +2,7 @@ from pacti.terms.polyhedra import *
 
 
 def test_empty_contract():
-    c = PolyhedralContract.from_string(InputVars=[], OutputVars=[], assumptions=[], guarantees=[])
+    c = PolyhedralContract.from_string(input_vars=[], output_vars=[], assumptions=[], guarantees=[])
     assert 0 == len(c.inputvars)
     assert 0 == len(c.outputvars)
     assert 0 == len(c.a.terms)
@@ -10,7 +10,7 @@ def test_empty_contract():
 
 
 def test_simple_contract():
-    c = PolyhedralContract.from_string(InputVars=["x"], OutputVars=[], assumptions=["-3x <= 0"], guarantees=[])
+    c = PolyhedralContract.from_string(input_vars=["x"], output_vars=[], assumptions=["-3x <= 0"], guarantees=[])
     assert 1 == len(c.inputvars)
     assert "x" == c.inputvars[0].name
     assert 0 == len(c.outputvars)
@@ -26,7 +26,7 @@ def test_simple_contract():
 
 # | LHS | <= RHS
 def test_pattern2_contract():
-    c = PolyhedralContract.from_string(InputVars=["x"], OutputVars=[], assumptions=["|x| <= 0"], guarantees=[])
+    c = PolyhedralContract.from_string(input_vars=["x"], output_vars=[], assumptions=["|x| <= 0"], guarantees=[])
     assert 1 == len(c.inputvars)
     assert "x" == c.inputvars[0].name
     assert 0 == len(c.outputvars)
@@ -50,7 +50,7 @@ def test_pattern2_contract():
 
 # | LHS | = 0
 def test_pattern3_contract():
-    c = PolyhedralContract.from_string(InputVars=["x"], OutputVars=[], assumptions=["|x| = 0"], guarantees=[])
+    c = PolyhedralContract.from_string(input_vars=["x"], output_vars=[], assumptions=["|x| = 0"], guarantees=[])
     assert 1 == len(c.inputvars)
     assert "x" == c.inputvars[0].name
     assert 0 == len(c.outputvars)
@@ -74,7 +74,7 @@ def test_pattern3_contract():
 
 # LHS = RHS
 def test_pattern4_contract():
-    c = PolyhedralContract.from_string(InputVars=["x"], OutputVars=[], assumptions=["x = 1"], guarantees=[])
+    c = PolyhedralContract.from_string(input_vars=["x"], output_vars=[], assumptions=["x = 1"], guarantees=[])
     assert 1 == len(c.inputvars)
     assert "x" == c.inputvars[0].name
     assert 0 == len(c.outputvars)
