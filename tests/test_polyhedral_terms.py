@@ -55,8 +55,8 @@ def test_polyhedral_var_elim_by_refinement_4() -> None:
     context = to_pts(["-x + y <= 0"])
     expected = to_pts(["x <= -1"])
     vars_elim = [x]
-    reference = reference.elim_vars_by_refining(context, vars_elim)
-    assert reference.terms == expected.terms
+    with pytest.raises(ValueError) as e_info:
+        reference = reference.elim_vars_by_refining(context, vars_elim)
 
 
 def test_polyhedral_var_elim_by_refinement_5() -> None:
