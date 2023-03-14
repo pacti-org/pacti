@@ -1252,6 +1252,8 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
     def _tactic_4(term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, refine: bool, no_vars: list[Var]):
         logging.debug("************ Tactic 4")
         logging.debug("Vars_to_elim %s \nTerm %s \nContext %s " % (vars_to_elim, term, context))
+        if not refine:
+            raise ValueError("Only refinement is supported")
         conflict_vars = list_intersection(vars_to_elim, term.vars)
         if len(conflict_vars) > 1:
             raise ValueError("Tactic 4 unsuccessful")
