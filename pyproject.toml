@@ -17,6 +17,7 @@ dependencies = [
     "matplotlib>=3.6.2",
     "typing-extensions>=4.5.0",
     "joblib>=1.2.0",
+    "ipykernel>=6.21.3",
 ]
 requires-python = ">=3.8, <=3.11.1"
 

@@ -20,14 +20,16 @@ numeric = Union[int, float]
 from generators import *
 
 parallelism=True
-
+run5=True
+run20=True
 
 # Now, let's apply the Latin hypercube generator to sample the scenario hyperparameters.
 from scipy.stats import qmc
 
 d = 12
 n5 = 200
-n20 = 200
+#n20 = 200
+n20 = 100
 
 mean_sampler = qmc.LatinHypercube(d=d)
 mean_sample5: np.ndarray = mean_sampler.random(n=n5)
@@ -82,19 +84,23 @@ nb_compose20 = 63
 nb_merge20 = 50
 
 
-m = 300
+#m = 300
+m = 30
 op_sampler: qmc.LatinHypercube = qmc.LatinHypercube(d=5)
 op_sample: np.ndarray = op_sampler.random(n=m)
 op_l_bounds = [
-    60.0,  # power: low range of initial soc
+    # 60.0,  # power: low range of initial soc
+    80.0,  # power: low range of initial soc
     10.0,  # power: low range of exit soc at each step
     10.0,  # alloc: low range of delta t
     60.0,  # sci: low range of d
     40.0,  # nav: low range of u
 ]
 op_u_bounds = [
-    90.0,  # power: high range of initial soc
-    50.0,  # power: low range of exit soc at each step
+    # 90.0,  # power: high range of initial soc
+    95.0,  # power: high range of initial soc
+    # 50.0,  # power: low range of exit soc at each step
+    30.0,  # power: low range of exit soc at each step
     50.0,  # alloc: high range of delta t
     100.0,  # sci: high range of  d
     90.0,  # nav: high range of  u
@@ -173,37 +179,37 @@ def schedulability_analysis5(scenario: tuple[list[tuple2float], PolyhedralContra
 import itertools
 import pickle
 
+if run5:
+    t0a = time.time()
+    if parallelism:
+        scenarios5: Optional[list[tuple[list[tuple2float], PolyhedralContract]]] = joblib.Parallel(n_jobs=joblib.cpu_count())(
+            joblib.delayed(make_scenario)(1, mean, dev, True) for mean, dev in zip(scaled_mean_sample5, dev_sample5)
+        )
+    else:
+        scenarios5: list[tuple[list[tuple2float], PolyhedralContract]] = [make_scenario(1, mean, dev, True) for mean, dev in zip(scaled_mean_sample5, dev_sample5)]
+    t1a = time.time()
 
-t0a = time.time()
-if parallelism:
-    scenarios5: Optional[list[tuple[list[tuple2float], PolyhedralContract]]] = joblib.Parallel(n_jobs=joblib.cpu_count())(
-        joblib.delayed(make_scenario)(1, mean, dev, True) for mean, dev in zip(scaled_mean_sample5, dev_sample5)
+    print(f"All {n5} hyperparameter variations of the 5-step scenario sequence generated in {t1a-t0a} seconds.")
+    print(
+        f"Total count of Pacti operations: {nb_contracts5} contracts; {nb_merge5} merges; and {nb_compose5} compositions."
     )
-else:
-    scenarios5: list[tuple[list[tuple2float], PolyhedralContract]] = [make_scenario(1, mean, dev, True) for mean, dev in zip(scaled_mean_sample5, dev_sample5)]
-t1a = time.time()
 
-print(f"All {n5} hyperparameter variations of the 5-step scenario sequence generated in {t1a-t0a} seconds.")
-print(
-    f"Total count of Pacti operations: {nb_contracts5} contracts; {nb_merge5} merges; and {nb_compose5} compositions."
-)
-
-t2a = time.time()
-if parallelism:
-    all_results5: Optional[list[tuple[list[tuple2float], PolyhedralContract]]] = joblib.Parallel(n_jobs=joblib.cpu_count())(
-        joblib.delayed(schedulability_analysis5)(scenario, req) for scenario in scenarios5 for req in scaled_op_sample
+    t2a = time.time()
+    if parallelism:
+        all_results5: Optional[list[tuple[list[tuple2float], PolyhedralContract]]] = joblib.Parallel(n_jobs=joblib.cpu_count())(
+            joblib.delayed(schedulability_analysis5)(scenario, req) for scenario in scenarios5 for req in scaled_op_sample
+        )
+    else:
+        all_results5: list[tuple[list[tuple2float], PolyhedralContract]] = [schedulability_analysis5(scenario, req) for scenario in scenarios5 for req in scaled_op_sample]
+    t3a = time.time()
+    results5 = [x for x in all_results5 if x is not None]
+    print(
+        f"Found {len(results5)} admissible schedules out of {m*n5} combinations generated from {m} variations of operational requirements for each of the {n5} scenarios.\nTotal time {t3a-t2a} seconds."
     )
-else:
-    all_results5: list[tuple[list[tuple2float], PolyhedralContract]] = [schedulability_analysis5(scenario, req) for scenario in scenarios5 for req in scaled_op_sample]
-t3a = time.time()
-results5 = [x for x in all_results5 if x is not None]
-print(
-    f"Found {len(results5)} admissible schedules out of {m*n5} combinations generated from {m} variations of operational requirements for each of the {n5} scenarios.\nTotal time {t3a-t2a} seconds."
-)
 
-f5 = open("case_studies/space_mission/data/results5.data", "wb")
-pickle.dump(results5, f5)
-f5.close()
+    f5 = open("case_studies/space_mission/data/results5.data", "wb")
+    pickle.dump(results5, f5)
+    f5.close()
 
 
 def make_op_requirements20(reqs: np.ndarray) -> PolyhedralContract:
@@ -287,33 +293,33 @@ def schedulability_analysis20(scenario: tuple[list[tuple2float], PolyhedralContr
     except ValueError:
         return None
 
-
-t0b = time.time()
-if parallelism:
-    scenarios20: Optional[list[tuple[list[tuple2float], PolyhedralContract]]] = joblib.Parallel(n_jobs=joblib.cpu_count())(
-        joblib.delayed(long_scenario)(mean, dev) for mean, dev in zip(scaled_mean_sample20, dev_sample20)
+if run20:
+    t0b = time.time()
+    if parallelism:
+        scenarios20: Optional[list[tuple[list[tuple2float], PolyhedralContract]]] = joblib.Parallel(n_jobs=joblib.cpu_count())(
+            joblib.delayed(long_scenario)(mean, dev) for mean, dev in zip(scaled_mean_sample20, dev_sample20)
+        )
+    else:
+        scenarios20: list[tuple[list[tuple2float], PolyhedralContract]] = [long_scenario(mean, dev) for mean, dev in zip(scaled_mean_sample20, dev_sample20)]
+    t1b = time.time()
+    print(f"All {n20} hyperparameter variations of the 20-step scenario sequence generated.\nTotal time {t1b-t0b} seconds using a maximum of {joblib.cpu_count()} concurrent jobs.")
+    print(
+        f"Total count of Pacti operations: {nb_contracts20} contracts; {nb_merge20} merges; and {nb_compose20} compositions."
     )
-else:
-    scenarios20: list[tuple[list[tuple2float], PolyhedralContract]] = [long_scenario(mean, dev) for mean, dev in zip(scaled_mean_sample20, dev_sample20)]
-t1b = time.time()
-print(f"All {n20} hyperparameter variations of the 20-step scenario sequence generated.\nTotal time {t1b-t0b} seconds using a maximum of {joblib.cpu_count()} concurrent jobs.")
-print(
-    f"Total count of Pacti operations: {nb_contracts20} contracts; {nb_merge20} merges; and {nb_compose20} compositions."
-)
 
-t2b = time.time()
-if parallelism:
-    all_results20 = joblib.Parallel(n_jobs=joblib.cpu_count())(
-        joblib.delayed(schedulability_analysis20)(scenario, req) for scenario in scenarios20 for req in scaled_op_sample
+    t2b = time.time()
+    if parallelism:
+        all_results20 = joblib.Parallel(n_jobs=joblib.cpu_count())(
+            joblib.delayed(schedulability_analysis20)(scenario, req) for scenario in scenarios20 for req in scaled_op_sample
+        )
+    else:
+        all_results20 = [schedulability_analysis20(scenario, req) for scenario in scenarios20 for req in scaled_op_sample]
+    t3b = time.time()
+    results20 = [x for x in all_results20 if x is not None]
+    print(
+        f"Found {len(results20)} admissible schedules out of {m*n20} combinations generated from {m} variations of operational requirements for each of the {n20} scenarios.\nTotal time {t3b-t2b} seconds using a maximum of {joblib.cpu_count()} concurrent jobs."
     )
-else:
-    all_results20 = [schedulability_analysis20(scenario, req) for scenario in scenarios20 for req in scaled_op_sample]
-t3b = time.time()
-results20 = [x for x in all_results20 if x is not None]
-print(
-    f"Found {len(results20)} admissible schedules out of {m*n20} combinations generated from {m} variations of operational requirements for each of the {n20} scenarios.\nTotal time {t3b-t2b} seconds using a maximum of {joblib.cpu_count()} concurrent jobs."
-)
 
-f20 = open("case_studies/space_mission/data/results20.data", "wb")
-pickle.dump(results20, f20)
-f20.close()
+    f20 = open("case_studies/space_mission/data/results20.data", "wb")
+    pickle.dump(results20, f20)
+    f20.close()

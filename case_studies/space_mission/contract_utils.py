@@ -9,9 +9,8 @@ import pathlib
 
 here=pathlib.Path(__file__).parent.resolve()
 
-#epsilon = 1e-5
-epsilon = 0
 
+epsilon = 0
 
 def nochange_contract(s: int, name: str) -> PolyhedralContract:
     """
@@ -31,37 +30,11 @@ def nochange_contract(s: int, name: str) -> PolyhedralContract:
             f"-{name}{s}_entry <= 0",
         ],
         guarantees=[
-            f"-{name}{s}_exit <= -{epsilon}",
-            f"| {name}{s}_exit - {name}{s}_entry | <= {epsilon}",
-            f"{name}{s}_exit <= {100-epsilon}",
+            # f"-{name}{s}_exit <= 0",
+            f"| {name}{s}_exit - {name}{s}_entry | <= 0",
+            # f"{name}{s}_exit <= 100",
         ],
 
-    )
-
-
-def duration_contract(s: int, duration: str, epsilon: float) -> PolyhedralContract:
-    """
-    Constructs a duration contract between entry/exit time variables derived from the step index.
-
-    Args:
-        s: step index
-        duration: step duration
-        epsilon: approximate equality for | entry - exit - duration | ~= 0
-
-    Returns:
-        A duration contract.
-    """
-    return PolyhedralContract.from_string(
-        input_vars=[f"t{s}_entry" f"{duration}{s}"],  # Scheduled start time  # Scheduled task duration
-        output_vars=[f"t{s}_exit"],  # Scheduled end time
-        assumptions=[
-            # positive scheduled duration
-            f"-{duration}{s} <= 0",
-        ],
-        guarantees=[
-            # task ends after the duration has elapsed
-            f"| t{s}_exit - t{s}_entry - {duration}{s} | <= {epsilon}",
-        ],
     )
 
 

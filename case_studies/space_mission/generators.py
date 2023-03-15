@@ -21,6 +21,8 @@ nb_contracts = 0
 nb_merge = 0
 nb_compose = 0
 
+#epsilon = 1e-6
+epsilon = 0
 
 def reset_nb_counts():
     global nb_contracts
@@ -67,9 +69,9 @@ def CHRG_power(s: int, generation: tuple[float, float]) -> PolyhedralContract:
             f" soc{s}_exit - soc{s}_entry - {generation[1]}*duration_charging{s} <= 0",
             f"-soc{s}_exit + soc{s}_entry + {generation[0]}*duration_charging{s} <= 0",
             # Battery cannot exceed maximum SOC
-            f"soc{s}_exit <= {100-epsilon}",
+            f"soc{s}_exit <= 100",
             # Battery should not completely discharge
-            f"-soc{s}_exit <= -{epsilon}",
+            f"-soc{s}_exit <= 0",
         ],
     )
     return spec
@@ -105,9 +107,9 @@ def power_consumer(s: int, task: str, consumption: tuple[float, float]) -> Polyh
             f" soc{s}_entry - soc{s}_exit - {consumption[1]}*duration_{task}{s} <= 0",
             f"-soc{s}_entry + soc{s}_exit + {consumption[0]}*duration_{task}{s} <= 0",
             # Battery cannot exceed maximum SOC
-            f"soc{s}_exit <= {100-epsilon}",
+            f"soc{s}_exit <= 100",
             # Battery should not completely discharge
-            f"-soc{s}_exit <= -{epsilon}",
+            f"-soc{s}_exit <= 0",
         ],
     )
     return spec
@@ -175,7 +177,7 @@ def DSN_data(s: int, speed: tuple[float, float]) -> PolyhedralContract:
             f" d{s}_entry - d{s}_exit - {speed[1]}*duration_dsn{s} <= 0",
             f"-d{s}_entry + d{s}_exit + {speed[0]}*duration_dsn{s} <= 0",
             # downlink cannot continue if there is no data left.
-            f"-d{s}_exit <= -{epsilon}",
+            f"-d{s}_exit <= 0",
         ],
     )
     return spec
@@ -208,7 +210,7 @@ def SBO_science_storage(s: int, generation: tuple[float, float]) -> PolyhedralCo
             f" d{s}_exit - d{s}_entry - {generation[1]}*duration_sbo{s} <= 0",
             f"-d{s}_exit + d{s}_entry + {generation[0]}*duration_sbo{s} <= 0",
             # Data volume cannot exceed the available storage capacity
-            f"d{s}_exit <= {100-epsilon}",
+            f"d{s}_exit <= 100",
         ],
     )
     return spec
@@ -233,7 +235,8 @@ def SBO_science_comulative(s: int, generation: tuple[float, float]) -> Polyhedra
         ],
         guarantees=[
             # cumulative data lower bound
-            f"-c{s}_exit <= -{epsilon}",
+            # NFR
+            # f"-c{s}_exit <= 0",
             # duration*generation(min) <= c{exit} - c{entry} <= duration*generation(max)
             f" c{s}_exit - c{s}_entry - {generation[1]}*duration_sbo{s} <= 0",
             f"-c{s}_exit + c{s}_entry + {generation[0]}*duration_sbo{s} <= 0",
@@ -300,21 +303,22 @@ def uncertainty_generating_nav(s: int, noise: tuple[float, float]) -> Polyhedral
         assumptions=[
             # 0 <= u{s}_entry <= 100
             f"-u{s}_entry <= 0",
-            f" u{s}_entry <= 100",
+            # f" u{s}_entry <= 100",
             # 0 <= r{s}_entry <= 100
             f"-r{s}_entry <= 0",
-            f" r{s}_entry <= 100",
+            # f" r{s}_entry <= 100",
         ],
         guarantees=[
             # upper bound u{s}_exit <= 100
-            f"u{s}_exit <= {100-epsilon}",
+            # f"u{s}_exit <= 100",
             # noise(min) <= u{exit} - u{entry} <= noise(max)
             f" u{s}_exit - u{s}_entry <=  {noise[1]}",
             f"-u{s}_exit + u{s}_entry <= -{noise[0]}",
             # no change to relative trajectory distance
+            # NFR
             f"| r{s}_exit - r{s}_entry | <= {epsilon}",
             # Lower-bound on the trajectory estimation uncertainty
-            f"-u{s}_exit <= -{epsilon}",
+            f"-u{s}_exit <= 0",
         ],
     )
     return spec
@@ -337,17 +341,18 @@ def SBO_nav_uncertainty(s: int, improvement: tuple[float, float]) -> PolyhedralC
         assumptions=[
             # Task has a positive scheduled duration
             f"-duration_sbo{s} <= 0",
+            f"-u{s}_entry <= 0",
             # Upper-bound on the trajectory estimation uncertainty
-            f"u{s}_entry <= 100",
+            # f"u{s}_entry <= 100",
         ],
         guarantees=[
             # upper bound u{s}_exit <= 100
-            f"u{s}_exit <= {100-epsilon}",
+            # f"u{s}_exit <= 100",
             # duration*improvement(min) <= u{entry} - u{exit} <= duration*improvement(max)
             f" u{s}_entry - u{s}_exit - {improvement[1]}*duration_sbo{s} <= 0",
             f"-u{s}_entry + u{s}_exit + {improvement[0]}*duration_sbo{s} <= 0",
             # Lower-bound on the trajectory estimation uncertainty
-            f"-u{s}_exit <= -{epsilon}",
+            f"-u{s}_exit <= 0",
         ],
     )
     return spec
@@ -369,16 +374,16 @@ def TCM_navigation_deltav_uncertainty(s: int, noise: tuple[float, float]) -> Pol
             f"-duration_tcm_dv{s} <= 0",
             # 0 <= u{s}_entry <= 100
             f"-u{s}_entry <= 0",
-            f" u{s}_entry <= 100",
+            # f" u{s}_entry <= 100",
         ],
         guarantees=[
             # upper bound u{s}_exit <= 100
-            f"u{s}_exit <= {100-epsilon}",
+            # f"u{s}_exit <= 100",
             # noise(min) <= u{exit} - u{entry} <= noise(max)
             f" u{s}_exit - u{s}_entry - {noise[1]} duration_tcm_dv{s} <= 0",
             f"-u{s}_exit + u{s}_entry + {noise[0]} duration_tcm_dv{s} <= 0",
             # Lower-bound on the trajectory estimation uncertainty
-            f"-u{s}_exit <= -{epsilon}",
+            f"-u{s}_exit <= 0",
         ],
     )
     return spec
@@ -397,16 +402,17 @@ def TCM_navigation_deltav_progress(s: int, progress: tuple[float, float]) -> Pol
         ],
         assumptions=[
             # upper bound on trajectory relative distance
-            f"r{s}_entry <= 100",
+            f"-r{s}_entry <= 0",
+            # f"r{s}_entry <= 100",
         ],
         guarantees=[
             # upper bound r{s}_exit <= 100
-            f"r{s}_exit <= {100-epsilon}",
+            # f"r{s}_exit <= 100",
             # duration*improvement(min) <= r{entry} - r{exit} <= duration*improvement(max)
             f" r{s}_entry - r{s}_exit - {progress[1]}*duration_tcm_dv{s} <= 0",
             f"-r{s}_entry + r{s}_exit + {progress[0]}*duration_tcm_dv{s} <= 0",
             # lower bound on trajectory relative distance
-            f"-r{s}_exit <= -{epsilon}",
+            f"-r{s}_exit <= 0",
         ],
     )
     return spec
