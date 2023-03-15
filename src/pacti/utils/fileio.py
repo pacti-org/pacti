@@ -46,7 +46,7 @@ def read_contracts_from_file(file_name: str) -> Tuple[list[polyhedra.PolyhedralC
     return contracts, names
 
 
-def write_contracts_to_file(
+def write_contracts_to_file(  # noqa: WPS231 too much cognitive complexity
     contracts: list[polyhedra.PolyhedralContract],
     names: list[str],
     file_name: str,
@@ -77,6 +77,13 @@ def write_contracts_to_file(
             else:
                 entry["type"] = "PolyhedralContract"
                 entry["data"] = c.to_dict()
+        elif isinstance(c, polyhedra.PolyhedralContractCompound):
+            entry["name"] = names[i]
+            if machine_representation:
+                raise ValueError("Unsupported representation")
+            entry["type"] = "PolyhedralContractCompound"
+            entry["data"] = c.to_dict()
+
         else:
             raise ValueError("Unsupported argument type")
         data.append(entry)

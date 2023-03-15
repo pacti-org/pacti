@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import logging
-from typing import List, TypeVar, Union
+from typing import Generic, List, TypeVar, Union
 
 from pacti.iocontract.iocontract import TermList_t, Var
 from pacti.utils.lists import list_diff, list_intersection, list_union
 
-NTL_t = TypeVar("NTL_t", bound="NestedTermList")
+NestedTermlist_t = TypeVar("NestedTermlist_t", bound="NestedTermList")
 numeric = Union[int, float]
 
 
@@ -46,7 +46,7 @@ class NestedTermList:
             return "\nor \n".join(res)
         return "true"
 
-    def simplify(self: NTL_t, context: NTL_t, force_empty_intersection: bool) -> NTL_t:
+    def simplify(self: NestedTermlist_t, context: NestedTermlist_t, force_empty_intersection: bool) -> NestedTermlist_t:
         """
         Remove redundant terms in nested termlist.
 
@@ -68,7 +68,7 @@ class NestedTermList:
                 new_nested_tl.append(new_tl)
         return type(self)(new_nested_tl, force_empty_intersection)
 
-    def intersect(self: NTL_t, other: NTL_t, force_empty_intersection: bool) -> NTL_t:
+    def intersect(self: NestedTermlist_t, other: NestedTermlist_t, force_empty_intersection: bool) -> NestedTermlist_t:
         """
         Semantically intersect two nested termlists.
 
@@ -99,7 +99,7 @@ class NestedTermList:
             varlist = list_union(varlist, tl.vars)
         return varlist
 
-    def copy(self: NTL_t, force_empty_intersection: bool) -> NTL_t:
+    def copy(self: NestedTermlist_t, force_empty_intersection: bool) -> NestedTermlist_t:
         """
         Makes copy of nested termlist.
 
@@ -134,7 +134,7 @@ class NestedTermList:
         return False
 
 
-class IoContractCompound:
+class IoContractCompound(Generic[NestedTermlist_t]):
     """
     Basic type for a compound IO contract.
 
@@ -150,7 +150,9 @@ class IoContractCompound:
         g: Contract guarantees.
     """
 
-    def __init__(self, assumptions: NTL_t, guarantees: NTL_t, input_vars: List[Var], output_vars: List[Var]):
+    def __init__(
+        self, assumptions: NestedTermlist_t, guarantees: NestedTermlist_t, input_vars: List[Var], output_vars: List[Var]
+    ):
         """
         Class constructor.
 
@@ -198,8 +200,8 @@ class IoContractCompound:
                 % (list_diff(guarantees.vars, list_union(input_vars, output_vars)), input_vars, output_vars, guarantees)
             )
 
-        self.a: NTL_t = assumptions.copy(True)
-        self.g: NTL_t = guarantees.copy(False)
+        self.a: NestedTermlist_t = assumptions.copy(True)
+        self.g: NestedTermlist_t = guarantees.copy(False)
         self.inputvars = input_vars.copy()
         self.outputvars = output_vars.copy()
         # simplify the guarantees with the assumptions
