@@ -677,7 +677,8 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         logging.debug("Simplifying terms: %s", self)
         logging.debug("Context: %s", context)
         if context:
-            result = PolyhedralTermList.termlist_to_polytope(self, context)
+            new_self = self - context
+            result = PolyhedralTermList.termlist_to_polytope(new_self, context)
         else:
             result = PolyhedralTermList.termlist_to_polytope(self, PolyhedralTermList())
 
