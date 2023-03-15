@@ -7,7 +7,9 @@ from typing import Any, Tuple
 from pacti.terms import polyhedra
 
 
-def read_contracts_from_file(file_name: str) -> Tuple[list[polyhedra.PolyhedralContract], list[str]]:
+def read_contracts_from_file(  # noqa: WPS231 too much cognitive complexity
+    file_name: str,
+) -> Tuple[list[polyhedra.PolyhedralContract], list[str]]:
     """
     Read contracts from a file.
 
@@ -40,6 +42,8 @@ def read_contracts_from_file(file_name: str) -> Tuple[list[polyhedra.PolyhedralC
         elif entry["type"] == "PolyhedralContract":
             polyhedra.serializer.validate_contract_dict(entry["data"], entry["name"], machine_representation=False)
             contracts.append(polyhedra.PolyhedralContract.from_string(**entry["data"]))
+        elif entry["type"] == "PolyhedralContractCompound":
+            contracts.append(polyhedra.PolyhedralContractCompound.from_string(**entry["data"]))
         else:
             raise ValueError()
 
