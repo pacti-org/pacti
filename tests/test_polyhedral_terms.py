@@ -109,3 +109,7 @@ def test_issue171() -> None:
     transformed = constraints.elim_vars_by_relaxing(PolyhedralTermList([]), [Var("t0"), Var("dt0")])
     expected = to_pts(["-1*t1 <= 0"])
     assert expected == transformed
+
+
+if __name__ == "__main__":
+    test_polyhedral_var_elim_by_refinement_4()

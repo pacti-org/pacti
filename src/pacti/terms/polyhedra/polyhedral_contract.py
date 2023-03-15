@@ -159,7 +159,7 @@ class PolyhedralContract(IoContract):
             assumptions=a,
             guarantees=g,
         )
-
+    
     def compose(self, other: PolyhedralContract, vars_to_keep: Optional[list[str]] = None) -> PolyhedralContract:
         """Compose polyhedral contracts.
 
