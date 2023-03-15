@@ -263,7 +263,7 @@ def _plot_transformed_constraints(
 
     # generate figure
     fig = plt.figure()
-    ax = fig.add_subplot(1, 1, 1, aspect="equal")
+    ax = fig.add_subplot(1, 1, 1, aspect="auto")
     #for i in range(len(x)):
     #    xx, yy = get_path(x[i-1],x[i],y[i-1],y[i],x_transform,y_transform,number_of_points)
     #    ax.plot(xx,yy)
