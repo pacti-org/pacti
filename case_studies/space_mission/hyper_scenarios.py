@@ -1,5 +1,5 @@
 import time
-from joblib import Parallel, delayed
+import joblib
 from base64 import b64decode
 from pacti import write_contracts_to_file
 from pacti.terms.polyhedra import *
@@ -19,6 +19,7 @@ numeric = Union[int, float]
 
 from generators import *
 
+parallelism=False
 
 # print(
 #     generate_navigation_scenario(
@@ -236,9 +237,12 @@ import pickle
 
 
 t0a = time.time()
-scenarios5: Optional[list[tuple[list[tuple2float], PolyhedralContract]]] = Parallel(n_jobs=32)(
-    delayed(make_scenario)(1, mean, dev, True) for mean, dev in zip(scaled_mean_sample5, dev_sample5)
-)
+if parallelism:
+    scenarios5: Optional[list[tuple[list[tuple2float], PolyhedralContract]]] = joblib.Parallel(n_jobs=joblib.cpu_count())(
+        joblib.delayed(make_scenario)(1, mean, dev, True) for mean, dev in zip(scaled_mean_sample5, dev_sample5)
+    )
+else:
+    scenarios5: list[tuple[list[tuple2float], PolyhedralContract]] = [make_scenario(1, mean, dev, True) for mean, dev in zip(scaled_mean_sample5, dev_sample5)]
 t1a = time.time()
 
 print(f"All {n5} hyperparameter variations of the 5-step scenario sequence generated in {t1a-t0a} seconds.")
@@ -247,13 +251,16 @@ print(
 )
 
 t2a = time.time()
-all_results5: Optional[list[tuple[list[tuple2float], PolyhedralContract]]] = Parallel(n_jobs=32)(
-    delayed(schedulability_analysis5)(scenario, req) for scenario in scenarios5 for req in scaled_op_sample
-)
+if parallelism:
+    all_results5: Optional[list[tuple[list[tuple2float], PolyhedralContract]]] = joblib.Parallel(n_jobs=joblib.cpu_count())(
+        joblib.delayed(schedulability_analysis5)(scenario, req) for scenario in scenarios5 for req in scaled_op_sample
+    )
+else:
+    all_results5: list[tuple[list[tuple2float], PolyhedralContract]] = [schedulability_analysis5(scenario, req) for scenario in scenarios5 for req in scaled_op_sample]
 t3a = time.time()
 results5 = [x for x in all_results5 if x is not None]
 print(
-    f"Found {len(results5)} admissible schedules out of {m*n5} combinations generated from {m} variations of operational requirements for each of the {n5} scenarios in {t3a-t2a} seconds."
+    f"Found {len(results5)} admissible schedules out of {m*n5} combinations generated from {m} variations of operational requirements for each of the {n5} scenarios.\nTotal time {t3a-t2a} seconds."
 )
 
 f5 = open("case_studies/space_mission/data/results5.data", "wb")
@@ -344,23 +351,29 @@ def schedulability_analysis20(scenario: tuple[list[tuple2float], PolyhedralContr
 
 
 t0b = time.time()
-scenarios20: Optional[list[tuple[list[tuple2float], PolyhedralContract]]] = Parallel(n_jobs=32)(
-    delayed(long_scenario)(mean, dev) for mean, dev in zip(scaled_mean_sample20, dev_sample20)
-)
+if parallelism:
+    scenarios20: Optional[list[tuple[list[tuple2float], PolyhedralContract]]] = joblib.Parallel(n_jobs=joblib.cpu_count())(
+        joblib.delayed(long_scenario)(mean, dev) for mean, dev in zip(scaled_mean_sample20, dev_sample20)
+    )
+else:
+    scenarios20: list[tuple[list[tuple2float], PolyhedralContract]] = [long_scenario(mean, dev) for mean, dev in zip(scaled_mean_sample20, dev_sample20)]
 t1b = time.time()
-print(f"All {n20} hyperparameter variations of the 20-step scenario sequence generated in {t1b-t0b} seconds.")
+print(f"All {n20} hyperparameter variations of the 20-step scenario sequence generated.\nTotal time {t1b-t0b} seconds using a maximum of {joblib.cpu_count()} concurrent jobs.")
 print(
     f"Total count of Pacti operations: {nb_contracts20} contracts; {nb_merge20} merges; and {nb_compose20} compositions."
 )
 
 t2b = time.time()
-all_results20 = Parallel(n_jobs=32)(
-    delayed(schedulability_analysis20)(scenario, req) for scenario in scenarios20 for req in scaled_op_sample
-)
+if parallelism:
+    all_results20 = joblib.Parallel(n_jobs=joblib.cpu_count())(
+        joblib.delayed(schedulability_analysis20)(scenario, req) for scenario in scenarios20 for req in scaled_op_sample
+    )
+else:
+    all_results20 = [schedulability_analysis20(scenario, req) for scenario in scenarios20 for req in scaled_op_sample]
 t3b = time.time()
 results20 = [x for x in all_results20 if x is not None]
 print(
-    f"Found {len(results20)} admissible schedules out of {m*n20} combinations generated from {m} variations of operational requirements for each of the {n20} scenarios in {t3b-t2b} seconds."
+    f"Found {len(results20)} admissible schedules out of {m*n20} combinations generated from {m} variations of operational requirements for each of the {n20} scenarios.\nTotal time {t3b-t2b} seconds using a maximum of {joblib.cpu_count()} concurrent jobs."
 )
 
 f20 = open("case_studies/space_mission/data/results20.data", "wb")
