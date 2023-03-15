@@ -9,7 +9,8 @@ import pathlib
 
 here=pathlib.Path(__file__).parent.resolve()
 
-epsilon = 1e-8
+#epsilon = 1e-5
+epsilon = 0
 
 
 def nochange_contract(s: int, name: str) -> PolyhedralContract:
@@ -30,8 +31,9 @@ def nochange_contract(s: int, name: str) -> PolyhedralContract:
             f"-{name}{s}_entry <= 0",
         ],
         guarantees=[
-            f"-{name}{s}_exit <= 0",
+            f"-{name}{s}_exit <= -{epsilon}",
             f"| {name}{s}_exit - {name}{s}_entry | <= {epsilon}",
+            f"{name}{s}_exit <= {100-epsilon}",
         ],
 
     )

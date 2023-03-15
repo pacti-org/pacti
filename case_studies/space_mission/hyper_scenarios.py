@@ -19,17 +19,8 @@ numeric = Union[int, float]
 
 from generators import *
 
-parallelism=False
+parallelism=True
 
-# print(
-#     generate_navigation_scenario(
-#         dsn_noise=(1.0, 2.0),
-#         chrg_noise=(1.0, 2.0),
-#         sbo_imp=(0.4, 0.6),
-#         tcm_dv_noise=(1.5, 1.6),
-#         tcm_dv_progress=(0.4, 0.5),
-#     )
-# )
 
 # Now, let's apply the Latin hypercube generator to sample the scenario hyperparameters.
 from scipy.stats import qmc
@@ -80,64 +71,11 @@ dev_sample20: np.ndarray = dev_sampler.random(n=o20)
 
 tuple2float = tuple[float, float]
 
-
-
-
-# tl0a=time.time()
-# ss=make_scenario(
-#         s=1,
-#         means=[
-#             3.0,  # power: min dns cons
-#             2.5,  # power: min chrg gen
-#             0.5,  # power: min sbo cons
-#             0.5,  # power: min tcm_h cons
-#             0.5,  # power: min tcm_dv cons
-#             5.0,  # science: min dsn speed
-#             3.0,  # science: min sbo gen
-#             1.0,  # nav: min dsn noise
-#             1.0,  # nav: min chrg noise
-#             0.3,  # nav: min sbo imp
-#             1.2,  # nav: min tcm_dv noise
-#             0.3,  # nav: min tcm_dv progress
-#         ],
-#         devs=[0.1] * 12,
-#     )
-# tl1a=time.time()
-# print("\n\n=======Short scenario")
-# print(ss)
-# print(f"1 short scenario in {tl1a-tl0a} seconds")
-# print_counts()
-
 nb_contracts5 = 23
 nb_compose5 = 12
 nb_merge5 = 10
 
 
-
-
-# tl0b=time.time()
-# ls=long_scenario(
-#         means=[
-#             3.0,  # power: min dns cons
-#             2.5,  # power: min chrg gen
-#             0.5,  # power: min sbo cons
-#             0.5,  # power: min tcm_h cons
-#             0.5,  # power: min tcm_dv cons
-#             5.0,  # science: min dsn speed
-#             3.0,  # science: min sbo gen
-#             1.0,  # nav: min dsn noise
-#             1.0,  # nav: min chrg noise
-#             0.3,  # nav: min sbo imp
-#             1.2,  # nav: min tcm_dv noise
-#             0.3,  # nav: min tcm_dv progress
-#         ],
-#         devs=[0.1] * 12,
-#     )
-# tl1b=time.time()
-# print("\n\n=======Long scenario")
-# print(ls)
-# print(f"1 long scenario in {tl1b-tl0b} seconds")
-# print_counts()
 
 nb_contracts20 = 115
 nb_compose20 = 63
