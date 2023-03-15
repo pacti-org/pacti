@@ -241,4 +241,4 @@ class IoContractCompound(Generic[NestedTermlist_t]):
         output_vars = list_union(self.outputvars, other.outputvars)
         assumptions = self.a.intersect(other.a, force_empty_intersection=True)
         guarantees = self.g.intersect(other.g, force_empty_intersection=False)
-        return IoContractCompound(assumptions, guarantees, input_vars, output_vars)
+        return type(self)(assumptions, guarantees, input_vars, output_vars)
