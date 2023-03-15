@@ -29,19 +29,20 @@ from scipy.stats import qmc
 d = 12
 n5 = 200
 #n20 = 200
-n20 = 100
+#n20 = 100
+n20 = 50
 
 mean_sampler = qmc.LatinHypercube(d=d)
 mean_sample5: np.ndarray = mean_sampler.random(n=n5)
 mean_sample20: np.ndarray = mean_sampler.random(n=n20)
 l_bounds = [
-    3.0,  # power: min dns cons
-    2.5,  # power: min chrg gen
-    0.5,  # power: min sbo cons
-    0.5,  # power: min tcm_h cons
-    0.5,  # power: min tcm_dv cons
+    2.0,  # power: min dns cons
+    4.0,  # power: min chrg gen
+    0.3,  # power: min sbo cons
+    0.2,  # power: min tcm_h cons
+    0.1,  # power: min tcm_dv cons
     5.0,  # science: min dsn speed
-    3.0,  # science: min sbo gen
+    2.0,  # science: min sbo gen
     1.0,  # nav: min dsn noise
     1.0,  # nav: min chrg noise
     0.3,  # nav: min sbo imp
@@ -49,18 +50,18 @@ l_bounds = [
     0.3,  # nav: min tcm_dv progress
 ]
 u_bounds = [
-    5.0,  # power: max dns cons
-    5.0,  # power: max chrg gen
-    1.5,  # power: max sbo cons
-    1.5,  # power: max tcm_h cons
-    1.5,  # power: max tcm_dv cons
+    2.2,  # power: max dns cons
+    4.5,  # power: max chrg gen
+    0.4,  # power: max sbo cons
+    0.3,  # power: max tcm_h cons
+    0.2,  # power: max tcm_dv cons
     6.0,  # science: max dsn speed
-    4.0,  # science: max sbo gen
-    2.0,  # nav: max dsn noise
-    2.0,  # nav: max chrg noise
+    10.0,  # science: max sbo gen
+    1.2,  # nav: max dsn noise
+    1.2,  # nav: max chrg noise
     0.8,  # nav: max sbo imp
-    1.8,  # nav: max tcm_dv noise
-    0.8,  # nav: max tcm_dv progress
+    1.4,  # nav: max tcm_dv noise
+    0.5,  # nav: max tcm_dv progress
 ]
 scaled_mean_sample5: np.ndarray = qmc.scale(sample=mean_sample5, l_bounds=l_bounds, u_bounds=u_bounds)
 scaled_mean_sample20: np.ndarray = qmc.scale(sample=mean_sample20, l_bounds=l_bounds, u_bounds=u_bounds)
@@ -92,7 +93,7 @@ op_l_bounds = [
     # 60.0,  # power: low range of initial soc
     80.0,  # power: low range of initial soc
     10.0,  # power: low range of exit soc at each step
-    10.0,  # alloc: low range of delta t
+    5.0,  # alloc: low range of delta t
     60.0,  # sci: low range of d
     40.0,  # nav: low range of u
 ]
@@ -101,7 +102,7 @@ op_u_bounds = [
     95.0,  # power: high range of initial soc
     # 50.0,  # power: low range of exit soc at each step
     30.0,  # power: low range of exit soc at each step
-    50.0,  # alloc: high range of delta t
+    200.0,  # alloc: high range of delta t
     100.0,  # sci: high range of  d
     90.0,  # nav: high range of  u
 ]
