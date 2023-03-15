@@ -234,6 +234,8 @@ def SBO_science_comulative(s: int, generation: tuple[float, float]) -> Polyhedra
             f"-c{s}_entry <= 0",
         ],
         guarantees=[
+            # cumulative data lower bound
+            f"-c{s}_exit <= 0",
             # duration*generation(min) <= c{exit} - c{entry} <= duration*generation(max)
             f" c{s}_exit - c{s}_entry - {generation[1]}*duration_sbo{s} <= 0",
             f"-c{s}_exit + c{s}_entry + {generation[0]}*duration_sbo{s} <= 0",
