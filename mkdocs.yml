@@ -2,7 +2,7 @@ site_name: "Pacti"
 site_description: "Compositional system analysis and design using contracts."
 site_url: "https://FormalSystems.github.io/pacti"
 repo_url: "https://github.com/FormalSystems/pacti"
-repo_name: "pacti"
+repo_name: ""
 site_dir: "site"
 watch: [README.md, CONTRIBUTING.md, CHANGELOG.md, src/pacti]
 
