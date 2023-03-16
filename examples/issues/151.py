@@ -15,7 +15,7 @@ c2 = PolyhedralContractCompound.from_string(
     input_vars=["i"],
     output_vars=["o"],
     assumptions=[["i <= 5"], ["-i <= -7"]],
-    guarantees=[["o - i <= 2"], ["i - o <= -3"]]
+    guarantees=[["o - i <= 2"], ["i - o <= -3"], ["i <= 5"]]
     )
 
 print(c2)

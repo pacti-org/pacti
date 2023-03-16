@@ -17,12 +17,12 @@ from typing import Tuple, Union
 
 numeric = Union[int, float]
 
-epsilon = 1e-8
-
 nb_contracts = 0
 nb_merge = 0
 nb_compose = 0
 
+#epsilon = 1e-6
+epsilon = 0
 
 def reset_nb_counts():
     global nb_contracts
@@ -69,7 +69,7 @@ def CHRG_power(s: int, generation: tuple[float, float]) -> PolyhedralContract:
             f" soc{s}_exit - soc{s}_entry - {generation[1]}*duration_charging{s} <= 0",
             f"-soc{s}_exit + soc{s}_entry + {generation[0]}*duration_charging{s} <= 0",
             # Battery cannot exceed maximum SOC
-            f"soc{s}_exit <= 100.0",
+            f"soc{s}_exit <= 100",
             # Battery should not completely discharge
             f"-soc{s}_exit <= 0",
         ],
@@ -107,7 +107,7 @@ def power_consumer(s: int, task: str, consumption: tuple[float, float]) -> Polyh
             f" soc{s}_entry - soc{s}_exit - {consumption[1]}*duration_{task}{s} <= 0",
             f"-soc{s}_entry + soc{s}_exit + {consumption[0]}*duration_{task}{s} <= 0",
             # Battery cannot exceed maximum SOC
-            f"soc{s}_exit <= 100.0",
+            f"soc{s}_exit <= 100",
             # Battery should not completely discharge
             f"-soc{s}_exit <= 0",
         ],
@@ -234,6 +234,9 @@ def SBO_science_comulative(s: int, generation: tuple[float, float]) -> Polyhedra
             f"-c{s}_entry <= 0",
         ],
         guarantees=[
+            # cumulative data lower bound
+            # NFR
+            # f"-c{s}_exit <= 0",
             # duration*generation(min) <= c{exit} - c{entry} <= duration*generation(max)
             f" c{s}_exit - c{s}_entry - {generation[1]}*duration_sbo{s} <= 0",
             f"-c{s}_exit + c{s}_entry + {generation[0]}*duration_sbo{s} <= 0",
@@ -300,18 +303,19 @@ def uncertainty_generating_nav(s: int, noise: tuple[float, float]) -> Polyhedral
         assumptions=[
             # 0 <= u{s}_entry <= 100
             f"-u{s}_entry <= 0",
-            f" u{s}_entry <= 100",
+            # f" u{s}_entry <= 100",
             # 0 <= r{s}_entry <= 100
             f"-r{s}_entry <= 0",
-            f" r{s}_entry <= 100",
+            # f" r{s}_entry <= 100",
         ],
         guarantees=[
             # upper bound u{s}_exit <= 100
-            f"u{s}_exit <= 100",
+            # f"u{s}_exit <= 100",
             # noise(min) <= u{exit} - u{entry} <= noise(max)
             f" u{s}_exit - u{s}_entry <=  {noise[1]}",
             f"-u{s}_exit + u{s}_entry <= -{noise[0]}",
             # no change to relative trajectory distance
+            # NFR
             f"| r{s}_exit - r{s}_entry | <= {epsilon}",
             # Lower-bound on the trajectory estimation uncertainty
             f"-u{s}_exit <= 0",
@@ -337,12 +341,13 @@ def SBO_nav_uncertainty(s: int, improvement: tuple[float, float]) -> PolyhedralC
         assumptions=[
             # Task has a positive scheduled duration
             f"-duration_sbo{s} <= 0",
+            f"-u{s}_entry <= 0",
             # Upper-bound on the trajectory estimation uncertainty
-            f"u{s}_entry <= 100",
+            # f"u{s}_entry <= 100",
         ],
         guarantees=[
             # upper bound u{s}_exit <= 100
-            f"u{s}_exit <= 100",
+            # f"u{s}_exit <= 100",
             # duration*improvement(min) <= u{entry} - u{exit} <= duration*improvement(max)
             f" u{s}_entry - u{s}_exit - {improvement[1]}*duration_sbo{s} <= 0",
             f"-u{s}_entry + u{s}_exit + {improvement[0]}*duration_sbo{s} <= 0",
@@ -369,11 +374,11 @@ def TCM_navigation_deltav_uncertainty(s: int, noise: tuple[float, float]) -> Pol
             f"-duration_tcm_dv{s} <= 0",
             # 0 <= u{s}_entry <= 100
             f"-u{s}_entry <= 0",
-            f" u{s}_entry <= 100",
+            # f" u{s}_entry <= 100",
         ],
         guarantees=[
             # upper bound u{s}_exit <= 100
-            f"u{s}_exit <= 100",
+            # f"u{s}_exit <= 100",
             # noise(min) <= u{exit} - u{entry} <= noise(max)
             f" u{s}_exit - u{s}_entry - {noise[1]} duration_tcm_dv{s} <= 0",
             f"-u{s}_exit + u{s}_entry + {noise[0]} duration_tcm_dv{s} <= 0",
@@ -397,11 +402,12 @@ def TCM_navigation_deltav_progress(s: int, progress: tuple[float, float]) -> Pol
         ],
         assumptions=[
             # upper bound on trajectory relative distance
-            f"r{s}_entry <= 100",
+            f"-r{s}_entry <= 0",
+            # f"r{s}_entry <= 100",
         ],
         guarantees=[
             # upper bound r{s}_exit <= 100
-            f"r{s}_exit <= 100",
+            # f"r{s}_exit <= 100",
             # duration*improvement(min) <= r{entry} - r{exit} <= duration*improvement(max)
             f" r{s}_entry - r{s}_exit - {progress[1]}*duration_tcm_dv{s} <= 0",
             f"-r{s}_entry + r{s}_exit + {progress[0]}*duration_tcm_dv{s} <= 0",
@@ -462,59 +468,6 @@ tuple2float = tuple[float, float]
 def make_range(mean: float, dev: float) -> tuple2float:
     delta = mean * dev
     return (mean - delta, mean + delta)
-
-# def generate_power_scenario_experiment(
-#     s: int,
-#     dsn_cons: tuple[float, float],
-#     chrg_gen: tuple[float, float],
-#     sbo_cons: tuple[float, float],
-#     tcmh_cons: tuple[float, float],
-#     tcmdv_cons: tuple[float, float],
-#     rename_outputs: bool = False,
-# ) -> PolyhedralContract:
-#     global nb_compose
-#     nb_compose += 4  # scenario_sequence
-
-#     s1 = power_consumer(s=s, task="dsn", consumption=dsn_cons)
-#     s2 = CHRG_power(s=s + 1, generation=chrg_gen)
-#     s3 = power_consumer(s=s + 2, task="sbo", consumption=sbo_cons)
-#     s4 = power_consumer(s=s + 3, task="tcm_h", consumption=tcmh_cons)
-#     s5 = power_consumer(s=s + 4, task="tcm_dv", consumption=tcmdv_cons)
-
-#     steps2 = scenario_sequence(c1=s1, c2=s2, variables=power_variables, c1index=s)
-#     steps3 = scenario_sequence(c1=steps2, c2=s3, variables=power_variables, c1index=s + 1)
-#     # steps4 = scenario_sequence(c1=steps3, c2=s4, variables=power_variables, c1index=s + 2)
-#     # steps5 = scenario_sequence(c1=steps4, c2=s5, variables=power_variables, c1index=s + 3)
-
-#     # if rename_outputs:
-#     #     return steps5.rename_variables([(f"soc{s+4}_exit", f"output_soc{s+4}")])
-#     # else:
-#     #     return steps5
-
-#     write_contracts_to_file(
-#         contracts=[steps2, s3, steps3], 
-#         names=["dsn_charging", "sbo", "dsn_charging_sbo"],
-#         file_name="power_composition_problem.json")
-#     return steps3
-
-# def make_power_scenario(
-#     s: int, means: np.ndarray, devs: np.ndarray, rename_outputs: bool = False
-# ) -> tuple[list[tuple2float], PolyhedralContract]:
-#     global nb_merge
-#     nb_merge += 2
-
-#     ranges = [make_range(m, d) for (m, d) in zip(means, devs)]
-#     scenario_pwr = generate_power_scenario_experiment(
-#         s,
-#         dsn_cons=ranges[0],
-#         chrg_gen=ranges[1],
-#         sbo_cons=ranges[2],
-#         tcmh_cons=ranges[3],
-#         tcmdv_cons=ranges[4],
-#         rename_outputs=rename_outputs,
-#     )
-
-#     return (ranges, scenario_pwr)
 
 def make_scenario(
     s: int, means: np.ndarray, devs: np.ndarray, rename_outputs: bool = False

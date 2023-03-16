@@ -2,7 +2,7 @@ import random
 from itertools import combinations
 
 import numpy as np
-
+from pacti.terms.polyhedra import PolyhedralContractCompound
 from pacti.iocontract import Var
 from pacti.terms.polyhedra import PolyhedralContract
 
@@ -153,40 +153,8 @@ def strategy_multiple(move_candidates, goal, cur_pos, last_pos):
     return move
 
 
-def check_collision_quadrants(merged_dyn_contract, c_q1, c_q2, c_q3, c_q4):
-    """
-    Merge each of the collision contracts with
-    the dynamics contract.
-    """
-    merged_contracts = []
-    try:
-        merged_contract_q1 = merged_dyn_contract.merge(c_q1)
-        merged_contracts.append(merged_contract_q1)
-    except:
-        pass
-
-    try:
-        merged_contract_q2 = merged_dyn_contract.merge(c_q2)
-        merged_contracts.append(merged_contract_q2)
-    except:
-        pass
-
-    try:
-        merged_contract_q3 = merged_dyn_contract.merge(c_q3)
-        merged_contracts.append(merged_contract_q3)
-    except:
-        pass
-
-    try:
-        merged_contract_q4 = merged_dyn_contract.merge(c_q4)
-        merged_contracts.append(merged_contract_q4)
-    except:
-        pass
-    return merged_contracts
-
-
-def find_move_candidates_multiple(n, m, robots, T_0, contract, c_dyn_collision):
-    """
+def find_move_candidates_three(n, m, robots, T_0, contract):
+    '''
     Evaluate the contracts for possible next positions
     of the robots to find allowed moves.
     """
@@ -224,14 +192,15 @@ def find_move_candidates_multiple(n, m, robots, T_0, contract, c_dyn_collision):
     cur_dist = min(current_distance_1, current_distance_2, current_distance_3)
     T_1 = T_0 + 1
 
-    # find possible [(x,y),(x,y)] options for robots
+    # find possible [(x,y),(x,y),(x,y)] options for robots
     possible_sol = []
-    for x_a in [max(X_A_0 - 1, 0), X_A_0, min(X_A_0 + 1, n)]:
-        for y_a in [max(Y_A_0 - 1, 0), Y_A_0, min(Y_A_0 + 1, m)]:
-            for x_b in [max(X_B_0 - 1, 0), X_B_0, min(X_B_0 + 1, n)]:
-                for y_b in [max(Y_B_0 - 1, 0), Y_B_0, min(Y_B_0 + 1, m)]:
-                    for x_c in [max(X_C_0 - 1, 0), X_C_0, min(X_C_0 + 1, n)]:
-                        for y_c in [max(Y_C_0 - 1, 0), Y_C_0, min(Y_C_0 + 1, m)]:
+    for x_a in list(set([max(X_A_0-1,0), X_A_0, min(X_A_0+1,n)])):
+        for y_a in list(set([max(Y_A_0-1,0), Y_A_0, min(Y_A_0+1,m)])):
+            for x_b in list(set([max(X_B_0-1,0), X_B_0, min(X_B_0+1,n)])):
+                for y_b in list(set([max(Y_B_0-1,0), Y_B_0, min(Y_B_0+1,m)])):
+                    for x_c in list(set([max(X_C_0-1,0), X_C_0, min(X_C_0+1,n)])):
+                        for y_c in list(set([max(Y_C_0-1,0), Y_C_0, min(Y_C_0+1,m)])):
+
                             del_x_A_B = (x_a - x_b) * (X_A_0 - X_B_0)
                             del_y_A_B = (y_a - y_b) * (Y_A_0 - Y_B_0)
                             del_x_A_C = (x_a - x_c) * (X_A_0 - X_C_0)
@@ -263,31 +232,9 @@ def find_move_candidates_multiple(n, m, robots, T_0, contract, c_dyn_collision):
                                 delta_y_B_C: del_y_B_C,
                             }
 
-                            # from ipdb import set_trace as st
-                            # st()
-                            if (
-                                c_dyn_collision.a.contains_behavior(var_dict)
-                                and c_dyn_collision.g.contains_behavior(var_dict)
-                                and contract.a.contains_behavior(var_dict)
-                                and contract.g.contains_behavior(var_dict)
-                            ):
-                                possible_sol.append([(x_a, y_a), (x_b, y_b), (x_c, y_c)])
-
-                            # sol = True
-                            # for g in c_dyn_collision.g.terms:
-                            #     dynamic_collision_holds = eval(str(g)+'<='+str(g.constant))
-                            #     if not dynamic_collision_holds:
-                            #         sol = False
-                            # if sol:
-                            #     for g in contract.g.terms:
-                            #         holds = eval(str(g)+'<='+str(g.constant))
-                            #         if not holds or not dynamic_collision_holds:
-                            #             sol = False
-                            # if sol:
-    #                         #     possible_sol.append([(x_a, y_a), (x_b, y_b), (x_c, y_c)])
-    # if possible_sol == []:
-    #     from ipdb import set_trace as st
-    #     st()
+                            if contract.a.contains_behavior(var_dict) and \
+                                contract.g.contains_behavior(var_dict):
+                                possible_sol.append([(x_a,y_a),(x_b,y_b),(x_c,y_c)])
 
     return possible_sol, t_1
 
@@ -300,42 +247,10 @@ def robots_move(robots, move):
         robots[i].move(move[i])
 
 
-def get_possible_moves_multiple_robots(n, m, robots, merged_dyn_contract, collision_contracts, c_dyn_collision):
-    """
-    Iterate though the robot pairs, merge each collision
-    contract with the dynamics contract and find the
-    possible moves for that robot pair.
-    Returns moves that are allowed for all robot pairs.
-    """
-    t_0 = 0
-    move_options = []
-    for contract_list in collision_contracts:
-        merged_contracts = check_collision_quadrants(
-            merged_dyn_contract, contract_list[0], contract_list[1], contract_list[2], contract_list[3]
-        )
-        sols = []
-        for i in range(len(merged_contracts)):
-            possible_sol, t_1 = find_move_candidates_multiple(n, m, robots, t_0, merged_contracts[i], c_dyn_collision)
-            sols = sols + possible_sol
-        move_options.append(sols)
-
-    n = len(move_options)
-    moves = []
-    for move in move_options[0]:
-        move_ok = True
-        for k in range(1, n):
-            if not move in move_options[k]:
-                move_ok = False
-        if move_ok:
-            moves.append(move)
-
-    return moves
-
-
-def get_dynamic_collision_contract(robots):
-    """
-    Contract ensureing no swapping conflicts for all robots.
-    """
+def get_swapping_contract(robots):
+    '''
+    Contract ensuring no swapping conflicts for all robots.
+    '''
     robotnames = []
     for robot in robots:
         robotnames.append(robot.name)
@@ -351,124 +266,58 @@ def get_dynamic_collision_contract(robots):
         delta_pairs.append((del_x_str, del_y_str))
     outputvars = []
 
-    contract = {
-        "input_vars": inputvars,
-        "output_vars": outputvars,
-        "assumptions": [{"constant": -1, "coefficients": {"current_distance": -1}}],
-        "guarantees": [{"constant": -1, "coefficients": {delta[0]: -1, delta[1]: -1}} for delta in delta_pairs],
-    }
+    contract = PolyhedralContractCompound.from_string(
+    InputVars = inputvars,
+    OutputVars= outputvars,
+    assumptions=[["-current_distance <= -1"
+                 ]],
+    guarantees=[[f"-{delta[0]}-{delta[1]} <= -1" for delta in delta_pairs]])
 
-    c_dyn_coll = PolyhedralContract.from_dict(contract)
+    return contract
 
-    return c_dyn_coll
+def get_collision_contract(robots):
+    robotnames = []
+    for robot in robots:
+        robotnames.append(robot.name)
+
+    combis = combinations(robotnames, 2)
+    # c_collison = collision_contract_named(combis[0][0], combis[0][1])
+    contracts = []
+    for combi in combis:
+        contract = collision_contract_named(combi[0], combi[1])
+        contracts.append(contract)
+
+    c_collison = contracts[0]
+    for contract in contracts[1:]:
+        c_collison = c_collison.merge(contract)
+
+    return c_collison
 
 
-def get_collision_contracts_robot_pair(robot_1, robot_2, other):
-    """
-    For each pair of robots, we will get four contracts describing the four collision quadrants.
-    """
+def collision_contract_named(robot_1, robot_2):
     inputvars = [
         "x_" + str(robot_1) + "_0",
         "y_" + str(robot_1) + "_0",
         "x_" + str(robot_2) + "_0",
         "y_" + str(robot_2) + "_0",
-        "x_" + str(other) + "_0",
-        "y_" + str(other) + "_0",
         "t_0",
         "current_distance",
     ]
     outputvars = [
-        "x_" + str(robot_1) + "_1",
-        "y_" + str(robot_1) + "_1",
-        "x_" + str(robot_2) + "_1",
-        "y_" + str(robot_2) + "_1",
-        "x_" + str(other) + "_1",
-        "y_" + str(other) + "_1",
-        "t_1",
-    ]
+            "x_" + str(robot_1) + "_1",
+            "y_" + str(robot_1) + "_1",
+            "x_" + str(robot_2) + "_1",
+            "y_" + str(robot_2) + "_1",
+            "t_1",
+        ]
 
-    contract_1 = {
-        "input_vars": inputvars,
-        "output_vars": outputvars,
-        "assumptions": [{"constant": -1, "coefficients": {"current_distance": -1}}],
-        "guarantees": [
-            {
-                "constant": -1,
-                "coefficients": {
-                    "x_" + str(robot_1) + "_1": 1,
-                    "x_" + str(robot_2) + "_1": -1,
-                    "y_" + str(robot_1) + "_1": 1,
-                    "y_" + str(robot_2) + "_1": -1,
-                },
-            }
-        ],
-    }
-
-    contract_2 = {
-        "input_vars": inputvars,
-        "output_vars": outputvars,
-        "assumptions": [
-            # Assume no collision
-            {"constant": -1, "coefficients": {"current_distance": -1}}
-        ],
-        "guarantees": [
-            {
-                "constant": -1,
-                "coefficients": {
-                    "x_" + str(robot_1) + "_1": -1,
-                    "x_" + str(robot_2) + "_1": 1,
-                    "y_" + str(robot_1) + "_1": -1,
-                    "y_" + str(robot_2) + "_1": 1,
-                },
-            }
-        ],
-    }
-
-    contract_3 = {
-        "input_vars": inputvars,
-        "output_vars": outputvars,
-        "assumptions": [
-            # Assume no collision
-            {"constant": -1, "coefficients": {"current_distance": -1}}
-        ],
-        "guarantees": [
-            # collision constraints (for each set of robots)
-            {
-                "constant": -1,
-                "coefficients": {
-                    "x_" + str(robot_1) + "_1": 1,
-                    "x_" + str(robot_2) + "_1": -1,
-                    "y_" + str(robot_1) + "_1": -1,
-                    "y_" + str(robot_2) + "_1": 1,
-                },
-            }
-        ],
-    }
-
-    contract_4 = {
-        "input_vars": inputvars,
-        "output_vars": outputvars,
-        "assumptions": [
-            # Assume no collision
-            {"constant": -1, "coefficients": {"current_distance": -1}}
-        ],
-        "guarantees": [
-            # collision constraints (for each set of robots)
-            {
-                "constant": -1,
-                "coefficients": {
-                    "x_" + str(robot_1) + "_1": -1,
-                    "x_" + str(robot_2) + "_1": 1,
-                    "y_" + str(robot_1) + "_1": 1,
-                    "y_" + str(robot_2) + "_1": -1,
-                },
-            }
-        ],
-    }
-
-    contract_c1 = PolyhedralContract.from_dict(contract_1)
-    contract_c2 = PolyhedralContract.from_dict(contract_2)
-    contract_c3 = PolyhedralContract.from_dict(contract_3)
-    contract_c4 = PolyhedralContract.from_dict(contract_4)
-
-    return [contract_c1, contract_c2, contract_c3, contract_c4]
+    contract = PolyhedralContractCompound.from_string(
+    InputVars = inputvars,
+    OutputVars= outputvars,
+    assumptions=[["-current_distance <= -1"
+                 ]],
+    guarantees=[["x_" + str(robot_1) + "_1 - x_" + str(robot_2) + "_1 + y_" + str(robot_1) + "_1 - y_" + str(robot_2) + "_1 <= -1"], \
+                ["- x_" + str(robot_1) + "_1 + x_" + str(robot_2) + "_1 - y_" + str(robot_1) + "_1 + y_" + str(robot_2) + "_1 <= -1"],\
+               ["x_" + str(robot_1) + "_1 - x_" + str(robot_2) + "_1 - y_" + str(robot_1) + "_1 + y_" + str(robot_2) + "_1 <= -1"],\
+               ["- x_" + str(robot_1) + "_1 + x_" + str(robot_2) + "_1 + y_" + str(robot_1) + "_1 - y_" + str(robot_2) + "_1 <= -1"]])
+    return contract

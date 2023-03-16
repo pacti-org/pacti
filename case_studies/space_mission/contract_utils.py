@@ -4,9 +4,13 @@ from pacti.terms.polyhedra import PolyhedralContract
 from pacti import write_contracts_to_file, read_contracts_from_file
 from typing import Optional
 import json
+import uuid
+import pathlib
 
-epsilon = 1e-8
+here=pathlib.Path(__file__).parent.resolve()
 
+
+epsilon = 0
 
 def nochange_contract(s: int, name: str) -> PolyhedralContract:
     """
@@ -22,36 +26,15 @@ def nochange_contract(s: int, name: str) -> PolyhedralContract:
     return PolyhedralContract.from_string(
         input_vars=[f"{name}{s}_entry"],
         output_vars=[f"{name}{s}_exit"],
-        assumptions=[],
-
-        guarantees=[f"| {name}{s}_exit - {name}{s}_entry | <= {epsilon}"],
-
-    )
-
-
-def duration_contract(s: int, duration: str, epsilon: float) -> PolyhedralContract:
-    """
-    Constructs a duration contract between entry/exit time variables derived from the step index.
-
-    Args:
-        s: step index
-        duration: step duration
-        epsilon: approximate equality for | entry - exit - duration | ~= 0
-
-    Returns:
-        A duration contract.
-    """
-    return PolyhedralContract.from_string(
-        input_vars=[f"t{s}_entry" f"{duration}{s}"],  # Scheduled start time  # Scheduled task duration
-        output_vars=[f"t{s}_exit"],  # Scheduled end time
         assumptions=[
-            # positive scheduled duration
-            f"-{duration}{s} <= 0",
+            f"-{name}{s}_entry <= 0",
         ],
         guarantees=[
-            # task ends after the duration has elapsed
-            f"| t{s}_exit - t{s}_entry - {duration}{s} | <= {epsilon}",
+            # f"-{name}{s}_exit <= 0",
+            f"| {name}{s}_exit - {name}{s}_entry | <= 0",
+            # f"{name}{s}_exit <= 100",
         ],
+
     )
 
 
@@ -84,20 +67,21 @@ def scenario_sequence(
     renamed_c1_outputs = [(f"{v}{c1index}_exit", f"output_{v}{c1index}") for v in variables]
 
     c2_with_inputs_renamed = c2.rename_variables(c2_inputs_to_c1_outputs)
-    try:
-        c12_with_outputs_kept = c1.compose(c2_with_inputs_renamed, vars_to_keep=keep_c1_outputs)
-    except ValueError:
-        print(keep_c1_outputs)
-        write_contracts_to_file([c1,c2_with_inputs_renamed],["c1","c2"], "example.json",machine_representation=True)
-        conts,_ = read_contracts_from_file("example.json")
-        print("**********************")
-        print(c1)
-        print("**********************")
-        print(conts[0])
-        assert c1 == conts[0]
-        assert c2_with_inputs_renamed == conts[1]
-        print("Exiting on error")
-        raise ValueError()
+    # try:
+    c12_with_outputs_kept = c1.compose(c2_with_inputs_renamed, vars_to_keep=keep_c1_outputs)
+    # except ValueError:
+    #     print(keep_c1_outputs)
+    #     example=f"{here}/json/example-{uuid.uuid4()}.json"
+    #     write_contracts_to_file([c1,c2_with_inputs_renamed],["c1","c2"], example, machine_representation=True)
+    #     conts,_ = read_contracts_from_file(example)
+    #     print("**********************")
+    #     print(c1)
+    #     print("**********************")
+    #     print(conts[0])
+    #     assert c1 == conts[0]
+    #     assert c2_with_inputs_renamed == conts[1]
+    #     print("Exiting on error")
+    #     raise ValueError()
 
     c12 = c12_with_outputs_kept.rename_variables(renamed_c1_outputs)
 
@@ -118,7 +102,7 @@ def scenario_sequence(
 # variable = ""  # noqa: E501
 
 
-with open("images.json") as f:
+with open(f"{here}/images.json") as f:
     file_data = json.load(f)
 
 figure_space_mission_scenario = file_data["figure_space_mission_scenario"]
