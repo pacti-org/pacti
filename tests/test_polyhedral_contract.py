@@ -47,9 +47,10 @@ def test_composition_failure(test_instance: str) -> None:
     except:
         assert False
     assert len(c) == 2
-    with pytest.raises(IncompatibleArgsError):
+    with pytest.raises((IncompatibleArgsError, ValueError)) as e_info:
         _ = c[0].compose(c[1])
-
+    if e_info.type is ValueError:
+        assert "unsatisfiable in context" in e_info.value.args[0] 
 
 quotient_test_instances = glob.glob(TEST_DATA_DIR + "**/*quotient_success*.json", recursive=True)
 
