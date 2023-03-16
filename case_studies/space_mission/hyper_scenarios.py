@@ -28,9 +28,9 @@ from scipy.stats import qmc
 
 d = 12
 n5 = 200
-#n20 = 200
+n20 = 200
 #n20 = 100
-n20 = 50
+#n20 = 50
 
 mean_sampler = qmc.LatinHypercube(d=d)
 mean_sample5: np.ndarray = mean_sampler.random(n=n5)
@@ -85,8 +85,8 @@ nb_compose20 = 63
 nb_merge20 = 50
 
 
-#m = 300
-m = 30
+m = 300
+#m = 30
 op_sampler: qmc.LatinHypercube = qmc.LatinHypercube(d=5)
 op_sample: np.ndarray = op_sampler.random(n=m)
 op_l_bounds = [
