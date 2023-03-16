@@ -194,7 +194,7 @@ class TermList(ABC):
         return type(self)(list_union(self.copy().terms, other.copy().terms))
 
     def __sub__(self: TermList_t, other: TermList_t) -> TermList_t:
-        return type(self)(list_union(self.copy().terms, other.copy().terms))
+        return type(self)(list_diff(self.copy().terms, other.copy().terms))
 
     def __le__(self: TermList_t, other: TermList_t) -> bool:
         return self.refines(other)
