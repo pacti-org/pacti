@@ -99,7 +99,7 @@ def test_simplify_1() -> None:
     reference = to_pts(["-0.5i <= -1.5", "3*i <= 1", "-1*i <= 2", "1*i <= 2"])
     expected = to_pts(["-0.5*i <= -1.5", "3*i <= 1"])
     with pytest.raises(ValueError):
-        reference.simplify()
+        _ = reference.simplify()
 
 
 def test_issue171() -> None:
@@ -109,3 +109,7 @@ def test_issue171() -> None:
     transformed = constraints.elim_vars_by_relaxing(PolyhedralTermList([]), [Var("t0"), Var("dt0")])
     expected = to_pts(["-1*t1 <= 0"])
     assert expected == transformed
+
+
+if __name__ == "__main__":
+    test_polyhedral_var_elim_by_refinement_4()

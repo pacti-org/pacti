@@ -194,7 +194,7 @@ class TermList(ABC):
         return type(self)(list_union(self.copy().terms, other.copy().terms))
 
     def __sub__(self: TermList_t, other: TermList_t) -> TermList_t:
-        return type(self)(list_union(self.copy().terms, other.copy().terms))
+        return type(self)(list_diff(self.copy().terms, other.copy().terms))
 
     def __le__(self: TermList_t, other: TermList_t) -> bool:
         return self.refines(other)
@@ -282,18 +282,18 @@ class TermList(ABC):
         """
 
     @abstractmethod
-    def simplify(self: TermList_t, context: Optional[TermList_t] = None) -> None:
+    def simplify(self: TermList_t, context: Optional[TermList_t] = None) -> TermList_t:
         """Remove redundant terms in TermList.
-
-        Let $S$ be this TermList and suppose $T \\subseteq S$. Let
-        $S_T = S \\setminus T$. Simplify will remove from $S$ a
-        maximal subset $T$ such that $\\frac{\\Gamma, S_T\\colon \\;
-        \\top}{\\Gamma, S_T\\colon \\; \\wedge_{t \\in T} t}$.
 
         Args:
             context:
                 List of context terms that will be used to remove redundancies in
                 the TermList.
+
+        Returns:
+            Let $S$ be this TermList. Simplify will return $S_T = S \\setminus T$
+            where $T \\subseteq S$ is a maximal subset such that $\\frac{\\Gamma, S_T\\colon \\;
+            \\top}{\\Gamma, S_T\\colon \\; \\wedge_{t \\in T} t}$.
         """
 
     @abstractmethod
@@ -382,11 +382,10 @@ class IoContract(Generic[TermList_t]):
             )
 
         self.a: TermList_t = assumptions.copy()
-        self.g: TermList_t = guarantees.copy()
         self.inputvars = input_vars.copy()
         self.outputvars = output_vars.copy()
         # simplify the guarantees with the assumptions
-        self.g.simplify(self.a)
+        self.g = guarantees.simplify(self.a)
 
     @property
     def vars(self) -> list[Var]:  # noqa: A003
@@ -481,6 +480,9 @@ class IoContract(Generic[TermList_t]):
         if not isinstance(other, type(self)):
             raise ValueError()
         return self.refines(other)
+
+    def __repr__(self) -> str:
+        return "<Var {0}>".format(self)
 
     def can_compose_with(self: IoContract_t, other: IoContract_t) -> bool:
         """
@@ -607,32 +609,33 @@ class IoContract(Generic[TermList_t]):
             conflict_variables = list_intersection(new_a.vars, assumptions_forbidden_vars)
             if conflict_variables:
                 raise IncompatibleArgsError(
-                    "Could not eliminate variables {}\n".format([str(x) for x in conflict_variables])
+                    "Could not eliminate variables {}\n".format([str(x) for x in assumptions_forbidden_vars])
                     + "by refining the assumptions \n{}\n".format(new_a.get_terms_with_vars(assumptions_forbidden_vars))
-                    + "using guarantees \n{}\n".format(self.g)
+                    + "using guarantees \n{}\n".format(self.a | self.g)
                 )
             assumptions = new_a | self.a
         elif other_helps_self and not self_helps_other:
-            logging.debug("Assumption computation: other provides context for self")
+            logging.debug("****** Assumption computation: other provides context for self")
             new_a = self.a.elim_vars_by_refining(other.a | other.g, assumptions_forbidden_vars)
             conflict_variables = list_intersection(new_a.vars, assumptions_forbidden_vars)
             if conflict_variables:
                 raise IncompatibleArgsError(
-                    "Could not eliminate variables {}".format([str(x) for x in conflict_variables])
+                    "Could not eliminate variables {}".format([str(x) for x in assumptions_forbidden_vars])
                     + " by refining the assumptions \n{}\n".format(
                         new_a.get_terms_with_vars(assumptions_forbidden_vars)
                     )
-                    + "using guarantees \n{}\n".format(other.g)
+                    + "using guarantees \n{}\n".format(other.a | other.g)
                 )
             assumptions = new_a | other.a
         # contracts can't help each other
         else:
-            logging.debug("Assumption computation: other provides context for self")
+            logging.debug("****** Assumption computation: other provides context for self")
             assumptions = self.a | other.a
         logging.debug("Assumption computation: computed assumptions:\n%s", assumptions)
-        assumptions.simplify()
+        assumptions = assumptions.simplify()
 
         # process guarantees
+        logging.debug("****** Computing guarantees")
         g1_t = self.g.copy()
         g2_t = other.g.copy()
         g1 = g1_t.elim_vars_by_relaxing(g2_t, intvars)
