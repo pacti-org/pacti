@@ -677,7 +677,8 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         logging.debug("Simplifying terms: %s", self)
         logging.debug("Context: %s", context)
         if context:
-            result = PolyhedralTermList.termlist_to_polytope(self, context)
+            new_self = self - context
+            result = PolyhedralTermList.termlist_to_polytope(new_self, context)
         else:
             result = PolyhedralTermList.termlist_to_polytope(self, PolyhedralTermList())
 
@@ -742,8 +743,10 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         term_list = list(self.terms)
         new_terms = self.copy()
         for i, term in enumerate(term_list):
-            helpers = (context | new_terms)
-            del helpers.terms[len(context.terms) + i]
+            copy_new_terms = new_terms.copy()
+            copy_new_terms.terms.remove(term)
+            helpers = (context | copy_new_terms)
+            #del helpers.terms[len(context.terms) + i]
             try:
                 new_term = PolyhedralTermList._transform_term(term, helpers, vars_to_elim, refine)
             except ValueError:
