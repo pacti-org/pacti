@@ -157,7 +157,7 @@ def find_move_candidates_three(n, m, robots, T_0, contract):
     """
     Evaluate the contracts for possible next positions
     of the robots to find allowed moves.
-    '''
+    """
     x_A_0 = Var("x_A_0")
     y_A_0 = Var("y_A_0")
     x_B_0 = Var("x_B_0")
