@@ -2,7 +2,7 @@
 
 
 from math import atan2
-from typing import Union
+from typing import Union, Dict, Tuple
 
 import matplotlib.pyplot as plt  # noqa: WPS301 Found dotted raw import
 import numpy as np
@@ -23,9 +23,9 @@ def plot_assumptions(
     contract: PolyhedralContract,
     x_var: Var,
     y_var: Var,
-    var_values: dict[Var, numeric],
-    x_lims: tuple[numeric, numeric],
-    y_lims: tuple[numeric, numeric],
+    var_values: Dict[Var, numeric],
+    x_lims: Tuple[numeric, numeric],
+    y_lims: Tuple[numeric, numeric],
 ) -> MplFigure:
     """
     Plots the assumptions of an IoContract with polyhedral terms.
@@ -61,9 +61,9 @@ def plot_guarantees(
     contract: PolyhedralContract,
     x_var: Var,
     y_var: Var,
-    var_values: dict[Var, numeric],
-    x_lims: tuple[numeric, numeric],
-    y_lims: tuple[numeric, numeric],
+    var_values: Dict[Var, numeric],
+    x_lims: Tuple[numeric, numeric],
+    y_lims: Tuple[numeric, numeric],
 ) -> MplFigure:
     """
     Plots the guarantees and assumptions of an IoContract with polyhedral terms.
@@ -96,7 +96,7 @@ def plot_guarantees(
 
 
 def _substitute_in_termlist(  # noqa: WPS231
-    constraints: PolyhedralTermList, var_values: dict[Var, numeric]
+    constraints: PolyhedralTermList, var_values: Dict[Var, numeric]
 ) -> PolyhedralTermList:
     plot_list = []
     for term in constraints.terms:
@@ -128,7 +128,7 @@ def _get_feasible_point(a_mat: np.ndarray, b: np.ndarray, interior: bool = True)
 
 
 # given a bounded polygon, return its vertices
-def _get_bounding_vertices(a_mat: np.ndarray, b: np.ndarray) -> tuple[tuple, tuple]:
+def _get_bounding_vertices(a_mat: np.ndarray, b: np.ndarray) -> Tuple[tuple, tuple]:
     try:
         interior_point = _get_feasible_point(a_mat, b)
     except ValueError as e:
@@ -157,7 +157,7 @@ def _get_bounding_vertices(a_mat: np.ndarray, b: np.ndarray) -> tuple[tuple, tup
 
 
 def _gen_boundary_constraints(
-    x_var: Var, y_var: Var, x_lims: tuple[numeric, numeric], y_lims: tuple[numeric, numeric]
+    x_var: Var, y_var: Var, x_lims: Tuple[numeric, numeric], y_lims: Tuple[numeric, numeric]
 ) -> PolyhedralTermList:
     constraints = [PolyhedralTerm({x_var: 1}, x_lims[1])]
     constraints.append(PolyhedralTerm({x_var: -1}, -x_lims[0]))
@@ -170,9 +170,9 @@ def _plot_constraints(
     constraints: PolyhedralTermList,
     x_var: Var,
     y_var: Var,
-    var_values: dict[Var, numeric],
-    x_lims: tuple[numeric, numeric],
-    y_lims: tuple[numeric, numeric],
+    var_values: Dict[Var, numeric],
+    x_lims: Tuple[numeric, numeric],
+    y_lims: Tuple[numeric, numeric],
 ) -> MplFigure:
     if not isinstance(constraints, PolyhedralTermList):
         raise ValueError("Expecting polyhedral constraints. Constraint type: %s" % (type(constraints)))

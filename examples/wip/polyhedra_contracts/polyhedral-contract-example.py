@@ -2,7 +2,7 @@
 from pacti.iocontract import IoContract, Var
 from pacti.terms.polyhedra import *
 
-def input2output(i: str, outputs: list[Var], varPrefixes: list[str]) -> str:
+def input2output(i: str, outputs: List[Var], varPrefixes: List[str]) -> str:
   for o in outputs:
     for p in varPrefixes:
       if i.startswith(p) & o.name.startswith(p):
@@ -12,7 +12,7 @@ def input2output(i: str, outputs: list[Var], varPrefixes: list[str]) -> str:
 
 varPrefixes=["t", "soc", "d", "e", "r"]
 
-def connect(c1: IoContract, c2: IoContract, varPrefixes: list[str]) -> IoContract:
+def connect(c1: IoContract, c2: IoContract, varPrefixes: List[str]) -> IoContract:
     c12 = PolyhedralContract.from_string(
       input_vars = list(map(lambda x: x.name, c1.outputvars)),
       output_vars = list(map(lambda x: x.name, c2.inputvars)),
@@ -21,7 +21,7 @@ def connect(c1: IoContract, c2: IoContract, varPrefixes: list[str]) -> IoContrac
 
     return c1.compose(c12).compose(c2)
 
-def initial_contract() -> tuple[int, PolyhedralContract]:
+def initial_contract() -> Tuple[int, PolyhedralContract]:
   e=1
   spec = PolyhedralContract.from_string(
     input_vars = [],
@@ -43,7 +43,7 @@ def initial_contract() -> tuple[int, PolyhedralContract]:
   )
   return e, spec
 
-def SBO_contract(s: int, duration: float, generation: float, consumption: float, improvement: float) -> tuple[int, PolyhedralContract]:
+def SBO_contract(s: int, duration: float, generation: float, consumption: float, improvement: float) -> Tuple[int, PolyhedralContract]:
   e = s+1
   spec = PolyhedralContract.from_string(
     input_vars = [

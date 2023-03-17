@@ -62,7 +62,7 @@ def _build_dependency_tree(symbol_dict: Dict) -> _Tree:  # noqa: WPS231 too much
     return root
 
 
-def compose_multiple_contracts(contracts: list[IoContract]) -> IoContract:
+def compose_multiple_contracts(contracts: List[IoContract]) -> IoContract:
     """
     Compose several contracts, finding the right order to compose them.
 
@@ -72,7 +72,7 @@ def compose_multiple_contracts(contracts: list[IoContract]) -> IoContract:
     Returns:
         A contract corresponding to the ordered composition of the given contracts.
     """
-    symbol_dict: dict[str, tuple[list[str], list[str]]] = {}  # noqa: WPS234 complex annotation
+    symbol_dict: Dict[str, Tuple[List[str], List[str]]] = {}  # noqa: WPS234 complex annotation
     contracts_dict = {}
     for i, contract in enumerate(contracts):
         input_symbols = [v.name for v in contract.inputvars]

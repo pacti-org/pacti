@@ -6,11 +6,13 @@ from pacti.iocontract import Var
 from pacti.terms.polyhedra import PolyhedralTermList
 from pacti.terms.polyhedra.serializer import polyhedral_termlist_from_string
 
+from typing import List
+
 FORMAT = "%(asctime)s:%(levelname)s:%(name)s:%(message)s"
 logging.basicConfig(filename="../pacti.log", filemode="w", level=logging.DEBUG, format=FORMAT)
 
 
-def to_pts(str_rep_list: list[str]) -> PolyhedralTermList:
+def to_pts(str_rep_list: List[str]) -> PolyhedralTermList:
     return PolyhedralTermList([item for el in str_rep_list for item in polyhedral_termlist_from_string(el)])
 
 

@@ -16,7 +16,7 @@ class NestedTermList:
     """A collection of termlists interpreted as their disjunction."""
 
     def __init__(  # noqa: WPS231 too much cognitive complexity
-        self, nested_termlist: list[TermList_t], force_empty_intersection: bool
+        self, nested_termlist: List[TermList_t], force_empty_intersection: bool
     ):
         """
         Class constructor.
@@ -36,7 +36,7 @@ class NestedTermList:
                         intersection = tli | tlj
                         if not intersection.is_empty():
                             raise ValueError("Terms %s and %s have nonempty intersection" % (tli, tlj))
-        self.nested_termlist: list[TermList_t] = []
+        self.nested_termlist: List[TermList_t] = []
         for tl in nested_termlist:
             self.nested_termlist.append(tl.copy())
 
@@ -88,13 +88,13 @@ class NestedTermList:
         return type(self)(new_nested_tl, force_empty_intersection)
 
     @property
-    def vars(self) -> list[Var]:  # noqa: A003
+    def vars(self) -> List[Var]:  # noqa: A003
         """The list of variables contained in this nested termlist.
 
         Returns:
             List of variables referenced in nested termlist.
         """
-        varlist: list[Var] = []
+        varlist: List[Var] = []
         for tl in self.nested_termlist:
             varlist = list_union(varlist, tl.vars)
         return varlist
@@ -111,7 +111,7 @@ class NestedTermList:
         """
         return type(self)([tl.copy() for tl in self.nested_termlist], force_empty_intersection)
 
-    def contains_behavior(self, behavior: dict[Var, numeric]) -> bool:
+    def contains_behavior(self, behavior: Dict[Var, numeric]) -> bool:
         """
         Tell whether constraints contain the given behavior.
 
