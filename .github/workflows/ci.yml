@@ -25,13 +25,13 @@ jobs:
         run: pdm install
       - name: Test code
         run: make test
-      # - name: Check types
-      #   run: make check-types
-      # - name: Run linters on code
-      #   run: make check-quality
-      # - name: Check types on Jupyter notebooks
-      #   run: make check-jn-types
-      # - name: Run linters on Jupyter notebooks
-      #   run: make check-jn-quality
-      # - name: Check documentation
-      #   run: make check-docs
+      - name: Check types
+        run: make check-types
+      - name: Run linters on code
+        run: make check-quality
+      - name: Check types on Jupyter notebooks
+        run: make check-jn-types
+      - name: Run linters on Jupyter notebooks
+        run: make check-jn-quality
+      - name: Check documentation
+        run: make check-docs
