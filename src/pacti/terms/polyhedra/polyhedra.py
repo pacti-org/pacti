@@ -305,6 +305,24 @@ class PolyhedralTerm(Term):
         return self.copy()
 
     def isolate_variable(self, var_to_isolate: Var) -> PolyhedralTerm:
+        """
+        Isolate a variable in a term.
+
+        Example:
+            In the term $-2x + y \\le 6$ understood as equality, isolating the
+            variable $x$ yields $x = 0.5 y - 3$, which in PolyhedralTerm
+            notation we express as $0.5 y <= -3$.
+
+        Args:
+            var_to_isolate: The variable to be isolated.
+
+        Returns:
+            A new term which corresponds to the isolation of the indicated
+            variable.
+
+        Raises:
+            ValueError: the indicated variable is not contained in the term.
+        """
         if var_to_isolate not in self.vars:
             raise ValueError("Variable %s is not a term variable" % (var_to_isolate))
         return PolyhedralTerm(
@@ -1258,7 +1276,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         return result
 
     @staticmethod
-    def _tactic_4(
+    def _tactic_4(  # noqa: WPS231
         term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, refine: bool, no_vars: List[Var]
     ) -> PolyhedralTerm:
         logging.debug("************ Tactic 4")
@@ -1321,8 +1339,8 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
                 try:  # noqa: WPS505 Found nested `try` block
                     result = PolyhedralTermList._tactic_2(term, context, vars_to_elim, refine)
                 except ValueError:
-                    try:
+                    try:  # noqa: WPS505 Found nested `try` block
                         result = PolyhedralTermList._tactic_4(term, context, vars_to_elim, refine, [])
-                    except ValueError as e:
+                    except ValueError:
                         result = term.copy()
         return result

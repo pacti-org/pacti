@@ -157,7 +157,7 @@ def find_move_candidates_three(n, m, robots, T_0, contract):
     """
     Evaluate the contracts for possible next positions
     of the robots to find allowed moves.
-    """
+    '''
     x_A_0 = Var("x_A_0")
     y_A_0 = Var("y_A_0")
     x_B_0 = Var("x_B_0")
@@ -267,8 +267,8 @@ def get_swapping_contract(robots):
     outputvars = []
 
     contract = PolyhedralContractCompound.from_string(
-    InputVars = inputvars,
-    OutputVars= outputvars,
+    input_vars = inputvars,
+    output_vars= outputvars,
     assumptions=[["-current_distance <= -1"
                  ]],
     guarantees=[[f"-{delta[0]}-{delta[1]} <= -1" for delta in delta_pairs]])
@@ -312,8 +312,8 @@ def collision_contract_named(robot_1, robot_2):
         ]
 
     contract = PolyhedralContractCompound.from_string(
-    InputVars = inputvars,
-    OutputVars= outputvars,
+    input_vars = inputvars,
+    output_vars= outputvars,
     assumptions=[["-current_distance <= -1"
                  ]],
     guarantees=[["x_" + str(robot_1) + "_1 - x_" + str(robot_2) + "_1 + y_" + str(robot_1) + "_1 - y_" + str(robot_2) + "_1 <= -1"], \
