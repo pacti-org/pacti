@@ -172,7 +172,7 @@ def tox(ctx):
     Arguments:
         ctx: The context instance (passed automatically).
     """
-    ctx.run(f"tox run -c config/tox.ini", title="Running tox", pty=PTY, capture=False)
+    ctx.run(f"tox --workdir . --root . -c config/tox.ini", title="Testing over platforms", pty=PTY, capture=False)
 
 
 @duty
