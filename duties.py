@@ -43,6 +43,10 @@ WINDOWS = os.name == "nt"
 PTY = not WINDOWS and not CI
 MYPY_FLAGS = "--allow-any-generics --implicit-reexport --allow-untyped-calls"
 FLAKE8_FLAGS_JN = "--ignore=D100,WPS226,WPS421,WPS111,BLK100 "
+
+sys.stdin.reconfigure(encoding='utf-8')
+sys.stdout.reconfigure(encoding='utf-8')
+
 #FLAKE8_FLAGS_JN = ""
 
 
