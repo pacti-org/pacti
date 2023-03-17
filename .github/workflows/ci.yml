@@ -19,7 +19,7 @@ jobs:
           architecture: x64
           enable-pep582: true
       - name: Install dependencies
-        run: pdm install
+        run: pdm init && pdm install
       - name: Test code
         run: make test
       # - name: Check types
