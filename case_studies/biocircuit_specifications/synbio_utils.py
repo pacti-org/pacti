@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import copy
 
 
 def display_sensor_contracts(
@@ -25,12 +26,16 @@ def display_sensor_contracts(
         _, ax = plt.subplots()
     slope = (ymax_lin - leak) / (K - start)
     intercept = leak - slope * start
-    ax.hlines(y=leak, xmin=xlim_min, xmax=start, color="r", lw=2, ls="--", label="OFF")
+    ax.hlines(y=leak, xmin=xlim_min, xmax=start, color="r",
+              lw=2, ls="--", label="OFF")
     ax.axvline(x=start, ls="dotted", color="k")
     ax.plot(
-        np.linspace(start, K, 2), slope * np.linspace(start, K, 2) + intercept, color="#006400", lw=2, label="Linear"
+        np.linspace(start, K, 2),
+        slope * np.array(np.linspace(start, K, 2)) + intercept,
+        color="#006400", lw=2, label="Linear"
     )
-    ax.hlines(y=ymax_lin, xmin=K, xmax=xlim_max, color="blue", lw=2, ls="--", label="Saturation")
+    ax.hlines(y=ymax_lin, xmin=K, xmax=xlim_max,
+              color="blue", lw=2, ls="--", label="Saturation")
     ax.axvline(x=K, ls="dotted", color="k")
     ax.set_xlabel(sensor_input, fontsize=14)
     ax.set_xscale("log")
@@ -44,9 +49,6 @@ def display_sensor_contracts(
     return ax
 
 
-import copy
-
-
 def remove_quantization_errors(contract, tolerance=1e-4):
     """
     Removes terms that have all coefficients lower than tolerance
@@ -56,7 +58,7 @@ def remove_quantization_errors(contract, tolerance=1e-4):
     # Remove quantization error from assumptions
     for t_i in list(from_contract.a.terms):
         all_coeff = 0
-        for var, coeff in t_i.variables.items():
+        for _, coeff in t_i.variables.items():
             all_coeff += np.abs(coeff)
         if all_coeff < tolerance:
             from_contract.a.terms.remove(t_i)
@@ -65,7 +67,7 @@ def remove_quantization_errors(contract, tolerance=1e-4):
     index = 0
     for t_i in list(from_contract.g.terms):
         all_coeff = 0
-        for var, coeff in t_i.variables.items():
+        for _, coeff in t_i.variables.items():
             all_coeff += np.abs(coeff)
         if all_coeff < tolerance:
             from_contract.g.terms.remove(t_i)
