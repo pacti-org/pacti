@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Optional, Tuple, TypedDict, Union, Dict, List
+from typing import Dict, List, Optional, Tuple, TypedDict, Union
 
 from pacti.iocontract import IoContract, IoContractCompound, NestedTermList, Var
 from pacti.terms.polyhedra import serializer
@@ -159,7 +159,7 @@ class PolyhedralContract(IoContract):
             assumptions=a,
             guarantees=g,
         )
-    
+
     def compose(self, other: PolyhedralContract, vars_to_keep: Optional[List[str]] = None) -> PolyhedralContract:
         """Compose polyhedral contracts.
 

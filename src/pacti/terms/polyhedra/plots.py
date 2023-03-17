@@ -2,7 +2,7 @@
 
 
 from math import atan2
-from typing import Union, Dict, Tuple
+from typing import Dict, Tuple, Union
 
 import matplotlib.pyplot as plt  # noqa: WPS301 Found dotted raw import
 import numpy as np

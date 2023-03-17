@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import List, TypeVar, Union, Dict
+from typing import Dict, List, TypeVar, Union
 
 from pacti.iocontract.iocontract import TermList_t, Var
 from pacti.utils.lists import list_diff, list_intersection, list_union

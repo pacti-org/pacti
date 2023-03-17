@@ -1,12 +1,11 @@
 import logging
+from typing import List
 
 import pytest
 
 from pacti.iocontract import Var
 from pacti.terms.polyhedra import PolyhedralTermList
 from pacti.terms.polyhedra.serializer import polyhedral_termlist_from_string
-
-from typing import List
 
 FORMAT = "%(asctime)s:%(levelname)s:%(name)s:%(message)s"
 logging.basicConfig(filename="../pacti.log", filemode="w", level=logging.DEBUG, format=FORMAT)

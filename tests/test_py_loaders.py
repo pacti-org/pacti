@@ -1,10 +1,11 @@
+from typing import List
+
 import pytest
 from test_iocontract import validate_iocontract
 
 import pacti.iocontract as iocontract
 from pacti.terms.polyhedra import *
 
-from typing import List
 
 def create_contracts(num: int = 1) -> List[dict]:
     """

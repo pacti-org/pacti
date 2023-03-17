@@ -1,6 +1,6 @@
 """Transformations between polyhedral structures and strings."""
 import re
-from typing import Dict, Tuple, Union, List, Match
+from typing import Dict, List, Match, Tuple, Union
 
 import numpy as np
 import sympy
