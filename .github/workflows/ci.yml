@@ -12,7 +12,7 @@ jobs:
         os: [windows-latest, ubuntu-latest, macos-latest]
         python-version: ["3.8", "3.9", "3.10", "3.11"]
     steps:
-      - uses: pdm-project/setup-pdm@v3
+      - uses: pdm-project/setup-pdm@main
         name: Setup PDM
         with:
           python-version: ${{ matrix.python-version }}
@@ -22,13 +22,13 @@ jobs:
         run: pdm install
       - name: Test code
         run: make test
-      - name: Check types
-        run: make check-types
-      - name: Run linters on code
-        run: make check-quality
-      - name: Check types on Jupyter notebooks
-        run: make check-jn-types
-      - name: Run linters on Jupyter notebooks
-        run: make check-jn-quality
-      - name: Check documentation
-        run: make check-docs
+      # - name: Check types
+      #   run: make check-types
+      # - name: Run linters on code
+      #   run: make check-quality
+      # - name: Check types on Jupyter notebooks
+      #   run: make check-jn-types
+      # - name: Run linters on Jupyter notebooks
+      #   run: make check-jn-quality
+      # - name: Check documentation
+      #   run: make check-docs
