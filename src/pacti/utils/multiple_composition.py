@@ -1,7 +1,7 @@
 """Support for multiple composition."""
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any, Dict, List, Tuple
 
 from pacti.iocontract import IoContract
 

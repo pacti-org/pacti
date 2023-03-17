@@ -154,7 +154,7 @@ def strategy_multiple(move_candidates, goal, cur_pos, last_pos):
 
 
 def find_move_candidates_three(n, m, robots, T_0, contract):
-    '''
+    """
     Evaluate the contracts for possible next positions
     of the robots to find allowed moves.
     """

@@ -8,7 +8,7 @@ $x_i$ are variables and the $a_i$ and $c$ are constants.
 from __future__ import annotations
 
 import logging
-from typing import Any, Optional, Tuple, Union
+from typing import Any, Optional, Tuple, Union, Dict, List
 
 import numpy as np
 import sympy
@@ -1252,7 +1252,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         return result
     
     @staticmethod
-    def _tactic_4(term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, refine: bool, no_vars: List[Var]):
+    def _tactic_4(term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, refine: bool, no_vars: List[Var]) -> PolyhedralTerm:
         logging.debug("************ Tactic 4")
         logging.debug("Vars_to_elim %s \nTerm %s \nContext %s " % (vars_to_elim, term, context))
         if not refine:
