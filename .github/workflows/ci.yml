@@ -12,14 +12,15 @@ jobs:
         os: [windows-latest, ubuntu-latest, macos-latest]
         python-version: ["3.8", "3.9", "3.10", "3.11"]
     steps:
-      - uses: pdm-project/setup-pdm@main
-        name: Setup PDM
+      - uses: actions/checkout@v3
+      - name: Setup PDM
+        uses: pdm-project/setup-pdm@main
         with:
           python-version: ${{ matrix.python-version }}
           architecture: x64
           enable-pep582: true
       - name: Install dependencies
-        run: pdm init && pdm install
+        run: pdm install
       - name: Test code
         run: make test
       # - name: Check types
