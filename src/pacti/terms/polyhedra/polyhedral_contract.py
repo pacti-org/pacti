@@ -159,7 +159,7 @@ class PolyhedralContract(IoContract):
             assumptions=a,
             guarantees=g,
         )
-    
+
     def compose(self, other: PolyhedralContract, vars_to_keep: Optional[list[str]] = None) -> PolyhedralContract:
         """Compose polyhedral contracts.
 
@@ -287,3 +287,17 @@ class PolyhedralContractCompound(IoContractCompound):
             assumptions=NestedPolyhedra(a, force_empty_intersection=True),
             guarantees=NestedPolyhedra(g, force_empty_intersection=False),
         )
+
+    def to_dict(self) -> dict:
+        """
+        Map contract into a user-readable dictionary.
+
+        Returns:
+            A dictionary containing the contract's information.
+        """
+        c_temp = {}
+        c_temp["input_vars"] = [str(x) for x in self.inputvars]
+        c_temp["output_vars"] = [str(x) for x in self.outputvars]
+        c_temp["assumptions"] = [x.to_str_list() for x in self.a.nested_termlist]
+        c_temp["guarantees"] = [x.to_str_list() for x in self.g.nested_termlist]
+        return c_temp
