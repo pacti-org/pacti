@@ -13,22 +13,22 @@ jobs:
         python-version: ["3.8", "3.9", "3.10", "3.11"]
         steps:
           - uses: pdm-project/setup-pdm@v3
-          name: Setup PDM
-          with:
-            python-version: ${{ matrix.python-version }}
-            architecture: x64
-            enable-pep582: true
-            - name: Install dependencies
+            name: Setup PDM
+            with:
+              python-version: ${{ matrix.python-version }}
+              architecture: x64
+              enable-pep582: true
+          - name: Install dependencies
             run: pdm install
-            - name: Test code
+          - name: Test code
             run: make test
-            - name: Check types
+          - name: Check types
             run: make check-types
-            - name: Run linters on code
+          - name: Run linters on code
             run: make check-quality
-            - name: Check types on Jupyter notebooks
+          - name: Check types on Jupyter notebooks
             run: make check-jn-types
-            - name: Run linters on Jupyter notebooks
+          - name: Run linters on Jupyter notebooks
             run: make check-jn-quality
-            - name: Check documentation
+          - name: Check documentation
             run: make check-docs
