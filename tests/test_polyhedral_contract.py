@@ -47,10 +47,24 @@ def test_composition_failure(test_instance: str) -> None:
     except:
         assert False
     assert len(c) == 2
-    with pytest.raises((IncompatibleArgsError, ValueError)) as e_info:
+    with pytest.raises(IncompatibleArgsError):
         _ = c[0].compose(c[1])
-    if e_info.type is ValueError:
-        assert "unsatisfiable in context" in e_info.value.args[0] 
+
+
+composition_unsatisfiable_context_instances = glob.glob(TEST_DATA_DIR + "**/*composition_unsatisfiable_context*.json", recursive=True)
+
+
+@pytest.mark.parametrize("test_instance",
+                         composition_unsatisfiable_context_instances)
+def test_composition_context(test_instance: str) -> None:
+    try:
+        c, _ = read_contracts_from_file(test_instance)
+    except:
+        assert False
+    assert len(c) == 2
+    with pytest.raises(ValueError, match="unsatisfiable in context"):
+        _ = c[0].compose(c[1])
+
 
 quotient_test_instances = glob.glob(TEST_DATA_DIR + "**/*quotient_success*.json", recursive=True)
 
