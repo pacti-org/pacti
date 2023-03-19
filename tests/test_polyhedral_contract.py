@@ -8,6 +8,7 @@ from pacti.utils.errors import IncompatibleArgsError
 TEST_DATA_DIR = "tests/test_data/polyhedral_contracts"
 
 import logging
+
 FORMAT = "%(asctime)s:%(levelname)s:%(name)s:%(message)s"
 logging.basicConfig(filename="../pacti.log", filemode="w", level=logging.DEBUG, format=FORMAT)
 

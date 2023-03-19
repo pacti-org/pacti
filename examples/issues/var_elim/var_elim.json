@@ -16,6 +16,12 @@
       ],
       "assumptions": [
         {
+          "constant": -9.99999993922529e-09,
+          "coefficients": {
+            "c1_entry": -1.0
+          }
+        },
+        {
           "constant": 0.0,
           "coefficients": {
             "duration_dsn1": -1.0
@@ -39,7 +45,7 @@
           "constant": 0.0,
           "coefficients": {
             "d1_entry": 1.0,
-            "duration_dsn1": -11.002354318354415,
+            "duration_dsn1": -6.564481131075319,
             "output_d1": -1.0
           }
         },
@@ -47,7 +53,7 @@
           "constant": 0.0,
           "coefficients": {
             "d1_entry": -1.0,
-            "duration_dsn1": 0.4420684545266216,
+            "duration_dsn1": 3.597376864975417,
             "output_d1": 1.0
           }
         },
@@ -58,42 +64,60 @@
           }
         },
         {
-          "constant": 0,
+          "constant": 0.0,
           "coefficients": {
-            "c1_entry": -1.0,
-            "output_c1": 1.0
-          }
-        },
-        {
-          "constant": 0,
-          "coefficients": {
-            "c1_entry": 1.0,
             "output_c1": -1.0
           }
         },
         {
-          "constant": 0,
+          "constant": 9.99999993922529e-09,
+          "coefficients": {
+            "output_c1": 1.0,
+            "c1_entry": -1.0
+          }
+        },
+        {
+          "constant": 9.99999993922529e-09,
+          "coefficients": {
+            "output_c1": -1.0,
+            "c1_entry": 1.0
+          }
+        },
+        {
+          "constant": 0.0,
+          "coefficients": {
+            "d2_exit": -1.0
+          }
+        },
+        {
+          "constant": 9.99999993922529e-09,
           "coefficients": {
             "output_d1": -1.0,
             "d2_exit": 1.0
           }
         },
         {
-          "constant": 0,
+          "constant": 9.99999993922529e-09,
           "coefficients": {
             "output_d1": 1.0,
             "d2_exit": -1.0
           }
         },
         {
-          "constant": 0,
+          "constant": 0.0,
+          "coefficients": {
+            "c2_exit": -1.0
+          }
+        },
+        {
+          "constant": 9.99999993922529e-09,
           "coefficients": {
             "output_c1": -1.0,
             "c2_exit": 1.0
           }
         },
         {
-          "constant": 0,
+          "constant": 9.99999993922529e-09,
           "coefficients": {
             "output_c1": 1.0,
             "c2_exit": -1.0
@@ -125,7 +149,7 @@
         {
           "constant": 100.0,
           "coefficients": {
-            "duration_sbo3": 6.052065010639488,
+            "duration_sbo3": 5.426484494958277,
             "d2_exit": 1.0
           }
         },
@@ -147,7 +171,7 @@
           "constant": 0.0,
           "coefficients": {
             "d3_exit": 1.0,
-            "duration_sbo3": -6.052065010639488,
+            "duration_sbo3": -5.426484494958277,
             "d2_exit": -1.0
           }
         },
@@ -155,14 +179,14 @@
           "constant": 0.0,
           "coefficients": {
             "d3_exit": -1.0,
-            "duration_sbo3": 0.9168832092663171,
+            "duration_sbo3": 1.4707681074967838,
             "d2_exit": 1.0
           }
         },
         {
           "constant": 0.0,
           "coefficients": {
-            "duration_sbo3": -6.052065010639488,
+            "duration_sbo3": -5.426484494958277,
             "c3_exit": 1.0,
             "c2_exit": -1.0
           }
@@ -170,7 +194,7 @@
         {
           "constant": 0.0,
           "coefficients": {
-            "duration_sbo3": 0.9168832092663171,
+            "duration_sbo3": 1.4707681074967838,
             "c3_exit": -1.0,
             "c2_exit": 1.0
           }
