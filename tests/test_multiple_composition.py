@@ -31,4 +31,4 @@ def test_multiple_composition() -> None:
         assert str(contract.a.to_str_list()[0]) == "q <= 0"
         assert str(contract.g.to_str_list()[0]) == "v <= 0"
     else:
-        assert contract.a.to_str_list() == [] and contract.g.to_str_list() == [] 
+        raise ValueError(f"Don't know how to handle this case\n{contract}")
