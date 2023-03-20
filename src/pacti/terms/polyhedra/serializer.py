@@ -66,7 +66,9 @@ float_closeness_absolute_tolerance: float = 1e-8
 def _number_to_string(n: numeric) -> str:
     if isinstance(n, sympy.core.numbers.Float):
         f: sympy.core.numbers.Float = n
-        return str(f.num)
+        return f"{f.num:.4g}"
+    elif isinstance(n, float):
+        return f"{n:.4g}"
     return str(n)
 
 
