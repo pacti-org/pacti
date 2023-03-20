@@ -305,10 +305,32 @@ class PolyhedralTerm(Term):
         return self.copy()
 
     def isolate_variable(self, var_to_isolate: Var) -> PolyhedralTerm:
+        """
+        Isolate a variable in a term.
+
+        Example:
+            In the term $-2x + y \\le 6$ understood as equality, isolating the
+            variable $x$ yields $x = 0.5 y - 3$, which in PolyhedralTerm
+            notation we express as $0.5 y <= -3$.
+
+        Args:
+            var_to_isolate: The variable to be isolated.
+
+        Returns:
+            A new term which corresponds to the isolation of the indicated
+            variable.
+
+        Raises:
+            ValueError: the indicated variable is not contained in the term.
+        """
         if var_to_isolate not in self.vars:
             raise ValueError("Variable %s is not a term variable" % (var_to_isolate))
-        return PolyhedralTerm(variables={k:-v/self.get_coefficient(var_to_isolate) for k,v in self.variables.items() if k != var_to_isolate},
-            constant=self.constant/self.get_coefficient(var_to_isolate))
+        return PolyhedralTerm(
+            variables={
+                k: -v / self.get_coefficient(var_to_isolate) for k, v in self.variables.items() if k != var_to_isolate
+            },
+            constant=self.constant / self.get_coefficient(var_to_isolate),
+        )
 
     @staticmethod
     def to_symbolic(term: PolyhedralTerm) -> Any:
@@ -1209,7 +1231,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         res = linprog(c=objective, A_ub=new_context_mat, b_ub=new_context_cons, bounds=(None, None))
         if res["status"] == 3:
             # unbounded
-            #return term.copy()
+            # return term.copy()
             raise ValueError("Tactic 2 did not succeed")
         replacement = polarity * res["fun"]
         # replace the irrelevant variables with new findings in term
@@ -1240,7 +1262,9 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
             if var != conflict_vars[0]:
                 subst_term_vars[var] = -conflict_coeff[var] / conflict_coeff[conflict_vars[0]]
         subst_term = PolyhedralTerm(variables=subst_term_vars, constant=0)
-        new_context = PolyhedralTermList([el.copy().substitute_variable(conflict_vars[0], subst_term) for el in context.terms])
+        new_context = PolyhedralTermList(
+            [el.copy().substitute_variable(conflict_vars[0], subst_term) for el in context.terms]
+        )
         # now we use tactic 1
         new_elims = list_diff(list_union(vars_to_elim, [Var("_")]), [conflict_vars[0]])
         try:
@@ -1250,9 +1274,11 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         logging.debug("************ Leaving Tactic 3")
         logging.debug("Vars_to_elim %s \nTerm %s \nContext %s " % (vars_to_elim, term, context))
         return result
-    
+
     @staticmethod
-    def _tactic_4(term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, refine: bool, no_vars: list[Var]):
+    def _tactic_4(  # noqa: WPS231
+        term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, refine: bool, no_vars: list[Var]
+    ) -> PolyhedralTerm:
         logging.debug("************ Tactic 4")
         logging.debug("Vars_to_elim %s \nTerm %s \nContext %s " % (vars_to_elim, term, context))
         if not refine:
@@ -1261,8 +1287,8 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         if len(conflict_vars) > 1:
             raise ValueError("Tactic 4 unsuccessful")
         var_to_elim = conflict_vars[0]
-        goal_context : list[PolyhedralTerm]= []
-        useful_context : list[PolyhedralTerm] = []
+        goal_context: list[PolyhedralTerm] = []
+        useful_context: list[PolyhedralTerm] = []
         polarity = -1
         if refine:
             polarity = 1
@@ -1270,7 +1296,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
             if list_intersection(context_term.vars, no_vars):
                 continue
             coeff = context_term.get_coefficient(var_to_elim)
-            if coeff != 0 and polarity * coeff *term.get_coefficient(var_to_elim) > 0:
+            if coeff != 0 and polarity * coeff * term.get_coefficient(var_to_elim) > 0:
                 temp_conflict_vars = list_intersection(context_term.vars, vars_to_elim)
                 if len(temp_conflict_vars) == 1:
                     goal_context.append(context_term.copy())
@@ -1279,7 +1305,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         if not useful_context and not goal_context:
             raise ValueError("Tactic 4 unsuccessful")
         if goal_context:
-            return term.substitute_variable(var_to_elim,goal_context[0].isolate_variable(var_to_elim))
+            return term.substitute_variable(var_to_elim, goal_context[0].isolate_variable(var_to_elim))
         ############
         for useful_term in useful_context:
             new_context = context.copy()
@@ -1288,12 +1314,11 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
             new_no_vars = no_vars.copy()
             new_no_vars.append(var_to_elim)
             try:
-                return_term = PolyhedralTermList._tactic_4(new_term,new_context,vars_to_elim,refine, new_no_vars)
+                return_term = PolyhedralTermList._tactic_4(new_term, new_context, vars_to_elim, refine, new_no_vars)
             except ValueError:
                 continue
             return term.substitute_variable(var_to_elim, return_term)
         raise ValueError("Tactic 4 unsuccessful")
-
 
     @staticmethod
     def _transform_term(
@@ -1314,8 +1339,8 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
                 try:  # noqa: WPS505 Found nested `try` block
                     result = PolyhedralTermList._tactic_2(term, context, vars_to_elim, refine)
                 except ValueError:
-                    try:
+                    try:  # noqa: WPS505 Found nested `try` block
                         result = PolyhedralTermList._tactic_4(term, context, vars_to_elim, refine, [])
-                    except ValueError as e:
+                    except ValueError:
                         result = term.copy()
         return result
