@@ -1,0 +1,65 @@
+[
+  {
+    "name": "contract_Cho_lin",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [
+        "Cho"
+      ],
+      "output_vars": [
+        "xRFP"
+      ],
+      "assumptions": [
+        "Cho <= 4100.0",
+        "-Cho <= -300.0"
+      ],
+      "guarantees": [
+        "0.00023460526315789476 Cho - xRFP = -0.061881578947368454"
+      ]
+    }
+  },
+  {
+    "name": "dCas9_contract_on",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [
+        "xRFP",
+        "dCas9"
+      ],
+      "output_vars": [
+        "RFP"
+      ],
+      "assumptions": [
+        "-xRFP <= -0.3",
+        "xRFP <= 1.0",
+        "-dCas9 <= -0.1",
+        "dCas9 <= 0.8"
+      ],
+      "guarantees": [
+        "RFP + 0.1 dCas9 + 2.0 xRFP <= 5.0"
+      ]
+    }
+  },
+  {
+    "name": "successful_comp_Cho",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [
+        "Cho",
+        "dCas9"
+      ],
+      "output_vars": [
+        "RFP"
+      ],
+      "assumptions": [
+        "-0.000234605263157895 Cho <= -0.23811842105263148",
+        "0.000234605263157895 Cho <= 0.9381184210526317",
+        "-dCas9 <= -0.09999999999999998",
+        "dCas9 <= 0.8"
+      ],
+      "guarantees": [
+        "0.00046921052631579 Cho + RFP + 0.1 dCas9 <= 4.876236842105263"
+      ]
+    }
+  }
+]
