@@ -24,7 +24,7 @@ A case study on word length analysis and optimization for digital signal process
 <img src="https://github.com/FormalSystems/media/blob/main/case_studies/digital_signal_processing/digital_filter_flow.png?raw=True" alt= "DSP figure" width="700"/>
 
 
-<font size="5">[**Generating UAV topologies**](/pacti/_case_studies/uav_topologies/)</font>
+<font size="5">[**Generating UAV topologies**](/pacti/_case_studies/uav_topologies/topologies/)</font>
 
 <img src="https://raw.githubusercontent.com/FormalSystems/media/main/case_studies/uav_topologies/grammar-1.png" alt= "uav topologies" width="700"/>
 
