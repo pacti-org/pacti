@@ -8,6 +8,7 @@ We present a case study to evaluate the perception system of an autonomous car u
 <img src="/pacti/_case_studies/evaluating_perception/imglib/autonomy-stack.png" alt= "autonomy figure" width="700"/>
 
 <font size="5">[**Trajectory planning for multi-agent systems**](/pacti/_case_studies/multiagent_coordination/multiagent/)</font>
+
 A case study on multi-agent path finding (MAPF) where multiple agents need to reach their target location on a grid world according to a conflict-free strategy.
 We treat each time step as our viewpoint to find a solution that satisfies the agents' dynamics and collision constraints using the _merge_ operator.
 
