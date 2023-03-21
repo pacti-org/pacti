@@ -20,7 +20,7 @@ def test_examples() -> None:
     print(str(c1))
     c2 = PolyhedralContract.from_dict(contract2)
     contract_str = "Contract1:InVars: [u_1]"
-    contract_str += "\nOutVars:[x_1]\nA: [\n  -u_1 <= -1.0\n"
+    contract_str += "\nOutVars:[x_1]\nA: [\n  -u_1 <= -1\n"
     contract_str += "]\nG: [\n  -x_1 <= -1.5\n]"
     assert "Contract1:" + str(c1) == contract_str
     contract_comp = c1.compose(c2)
