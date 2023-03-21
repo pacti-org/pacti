@@ -1,5 +1,5 @@
 import time
-from joblib import Parallel, delayed
+import joblib
 from base64 import b64decode
 from pacti import write_contracts_to_file
 from pacti.terms.polyhedra import *
@@ -19,16 +19,9 @@ numeric = Union[int, float]
 
 from generators import *
 
-
-# print(
-#     generate_navigation_scenario(
-#         dsn_noise=(1.0, 2.0),
-#         chrg_noise=(1.0, 2.0),
-#         sbo_imp=(0.4, 0.6),
-#         tcm_dv_noise=(1.5, 1.6),
-#         tcm_dv_progress=(0.4, 0.5),
-#     )
-# )
+parallelism=True
+run5=True
+run20=True
 
 # Now, let's apply the Latin hypercube generator to sample the scenario hyperparameters.
 from scipy.stats import qmc
@@ -36,18 +29,20 @@ from scipy.stats import qmc
 d = 12
 n5 = 200
 n20 = 200
+#n20 = 100
+#n20 = 50
 
 mean_sampler = qmc.LatinHypercube(d=d)
 mean_sample5: np.ndarray = mean_sampler.random(n=n5)
 mean_sample20: np.ndarray = mean_sampler.random(n=n20)
 l_bounds = [
-    3.0,  # power: min dns cons
-    2.5,  # power: min chrg gen
-    0.5,  # power: min sbo cons
-    0.5,  # power: min tcm_h cons
-    0.5,  # power: min tcm_dv cons
+    2.0,  # power: min dns cons
+    4.0,  # power: min chrg gen
+    0.3,  # power: min sbo cons
+    0.2,  # power: min tcm_h cons
+    0.1,  # power: min tcm_dv cons
     5.0,  # science: min dsn speed
-    3.0,  # science: min sbo gen
+    2.0,  # science: min sbo gen
     1.0,  # nav: min dsn noise
     1.0,  # nav: min chrg noise
     0.3,  # nav: min sbo imp
@@ -55,18 +50,18 @@ l_bounds = [
     0.3,  # nav: min tcm_dv progress
 ]
 u_bounds = [
-    5.0,  # power: max dns cons
-    5.0,  # power: max chrg gen
-    1.5,  # power: max sbo cons
-    1.5,  # power: max tcm_h cons
-    1.5,  # power: max tcm_dv cons
+    2.2,  # power: max dns cons
+    4.5,  # power: max chrg gen
+    0.4,  # power: max sbo cons
+    0.3,  # power: max tcm_h cons
+    0.2,  # power: max tcm_dv cons
     6.0,  # science: max dsn speed
-    4.0,  # science: max sbo gen
-    2.0,  # nav: max dsn noise
-    2.0,  # nav: max chrg noise
+    10.0,  # science: max sbo gen
+    1.2,  # nav: max dsn noise
+    1.2,  # nav: max chrg noise
     0.8,  # nav: max sbo imp
-    1.8,  # nav: max tcm_dv noise
-    0.8,  # nav: max tcm_dv progress
+    1.4,  # nav: max tcm_dv noise
+    0.5,  # nav: max tcm_dv progress
 ]
 scaled_mean_sample5: np.ndarray = qmc.scale(sample=mean_sample5, l_bounds=l_bounds, u_bounds=u_bounds)
 scaled_mean_sample20: np.ndarray = qmc.scale(sample=mean_sample20, l_bounds=l_bounds, u_bounds=u_bounds)
@@ -79,64 +74,11 @@ dev_sample20: np.ndarray = dev_sampler.random(n=o20)
 
 tuple2float = tuple[float, float]
 
-
-
-
-# tl0a=time.time()
-# ss=make_scenario(
-#         s=1,
-#         means=[
-#             3.0,  # power: min dns cons
-#             2.5,  # power: min chrg gen
-#             0.5,  # power: min sbo cons
-#             0.5,  # power: min tcm_h cons
-#             0.5,  # power: min tcm_dv cons
-#             5.0,  # science: min dsn speed
-#             3.0,  # science: min sbo gen
-#             1.0,  # nav: min dsn noise
-#             1.0,  # nav: min chrg noise
-#             0.3,  # nav: min sbo imp
-#             1.2,  # nav: min tcm_dv noise
-#             0.3,  # nav: min tcm_dv progress
-#         ],
-#         devs=[0.1] * 12,
-#     )
-# tl1a=time.time()
-# print("\n\n=======Short scenario")
-# print(ss)
-# print(f"1 short scenario in {tl1a-tl0a} seconds")
-# print_counts()
-
 nb_contracts5 = 23
 nb_compose5 = 12
 nb_merge5 = 10
 
 
-
-
-# tl0b=time.time()
-# ls=long_scenario(
-#         means=[
-#             3.0,  # power: min dns cons
-#             2.5,  # power: min chrg gen
-#             0.5,  # power: min sbo cons
-#             0.5,  # power: min tcm_h cons
-#             0.5,  # power: min tcm_dv cons
-#             5.0,  # science: min dsn speed
-#             3.0,  # science: min sbo gen
-#             1.0,  # nav: min dsn noise
-#             1.0,  # nav: min chrg noise
-#             0.3,  # nav: min sbo imp
-#             1.2,  # nav: min tcm_dv noise
-#             0.3,  # nav: min tcm_dv progress
-#         ],
-#         devs=[0.1] * 12,
-#     )
-# tl1b=time.time()
-# print("\n\n=======Long scenario")
-# print(ls)
-# print(f"1 long scenario in {tl1b-tl0b} seconds")
-# print_counts()
 
 nb_contracts20 = 115
 nb_compose20 = 63
@@ -144,19 +86,23 @@ nb_merge20 = 50
 
 
 m = 300
+#m = 30
 op_sampler: qmc.LatinHypercube = qmc.LatinHypercube(d=5)
 op_sample: np.ndarray = op_sampler.random(n=m)
 op_l_bounds = [
-    60.0,  # power: low range of initial soc
+    # 60.0,  # power: low range of initial soc
+    80.0,  # power: low range of initial soc
     10.0,  # power: low range of exit soc at each step
-    10.0,  # alloc: low range of delta t
+    5.0,  # alloc: low range of delta t
     60.0,  # sci: low range of d
     40.0,  # nav: low range of u
 ]
 op_u_bounds = [
-    90.0,  # power: high range of initial soc
-    50.0,  # power: low range of exit soc at each step
-    50.0,  # alloc: high range of delta t
+    # 90.0,  # power: high range of initial soc
+    95.0,  # power: high range of initial soc
+    # 50.0,  # power: low range of exit soc at each step
+    30.0,  # power: low range of exit soc at each step
+    200.0,  # alloc: high range of delta t
     100.0,  # sci: high range of  d
     90.0,  # nav: high range of  u
 ]
@@ -234,31 +180,37 @@ def schedulability_analysis5(scenario: tuple[list[tuple2float], PolyhedralContra
 import itertools
 import pickle
 
+if run5:
+    t0a = time.time()
+    if parallelism:
+        scenarios5: Optional[list[tuple[list[tuple2float], PolyhedralContract]]] = joblib.Parallel(n_jobs=joblib.cpu_count())(
+            joblib.delayed(make_scenario)(1, mean, dev, True) for mean, dev in zip(scaled_mean_sample5, dev_sample5)
+        )
+    else:
+        scenarios5: list[tuple[list[tuple2float], PolyhedralContract]] = [make_scenario(1, mean, dev, True) for mean, dev in zip(scaled_mean_sample5, dev_sample5)]
+    t1a = time.time()
 
-t0a = time.time()
-scenarios5: Optional[list[tuple[list[tuple2float], PolyhedralContract]]] = Parallel(n_jobs=32)(
-    delayed(make_scenario)(1, mean, dev, True) for mean, dev in zip(scaled_mean_sample5, dev_sample5)
-)
-t1a = time.time()
+    print(f"All {n5} hyperparameter variations of the 5-step scenario sequence generated in {t1a-t0a} seconds.")
+    print(
+        f"Total count of Pacti operations: {nb_contracts5} contracts; {nb_merge5} merges; and {nb_compose5} compositions."
+    )
 
-print(f"All {n5} hyperparameter variations of the 5-step scenario sequence generated in {t1a-t0a} seconds.")
-print(
-    f"Total count of Pacti operations: {nb_contracts5} contracts; {nb_merge5} merges; and {nb_compose5} compositions."
-)
+    t2a = time.time()
+    if parallelism:
+        all_results5: Optional[list[tuple[list[tuple2float], PolyhedralContract]]] = joblib.Parallel(n_jobs=joblib.cpu_count())(
+            joblib.delayed(schedulability_analysis5)(scenario, req) for scenario in scenarios5 for req in scaled_op_sample
+        )
+    else:
+        all_results5: list[tuple[list[tuple2float], PolyhedralContract]] = [schedulability_analysis5(scenario, req) for scenario in scenarios5 for req in scaled_op_sample]
+    t3a = time.time()
+    results5 = [x for x in all_results5 if x is not None]
+    print(
+        f"Found {len(results5)} admissible schedules out of {m*n5} combinations generated from {m} variations of operational requirements for each of the {n5} scenarios.\nTotal time {t3a-t2a} seconds."
+    )
 
-t2a = time.time()
-all_results5: Optional[list[tuple[list[tuple2float], PolyhedralContract]]] = Parallel(n_jobs=32)(
-    delayed(schedulability_analysis5)(scenario, req) for scenario in scenarios5 for req in scaled_op_sample
-)
-t3a = time.time()
-results5 = [x for x in all_results5 if x is not None]
-print(
-    f"Found {len(results5)} admissible schedules out of {m*n5} combinations generated from {m} variations of operational requirements for each of the {n5} scenarios in {t3a-t2a} seconds."
-)
-
-f5 = open("case_studies/space_mission/data/results5.data", "wb")
-pickle.dump(results5, f5)
-f5.close()
+    f5 = open("case_studies/space_mission/data/results5.data", "wb")
+    pickle.dump(results5, f5)
+    f5.close()
 
 
 def make_op_requirements20(reqs: np.ndarray) -> PolyhedralContract:
@@ -342,27 +294,33 @@ def schedulability_analysis20(scenario: tuple[list[tuple2float], PolyhedralContr
     except ValueError:
         return None
 
+if run20:
+    t0b = time.time()
+    if parallelism:
+        scenarios20: Optional[list[tuple[list[tuple2float], PolyhedralContract]]] = joblib.Parallel(n_jobs=joblib.cpu_count())(
+            joblib.delayed(long_scenario)(mean, dev) for mean, dev in zip(scaled_mean_sample20, dev_sample20)
+        )
+    else:
+        scenarios20: list[tuple[list[tuple2float], PolyhedralContract]] = [long_scenario(mean, dev) for mean, dev in zip(scaled_mean_sample20, dev_sample20)]
+    t1b = time.time()
+    print(f"All {n20} hyperparameter variations of the 20-step scenario sequence generated.\nTotal time {t1b-t0b} seconds using a maximum of {joblib.cpu_count()} concurrent jobs.")
+    print(
+        f"Total count of Pacti operations: {nb_contracts20} contracts; {nb_merge20} merges; and {nb_compose20} compositions."
+    )
 
-t0b = time.time()
-scenarios20: Optional[list[tuple[list[tuple2float], PolyhedralContract]]] = Parallel(n_jobs=32)(
-    delayed(long_scenario)(mean, dev) for mean, dev in zip(scaled_mean_sample20, dev_sample20)
-)
-t1b = time.time()
-print(f"All {n20} hyperparameter variations of the 20-step scenario sequence generated in {t1b-t0b} seconds.")
-print(
-    f"Total count of Pacti operations: {nb_contracts20} contracts; {nb_merge20} merges; and {nb_compose20} compositions."
-)
+    t2b = time.time()
+    if parallelism:
+        all_results20 = joblib.Parallel(n_jobs=joblib.cpu_count())(
+            joblib.delayed(schedulability_analysis20)(scenario, req) for scenario in scenarios20 for req in scaled_op_sample
+        )
+    else:
+        all_results20 = [schedulability_analysis20(scenario, req) for scenario in scenarios20 for req in scaled_op_sample]
+    t3b = time.time()
+    results20 = [x for x in all_results20 if x is not None]
+    print(
+        f"Found {len(results20)} admissible schedules out of {m*n20} combinations generated from {m} variations of operational requirements for each of the {n20} scenarios.\nTotal time {t3b-t2b} seconds using a maximum of {joblib.cpu_count()} concurrent jobs."
+    )
 
-t2b = time.time()
-all_results20 = Parallel(n_jobs=32)(
-    delayed(schedulability_analysis20)(scenario, req) for scenario in scenarios20 for req in scaled_op_sample
-)
-t3b = time.time()
-results20 = [x for x in all_results20 if x is not None]
-print(
-    f"Found {len(results20)} admissible schedules out of {m*n20} combinations generated from {m} variations of operational requirements for each of the {n20} scenarios in {t3b-t2b} seconds."
-)
-
-f20 = open("case_studies/space_mission/data/results20.data", "wb")
-pickle.dump(results20, f20)
-f20.close()
+    f20 = open("case_studies/space_mission/data/results20.data", "wb")
+    pickle.dump(results20, f20)
+    f20.close()

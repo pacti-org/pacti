@@ -45,6 +45,26 @@ class NestedTermList:
             res = [str(tl) for tl in self.nested_termlist]
             return "\nor \n".join(res)
         return "true"
+    
+    def __le__(self, other: object) -> bool:
+        if not isinstance(other, type(self)):
+            raise ValueError()
+        for this_tl in self.nested_termlist:
+            found = False
+            for that_tl in other.nested_termlist:
+                if this_tl <= that_tl:
+                    found = True
+                    break
+            if not found:
+                return False
+        return True
+    
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, type(self)):
+            raise ValueError()
+        return (self <= other) and (other <= self)
+
 
     def simplify(self: NestedTermlist_t, context: NestedTermlist_t, force_empty_intersection: bool) -> NestedTermlist_t:
         """
@@ -222,6 +242,16 @@ class IoContractCompound(Generic[NestedTermlist_t]):
             + "\n"
             + "G: "
             + str(self.g)
+        )
+    
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, type(self)):
+            raise ValueError
+        return (
+            self.inputvars == other.inputvars
+            and self.outputvars == self.outputvars
+            and self.a == other.a
+            and self.g == other.g
         )
 
     def merge(self, other: IoContractCompound) -> IoContractCompound:
