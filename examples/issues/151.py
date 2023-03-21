@@ -35,3 +35,5 @@ conts, _ = read_contracts_from_file("compound.json")
 print("************")
 print(c1)
 print(conts[0])
+
+print(c1 == conts[1])
