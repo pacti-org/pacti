@@ -1,0 +1,65 @@
+[
+  {
+    "name": "contract_OHC14_lin",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [
+        "OHC14"
+      ],
+      "output_vars": [
+        "xRFP"
+      ],
+      "assumptions": [
+        "OHC14 <= 0.43",
+        "-OHC14 <= -0.016"
+      ],
+      "guarantees": [
+        "1.683574879227053 OHC14 - xRFP = -0.023937198067632837"
+      ]
+    }
+  },
+  {
+    "name": "dCas9_contract_on",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [
+        "xRFP",
+        "dCas9"
+      ],
+      "output_vars": [
+        "RFP"
+      ],
+      "assumptions": [
+        "-xRFP <= -0.3",
+        "xRFP <= 1.0",
+        "-dCas9 <= -0.1",
+        "dCas9 <= 0.8"
+      ],
+      "guarantees": [
+        "RFP + 0.1 dCas9 + 2.0 xRFP <= 5.0"
+      ]
+    }
+  },
+  {
+    "name": "successful_comp_OHC14",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [
+        "OHC14",
+        "dCas9"
+      ],
+      "output_vars": [
+        "RFP"
+      ],
+      "assumptions": [
+        "-1.68357487922705 OHC14 <= -0.2760628019323672",
+        "-dCas9 <= -0.09999999999999998",
+        "dCas9 <= 0.8",
+        "OHC14 <= 0.42999999999999994"
+      ],
+      "guarantees": [
+        "1.683574879227053 OHC14 + 0.5 RFP + 0.05 dCas9 <= 2.4760628019323674"
+      ]
+    }
+  }
+]
