@@ -9,6 +9,7 @@ from pacti.iocontract.iocontract import TermList_t, Var
 from pacti.utils.lists import list_diff, list_intersection, list_union
 
 NestedTermlist_t = TypeVar("NestedTermlist_t", bound="NestedTermList")
+IoContractCompound_t = TypeVar("IoContractCompound_t", bound="IoContractCompound")
 numeric = Union[int, float]
 
 
@@ -45,6 +46,24 @@ class NestedTermList:
             res = [str(tl) for tl in self.nested_termlist]
             return "\nor \n".join(res)
         return "true"
+
+    def __le__(self, other: object) -> bool:  # noqa: WPS231 too much cognitive complexity
+        if not isinstance(other, type(self)):
+            raise ValueError()
+        for this_tl in self.nested_termlist:
+            found = False
+            for that_tl in other.nested_termlist:
+                if this_tl <= that_tl:
+                    found = True
+                    break
+            if not found:
+                return False
+        return True
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, type(self)):
+            raise ValueError()
+        return self <= other <= self
 
     def simplify(self: NestedTermlist_t, context: NestedTermlist_t, force_empty_intersection: bool) -> NestedTermlist_t:
         """
@@ -224,7 +243,17 @@ class IoContractCompound(Generic[NestedTermlist_t]):
             + str(self.g)
         )
 
-    def merge(self, other: IoContractCompound) -> IoContractCompound:
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, type(self)):
+            raise ValueError
+        return (
+            self.inputvars == other.inputvars
+            and self.outputvars == self.outputvars
+            and self.a == other.a
+            and self.g == other.g
+        )
+
+    def merge(self: IoContractCompound_t, other: IoContractCompound_t) -> IoContractCompound_t:
         """
         Compute the merging operation for two contracts.
 

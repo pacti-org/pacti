@@ -43,7 +43,7 @@ CI = os.environ.get("CI", "0") in {"1", "true", "yes", ""}
 WINDOWS = os.name == "nt"
 PTY = not WINDOWS and not CI
 MYPY_FLAGS = "--allow-any-generics --implicit-reexport --allow-untyped-calls"
-FLAKE8_FLAGS_JN = "--ignore=D100,WPS226,WPS421,WPS111,BLK100 "
+FLAKE8_FLAGS_JN = "--ignore=D100,WPS226,WPS421,WPS111,BLK100,E402,WPS331,WPS221,WPS231,N806,WPS114,D212"
 
 sys.stdin.reconfigure(encoding='utf-8')
 sys.stdout.reconfigure(encoding='utf-8')
