@@ -768,7 +768,6 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
             copy_new_terms = new_terms.copy()
             copy_new_terms.terms.remove(term)
             helpers = context | copy_new_terms
-            # del helpers.terms[len(context.terms) + i]
             try:
                 new_term = PolyhedralTermList._transform_term(term, helpers, vars_to_elim, refine)
             except ValueError:
