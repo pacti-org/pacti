@@ -5,7 +5,7 @@ from itertools import combinations
 import numpy as np
 
 from pacti.iocontract import Var
-from pacti.terms.polyhedra import PolyhedralContractCompound
+from pacti.terms.polyhedra import PolyhedralContractCompound, IoContractCompound
 
 
 class Coord:
@@ -256,7 +256,7 @@ def find_move_candidates_three(  # noqa: WPS231
     T_1 = T_0 + 1  # noqa: N806
 
     # find possible [(x,y),(x,y),(x,y)] options for robots
-    possible_sol = []
+    possible_sol: list[list[tuple[int, int]]] = []  # noqa: WPS234
     for x_a in list({max(X_A_0 - 1, 0), X_A_0, min(X_A_0 + 1, grid_n)}):
         for y_a in list({max(Y_A_0 - 1, 0), Y_A_0, min(Y_A_0 + 1, grid_m)}):
             for x_b in list({max(X_B_0 - 1, 0), X_B_0, min(X_B_0 + 1, grid_n)}):
@@ -297,7 +297,7 @@ def find_move_candidates_three(  # noqa: WPS231
                             if contract.a.contains_behavior(var_dict) and contract.g.contains_behavior(var_dict):
                                 possible_sol.append([(x_a, y_a), (x_b, y_b), (x_c, y_c)])
 
-    return possible_sol, t_1
+    return possible_sol, T_1
 
 
 def robots_move(robots: list[Robot], move: list[tuple[int, int]]) -> None:
@@ -347,7 +347,7 @@ def get_swapping_contract(robots: list[Robot]) -> PolyhedralContractCompound:
     return contract  # noqa: WPS331
 
 
-def get_collision_contract(robots: list[Robot]) -> PolyhedralContractCompound:
+def get_collision_contract(robots: list[Robot]) -> IoContractCompound:
     """
     Contract ensuring no collision for all robots.
 
