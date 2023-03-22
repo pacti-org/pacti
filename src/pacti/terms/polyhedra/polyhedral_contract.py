@@ -2,24 +2,24 @@
 
 from __future__ import annotations
 
-from typing import Optional, Tuple, TypedDict, Union
+from typing import Dict, List, Optional, Tuple, TypedDict, Union
 
 from pacti.iocontract import IoContract, IoContractCompound, NestedTermList, Var
 from pacti.terms.polyhedra import serializer
 from pacti.terms.polyhedra.polyhedra import PolyhedralTerm, PolyhedralTermList
 
 numeric = Union[int, float]
-ser_pt = dict[str, Union[float, dict[str, float]]]
+ser_pt = Dict[str, Union[float, Dict[str, float]]]
 ser_contract = TypedDict(
     "ser_contract",
-    {"input_vars": list[str], "output_vars": list[str], "assumptions": list[ser_pt], "guarantees": list[ser_pt]},
+    {"input_vars": List[str], "output_vars": List[str], "assumptions": List[ser_pt], "guarantees": List[ser_pt]},
 )
 
 
 class PolyhedralContract(IoContract):
     """IO Contracts with assumptions and guarantees expressed as polyhedral constraints."""
 
-    def rename_variables(self, variable_mappings: list[tuple[str, str]]) -> PolyhedralContract:
+    def rename_variables(self, variable_mappings: List[Tuple[str, str]]) -> PolyhedralContract:
         """
         Rename variables in a contract.
 
@@ -43,14 +43,14 @@ class PolyhedralContract(IoContract):
         """
         input_vars = [str(x) for x in self.inputvars]
         output_vars = [str(x) for x in self.outputvars]
-        assumptions: list[ser_pt] = [
+        assumptions: List[ser_pt] = [
             {
                 "constant": float(term.constant),
                 "coefficients": {str(k): float(v) for k, v in term.variables.items()},
             }
             for term in self.a.terms
         ]
-        guarantees: list[ser_pt] = [
+        guarantees: List[ser_pt] = [
             {
                 "constant": float(term.constant),
                 "coefficients": {str(k): float(v) for k, v in term.variables.items()},
@@ -81,10 +81,10 @@ class PolyhedralContract(IoContract):
 
     @staticmethod
     def from_string(
-        assumptions: list[str],
-        guarantees: list[str],
-        input_vars: list[str],
-        output_vars: list[str],
+        assumptions: List[str],
+        guarantees: List[str],
+        input_vars: List[str],
+        output_vars: List[str],
     ) -> PolyhedralContract:
         """
         Create contract from several lists of strings.
@@ -98,11 +98,11 @@ class PolyhedralContract(IoContract):
         Returns:
             A polyhedral contract built from the arguments provided.
         """
-        a: list[PolyhedralTerm] = []
+        a: List[PolyhedralTerm] = []
         if assumptions:
             a = [item for x in assumptions for item in serializer.polyhedral_termlist_from_string(x)]
 
-        g: list[PolyhedralTerm] = []
+        g: List[PolyhedralTerm] = []
         if guarantees:
             g = [item for x in guarantees for item in serializer.polyhedral_termlist_from_string(x)]
 
@@ -160,7 +160,7 @@ class PolyhedralContract(IoContract):
             guarantees=g,
         )
 
-    def compose(self, other: PolyhedralContract, vars_to_keep: Optional[list[str]] = None) -> PolyhedralContract:
+    def compose(self, other: PolyhedralContract, vars_to_keep: Optional[List[str]] = None) -> PolyhedralContract:
         """Compose polyhedral contracts.
 
         Compute the composition of the two given contracts and abstract the
@@ -222,7 +222,7 @@ class NestedPolyhedra(NestedTermList):
     """A collection of polyhedral termlists interpreted as their disjunction."""
 
     def __init__(  # noqa: WPS612 useless overwritten __init__
-        self, nested_termlist: list[PolyhedralTermList], force_empty_intersection: bool
+        self, nested_termlist: List[PolyhedralTermList], force_empty_intersection: bool
     ):
         """
         Class constructor.
@@ -252,10 +252,10 @@ class PolyhedralContractCompound(IoContractCompound):
 
     @staticmethod
     def from_string(
-        assumptions: list[list[str]],
-        guarantees: list[list[str]],
-        input_vars: list[str],
-        output_vars: list[str],
+        assumptions: List[list[str]],
+        guarantees: List[list[str]],
+        input_vars: List[str],
+        output_vars: List[str],
     ) -> PolyhedralContractCompound:
         """
         Create contract from several lists of strings.
@@ -269,13 +269,13 @@ class PolyhedralContractCompound(IoContractCompound):
         Returns:
             A polyhedral contract built from the arguments provided.
         """
-        a: list[PolyhedralTermList] = []
+        a: List[PolyhedralTermList] = []
         if assumptions:
             for termlist_str in assumptions:
                 a_termlist = [item for x in termlist_str for item in serializer.polyhedral_termlist_from_string(x)]
                 a.append(PolyhedralTermList(a_termlist))
 
-        g: list[PolyhedralTermList] = []
+        g: List[PolyhedralTermList] = []
         if guarantees:
             for termlist_str in guarantees:
                 g_termlist = [item for x in termlist_str for item in serializer.polyhedral_termlist_from_string(x)]
