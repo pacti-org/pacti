@@ -263,7 +263,6 @@ def find_move_candidates_three(  # noqa: WPS231
                 for y_b in list({max(Y_B_0 - 1, 0), Y_B_0, min(Y_B_0 + 1, grid_m)}):
                     for x_c in list({max(X_C_0 - 1, 0), X_C_0, min(X_C_0 + 1, grid_n)}):
                         for y_c in list({max(Y_C_0 - 1, 0), Y_C_0, min(Y_C_0 + 1, grid_m)}):
-
                             del_x_A_B = (x_a - x_b) * (X_A_0 - X_B_0)  # noqa: N806
                             del_y_A_B = (y_a - y_b) * (Y_A_0 - Y_B_0)  # noqa: N806
                             del_x_A_C = (x_a - x_c) * (X_A_0 - X_C_0)  # noqa: N806

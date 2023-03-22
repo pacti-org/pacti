@@ -52,11 +52,12 @@ def test_composition_failure(test_instance: str) -> None:
         _ = c[0].compose(c[1])
 
 
-composition_unsatisfiable_context_instances = glob.glob(TEST_DATA_DIR + "**/*composition_unsatisfiable_context*.json", recursive=True)
+composition_unsatisfiable_context_instances = glob.glob(
+    TEST_DATA_DIR + "**/*composition_unsatisfiable_context*.json", recursive=True
+)
 
 
-@pytest.mark.parametrize("test_instance",
-                         composition_unsatisfiable_context_instances)
+@pytest.mark.parametrize("test_instance", composition_unsatisfiable_context_instances)
 def test_composition_context(test_instance: str) -> None:
     try:
         c, _ = read_contracts_from_file(test_instance)
