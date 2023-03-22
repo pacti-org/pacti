@@ -256,7 +256,7 @@ def find_move_candidates_three(  # noqa: WPS231
     T_1 = T_0 + 1  # noqa: N806
 
     # find possible [(x,y),(x,y),(x,y)] options for robots
-    possible_sol: list[list[tuple[int, int]]] = []
+    possible_sol: list[list[tuple[int, int]]] = []  # noqa: WPS234
     for x_a in list({max(X_A_0 - 1, 0), X_A_0, min(X_A_0 + 1, grid_n)}):
         for y_a in list({max(Y_A_0 - 1, 0), Y_A_0, min(Y_A_0 + 1, grid_m)}):
             for x_b in list({max(X_B_0 - 1, 0), X_B_0, min(X_B_0 + 1, grid_n)}):
