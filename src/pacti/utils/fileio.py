@@ -2,14 +2,14 @@
 
 import json
 import os
-from typing import Any, Tuple
+from typing import Any, Dict, List, Tuple
 
 from pacti.terms import polyhedra
 
 
 def read_contracts_from_file(  # noqa: WPS231 too much cognitive complexity
     file_name: str,
-) -> Tuple[list[polyhedra.PolyhedralContract], list[str]]:
+) -> Tuple[List[polyhedra.PolyhedralContract], List[str]]:
     """
     Read contracts from a file.
 
@@ -51,8 +51,8 @@ def read_contracts_from_file(  # noqa: WPS231 too much cognitive complexity
 
 
 def write_contracts_to_file(  # noqa: WPS231 too much cognitive complexity
-    contracts: list[polyhedra.PolyhedralContract],
-    names: list[str],
+    contracts: List[polyhedra.PolyhedralContract],
+    names: List[str],
     file_name: str,
     machine_representation: bool = False,
 ) -> None:
@@ -71,7 +71,7 @@ def write_contracts_to_file(  # noqa: WPS231 too much cognitive complexity
     data = []
     assert len(contracts) == len(names)
     for i, c in enumerate(contracts):
-        entry: dict[str, Any] = {}
+        entry: Dict[str, Any] = {}
         if isinstance(c, polyhedra.PolyhedralContract):
             entry["name"] = names[i]
             if machine_representation:
