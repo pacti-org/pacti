@@ -91,7 +91,7 @@ typing = [
 security = ["safety>=2"]
 dev = [
     "certifi>=2022.9.24",
-    "tox-pdm>=0.6.1",
+    "tox>=4.4.7",
 ]
 
 [tool.black]
