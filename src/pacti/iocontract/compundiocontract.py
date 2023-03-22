@@ -9,6 +9,7 @@ from pacti.iocontract.iocontract import TermList_t, Var
 from pacti.utils.lists import list_diff, list_intersection, list_union
 
 NestedTermlist_t = TypeVar("NestedTermlist_t", bound="NestedTermList")
+IoContractCompound_t = TypeVar("IoContractCompound_t", bound="IoContractCompound")
 numeric = Union[int, float]
 
 
@@ -252,7 +253,7 @@ class IoContractCompound(Generic[NestedTermlist_t]):
             and self.g == other.g
         )
 
-    def merge(self, other: IoContractCompound) -> IoContractCompound:
+    def merge(self: IoContractCompound_t, other: IoContractCompound_t) -> IoContractCompound_t:
         """
         Compute the merging operation for two contracts.
 

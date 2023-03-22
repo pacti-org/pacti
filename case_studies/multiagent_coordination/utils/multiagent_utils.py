@@ -1,11 +1,12 @@
 """Utility functions for the multiagent coordination case study."""
 import random
 from itertools import combinations
+from typing import List
 
 import numpy as np
 
 from pacti.iocontract import Var
-from pacti.terms.polyhedra import PolyhedralContractCompound, IoContractCompound
+from pacti.terms.polyhedra import PolyhedralContractCompound
 
 
 class Coord:
@@ -37,7 +38,7 @@ class Robot:
         self.pos = Coord(new_pos)
 
 
-def distance(candidate: list[tuple[int, int]], goal: list[Coord]) -> int:
+def distance(candidate: List[tuple[int, int]], goal: List[Coord]) -> int:
     """
     Distance measure from next robot positions to desired position.
 
@@ -70,7 +71,7 @@ def indiv_distance(move: tuple[int, int], goal: Coord) -> int:
     return distance  # noqa: WPS331
 
 
-def strategy(move_candidates: list[list[tuple[int, int]]], goal: list[Coord]) -> list[tuple[int, int]]:  # noqa: WPS234
+def strategy(move_candidates: List[List[tuple[int, int]]], goal: List[Coord]) -> List[tuple[int, int]]:  # noqa: WPS234
     """
     Choosing the next move according to a strategy.
 
@@ -81,9 +82,9 @@ def strategy(move_candidates: list[list[tuple[int, int]]], goal: list[Coord]) ->
     Returns:
         The chosen move.
     """
-    min_dist: dict[int, list[list[tuple[int, int]]]] = {}  # noqa: WPS234
+    min_dist: dict[int, List[List[tuple[int, int]]]] = {}  # noqa: WPS234
     for candidate in move_candidates:
-        candidate_list: list[list[tuple[int, int]]] = []  # noqa: WPS234
+        candidate_list: List[List[tuple[int, int]]] = []  # noqa: WPS234
         dist = distance(candidate, goal)
 
         if dist in min_dist.keys():
@@ -98,8 +99,8 @@ def strategy(move_candidates: list[list[tuple[int, int]]], goal: list[Coord]) ->
 
 
 def strategy_multiple_simple(  # noqa: WPS234
-    move_candidates: list[list[tuple[int, int]]], goal: list[Coord]
-) -> list[tuple[int, int]]:
+    move_candidates: List[List[tuple[int, int]]], goal: List[Coord]
+) -> List[tuple[int, int]]:
     """
     Choosing the next move for multiple robots according to a simple strategy.
 
@@ -131,11 +132,11 @@ def strategy_multiple_simple(  # noqa: WPS234
 
 
 def strategy_multiple(  # noqa: WPS231,WPS234
-    move_candidates: list[list[tuple[int, int]]],
-    goal: list[Coord],
-    cur_pos: list[tuple[int, int]],
-    last_pos: list[tuple[int, int]],
-) -> list[tuple[int, int]]:
+    move_candidates: List[List[tuple[int, int]]],
+    goal: List[Coord],
+    cur_pos: List[tuple[int, int]],
+    last_pos: List[tuple[int, int]],
+) -> List[tuple[int, int]]:
     """
     Choosing the next move for multiple robots according to a strategy.
 
@@ -165,11 +166,11 @@ def strategy_multiple(  # noqa: WPS231,WPS234
     best_dist = distance(best_move, goal)
     cur_dist = distance(cur_pos, goal)
 
-    moves: list[list[tuple[int, int]]] = []  # noqa: WPS234
-    chosen_move: list[tuple[int, int]] = []  # noqa: WPS234
+    moves: List[List[tuple[int, int]]] = []  # noqa: WPS234
+    chosen_move: List[tuple[int, int]] = []  # noqa: WPS234
 
     if best_dist < cur_dist:
-        move_options: list[list[tuple[int, int]]] = []  # noqa: WPS234
+        move_options: List[List[tuple[int, int]]] = []  # noqa: WPS234
         for distances in min_dist.keys():
             if distances < cur_dist:
                 move_options = move_options + min_dist[distances]
@@ -206,7 +207,7 @@ def strategy_multiple(  # noqa: WPS231,WPS234
 
 
 def find_move_candidates_three(  # noqa: WPS231
-    grid_n: int, grid_m: int, robots: list[Robot], T_0: int, contract: PolyhedralContractCompound  # noqa: N803
+    grid_n: int, grid_m: int, robots: List[Robot], T_0: int, contract: PolyhedralContractCompound  # noqa: N803
 ) -> tuple[list, int]:
     """
     Evaluate the contracts for possible next positions of the robots to find allowed moves.
@@ -256,7 +257,7 @@ def find_move_candidates_three(  # noqa: WPS231
     T_1 = T_0 + 1  # noqa: N806
 
     # find possible [(x,y),(x,y),(x,y)] options for robots
-    possible_sol: list[list[tuple[int, int]]] = []  # noqa: WPS234
+    possible_sol: List[List[tuple[int, int]]] = []  # noqa: WPS234
     for x_a in list({max(X_A_0 - 1, 0), X_A_0, min(X_A_0 + 1, grid_n)}):
         for y_a in list({max(Y_A_0 - 1, 0), Y_A_0, min(Y_A_0 + 1, grid_m)}):
             for x_b in list({max(X_B_0 - 1, 0), X_B_0, min(X_B_0 + 1, grid_n)}):
@@ -300,7 +301,7 @@ def find_move_candidates_three(  # noqa: WPS231
     return possible_sol, T_1
 
 
-def robots_move(robots: list[Robot], move: list[tuple[int, int]]) -> None:
+def robots_move(robots: List[Robot], move: List[tuple[int, int]]) -> None:
     """
     Apply next move and update positions.
 
@@ -312,7 +313,7 @@ def robots_move(robots: list[Robot], move: list[tuple[int, int]]) -> None:
         robots[i].move(move[i])
 
 
-def get_swapping_contract(robots: list[Robot]) -> PolyhedralContractCompound:
+def get_swapping_contract(robots: List[Robot]) -> PolyhedralContractCompound:
     """
     Contract ensuring no swapping conflicts for all robots.
 
@@ -347,7 +348,7 @@ def get_swapping_contract(robots: list[Robot]) -> PolyhedralContractCompound:
     return contract  # noqa: WPS331
 
 
-def get_collision_contract(robots: list[Robot]) -> IoContractCompound:
+def get_collision_contract(robots: List[Robot]) -> PolyhedralContractCompound:
     """
     Contract ensuring no collision for all robots.
 
@@ -362,7 +363,7 @@ def get_collision_contract(robots: list[Robot]) -> IoContractCompound:
         robotnames.append(robot.name)
 
     combis = combinations(robotnames, 2)
-    contracts = []
+    contracts: List[PolyhedralContractCompound] = []
     for combi in combis:
         contract = collision_contract_named(combi[0], combi[1])
         contracts.append(contract)
