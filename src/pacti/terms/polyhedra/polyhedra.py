@@ -612,7 +612,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
             return termlist._transform(context=context, vars_to_elim=vars_to_elim, refine=True)
         except ValueError as e:
             raise ValueError(
-                "The elimination of variables \n{}\n".format(vars_to_elim)
+                "The elimination of variables \n{}\n".format([str(x) for x in vars_to_elim])
                 + "by refining terms \n{}\n".format(self)
                 + "in context \n{}\n".format(context)
                 + "was not possible"
@@ -666,7 +666,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
             termlist = termlist._transform(context=context, vars_to_elim=vars_to_elim, refine=False)
         except ValueError as e:
             raise ValueError(
-                "The elimination of variables \n{}\n".format(vars_to_elim)
+                "The elimination of variables \n{}\n".format([str(x) for x in vars_to_elim])
                 + "by relaxing terms \n{}\n".format(self)
                 + "in context \n{}\n".format(context)
                 + "was not possible"
