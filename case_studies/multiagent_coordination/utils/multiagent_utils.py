@@ -15,7 +15,7 @@ class Coord:
     Allows storing the x and y coordinate.
     """
 
-    def __init__(self, pos):  # noqa: D107
+    def __init__(self, pos: tuple[int, int]):  # noqa: D107
         self.x = pos[0]
         self.y = pos[1]
         self.xy = pos
@@ -28,34 +28,34 @@ class Robot:
     Stores the name, position and goal of the robot.
     """
 
-    def __init__(self, name, pos, goal):  # noqa: D107
+    def __init__(self, name: str, pos: tuple[int, int], goal: tuple[int, int]):  # noqa: D107
         self.name = name
         self.pos = Coord(pos)
         self.goal = Coord(goal)
 
-    def move(self, new_pos):  # noqa: D102
+    def move(self, new_pos: tuple[int, int]) -> None:  # noqa: D102
         self.pos = Coord(new_pos)
 
 
-def distance(candidate, goal):
+def distance(candidate: list[tuple[int, int]], goal: list[Coord]) -> int:
     """
     Distance measure from next robot positions to desired position.
 
     Args:
-        candidate: List of the next positions for the robots.
-        goal: List of goals corresponding to the robots.
+        candidate: list of the next positions for the robots.
+        goal: list of goals corresponding to the robots.
 
     Returns:
         The cumulated distance from the candidate next position to the goal.
     """
-    distance = 0  # noqa: WPS442
+    distance: int = 0  # noqa: WPS442
     for i, move in enumerate(candidate):
         distance = distance + np.abs(move[0] - goal[i].x) + np.abs(move[1] - goal[i].y)  # noqa: WPS442
 
     return distance
 
 
-def indiv_distance(move, goal):
+def indiv_distance(move: tuple[int, int], goal: Coord) -> int:
     """
     Distance measure from current robot position to desired position.
 
@@ -66,24 +66,24 @@ def indiv_distance(move, goal):
     Returns:
         The distance from the robot's next position to the goal.
     """
-    distance = np.abs(move[0] - goal.x) + np.abs(move[1] - goal.y)  # noqa: WPS442
+    distance: int = np.abs(move[0] - goal.x) + np.abs(move[1] - goal.y)  # noqa: WPS442
     return distance  # noqa: WPS331
 
 
-def strategy(move_candidates, goal):
+def strategy(move_candidates: list[list[tuple[int, int]]], goal: list[Coord]) -> list[tuple[int, int]]:  # noqa: WPS234
     """
     Choosing the next move according to a strategy.
 
     Args:
-        move_candidates: List of next robot positions.
-        goal: List of goals corresponding to the robots.
+        move_candidates: list of next robot positions.
+        goal: list of goals corresponding to the robots.
 
     Returns:
         The chosen move.
     """
-    min_dist = {}
+    min_dist: dict[int, list[list[tuple[int, int]]]] = {}  # noqa: WPS234
     for candidate in move_candidates:
-        candidate_list = []
+        candidate_list: list[list[tuple[int, int]]] = []  # noqa: WPS234
         dist = distance(candidate, goal)
 
         if dist in min_dist.keys():
@@ -97,18 +97,20 @@ def strategy(move_candidates, goal):
     return move  # noqa: WPS331
 
 
-def strategy_multiple_simple(move_candidates, goal):
+def strategy_multiple_simple(  # noqa: WPS234
+    move_candidates: list[list[tuple[int, int]]], goal: list[Coord]
+) -> list[tuple[int, int]]:
     """
     Choosing the next move for multiple robots according to a simple strategy.
 
     Args:
-        move_candidates: List of next robot positions.
-        goal: List of goals corresponding to the robots.
+        move_candidates: list of next robot positions.
+        goal: list of goals corresponding to the robots.
 
     Returns:
         The chosen move.
     """
-    min_dist = {}
+    min_dist: dict[int, list] = {}
     for candidate in move_candidates:
         candidate_list = []
         dist = distance(candidate, goal)
@@ -128,20 +130,25 @@ def strategy_multiple_simple(move_candidates, goal):
     return move
 
 
-def strategy_multiple(move_candidates, goal, cur_pos, last_pos):  # noqa: WPS231
+def strategy_multiple(  # noqa: WPS231,WPS234
+    move_candidates: list[list[tuple[int, int]]],
+    goal: list[Coord],
+    cur_pos: list[tuple[int, int]],
+    last_pos: list[tuple[int, int]],
+) -> list[tuple[int, int]]:
     """
     Choosing the next move for multiple robots according to a strategy.
 
     Args:
-        move_candidates: List of next robot positions.
-        goal: List of goals corresponding to the robots.
+        move_candidates: list of next robot positions.
+        goal: list of goals corresponding to the robots.
         cur_pos: Current position.
         last_pos: Last position.
 
     Returns:
         The chosen move.
     """
-    min_dist = {}
+    min_dist: dict[int, list] = {}
     for candidate in move_candidates:
         candidate_list = []
         dist = distance(candidate, goal)
@@ -158,35 +165,36 @@ def strategy_multiple(move_candidates, goal, cur_pos, last_pos):  # noqa: WPS231
     best_dist = distance(best_move, goal)
     cur_dist = distance(cur_pos, goal)
 
+    moves: list[list[tuple[int, int]]] = []  # noqa: WPS234
+    chosen_move: list[tuple[int, int]] = []  # noqa: WPS234
+
     if best_dist < cur_dist:
-        move_options = []
+        move_options: list[list[tuple[int, int]]] = []  # noqa: WPS234
         for distances in min_dist.keys():
             if distances < cur_dist:
                 move_options = move_options + min_dist[distances]
         # prune options where robots leave their goal
-        moves = []
         for move in move_options:
             move_ok = True
-            for i in enumerate(cur_pos):  # keep robots at goal at goal
-                if indiv_distance(cur_pos[i], goal[i]) < indiv_distance(move[i], goal[i]):
+            for i, _value in enumerate(cur_pos):  # keep robots at goal at goal
+                if indiv_distance(move[i], goal[i]) < indiv_distance(move[i], goal[i]):
                     move_ok = False
             if move_ok and move not in moves:
                 moves = moves + [move]  # noqa: S311
 
         if random.random() < 0.1:  # noqa: S311,WPS459,WPS432
-            move = random.choice(min_dist[min(sorted(min_dist.keys()))])  # noqa: S311
+            chosen_move = random.choice(min_dist[min(sorted(min_dist.keys()))])  # noqa: S311
         else:  # take a random good move
-            move = random.choice(moves)  # noqa: S311
+            chosen_move = random.choice(moves)  # noqa: S311
     # check that other moves are possible
     elif best_dist == cur_dist:
-        moves = []
         for move in move_candidates:
             move_ok = True
             if move == cur_pos:  # remove staying in the same position
                 move_ok = False
             if move == last_pos:  # remove going back to previous position
                 move_ok = False
-            for i in enumerate(cur_pos):  # keep robots at goal at goal
+            for i, _val in enumerate(cur_pos):  # keep robots at goal at goal
                 if indiv_distance(cur_pos[i], goal[i]) == 0 and indiv_distance(move[i], goal[i]) != 0:
                     move_ok = False
             if move_ok and move not in moves:  # add move to possible moves
@@ -197,14 +205,16 @@ def strategy_multiple(move_candidates, goal, cur_pos, last_pos):  # noqa: WPS231
     return chosen_move
 
 
-def find_move_candidates_three(grid_n, grid_m, robots, T_0, contract):  # noqa: WPS231,N803
+def find_move_candidates_three(  # noqa: WPS231
+    grid_n: int, grid_m: int, robots: list[Robot], T_0: int, contract: PolyhedralContractCompound  # noqa: N803
+) -> tuple[list, int]:
     """
     Evaluate the contracts for possible next positions of the robots to find allowed moves.
 
     Args:
         grid_n: Grid dimension n.
         grid_m: Grid dimension m.
-        robots: List of robots.
+        robots: list of robots.
         T_0: Current time step.
         contract: The contract that the next positions must satisfy.
 
@@ -291,24 +301,24 @@ def find_move_candidates_three(grid_n, grid_m, robots, T_0, contract):  # noqa: 
     return possible_sol, t_1
 
 
-def robots_move(robots, move):
+def robots_move(robots: list[Robot], move: list[tuple[int, int]]) -> None:
     """
     Apply next move and update positions.
 
     Args:
-        robots: List of robots.
+        robots: list of robots.
         move: Next move.
     """
-    for i in enumerate(robots):
+    for i, _robot in enumerate(robots):
         robots[i].move(move[i])
 
 
-def get_swapping_contract(robots):
+def get_swapping_contract(robots: list[Robot]) -> PolyhedralContractCompound:
     """
     Contract ensuring no swapping conflicts for all robots.
 
     Args:
-        robots: List of robots.
+        robots: list of robots.
 
     Returns:
         The contract that ensures no swapping conflicts.
@@ -326,7 +336,7 @@ def get_swapping_contract(robots):
         del_y_str = "delta_y_" + str(combi[0]) + "_" + str(str(combi[1]))
         inputvars = inputvars + [del_x_str, del_y_str]
         delta_pairs.append((del_x_str, del_y_str))
-    outputvars = []
+    outputvars: list = []
 
     contract = PolyhedralContractCompound.from_string(
         input_vars=inputvars,
@@ -338,12 +348,12 @@ def get_swapping_contract(robots):
     return contract  # noqa: WPS331
 
 
-def get_collision_contract(robots):
+def get_collision_contract(robots: list[Robot]) -> PolyhedralContractCompound:
     """
     Contract ensuring no collision for all robots.
 
     Args:
-        robots: List of robots.
+        robots: list of robots.
 
     Returns:
         The contract that ensures no collision.
@@ -365,7 +375,7 @@ def get_collision_contract(robots):
     return c_collison
 
 
-def collision_contract_named(robot_1, robot_2):
+def collision_contract_named(robot_1: str, robot_2: str) -> PolyhedralContractCompound:
     """
     Contract ensuring no collision for a pair of robots.
 
