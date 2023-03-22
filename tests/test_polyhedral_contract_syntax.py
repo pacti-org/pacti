@@ -97,8 +97,11 @@ def test_pattern4_contract() -> None:
 
     assert 0 == len(c.g.terms)
 
+
 def test_epsilon_contract() -> None:
-    c = PolyhedralContract.from_string(input_vars=["i"], output_vars=[], assumptions=["|i| <= 1.23456789e-5"], guarantees=[])
+    c = PolyhedralContract.from_string(
+        input_vars=["i"], output_vars=[], assumptions=["|i| <= 1.23456789e-5"], guarantees=[]
+    )
 
     assert 1 == len(c.inputvars)
     assert "i" == c.inputvars[0].name
