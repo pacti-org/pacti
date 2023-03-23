@@ -5,15 +5,15 @@ from dataclasses import dataclass, field
 
 from matplotlib.figure import Figure
 
-from case_studies.uav_topologies.src.contracts_utils.union import ContractsUnions
+from src.contracts_utils.union import ContractsUnions
 from pacti.terms.polyhedra import PolyhedralContract
 
-from ..shared import Direction, SymbolType, symbols_colors
-from ..tools.constraints import from_symbol_directions_to_constraints
-from ..tools.plotting import plot_3d_grid
-from .figures import DirectionsGrid
-from .rule import Rule
-from .symbols import Connector, Empty, Fuselage, Rotor, Symbol, Unoccupied, Wing
+from src.shared.shared import Direction, SymbolType, symbols_colors
+from src.tools.constraints import from_symbol_directions_to_constraints
+from src.tools.plotting import plot_3d_grid
+from src.grammar.figures import DirectionsGrid
+from src.grammar.rule import Rule
+from src.grammar.symbols import Connector, Empty, Fuselage, Rotor, Symbol, Unoccupied, Wing
 
 
 @dataclass
