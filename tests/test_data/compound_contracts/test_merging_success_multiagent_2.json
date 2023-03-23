@@ -1,0 +1,98 @@
+[
+  {
+    "name": "contract1",
+    "type": "PolyhedralContractCompound",
+    "data": {
+      "input_vars": [
+        "current_distance"
+      ],
+      "output_vars": [
+        "x_A_1",
+        "y_A_1",
+        "x_B_1",
+        "y_B_1"
+      ],
+      "assumptions": [
+        [
+          "-current_distance <= -1"
+        ]
+      ],
+      "guarantees": [
+        [
+          "x_A_1 - x_B_1 + y_A_1 - y_B_1 <= -1"
+        ],
+        [
+          "-x_A_1 + x_B_1 - y_A_1 + y_B_1 <= -1"
+        ],
+        [
+          "x_A_1 - x_B_1 - y_A_1 + y_B_1 <= -1"
+        ],
+        [
+          "-x_A_1 + x_B_1 + y_A_1 - y_B_1 <= -1"
+        ]
+      ]
+    }
+  },
+  {
+    "name": "contract2",
+    "type": "PolyhedralContractCompound",
+    "data": {
+      "input_vars": [
+        "delta_x",
+        "delta_y",
+        "current_distance"
+      ],
+      "output_vars": [],
+      "assumptions": [
+        [
+          "-current_distance <= -1"
+        ]
+      ],
+      "guarantees": [
+        [
+          "-delta_x - delta_y <= -1"
+        ]
+      ]
+    }
+  },
+  {
+    "name": "contract3",
+    "type": "PolyhedralContractCompound",
+    "data": {
+      "input_vars": [
+        "current_distance",
+        "delta_x",
+        "delta_y"
+      ],
+      "output_vars": [
+        "x_A_1",
+        "y_A_1",
+        "x_B_1",
+        "y_B_1"
+      ],
+      "assumptions": [
+        [
+          "-current_distance <= -1"
+        ]
+      ],
+      "guarantees": [
+        [
+          "x_A_1 - x_B_1 + y_A_1 - y_B_1 <= -1",
+          "-delta_x - delta_y <= -1"
+        ],
+        [
+          "-x_A_1 + x_B_1 - y_A_1 + y_B_1 <= -1",
+          "-delta_x - delta_y <= -1"
+        ],
+        [
+          "x_A_1 - x_B_1 - y_A_1 + y_B_1 <= -1",
+          "-delta_x - delta_y <= -1"
+        ],
+        [
+          "-x_A_1 + x_B_1 + y_A_1 - y_B_1 <= -1",
+          "-delta_x - delta_y <= -1"
+        ]
+      ]
+    }
+  }
+]
