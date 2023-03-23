@@ -1,0 +1,60 @@
+[
+  {
+    "name": "contract1",
+    "type": "PolyhedralContractCompound",
+    "data": {
+      "input_vars": [
+        "x_0",
+        "y_0"
+      ],
+      "output_vars": [
+        "x_1",
+        "y_1"
+      ],
+      "assumptions": [
+        [
+          "x_0 = 1",
+          "y_0 = 1"
+        ]
+      ],
+      "guarantees": [
+        [
+          "|-x_0 - y_0| <= 1",
+          "x_0 <= 5",
+          "y_0 <= 2",
+          "-x_0 <= 0",
+          "-y_0 <= 0"
+        ]
+      ]
+    }
+  },
+  {
+    "name": "contract2",
+    "type": "PolyhedralContractCompound",
+    "data": {
+      "input_vars": [
+        "x_1",
+        "y_1"
+      ],
+      "output_vars": [
+        "x_0",
+        "y_0"
+      ],
+      "assumptions": [
+        [
+          "x_1 = 1",
+          "y_1 = 1"
+        ]
+      ],
+      "guarantees": [
+        [
+          "|-x_0 - y_0| <= 1",
+          "x_0 <= 5",
+          "y_0 <= 2",
+          "-x_0 <= 0",
+          "-y_0 <= 0"
+        ]
+      ]
+    }
+  }
+]
