@@ -21,6 +21,7 @@ nav:
     - From saved data: _case_studies/evaluating_perception/saved_results.ipynb
     - Full demonstration: _case_studies/evaluating_perception/recompute.ipynb
   - Multi-agent Coordination: _case_studies/multiagent_coordination/multiagent.ipynb
+  - UAV Topologies Generation: _case_studies/uav_topologies/topologies.ipynb
   - Signal Processing in Digital ICs: _case_studies/digital_signal_processing/dsp_wl.ipynb
   - Synthetic Biology: _case_studies/biocircuit_specifications/specification_based_synthetic_biology.ipynb
   - Space Mission Scenario: 

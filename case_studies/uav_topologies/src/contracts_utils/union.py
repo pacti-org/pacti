@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from case_studies.uav_topologies.src.contracts_utils.misc import get_equalized_alphabets
+from ..contracts_utils.misc import get_equalized_alphabets
 from pacti.iocontract import IoContract, Var
 from pacti.utils.lists import list_intersection, list_union
 
