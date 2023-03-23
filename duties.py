@@ -27,6 +27,7 @@ from io import StringIO
 from pathlib import Path
 from typing import List, Optional, Pattern
 from urllib.request import urlopen
+import shutil
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -42,9 +43,15 @@ CI = os.environ.get("CI", "0") in {"1", "true", "yes", ""}
 WINDOWS = os.name == "nt"
 PTY = not WINDOWS and not CI
 MYPY_FLAGS = "--allow-any-generics --implicit-reexport --allow-untyped-calls"
-FLAKE8_FLAGS_JN = "--ignore=D100,WPS226,WPS421,WPS111,BLK100 "
+FLAKE8_FLAGS_JN = "--ignore=D100,WPS226,WPS421,WPS111,BLK100,E402,WPS331,WPS221,WPS231,N806,WPS114,D212"
+
+sys.stdin.reconfigure(encoding='utf-8')
+sys.stdout.reconfigure(encoding='utf-8')
+
 #FLAKE8_FLAGS_JN = ""
 
+#sys.stdin.reconfigure(encoding='utf-8')
+#sys.stdout.reconfigure(encoding='utf-8')
 
 def _latest(lines: List[str], regex: Pattern) -> Optional[str]:
     for line in lines:
@@ -172,7 +179,7 @@ def tox(ctx):
     Arguments:
         ctx: The context instance (passed automatically).
     """
-    ctx.run(f"tox run -c config/tox.ini", title="Running tox", pty=PTY, capture=False)
+    ctx.run(f"tox --workdir . --root . -c config/tox.ini", title="Testing over platforms", pty=PTY, capture=False)
 
 
 @duty
@@ -268,23 +275,23 @@ def clean(ctx):
     Arguments:
         ctx: The context instance (passed automatically).
     """
-    ctx.run("rm -rf .coverage*")
-    ctx.run("rm -rf .mypy_cache")
-    ctx.run("rm -rf .pytest_cache")
-    ctx.run("rm -rf tests/.pytest_cache")
-    ctx.run("rm -rf build")
-    ctx.run("rm -rf dist")
-    ctx.run("rm -rf htmlcov")
-    ctx.run("rm -rf pip-wheel-metadata")
-    ctx.run("rm -rf site")
-    ctx.run("find . -type d -name __pycache__ | xargs rm -rf")
-    ctx.run("find . -name '*.rej' -delete")
-    ctx.run("rm -rf docs/_case_studies")
+    shutil.rmtree(".coverage*",ignore_errors=True)
+    shutil.rmtree(".mypy_cache",ignore_errors=True)
+    shutil.rmtree(".pytest_cache",ignore_errors=True)
+    shutil.rmtree("tests/.pytest_cache",ignore_errors=True)
+    shutil.rmtree("build",ignore_errors=True)
+    shutil.rmtree("dist",ignore_errors=True)
+    shutil.rmtree("htmlcov",ignore_errors=True)
+    shutil.rmtree("pip-wheel-metadata",ignore_errors=True)
+    shutil.rmtree("site",ignore_errors=True)
+    shutil.rmtree("__pycache__",ignore_errors=True)
+    shutil.rmtree("docs/_case_studies",ignore_errors=True)
+    shutil.rmtree(".venv",ignore_errors=True)
 
 
 def copy_case_studies(ctx):
     if os.path.exists("docs/_case_studies"):
-        ctx.run("rm -rf docs/_case_studies")
+        shutil.rmtree("docs/_case_studies")
 
     ctx.run("cp -r case_studies docs/_case_studies")
     py_files = glob.glob("docs/_case_studies/**/*.py", recursive=True)

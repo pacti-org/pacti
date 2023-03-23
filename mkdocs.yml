@@ -17,9 +17,7 @@ nav:
 # defer to gen-files + literate-nav
 - Case Studies:
   - Overview: case_studies.md
-  - Autonomous Systems:
-    - From saved data: _case_studies/evaluating_perception/saved_results.ipynb
-    - Full demonstration: _case_studies/evaluating_perception/recompute.ipynb
+  - Autonomous Systems: _case_studies/evaluating_perception/evaluating_perception.ipynb
   - Multi-agent Coordination: _case_studies/multiagent_coordination/multiagent.ipynb
   - UAV Topologies Generation: _case_studies/uav_topologies/topologies.ipynb
   - Signal Processing in Digital ICs: _case_studies/digital_signal_processing/dsp_wl.ipynb

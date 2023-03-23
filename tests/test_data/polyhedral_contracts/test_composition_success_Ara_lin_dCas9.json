@@ -1,0 +1,65 @@
+[
+  {
+    "name": "contract_Ara_lin",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [
+        "Ara"
+      ],
+      "output_vars": [
+        "xRFP"
+      ],
+      "assumptions": [
+        "Ara <= 37.0",
+        "-Ara <= -0.2"
+      ],
+      "guarantees": [
+        "0.018956521739130438 Ara - xRFP = -0.0013913043478260834"
+      ]
+    }
+  },
+  {
+    "name": "dCas9_contract_on",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [
+        "xRFP",
+        "dCas9"
+      ],
+      "output_vars": [
+        "RFP"
+      ],
+      "assumptions": [
+        "-xRFP <= -0.3",
+        "xRFP <= 1.0",
+        "-dCas9 <= -0.1",
+        "dCas9 <= 0.8"
+      ],
+      "guarantees": [
+        "RFP + 0.1 dCas9 + 2.0 xRFP <= 5.0"
+      ]
+    }
+  },
+  {
+    "name": "successful_comp_Ara",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [
+        "Ara",
+        "dCas9"
+      ],
+      "output_vars": [
+        "RFP"
+      ],
+      "assumptions": [
+        "-0.0189565217391304 Ara <= -0.29860869565217396",
+        "-dCas9 <= -0.09999999999999998",
+        "dCas9 <= 0.8",
+        "Ara <= 37.0"
+      ],
+      "guarantees": [
+        "0.018956521739130438 Ara + 0.5 RFP + 0.05 dCas9 <= 2.498608695652174"
+      ]
+    }
+  }
+]

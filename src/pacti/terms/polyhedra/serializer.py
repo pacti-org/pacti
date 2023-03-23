@@ -1,6 +1,6 @@
 """Transformations between polyhedral structures and strings."""
 import re
-from typing import Dict, Tuple, Union
+from typing import Dict, List, Match, Tuple, Union
 
 import numpy as np
 import sympy
@@ -66,7 +66,9 @@ float_closeness_absolute_tolerance: float = 1e-8
 def _number_to_string(n: numeric) -> str:
     if isinstance(n, sympy.core.numbers.Float):
         f: sympy.core.numbers.Float = n
-        return str(f.num)
+        return f"{f.num:.4g}"
+    elif isinstance(n, float):
+        return f"{n:.4g}"
     return str(n)
 
 
@@ -117,8 +119,8 @@ def _lhs_str(term: PolyhedralTerm) -> str:  # noqa: WPS231
 
 
 def polyhedral_term_list_to_strings(  # noqa: WPS231 too much cognitive complexity
-    terms: list[PolyhedralTerm],
-) -> Tuple[str, list[PolyhedralTerm]]:
+    terms: List[PolyhedralTerm],
+) -> Tuple[str, List[PolyhedralTerm]]:
     """
     Convert a list of polyhedral terms into a list of strings, one term at a time.
 
@@ -271,7 +273,7 @@ def _internal_parse_constant(val: str) -> numeric:
     return n
 
 
-def _internal_add_variable(terms: str, variables: dict[str, numeric], v: str, c: str) -> None:
+def _internal_add_variable(terms: str, variables: Dict[str, numeric], v: str, c: str) -> None:
     if v in variables:
         raise (ValueError(f"Multiple coefficients involving the same variable: {v} in: {terms}"))
 
@@ -279,7 +281,7 @@ def _internal_add_variable(terms: str, variables: dict[str, numeric], v: str, c:
     variables.update({v: n})
 
 
-def _internal_parse_variables(variables: dict[str, numeric], terms: str) -> None:
+def _internal_parse_variables(variables: Dict[str, numeric], terms: str) -> None:
     t = internal_variable_pattern.match(terms)
     if not t:
         raise (ValueError(f"Polyhedral variable syntax mismatch: {terms}"))
@@ -295,8 +297,8 @@ def _internal_parse_variables(variables: dict[str, numeric], terms: str) -> None
         variables
 
 
-def _internal_pt_from_canonical_match(m: re.Match[str]) -> PolyhedralTerm:
-    variables: dict[str, numeric] = {}
+def _internal_pt_from_canonical_match(m: Match[str]) -> PolyhedralTerm:
+    variables: Dict[str, numeric] = {}
 
     v = m.group("variable")
     c = m.group("coefficient")
@@ -314,7 +316,7 @@ def _internal_pt_from_canonical_match(m: re.Match[str]) -> PolyhedralTerm:
 # pos: LHS <= RHS
 # neg: -(LHS) <= RHS
 # result is [pos,neg]
-def _internal_pt_from_absolute_less_than_match(m: re.Match[str]) -> list[PolyhedralTerm]:
+def _internal_pt_from_absolute_less_than_match(m: Match[str]) -> List[PolyhedralTerm]:
     s1 = f"{m.group('LHS')} <= {m.group('RHS')}"
     m1 = internal_polyhedral_term_canonical_pattern.match(s1)
     if not m1:
@@ -331,7 +333,7 @@ def _internal_pt_from_absolute_less_than_match(m: re.Match[str]) -> list[Polyhed
 # pos: LHS <= 0
 # neg: -(LHS) <= 0
 # result is [pos,neg]
-def _internal_pt_from_absolute_zero_match(m: re.Match[str]) -> list[PolyhedralTerm]:
+def _internal_pt_from_absolute_zero_match(m: Match[str]) -> List[PolyhedralTerm]:
     s1 = f"{m.group('LHS')} <= 0"
     m1 = internal_polyhedral_term_canonical_pattern.match(s1)
     if not m1:
@@ -348,7 +350,7 @@ def _internal_pt_from_absolute_zero_match(m: re.Match[str]) -> list[PolyhedralTe
 # pos: LHS <= RHS
 # neg: -(LHS) <= -(RHS)
 # result is [pos,neg]
-def _internal_pt_from_equality_match(m: re.Match[str]) -> list[PolyhedralTerm]:
+def _internal_pt_from_equality_match(m: Match[str]) -> List[PolyhedralTerm]:
     s1 = f"{m.group('LHS')} <= {m.group('RHS')}"
     m1 = internal_polyhedral_term_canonical_pattern.match(s1)
     if not m1:
@@ -362,7 +364,7 @@ def _internal_pt_from_equality_match(m: re.Match[str]) -> list[PolyhedralTerm]:
     return [pos, neg]
 
 
-def polyhedral_termlist_from_string(str_rep: str) -> list[PolyhedralTerm]:
+def polyhedral_termlist_from_string(str_rep: str) -> List[PolyhedralTerm]:
     """
     Transform a linear expression into a polyhedral termlist.
 

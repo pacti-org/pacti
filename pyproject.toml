@@ -6,7 +6,7 @@ build-backend = "pdm.pep517.api"
 name = "Pacti"
 description = "pacti-description"
 authors = [{name = "pacti-authors-name", email = "pacti-authors-email"}]
-license = "BSD-2-Clause"
+license = "BSD-3-Clause"
 readme = "README.md"
 keywords = []
 dynamic = ["version"]
@@ -91,7 +91,7 @@ typing = [
 security = ["safety>=2"]
 dev = [
     "certifi>=2022.9.24",
-    "tox-pdm>=0.6.1",
+    "tox>=4.4.7",
 ]
 
 [tool.black]

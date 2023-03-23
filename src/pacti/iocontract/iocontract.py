@@ -81,7 +81,7 @@ class Term(ABC):
 
     @property
     @abstractmethod
-    def vars(self) -> list[Var]:  # noqa: A003
+    def vars(self) -> List[Var]:  # noqa: A003
         """Variables contained in the syntax of the term."""
 
     @abstractmethod
@@ -149,13 +149,13 @@ class TermList(ABC):
             self.terms = []
 
     @property
-    def vars(self) -> list[Var]:  # noqa: A003
+    def vars(self) -> List[Var]:  # noqa: A003
         """The list of variables contained in this list of terms.
 
         Returns:
             List of variables referenced in the term.
         """
-        varlist: list[Var] = []
+        varlist: List[Var] = []
         for t in self.terms:
             varlist = list_union(varlist, t.vars)
         return varlist
@@ -392,7 +392,7 @@ class IoContract(Generic[TermList_t]):
         self.g = guarantees.simplify(self.a)
 
     @property
-    def vars(self) -> list[Var]:  # noqa: A003
+    def vars(self) -> List[Var]:  # noqa: A003
         """
         The list of variables in the interface of the contract.
 
