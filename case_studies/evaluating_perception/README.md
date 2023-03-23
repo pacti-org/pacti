@@ -1,1 +1,0 @@
-This notebook contains the code to run the notebook on evaluating perception with respect to system level requirements. Run evaluate_perception.ipynb for the car pedestrian example.
