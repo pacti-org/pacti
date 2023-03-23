@@ -16,8 +16,11 @@ behavior_test_instances = glob.glob(TEST_DATA_DIR + "**/*behavior*.json", recurs
 
 x = Var("x")
 y = Var("y")
-test_success_combinations = {'tests/test_data/behavior_contracts/test_behavior_1.json': {x:0, y:2}}
-test_failure_combinations = {'tests/test_data/behavior_contracts/test_behavior_1.json': {x:3, y:5}}
+for instance in behavior_test_instances:
+    if 'test_behavior_1' in instance:
+        contract = instance
+test_success_combinations = {contract: {x:0, y:2}}
+test_failure_combinations = {contract: {x:3, y:5}}
 
 @pytest.mark.parametrize("test_instance", behavior_test_instances)
 def test_contains_behavior_success(test_instance: str) -> None:
