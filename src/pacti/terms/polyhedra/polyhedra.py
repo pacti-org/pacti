@@ -975,7 +975,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
                 # logging.debug("Optimal value: %s", -res["fun"])
             # logging.debug("Results: %s", res)
             # if res["success"] and -res["fun"] <= b_temp[i]:
-            if res["status"] != 2 and -res["fun"] <= b_temp[i]:  # noqa: WPS309
+            if res["status"] == 0 and -res["fun"] <= b_temp[i]:  # noqa: WPS309
                 logging.debug("Can remove")
                 a_temp = np.delete(a_temp, i, 0)
                 b_temp = np.delete(b_temp, i)
