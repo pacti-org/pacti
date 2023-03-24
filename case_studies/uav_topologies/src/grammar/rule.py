@@ -37,15 +37,9 @@ class Rule:
         symbols_dirs = self.conditions.get_all_symbol_types_and_directions()
         constraints, symbols = from_symbol_directions_to_constraints(symbols_dirs)
 
-        if self.name == "r14":
-            pass
         """Creating Contracts"""
         contract_union = ContractsUnions(name=self.name)
         for constraint in constraints:
-            # new_c = StrContract(assumptions=constraint, inputs=list(symbols))
-            # print(new_c)
-            print(constraint)
-            print(list(symbols))
             io_contract = PolyhedralContract.from_string(
                 input_vars=list(symbols), output_vars=[], assumptions=constraint, guarantees=[]
             )
