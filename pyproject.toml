@@ -20,7 +20,7 @@ dependencies = [
     "ipykernel>=6.21.3",
     "ipympl>=0.9.3",
 ]
-requires-python = ">=3.8, <=3.11.1"
+requires-python = ">=3.8, <3.12"
 
 [project.scripts]
 #pacti = "pacti.cli:main"
