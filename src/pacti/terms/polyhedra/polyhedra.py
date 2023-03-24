@@ -957,25 +957,21 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         while i < n:
             objective = a_temp[i, :] * -1
             b_temp[i] += 1
-            # logging.debug("Optimization objective: \n%s", objective)
-            # logging.debug("a_temp is \n%s", a_temp)
-            # logging.debug("a_help is \n%s", a_help)
-            # logging.debug("b_temp is \n%s", b_temp)
-            # logging.debug("b_help is \n%s", b_help)
             if helper_present:
                 a_opt = np.concatenate((a_temp, a_help), axis=0)
                 b_opt = np.concatenate((b_temp, b_help))
             else:
                 a_opt = a_temp
                 b_opt = b_temp
+            # Linprog's status values
+            # 0 : Optimization proceeding nominally.
+            # 1 : Iteration limit reached.
+            # 2 : Problem appears to be infeasible.
+            # 3 : Problem appears to be unbounded.
+            # 4 : Numerical difficulties encountered.
             res = linprog(c=objective, A_ub=a_opt, b_ub=b_opt, bounds=(None, None))  # ,options={'tol':0.000001})
             b_temp[i] -= 1
-            if res["fun"]:
-                ...
-                # logging.debug("Optimal value: %s", -res["fun"])
-            # logging.debug("Results: %s", res)
-            # if res["success"] and -res["fun"] <= b_temp[i]:
-            if res["status"] != 2 and -res["fun"] <= b_temp[i]:  # noqa: WPS309
+            if res["status"] == 3 or (res["status"] == 0 and -res["fun"] <= b_temp[i]):  # noqa: WPS309
                 logging.debug("Can remove")
                 a_temp = np.delete(a_temp, i, 0)
                 b_temp = np.delete(b_temp, i)
