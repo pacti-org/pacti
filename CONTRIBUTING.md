@@ -34,5 +34,4 @@ Pacti has continuous integration and development setup with Github Actions. Some
 1. If you are in the process of developing a feature/fixing a bug in your own development branch: Make sure that the Pacti Development workflow passes. This will automatically be run with every commit, so you should be getting notifications of what Pacti functionality failed (if any).
 2. If you are contributing a development feature to any branch (that is, your development has finished): Run the Pacti Development Review workflow. This will test the functionality and also code quality.
 3. If you are reviewing a pull-request to the main branch from another developer: Make sure to go to the "Actions" tab and run the Pacti Pre-Production workflow manually. This workflow tests the package for functionality and quality on two Python versions.
-
-Until the repository is private, we may choose to run the Pacti Production workflow once a month to make sure that the software works with all OS and all Python versions.
+4. The Pacti Production workflow makes sure that the software works with all OS and all Python versions.
