@@ -1,5 +1,4 @@
-on:
-  workflow-dispatch
+on: workflow_dispatch
 # Use the following when repo is public:
 # on:
 #   push:

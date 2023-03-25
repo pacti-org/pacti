@@ -1,5 +1,4 @@
-on:
-  workflow-dispatch
+on: workflow_dispatch
 
 name: Pacti Development Review
 
