@@ -1,13 +1,13 @@
 on:
   workflow-dispath
-# Use this when repo is public:
+# Use the following when repo is public:
 # on:
 #   push:
 #     branches: ["main"]
 #   pull_request:
 #     branches: ["main"]
 
-name: Pacti Production
+name: Pacti Pre-Production
 
 jobs:
   build:
@@ -16,8 +16,8 @@ jobs:
       fail-fast: false
       max-parallel: 4
       matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        os: [ubuntu-latest]
+        python-version: ["3.8", "3.11"]
     steps:
       - uses: actions/checkout@v3
       - name: Setup PDM
