@@ -1,10 +1,9 @@
-on: workflow_dispatch
-# Use the following when repo is public:
-# on:
-#   push:
-#     branches: ["main"]
-#   pull_request:
-#     branches: ["main"]
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
 
 name: Pacti Pre-Production
 
