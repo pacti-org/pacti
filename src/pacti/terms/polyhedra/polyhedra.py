@@ -503,7 +503,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         res += "\n  ".join(self.to_str_list())
         res += "\n]"
         return res
-    
+
     def __hash__(self) -> int:
         return hash(tuple(self.terms))
 

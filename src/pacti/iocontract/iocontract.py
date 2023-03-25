@@ -198,9 +198,9 @@ class TermList(ABC):
 
     def __le__(self: TermList_t, other: TermList_t) -> bool:
         return self.refines(other)
-    
+
     @abstractmethod
-    def __hash__(self: TermList_t, other: TermList_t) -> int:
+    def __hash__(self) -> int:
         ...
 
     def copy(self: TermList_t) -> TermList_t:
@@ -427,7 +427,7 @@ class IoContract(Generic[TermList_t]):
             and self.a == other.a
             and self.g == other.g
         )
-    
+
     def __hash__(self) -> int:
         return hash((tuple(self.inputvars), tuple(self.outputvars), self.a, self.g))
 
