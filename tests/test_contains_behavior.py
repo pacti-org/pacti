@@ -2,8 +2,8 @@ import glob
 
 import pytest
 
-from pacti.utils import read_contracts_from_file
 from pacti.iocontract import Var
+from pacti.utils import read_contracts_from_file
 
 TEST_DATA_DIR = "tests/test_data/behavior_contracts"
 
@@ -17,10 +17,11 @@ behavior_test_instances = glob.glob(TEST_DATA_DIR + "**/*behavior*.json", recurs
 x = Var("x")
 y = Var("y")
 for instance in behavior_test_instances:
-    if 'test_behavior_1' in instance:
+    if "test_behavior_1" in instance:
         contract = instance
-test_success_combinations = {contract: {x:0, y:2}}
-test_failure_combinations = {contract: {x:3, y:5}}
+test_success_combinations = {contract: {x: 0, y: 2}}
+test_failure_combinations = {contract: {x: 3, y: 5}}
+
 
 @pytest.mark.parametrize("test_instance", behavior_test_instances)
 def test_contains_behavior_success(test_instance: str) -> None:
@@ -38,6 +39,7 @@ def test_contains_behavior_success(test_instance: str) -> None:
     assert a_contains == True
     assert g_contains == True
 
+
 @pytest.mark.parametrize("test_instance", behavior_test_instances)
 def test_contains_behavior_failure(test_instance: str) -> None:
     try:
@@ -54,6 +56,7 @@ def test_contains_behavior_failure(test_instance: str) -> None:
     assert a_contains == False
     assert g_contains == False
 
+
 if __name__ == "__main__":
-    file = 'test_data/behavior_contracts/test_behavior_1.json'
+    file = "test_data/behavior_contracts/test_behavior_1.json"
     test_contains_behavior_success(file)
