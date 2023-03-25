@@ -1,0 +1,21 @@
+[
+  {
+    "name": "contract",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [
+        "x"
+      ],
+      "output_vars": [
+        "y"
+      ],
+      "assumptions": [
+        "x <= 2"
+      ],
+      "guarantees": [
+        "2 x + 3 y <= 7",
+        "-3 x + 2 y <= 8"
+      ]
+    }
+  }
+]

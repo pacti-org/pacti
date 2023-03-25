@@ -1,6 +1,7 @@
 
 from pacti.terms.polyhedra import PolyhedralContractCompound
 from pacti.iocontract import Var
+from pacti import read_contracts_from_file, write_contracts_to_file
 
 c1 = PolyhedralContractCompound.from_string(
     input_vars=["x"],
@@ -27,3 +28,12 @@ print(c1.g.contains_behavior({Var("x"):3, Var("y"):0}))
 print(c1.g.contains_behavior({Var("x"):3, Var("y"):2.5}))
 print(c1.a.contains_behavior({Var("x"):5, Var("y"):0}))
 print(c1.a.contains_behavior({Var("x"):3, Var("y"):2.5}))
+
+write_contracts_to_file([c1,c2],["c1","c2"], "compound.json")
+conts, _ = read_contracts_from_file("compound.json")
+
+print("************")
+print(c1)
+print(conts[0])
+
+print(c1 == conts[1])

@@ -29,6 +29,7 @@ from matplotlib import patches
 import pdb
 from matplotlib.collections import PatchCollection
 from contract_utils import *
+from typing import Tuple
 
 varPrefixes=["t", "soc", "d", "c", "u", "r", "temp"]
 epsilon = 1e-3
@@ -49,7 +50,7 @@ epsilon = 1e-3
 # - s: start index of the timeline variables
 # - generation: (min, max) rate of battery charge during the task instance
 # - epsilon: approximately zero
-def CHARGING_power(s: int, generation: tuple[float, float], epsilon: float) -> PolyhedralContract:
+def CHARGING_power(s: int, generation: Tuple[float, float], epsilon: float) -> PolyhedralContract:
   spec = PolyhedralContract.from_string(
     input_vars = [
       f"soc{s}_entry",          # initial battery SOC
@@ -98,7 +99,7 @@ _ = plot_guarantees(contract=charging1_power,
 # Parameters:
 # - s: start index of the timeline variables
 # - consumption: (min, max) rate of battery discharge during the task instance
-def power_consumer(s: int, task: str, consumption: tuple[float, float]) -> PolyhedralContract:
+def power_consumer(s: int, task: str, consumption: Tuple[float, float]) -> PolyhedralContract:
   spec = PolyhedralContract.from_string(
     input_vars = [
       f"soc{s}_entry",          # initial battery SOC

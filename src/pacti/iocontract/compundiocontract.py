@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import logging
-from typing import List, TypeVar, Union
+from typing import Dict, Generic, List, TypeVar, Union
 
 from pacti.iocontract.iocontract import TermList_t, Var
 from pacti.utils.lists import list_diff, list_intersection, list_union
 
-NTL_t = TypeVar("NTL_t", bound="NestedTermList")
+NestedTermlist_t = TypeVar("NestedTermlist_t", bound="NestedTermList")
+IoContractCompound_t = TypeVar("IoContractCompound_t", bound="IoContractCompound")
 numeric = Union[int, float]
 
 
@@ -16,7 +17,7 @@ class NestedTermList:
     """A collection of termlists interpreted as their disjunction."""
 
     def __init__(  # noqa: WPS231 too much cognitive complexity
-        self, nested_termlist: list[TermList_t], force_empty_intersection: bool
+        self, nested_termlist: List[TermList_t], force_empty_intersection: bool
     ):
         """
         Class constructor.
@@ -36,7 +37,7 @@ class NestedTermList:
                         intersection = tli | tlj
                         if not intersection.is_empty():
                             raise ValueError("Terms %s and %s have nonempty intersection" % (tli, tlj))
-        self.nested_termlist: list[TermList_t] = []
+        self.nested_termlist: List[TermList_t] = []
         for tl in nested_termlist:
             self.nested_termlist.append(tl.copy())
 
@@ -46,7 +47,25 @@ class NestedTermList:
             return "\nor \n".join(res)
         return "true"
 
-    def simplify(self: NTL_t, context: NTL_t, force_empty_intersection: bool) -> NTL_t:
+    def __le__(self, other: object) -> bool:  # noqa: WPS231 too much cognitive complexity
+        if not isinstance(other, type(self)):
+            raise ValueError()
+        for this_tl in self.nested_termlist:
+            found = False
+            for that_tl in other.nested_termlist:
+                if this_tl <= that_tl:
+                    found = True
+                    break
+            if not found:
+                return False
+        return True
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, type(self)):
+            raise ValueError()
+        return self <= other <= self
+
+    def simplify(self: NestedTermlist_t, context: NestedTermlist_t, force_empty_intersection: bool) -> NestedTermlist_t:
         """
         Remove redundant terms in nested termlist.
 
@@ -68,7 +87,7 @@ class NestedTermList:
                 new_nested_tl.append(new_tl)
         return type(self)(new_nested_tl, force_empty_intersection)
 
-    def intersect(self: NTL_t, other: NTL_t, force_empty_intersection: bool) -> NTL_t:
+    def intersect(self: NestedTermlist_t, other: NestedTermlist_t, force_empty_intersection: bool) -> NestedTermlist_t:
         """
         Semantically intersect two nested termlists.
 
@@ -88,18 +107,18 @@ class NestedTermList:
         return type(self)(new_nested_tl, force_empty_intersection)
 
     @property
-    def vars(self) -> list[Var]:  # noqa: A003
+    def vars(self) -> List[Var]:  # noqa: A003
         """The list of variables contained in this nested termlist.
 
         Returns:
             List of variables referenced in nested termlist.
         """
-        varlist: list[Var] = []
+        varlist: List[Var] = []
         for tl in self.nested_termlist:
             varlist = list_union(varlist, tl.vars)
         return varlist
 
-    def copy(self: NTL_t, force_empty_intersection: bool) -> NTL_t:
+    def copy(self: NestedTermlist_t, force_empty_intersection: bool) -> NestedTermlist_t:
         """
         Makes copy of nested termlist.
 
@@ -111,7 +130,7 @@ class NestedTermList:
         """
         return type(self)([tl.copy() for tl in self.nested_termlist], force_empty_intersection)
 
-    def contains_behavior(self, behavior: dict[Var, numeric]) -> bool:
+    def contains_behavior(self, behavior: Dict[Var, numeric]) -> bool:
         """
         Tell whether constraints contain the given behavior.
 
@@ -134,7 +153,7 @@ class NestedTermList:
         return False
 
 
-class IoContractCompound:
+class IoContractCompound(Generic[NestedTermlist_t]):
     """
     Basic type for a compound IO contract.
 
@@ -150,7 +169,9 @@ class IoContractCompound:
         g: Contract guarantees.
     """
 
-    def __init__(self, assumptions: NTL_t, guarantees: NTL_t, input_vars: List[Var], output_vars: List[Var]):
+    def __init__(
+        self, assumptions: NestedTermlist_t, guarantees: NestedTermlist_t, input_vars: List[Var], output_vars: List[Var]
+    ):
         """
         Class constructor.
 
@@ -198,8 +219,8 @@ class IoContractCompound:
                 % (list_diff(guarantees.vars, list_union(input_vars, output_vars)), input_vars, output_vars, guarantees)
             )
 
-        self.a: NTL_t = assumptions.copy(True)
-        self.g: NTL_t = guarantees.copy(False)
+        self.a: NestedTermlist_t = assumptions.copy(True)
+        self.g: NestedTermlist_t = guarantees.copy(False)
         self.inputvars = input_vars.copy()
         self.outputvars = output_vars.copy()
         # simplify the guarantees with the assumptions
@@ -222,7 +243,17 @@ class IoContractCompound:
             + str(self.g)
         )
 
-    def merge(self, other: IoContractCompound) -> IoContractCompound:
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, type(self)):
+            raise ValueError
+        return (
+            self.inputvars == other.inputvars
+            and self.outputvars == self.outputvars
+            and self.a == other.a
+            and self.g == other.g
+        )
+
+    def merge(self: IoContractCompound_t, other: IoContractCompound_t) -> IoContractCompound_t:
         """
         Compute the merging operation for two contracts.
 
@@ -239,4 +270,4 @@ class IoContractCompound:
         output_vars = list_union(self.outputvars, other.outputvars)
         assumptions = self.a.intersect(other.a, force_empty_intersection=True)
         guarantees = self.g.intersect(other.g, force_empty_intersection=False)
-        return IoContractCompound(assumptions, guarantees, input_vars, output_vars)
+        return type(self)(assumptions, guarantees, input_vars, output_vars)

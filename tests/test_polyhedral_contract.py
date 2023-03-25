@@ -8,6 +8,7 @@ from pacti.utils.errors import IncompatibleArgsError
 TEST_DATA_DIR = "tests/test_data/polyhedral_contracts"
 
 import logging
+
 FORMAT = "%(asctime)s:%(levelname)s:%(name)s:%(message)s"
 logging.basicConfig(filename="../pacti.log", filemode="w", level=logging.DEBUG, format=FORMAT)
 
@@ -48,6 +49,22 @@ def test_composition_failure(test_instance: str) -> None:
         assert False
     assert len(c) == 2
     with pytest.raises(IncompatibleArgsError):
+        _ = c[0].compose(c[1])
+
+
+composition_unsatisfiable_context_instances = glob.glob(
+    TEST_DATA_DIR + "**/*composition_unsatisfiable_context*.json", recursive=True
+)
+
+
+@pytest.mark.parametrize("test_instance", composition_unsatisfiable_context_instances)
+def test_composition_context(test_instance: str) -> None:
+    try:
+        c, _ = read_contracts_from_file(test_instance)
+    except:
+        assert False
+    assert len(c) == 2
+    with pytest.raises(ValueError, match="unsatisfiable in context"):
         _ = c[0].compose(c[1])
 
 

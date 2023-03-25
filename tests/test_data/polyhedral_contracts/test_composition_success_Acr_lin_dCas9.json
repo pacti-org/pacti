@@ -1,0 +1,65 @@
+[
+  {
+    "name": "contract_Acr_lin",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [
+        "Acr"
+      ],
+      "output_vars": [
+        "xRFP"
+      ],
+      "assumptions": [
+        "Acr <= 130.0",
+        "-Acr <= -10.0"
+      ],
+      "guarantees": [
+        "0.013858333333333334 Acr - xRFP = -0.10158333333333336"
+      ]
+    }
+  },
+  {
+    "name": "dCas9_contract_on",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [
+        "xRFP",
+        "dCas9"
+      ],
+      "output_vars": [
+        "RFP"
+      ],
+      "assumptions": [
+        "-xRFP <= -0.3",
+        "xRFP <= 1.0",
+        "-dCas9 <= -0.1",
+        "dCas9 <= 0.8"
+      ],
+      "guarantees": [
+        "RFP + 0.1 dCas9 + 2.0 xRFP <= 5.0"
+      ]
+    }
+  },
+  {
+    "name": "successful_comp_Acr",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [
+        "Acr",
+        "dCas9"
+      ],
+      "output_vars": [
+        "RFP"
+      ],
+      "assumptions": [
+        "-0.0138583333333333 Acr <= -0.19841666666666702",
+        "0.0138583333333333 Acr <= 0.8984166666666669",
+        "-dCas9 <= -0.09999999999999998",
+        "dCas9 <= 0.8"
+      ],
+      "guarantees": [
+        "0.013858333333333334 Acr + 0.5 RFP + 0.05 dCas9 <= 2.398416666666667"
+      ]
+    }
+  }
+]
