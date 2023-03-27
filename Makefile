@@ -27,10 +27,6 @@ BASIC_DUTIES = \
 	check-dependencies \
 	clean \
 	coverage \
-	docs \
-	docs-deploy \
-	docs-regen \
-	docs-serve \
 	format \
 	release \
 	tox
@@ -38,7 +34,6 @@ BASIC_DUTIES = \
 QUALITY_DUTIES = \
 	check-quality \
 	check-jn-quality \
-	check-docs \
 	check-types \
 	check-jn-types \
 	test

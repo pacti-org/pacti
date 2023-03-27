@@ -1,2 +1,0 @@
-[tool.jupytext]
-formats = "case_studies///ipynb,tests/case_studies///py:percent"

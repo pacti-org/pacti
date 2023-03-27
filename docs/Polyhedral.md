@@ -1,1 +1,0 @@
-::: pacti.terms.polyhedra.polyhedra
