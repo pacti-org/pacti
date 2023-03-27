@@ -27,18 +27,15 @@ BASIC_DUTIES = \
 	check-dependencies \
 	clean \
 	coverage \
-	docs \
-	docs-deploy \
-	docs-regen \
-	docs-serve \
 	format \
 	release \
 	tox
 
 QUALITY_DUTIES = \
 	check-quality \
-	check-docs \
+	check-jn-quality \
 	check-types \
+	check-jn-types \
 	test
 
 .PHONY: help
@@ -51,7 +48,7 @@ lock:
 
 .PHONY: check
 check:
-	@$(DUTY) check-quality check-types check-docs check-dependencies
+	@$(DUTY) check-quality check-jn-quality check-types check-jn-types check-docs check-dependencies
 
 .PHONY: uninstall
 uninstall:
@@ -66,9 +63,9 @@ uninstall:
 	rm -rf site
 	find . -type d -name __pycache__ | xargs rm -rf
 	find . -type d -name __pypackages__ | xargs rm -rf
-	find . -name '*.rej' -delete
-	find . -name pdm.lock -delete
-	find . -name .pdm.toml -delete
+	find . -name pdm.lock | xargs rm -rf
+	find . -name .pdm.toml | xargs rm -rf
+	find . -name '*.rej' | xargs rm -rf
 
 
 .PHONY: $(BASIC_DUTIES)

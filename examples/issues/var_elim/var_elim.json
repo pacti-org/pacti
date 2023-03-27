@@ -1,0 +1,205 @@
+[
+  {
+    "name": "c1",
+    "type": "PolyhedralContract_machine",
+    "data": {
+      "input_vars": [
+        "d1_entry",
+        "duration_dsn1",
+        "c1_entry"
+      ],
+      "output_vars": [
+        "d2_exit",
+        "c2_exit",
+        "output_d1",
+        "output_c1"
+      ],
+      "assumptions": [
+        {
+          "constant": -9.99999993922529e-09,
+          "coefficients": {
+            "c1_entry": -1.0
+          }
+        },
+        {
+          "constant": 0.0,
+          "coefficients": {
+            "duration_dsn1": -1.0
+          }
+        },
+        {
+          "constant": 100.0,
+          "coefficients": {
+            "d1_entry": 1.0
+          }
+        },
+        {
+          "constant": 0.0,
+          "coefficients": {
+            "d1_entry": -1.0
+          }
+        }
+      ],
+      "guarantees": [
+        {
+          "constant": 0.0,
+          "coefficients": {
+            "d1_entry": 1.0,
+            "duration_dsn1": -6.564481131075319,
+            "output_d1": -1.0
+          }
+        },
+        {
+          "constant": 0.0,
+          "coefficients": {
+            "d1_entry": -1.0,
+            "duration_dsn1": 3.597376864975417,
+            "output_d1": 1.0
+          }
+        },
+        {
+          "constant": 0.0,
+          "coefficients": {
+            "output_d1": -1.0
+          }
+        },
+        {
+          "constant": 0.0,
+          "coefficients": {
+            "output_c1": -1.0
+          }
+        },
+        {
+          "constant": 9.99999993922529e-09,
+          "coefficients": {
+            "output_c1": 1.0,
+            "c1_entry": -1.0
+          }
+        },
+        {
+          "constant": 9.99999993922529e-09,
+          "coefficients": {
+            "output_c1": -1.0,
+            "c1_entry": 1.0
+          }
+        },
+        {
+          "constant": 0.0,
+          "coefficients": {
+            "d2_exit": -1.0
+          }
+        },
+        {
+          "constant": 9.99999993922529e-09,
+          "coefficients": {
+            "output_d1": -1.0,
+            "d2_exit": 1.0
+          }
+        },
+        {
+          "constant": 9.99999993922529e-09,
+          "coefficients": {
+            "output_d1": 1.0,
+            "d2_exit": -1.0
+          }
+        },
+        {
+          "constant": 0.0,
+          "coefficients": {
+            "c2_exit": -1.0
+          }
+        },
+        {
+          "constant": 9.99999993922529e-09,
+          "coefficients": {
+            "output_c1": -1.0,
+            "c2_exit": 1.0
+          }
+        },
+        {
+          "constant": 9.99999993922529e-09,
+          "coefficients": {
+            "output_c1": 1.0,
+            "c2_exit": -1.0
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "c2",
+    "type": "PolyhedralContract_machine",
+    "data": {
+      "input_vars": [
+        "duration_sbo3",
+        "d2_exit",
+        "c2_exit"
+      ],
+      "output_vars": [
+        "d3_exit",
+        "c3_exit"
+      ],
+      "assumptions": [
+        {
+          "constant": 0.0,
+          "coefficients": {
+            "duration_sbo3": -1.0
+          }
+        },
+        {
+          "constant": 100.0,
+          "coefficients": {
+            "duration_sbo3": 5.426484494958277,
+            "d2_exit": 1.0
+          }
+        },
+        {
+          "constant": 0.0,
+          "coefficients": {
+            "d2_exit": -1.0
+          }
+        },
+        {
+          "constant": 0.0,
+          "coefficients": {
+            "c2_exit": -1.0
+          }
+        }
+      ],
+      "guarantees": [
+        {
+          "constant": 0.0,
+          "coefficients": {
+            "d3_exit": 1.0,
+            "duration_sbo3": -5.426484494958277,
+            "d2_exit": -1.0
+          }
+        },
+        {
+          "constant": 0.0,
+          "coefficients": {
+            "d3_exit": -1.0,
+            "duration_sbo3": 1.4707681074967838,
+            "d2_exit": 1.0
+          }
+        },
+        {
+          "constant": 0.0,
+          "coefficients": {
+            "duration_sbo3": -5.426484494958277,
+            "c3_exit": 1.0,
+            "c2_exit": -1.0
+          }
+        },
+        {
+          "constant": 0.0,
+          "coefficients": {
+            "duration_sbo3": 1.4707681074967838,
+            "c3_exit": -1.0,
+            "c2_exit": 1.0
+          }
+        }
+      ]
+    }
+  }
+]

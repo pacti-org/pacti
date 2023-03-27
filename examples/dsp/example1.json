@@ -1,12 +1,12 @@
 {
     "contract1": {
-        "InputVars": [
+        "input_vars": [
             "p1_a",
             "p1_e",
             "p2_a",
             "p2_e"
         ],
-        "OutputVars": [
+        "output_vars": [
             "p3_a",
             "p3_e"
         ],
@@ -37,13 +37,13 @@
         ]
     },
     "contract2": {
-        "InputVars": [
+        "input_vars": [
             "p3_a",
             "p3_e",
             "p4_a",
             "p4_e"
         ],
-        "OutputVars": [
+        "output_vars": [
             "p5_a",
             "p5_e"
         ],

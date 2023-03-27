@@ -1,0 +1,39 @@
+{
+"contract1" : {
+    "input_vars": ["x_0", "t_0"],
+    "output_vars": ["x_1", "t_1"],
+    "assumptions": [
+      {"constant": 5, "coefficients": {"x_0": 1}},
+      {"constant": 0, "coefficients": {"x_0": -1}},
+    {"constant": 0, "coefficients": {"t_0": -1}},
+    {"constant": 1, "coefficients": {"x_0": 1}},
+    {"constant": -1, "coefficients": {"x_0": -1}}
+  ],
+
+    "guarantees": [{"constant": 1, "coefficients": {"t_1": 1, "t_0": -1}},
+      {"constant": 5, "coefficients": {"x_1": 1}},
+      {"constant": 0, "coefficients": {"x_1": -1}},
+      {"constant": -1, "coefficients": {"t_1": -1, "t_0": 1}},
+      {"constant": 1, "coefficients": {"x_1": 1, "x_0": -1}},
+      {"constant": 1, "coefficients": {"x_1": -1, "x_0": 1}}
+      ]
+    },
+"contract2": {
+    "input_vars": ["x_1", "t_1"],
+    "output_vars": ["x_2", "t_2"],
+    "assumptions": [{"constant": 5, "coefficients": {"x_1": 1}},
+    {"constant": 0, "coefficients": {"x_1": -1}},
+    {"constant": 0, "coefficients": {"t_1": -1}}
+  ],
+
+    "guarantees": [
+      {"constant": 5, "coefficients": {"x_2": 1}},
+      {"constant": 0, "coefficients": {"x_2": -1}},
+      {"constant": -1, "coefficients": {"t_2": -1, "t_1": 1}},
+      {"constant": 1, "coefficients": {"t_2": 1, "t_1": -1}},
+      {"constant": 1, "coefficients": {"x_2": 1, "x_1": -1}},
+      {"constant": 1, "coefficients": {"x_2": -1, "x_1": 1}}
+      ]
+    },
+"operation":"composition"
+}

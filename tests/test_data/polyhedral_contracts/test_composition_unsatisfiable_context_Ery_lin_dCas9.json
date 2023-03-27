@@ -1,0 +1,43 @@
+[
+  {
+    "name": "contract_Ery_lin",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [
+        "Ery"
+      ],
+      "output_vars": [
+        "xRFP"
+      ],
+      "assumptions": [
+        "Ery <= 65.0",
+        "-Ery <= -2.0"
+      ],
+      "guarantees": [
+        "0.00273015873015873 Ery - xRFP = 0.0025396825396826195"
+      ]
+    }
+  },
+  {
+    "name": "dCas9_contract_on",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [
+        "xRFP",
+        "dCas9"
+      ],
+      "output_vars": [
+        "RFP"
+      ],
+      "assumptions": [
+        "-xRFP <= -0.3",
+        "xRFP <= 1.0",
+        "-dCas9 <= -0.1",
+        "dCas9 <= 0.8"
+      ],
+      "guarantees": [
+        "RFP + 0.1 dCas9 + 2.0 xRFP <= 5.0"
+      ]
+    }
+  }
+]

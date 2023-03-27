@@ -1,0 +1,65 @@
+[
+  {
+    "name": "contract_Cuma_lin",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [
+        "Cuma"
+      ],
+      "output_vars": [
+        "xRFP"
+      ],
+      "assumptions": [
+        "Cuma <= 8.9",
+        "-Cuma <= -0.3"
+      ],
+      "guarantees": [
+        "0.23205813953488375 Cuma - xRFP = -0.06531744186046518"
+      ]
+    }
+  },
+  {
+    "name": "dCas9_contract_on",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [
+        "xRFP",
+        "dCas9"
+      ],
+      "output_vars": [
+        "RFP"
+      ],
+      "assumptions": [
+        "-xRFP <= -0.3",
+        "xRFP <= 1.0",
+        "-dCas9 <= -0.1",
+        "dCas9 <= 0.8"
+      ],
+      "guarantees": [
+        "RFP + 0.1 dCas9 + 2.0 xRFP <= 5.0"
+      ]
+    }
+  },
+  {
+    "name": "successful_comp_Cuma",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [
+        "Cuma",
+        "dCas9"
+      ],
+      "output_vars": [
+        "RFP"
+      ],
+      "assumptions": [
+        "-0.232058139534884 Cuma <= -0.23468255813953487",
+        "0.232058139534884 Cuma <= 0.9346825581395348",
+        "-dCas9 <= -0.09999999999999998",
+        "dCas9 <= 0.8"
+      ],
+      "guarantees": [
+        "0.464116279069768 Cuma + RFP + 0.1 dCas9 <= 4.869365116279069"
+      ]
+    }
+  }
+]

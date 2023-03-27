@@ -1,0 +1,70 @@
+[
+  {
+    "name": "contract1",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [],
+      "output_vars": [
+        "mult_out1_a",
+        "mult_out1_e",
+        "mult_out2_a",
+        "mult_out2_e",
+        "mult_out3_a",
+        "mult_out3_e"
+      ],
+      "assumptions": [],
+      "guarantees": [
+        "mult_out1_e <= 0.02768554687499991",
+        "mult_out1_a <= 0.1845703125",
+        "mult_out2_e <= 0.021533203124999956",
+        "mult_out2_a <= 0.58447265625",
+        "mult_out3_e <= 0.02768554687499991",
+        "mult_out3_a <= 0.1845703125"
+      ]
+    }
+  },
+  {
+    "name": "contract2",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [
+        "mult_out1_a",
+        "mult_out1_e",
+        "mult_out2_a",
+        "mult_out2_e"
+      ],
+      "output_vars": [
+        "add_out1_a",
+        "add_out1_e"
+      ],
+      "assumptions": [
+        "mult_out1_a + mult_out2_a <= 1.0"
+      ],
+      "guarantees": [
+        "add_out1_e - mult_out1_e - mult_out2_e <= 0.0",
+        "add_out1_a <= 0.984375",
+        "add_out1_a - mult_out1_a - mult_out2_a <= 0.0"
+      ]
+    }
+  },
+  {
+    "name": "contract3",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [],
+      "output_vars": [
+        "mult_out3_a",
+        "mult_out3_e",
+        "add_out1_a",
+        "add_out1_e"
+      ],
+      "assumptions": [],
+      "guarantees": [
+        "mult_out3_e <= 0.02768554687499991",
+        "mult_out3_a <= 0.1845703125",
+        "add_out1_e <= 0.04921875000000009",
+        "add_out1_a <= 0.76904296875"
+      ]
+    }
+  }
+]

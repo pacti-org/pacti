@@ -1,0 +1,191 @@
+[
+  {
+    "name": "contract1",
+    "type": "PolyhedralContractCompound",
+    "data": {
+      "input_vars": [
+        "x_A_0",
+        "y_A_0",
+        "t_0",
+        "x_B_0",
+        "y_B_0"
+      ],
+      "output_vars": [
+        "x_A_1",
+        "y_A_1",
+        "t_1",
+        "x_B_1",
+        "y_B_1"
+      ],
+      "assumptions": [
+        [
+          "x_A_0 = 0",
+          "y_A_0 = 0",
+          "t_0 = 0",
+          "x_B_0 = 0",
+          "y_B_0 = 2"
+        ]
+      ],
+      "guarantees": [
+        [
+          "-t_0 + t_1 = 1",
+          "|-x_A_0 + x_A_1 - y_A_0 + y_A_1| <= 1",
+          "|-x_A_0 + x_A_1 + y_A_0 - y_A_1| <= 1",
+          "x_A_1 <= 5",
+          "y_A_1 <= 2",
+          "-x_A_1 <= 0",
+          "-y_A_1 <= 0",
+          "|-x_B_0 + x_B_1 - y_B_0 + y_B_1| <= 1",
+          "|-x_B_0 + x_B_1 + y_B_0 - y_B_1| <= 1",
+          "x_B_1 <= 5",
+          "y_B_1 <= 2",
+          "-x_B_1 <= 0",
+          "-y_B_1 <= 0"
+        ]
+      ]
+    }
+  },
+  {
+    "name": "contract2",
+    "type": "PolyhedralContractCompound",
+    "data": {
+      "input_vars": [
+        "current_distance",
+        "delta_x",
+        "delta_y"
+      ],
+      "output_vars": [
+        "x_A_1",
+        "y_A_1",
+        "x_B_1",
+        "y_B_1"
+      ],
+      "assumptions": [
+        [
+          "-current_distance <= -1"
+        ]
+      ],
+      "guarantees": [
+        [
+          "x_A_1 - x_B_1 + y_A_1 - y_B_1 <= -1",
+          "-delta_x - delta_y <= -1"
+        ],
+        [
+          "-x_A_1 + x_B_1 - y_A_1 + y_B_1 <= -1",
+          "-delta_x - delta_y <= -1"
+        ],
+        [
+          "x_A_1 - x_B_1 - y_A_1 + y_B_1 <= -1",
+          "-delta_x - delta_y <= -1"
+        ],
+        [
+          "-x_A_1 + x_B_1 + y_A_1 - y_B_1 <= -1",
+          "-delta_x - delta_y <= -1"
+        ]
+      ]
+    }
+  },
+  {
+    "name": "contract3",
+    "type": "PolyhedralContractCompound",
+    "data": {
+      "input_vars": [
+        "x_A_0",
+        "y_A_0",
+        "t_0",
+        "x_B_0",
+        "y_B_0",
+        "current_distance",
+        "delta_x",
+        "delta_y"
+      ],
+      "output_vars": [
+        "x_A_1",
+        "y_A_1",
+        "t_1",
+        "x_B_1",
+        "y_B_1"
+      ],
+      "assumptions": [
+        [
+          "x_A_0 = 0",
+          "y_A_0 = 0",
+          "t_0 = 0",
+          "x_B_0 = 0",
+          "y_B_0 = 2",
+          "-current_distance <= -1"
+        ]
+      ],
+      "guarantees": [
+        [
+          "-t_0 + t_1 = 1",
+          "|-x_A_0 + x_A_1 - y_A_0 + y_A_1| <= 1",
+          "|-x_A_0 + x_A_1 + y_A_0 - y_A_1| <= 1",
+          "x_A_1 <= 5",
+          "y_A_1 <= 2",
+          "-x_A_1 <= 0",
+          "-y_A_1 <= 0",
+          "|-x_B_0 + x_B_1 - y_B_0 + y_B_1| <= 1",
+          "|-x_B_0 + x_B_1 + y_B_0 - y_B_1| <= 1",
+          "x_B_1 <= 5",
+          "y_B_1 <= 2",
+          "-x_B_1 <= 0",
+          "-y_B_1 <= 0",
+          "x_A_1 - x_B_1 + y_A_1 - y_B_1 <= -1",
+          "-delta_x - delta_y <= -1"
+        ],
+        [
+          "-t_0 + t_1 = 1",
+          "|-x_A_0 + x_A_1 - y_A_0 + y_A_1| <= 1",
+          "|-x_A_0 + x_A_1 + y_A_0 - y_A_1| <= 1",
+          "x_A_1 <= 5",
+          "y_A_1 <= 2",
+          "-x_A_1 <= 0",
+          "-y_A_1 <= 0",
+          "|-x_B_0 + x_B_1 - y_B_0 + y_B_1| <= 1",
+          "|-x_B_0 + x_B_1 + y_B_0 - y_B_1| <= 1",
+          "x_B_1 <= 5",
+          "y_B_1 <= 2",
+          "-x_B_1 <= 0",
+          "-y_B_1 <= 0",
+          "-x_A_1 + x_B_1 - y_A_1 + y_B_1 <= -1",
+          "-delta_x - delta_y <= -1"
+        ],
+        [
+          "-t_0 + t_1 = 1",
+          "|-x_A_0 + x_A_1 - y_A_0 + y_A_1| <= 1",
+          "|-x_A_0 + x_A_1 + y_A_0 - y_A_1| <= 1",
+          "x_A_1 <= 5",
+          "y_A_1 <= 2",
+          "-x_A_1 <= 0",
+          "-y_A_1 <= 0",
+          "|-x_B_0 + x_B_1 - y_B_0 + y_B_1| <= 1",
+          "|-x_B_0 + x_B_1 + y_B_0 - y_B_1| <= 1",
+          "x_B_1 <= 5",
+          "y_B_1 <= 2",
+          "-x_B_1 <= 0",
+          "-y_B_1 <= 0",
+          "x_A_1 - x_B_1 - y_A_1 + y_B_1 <= -1",
+          "-delta_x - delta_y <= -1"
+        ],
+        [
+          "-t_0 + t_1 = 1",
+          "|-x_A_0 + x_A_1 - y_A_0 + y_A_1| <= 1",
+          "|-x_A_0 + x_A_1 + y_A_0 - y_A_1| <= 1",
+          "x_A_1 <= 5",
+          "y_A_1 <= 2",
+          "-x_A_1 <= 0",
+          "-y_A_1 <= 0",
+          "|-x_B_0 + x_B_1 - y_B_0 + y_B_1| <= 1",
+          "|-x_B_0 + x_B_1 + y_B_0 - y_B_1| <= 1",
+          "x_B_1 <= 5",
+          "y_B_1 <= 2",
+          "-x_B_1 <= 0",
+          "-y_B_1 <= 0",
+          "-x_A_1 + x_B_1 + y_A_1 - y_B_1 <= -1",
+          "-delta_x - delta_y <= -1"
+        ]
+      ]
+    }
+  }
+]
