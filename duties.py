@@ -27,24 +27,32 @@ from io import StringIO
 from pathlib import Path
 from typing import List, Optional, Pattern
 from urllib.request import urlopen
+import shutil
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
 from duty import duty
 
-DIR_SEARCH = ["src", "tests", "case_studies", "docs"]
+DIR_SEARCH = ["src", "tests", "docs"]
 PY_SRC_PATHS = (Path(_) for _ in DIR_SEARCH)
 PY_SRC_LIST = tuple(str(_) for _ in PY_SRC_PATHS)
 PY_SRC = " ".join(PY_SRC_LIST)
 JNB_SRC = " ".join([el for src in DIR_SEARCH for el in glob.glob(src+"/**/*.ipynb", recursive=True)])
+print(JNB_SRC)
 TESTING = os.environ.get("TESTING", "0") in {"1", "true"}
 CI = os.environ.get("CI", "0") in {"1", "true", "yes", ""}
 WINDOWS = os.name == "nt"
 PTY = not WINDOWS and not CI
 MYPY_FLAGS = "--allow-any-generics --implicit-reexport --allow-untyped-calls"
-FLAKE8_FLAGS_JN = "--ignore=D100,WPS226,WPS421,WPS111,BLK100 "
+FLAKE8_FLAGS_JN = "--ignore=D100,WPS226,WPS421,WPS111,BLK100,E402,WPS331,WPS221,WPS231,N806,WPS114,D212"
+
+sys.stdin.reconfigure(encoding='utf-8')
+sys.stdout.reconfigure(encoding='utf-8')
+
 #FLAKE8_FLAGS_JN = ""
 
+#sys.stdin.reconfigure(encoding='utf-8')
+#sys.stdout.reconfigure(encoding='utf-8')
 
 def _latest(lines: List[str], regex: Pattern) -> Optional[str]:
     for line in lines:
@@ -130,7 +138,7 @@ def changelog(ctx):
     )
 
 
-@duty(pre=["check_quality", "check_types", "check_docs", "check_dependencies"])
+@duty(pre=["check_quality", "check_types", "check_dependencies"])
 def check(ctx):
     """
     Check it all!
@@ -172,7 +180,7 @@ def tox(ctx):
     Arguments:
         ctx: The context instance (passed automatically).
     """
-    ctx.run(f"tox run -c config/tox.ini", title="Running tox", pty=PTY, capture=False)
+    ctx.run(f"tox --workdir . --root . -c config/tox.ini", title="Testing over platforms", pty=PTY, capture=False)
 
 
 @duty
@@ -224,18 +232,6 @@ def check_dependencies(ctx):
     ctx.run(safety, title="Checking dependencies")
 
 
-@duty
-def check_docs(ctx):
-    """
-    Check if the documentation builds correctly.
-
-    Arguments:
-        ctx: The context instance (passed automatically).
-    """
-    Path("htmlcov").mkdir(parents=True, exist_ok=True)
-    Path("htmlcov/index.html").touch(exist_ok=True)
-    copy_case_studies(ctx)
-    ctx.run("mkdocs build -s", title="Building documentation", pty=PTY)
 
 
 @duty  # noqa: WPS231
@@ -268,79 +264,18 @@ def clean(ctx):
     Arguments:
         ctx: The context instance (passed automatically).
     """
-    ctx.run("rm -rf .coverage*")
-    ctx.run("rm -rf .mypy_cache")
-    ctx.run("rm -rf .pytest_cache")
-    ctx.run("rm -rf tests/.pytest_cache")
-    ctx.run("rm -rf build")
-    ctx.run("rm -rf dist")
-    ctx.run("rm -rf htmlcov")
-    ctx.run("rm -rf pip-wheel-metadata")
-    ctx.run("rm -rf site")
-    ctx.run("find . -type d -name __pycache__ | xargs rm -rf")
-    ctx.run("find . -name '*.rej' -delete")
-    ctx.run("rm -rf docs/_case_studies")
+    shutil.rmtree(".coverage*",ignore_errors=True)
+    shutil.rmtree(".mypy_cache",ignore_errors=True)
+    shutil.rmtree(".pytest_cache",ignore_errors=True)
+    shutil.rmtree("tests/.pytest_cache",ignore_errors=True)
+    shutil.rmtree("build",ignore_errors=True)
+    shutil.rmtree("dist",ignore_errors=True)
+    shutil.rmtree("htmlcov",ignore_errors=True)
+    shutil.rmtree("pip-wheel-metadata",ignore_errors=True)
+    shutil.rmtree("site",ignore_errors=True)
+    shutil.rmtree("__pycache__",ignore_errors=True)
+    shutil.rmtree(".venv",ignore_errors=True)
 
-
-def copy_case_studies(ctx):
-    if os.path.exists("docs/_case_studies"):
-        ctx.run("rm -rf docs/_case_studies")
-
-    ctx.run("cp -r case_studies docs/_case_studies")
-    py_files = glob.glob("docs/_case_studies/**/*.py", recursive=True)
-    for path in py_files:
-        pathlib.Path.unlink(Path(path))
-    # get all jupyter files in configuration
-    with open("mkdocs.yml") as f:
-        contents = f.readlines()
-    nb_files_use = []
-    for line in contents:
-        m = re.match("^.*?([^\s]*\.ipynb)", line)
-        if m:
-            nb_files_use.append(Path("docs/" + m.groups()[0]))
-    nb_files = glob.glob("docs/_case_studies/**/*.ipynb", recursive=True)
-    for file in nb_files:
-        path = Path(file)
-        if path not in nb_files_use:
-            pathlib.Path.unlink(path)
-
-
-@duty
-def docs(ctx):
-    """
-    Build the documentation locally.
-
-    Arguments:
-        ctx: The context instance (passed automatically).
-    """
-    copy_case_studies(ctx)
-    ctx.run("mkdocs build", title="Building documentation")
-
-
-@duty
-def docs_serve(ctx, host="127.0.0.1", port=8000):
-    """
-    Serve the documentation (localhost:8000).
-
-    Arguments:
-        ctx: The context instance (passed automatically).
-        host: The host to serve the docs from.
-        port: The port to serve the docs on.
-    """
-    copy_case_studies(ctx)
-    ctx.run(f"mkdocs serve -a {host}:{port}", title="Serving documentation", capture=False)
-
-
-@duty
-def docs_deploy(ctx):
-    """
-    Deploy the documentation on GitHub pages.
-
-    Arguments:
-        ctx: The context instance (passed automatically).
-    """
-    copy_case_studies
-    ctx.run("mkdocs gh-deploy", title="Deploying documentation")
 
 
 @duty

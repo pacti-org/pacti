@@ -81,7 +81,7 @@ class Term(ABC):
 
     @property
     @abstractmethod
-    def vars(self) -> list[Var]:  # noqa: A003
+    def vars(self) -> List[Var]:  # noqa: A003
         """Variables contained in the syntax of the term."""
 
     @abstractmethod
@@ -149,13 +149,13 @@ class TermList(ABC):
             self.terms = []
 
     @property
-    def vars(self) -> list[Var]:  # noqa: A003
+    def vars(self) -> List[Var]:  # noqa: A003
         """The list of variables contained in this list of terms.
 
         Returns:
             List of variables referenced in the term.
         """
-        varlist: list[Var] = []
+        varlist: List[Var] = []
         for t in self.terms:
             varlist = list_union(varlist, t.vars)
         return varlist
@@ -198,6 +198,10 @@ class TermList(ABC):
 
     def __le__(self: TermList_t, other: TermList_t) -> bool:
         return self.refines(other)
+
+    @abstractmethod
+    def __hash__(self) -> int:
+        ...
 
     def copy(self: TermList_t) -> TermList_t:
         """
@@ -388,7 +392,7 @@ class IoContract(Generic[TermList_t]):
         self.g = guarantees.simplify(self.a)
 
     @property
-    def vars(self) -> list[Var]:  # noqa: A003
+    def vars(self) -> List[Var]:  # noqa: A003
         """
         The list of variables in the interface of the contract.
 
@@ -423,6 +427,9 @@ class IoContract(Generic[TermList_t]):
             and self.a == other.a
             and self.g == other.g
         )
+
+    def __hash__(self) -> int:
+        return hash((tuple(self.inputvars), tuple(self.outputvars), self.a, self.g))
 
     def rename_variable(  # noqa: WPS231 too much cognitive complexity
         self: IoContract_t, source_var: Var, target_var: Var

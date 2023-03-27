@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import logging
-from typing import Generic, List, TypeVar, Union
+from typing import Dict, Generic, List, TypeVar, Union
 
 from pacti.iocontract.iocontract import TermList_t, Var
 from pacti.utils.lists import list_diff, list_intersection, list_union
 
 NestedTermlist_t = TypeVar("NestedTermlist_t", bound="NestedTermList")
+IoContractCompound_t = TypeVar("IoContractCompound_t", bound="IoContractCompound")
 numeric = Union[int, float]
 
 
@@ -16,7 +17,7 @@ class NestedTermList:
     """A collection of termlists interpreted as their disjunction."""
 
     def __init__(  # noqa: WPS231 too much cognitive complexity
-        self, nested_termlist: list[TermList_t], force_empty_intersection: bool
+        self, nested_termlist: List[TermList_t], force_empty_intersection: bool
     ):
         """
         Class constructor.
@@ -36,7 +37,7 @@ class NestedTermList:
                         intersection = tli | tlj
                         if not intersection.is_empty():
                             raise ValueError("Terms %s and %s have nonempty intersection" % (tli, tlj))
-        self.nested_termlist: list[TermList_t] = []
+        self.nested_termlist: List[TermList_t] = []
         for tl in nested_termlist:
             self.nested_termlist.append(tl.copy())
 
@@ -45,6 +46,24 @@ class NestedTermList:
             res = [str(tl) for tl in self.nested_termlist]
             return "\nor \n".join(res)
         return "true"
+
+    def __le__(self, other: object) -> bool:  # noqa: WPS231 too much cognitive complexity
+        if not isinstance(other, type(self)):
+            raise ValueError()
+        for this_tl in self.nested_termlist:
+            found = False
+            for that_tl in other.nested_termlist:
+                if this_tl <= that_tl:
+                    found = True
+                    break
+            if not found:
+                return False
+        return True
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, type(self)):
+            raise ValueError()
+        return self <= other <= self
 
     def simplify(self: NestedTermlist_t, context: NestedTermlist_t, force_empty_intersection: bool) -> NestedTermlist_t:
         """
@@ -88,13 +107,13 @@ class NestedTermList:
         return type(self)(new_nested_tl, force_empty_intersection)
 
     @property
-    def vars(self) -> list[Var]:  # noqa: A003
+    def vars(self) -> List[Var]:  # noqa: A003
         """The list of variables contained in this nested termlist.
 
         Returns:
             List of variables referenced in nested termlist.
         """
-        varlist: list[Var] = []
+        varlist: List[Var] = []
         for tl in self.nested_termlist:
             varlist = list_union(varlist, tl.vars)
         return varlist
@@ -111,7 +130,7 @@ class NestedTermList:
         """
         return type(self)([tl.copy() for tl in self.nested_termlist], force_empty_intersection)
 
-    def contains_behavior(self, behavior: dict[Var, numeric]) -> bool:
+    def contains_behavior(self, behavior: Dict[Var, numeric]) -> bool:
         """
         Tell whether constraints contain the given behavior.
 
@@ -224,7 +243,17 @@ class IoContractCompound(Generic[NestedTermlist_t]):
             + str(self.g)
         )
 
-    def merge(self, other: IoContractCompound) -> IoContractCompound:
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, type(self)):
+            raise ValueError
+        return (
+            self.inputvars == other.inputvars
+            and self.outputvars == self.outputvars
+            and self.a == other.a
+            and self.g == other.g
+        )
+
+    def merge(self: IoContractCompound_t, other: IoContractCompound_t) -> IoContractCompound_t:
         """
         Compute the merging operation for two contracts.
 

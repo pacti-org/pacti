@@ -1,0 +1,65 @@
+[
+  {
+    "name": "contract_IPTG_lin",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [
+        "IPTG"
+      ],
+      "output_vars": [
+        "xRFP"
+      ],
+      "assumptions": [
+        "IPTG <= 140.0",
+        "-IPTG <= -2.0"
+      ],
+      "guarantees": [
+        "0.010834782608695652 IPTG - xRFP = -0.016869565217391358"
+      ]
+    }
+  },
+  {
+    "name": "dCas9_contract_on",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [
+        "xRFP",
+        "dCas9"
+      ],
+      "output_vars": [
+        "RFP"
+      ],
+      "assumptions": [
+        "-xRFP <= -0.3",
+        "xRFP <= 1.0",
+        "-dCas9 <= -0.1",
+        "dCas9 <= 0.8"
+      ],
+      "guarantees": [
+        "RFP + 0.1 dCas9 + 2.0 xRFP <= 5.0"
+      ]
+    }
+  },
+  {
+    "name": "successful_comp_IPTG",
+    "type": "PolyhedralContract",
+    "data": {
+      "input_vars": [
+        "IPTG",
+        "dCas9"
+      ],
+      "output_vars": [
+        "RFP"
+      ],
+      "assumptions": [
+        "-0.0108347826086957 IPTG <= -0.2831304347826087",
+        "0.0108347826086957 IPTG <= 0.9831304347826086",
+        "-dCas9 <= -0.09999999999999998",
+        "dCas9 <= 0.8"
+      ],
+      "guarantees": [
+        "0.0216695652173914 IPTG + RFP + 0.1 dCas9 <= 4.966260869565217"
+      ]
+    }
+  }
+]
