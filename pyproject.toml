@@ -4,8 +4,8 @@ build-backend = "pdm.pep517.api"
 
 [project]
 name = "Pacti"
-description = "pacti-description"
-authors = [{name = "pacti-authors-name", email = "pacti-authors-email"}]
+description = "A package for compositional system design"
+authors = [{name = "Pacti developers", email = "info@pacti.org"}]
 license = "BSD-3-Clause"
 readme = "README.md"
 keywords = []
