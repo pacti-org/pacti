@@ -6,6 +6,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 <!-- insertion marker -->
 
-## [0.1.0](https://github.com/FormalSystems/pacti/releases/tag/0.1.0) - 2022-10-04
+## [0.1.0](https://github.com/pacti-org/pacti/releases/tag/0.1.0) - 2022-10-04
 
-<small>[Compare with first commit](https://github.com/FormalSystems/pacti/compare/637102ffcf1d9aedf5c4fbe61bad948441654d1c...0.1.0)</small>
+<small>[Compare with first commit](https://github.com/pacti-org/pacti/compare/637102ffcf1d9aedf5c4fbe61bad948441654d1c...0.1.0)</small>
