@@ -9,7 +9,7 @@ system using assume-guarantee specifications, or contracts. Pacti's capabilities
 
 - Obtaining sensible system specifications from the specifications of the constituent subsystems.
 - Computing specifications of subsystems that need to be added to a design in order to meet an objective.
-- Diagnose incompatibilities when interconnecting components.
+- Diagnosing incompatibilities when interconnecting components.
 
 
 
