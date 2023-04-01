@@ -4,11 +4,14 @@ build-backend = "pdm.pep517.api"
 
 [project]
 name = "Pacti"
-description = "A package for compositional system design"
+description = "A package for compositional system analysis and design"
 authors = [{name = "Pacti developers", email = "info@pacti.org"}]
 license = "BSD-3-Clause"
 readme = "README.md"
-keywords = []
+classifiers = [
+    "Topic :: Scientific/Engineering"
+]
+keywords = ["system design", "contracts", "compositional"]
 dynamic = ["version"]
 dependencies = [
     "scipy>=1.10.0",
@@ -18,6 +21,11 @@ dependencies = [
     "typing-extensions>=4.5.0",
 ]
 requires-python = ">=3.8, <3.12"
+
+    [project.urls]
+    repository    = "https://github.com/pacti-org/pacti"
+    documentation = "https://www.pacti.org"
+
 
 [project.scripts]
 #pacti = "pacti.cli:main"
