@@ -1,4 +1,3 @@
-
 [![Build Status](https://github.com/pacti-org/pacti/actions/workflows/pacti_development.yml/badge.svg)](https://github.com/pacti-org/pacti/actions/workflows/pacti_development.yml)
 [![PyPI version](https://badge.fury.io/py/pacti.svg)](https://badge.fury.io/py/pacti)
 [![codecov](https://codecov.io/gh/pacti-org/pacti/branch/main/graph/badge.svg)](https://codecov.io/gh/pacti-org/pacti)
