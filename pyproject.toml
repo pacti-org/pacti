@@ -13,7 +13,7 @@ classifiers = [
 ]
 keywords = ["system design", "contracts", "compositional"]
 #dynamic = ["version"]
-version = "0.0.0a1"
+version = "1.0.0-alpha"
 dependencies = [
     "scipy>=1.10.0",
     "sympy>=1.11.1",
