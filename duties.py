@@ -38,7 +38,6 @@ PY_SRC_PATHS = (Path(_) for _ in DIR_SEARCH)
 PY_SRC_LIST = tuple(str(_) for _ in PY_SRC_PATHS)
 PY_SRC = " ".join(PY_SRC_LIST)
 JNB_SRC = " ".join([el for src in DIR_SEARCH for el in glob.glob(src+"/**/*.ipynb", recursive=True)])
-print(JNB_SRC)
 TESTING = os.environ.get("TESTING", "0") in {"1", "true"}
 CI = os.environ.get("CI", "0") in {"1", "true", "yes", ""}
 WINDOWS = os.name == "nt"
