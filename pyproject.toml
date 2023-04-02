@@ -7,12 +7,13 @@ name = "Pacti"
 description = "A package for compositional system analysis and design"
 authors = [{name = "Pacti developers", email = "info@pacti.org"}]
 license = "BSD-3-Clause"
-readme = "README.md"
+readme = "docs/dist-README.md"
 classifiers = [
     "Topic :: Scientific/Engineering"
 ]
 keywords = ["system design", "contracts", "compositional"]
-dynamic = ["version"]
+#dynamic = ["version"]
+version = "0.0.0a1"
 dependencies = [
     "scipy>=1.10.0",
     "sympy>=1.11.1",
