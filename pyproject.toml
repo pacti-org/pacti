@@ -25,6 +25,7 @@ requires-python = ">=3.8, <3.12"
     [project.urls]
     repository    = "https://github.com/pacti-org/pacti"
     documentation = "https://www.pacti.org"
+    "Bug Tracker" = "https://github.com/pacti-org/pacti/issues"
 
 
 [project.scripts]
