@@ -86,6 +86,7 @@ def update_changelog(
     """
     from git_changelog.build import Changelog
     from git_changelog.commit import AngularConvention
+    from git_changelog.cli import build_and_render
     from jinja2.sandbox import SandboxedEnvironment
 
     AngularConvention.DEFAULT_RENDER.insert(0, AngularConvention.TYPES["build"])
@@ -97,7 +98,7 @@ def update_changelog(
     if len(changelog.versions_list) == 1:
         last_version = changelog.versions_list[0]
         if last_version.planned_tag is None:
-            planned_tag = "1.0.0-alpha"
+            planned_tag = "1.0.0-alpha.1"
             last_version.tag = planned_tag
             last_version.url += planned_tag
             last_version.compare_url = last_version.compare_url.replace("HEAD", planned_tag)
@@ -115,6 +116,37 @@ def update_changelog(
         changelog_file.write("\n".join(lines).rstrip("\n") + "\n")
 
 
+def update_changelog2(
+    inplace_file: str,
+    marker: str,
+    version_regex: str,
+    # template_url: str,
+) -> None:
+    """
+    Update the given changelog file in place.
+
+    Arguments:
+        inplace_file: The file to update in-place.
+        marker: The line after which to insert new contents.
+        version_regex: A regular expression to find currently documented versions in the file.
+        template_url: The URL to the Jinja template used to render contents.
+    """
+    from git_changelog.cli import build_and_render
+    out1, out2 = build_and_render(
+        repository=".",
+        output=inplace_file,
+        convention="angular",
+        template="keepachangelog",
+        parse_trailers=True,
+        parse_refs=False,
+        sections=("build", "deps", "feat", "fix", "refactor"),
+        bump_latest=True,
+        in_place=True,
+        marker_line=marker,
+        version_regex=version_regex,
+    )
+
+
 @duty
 def changelog(ctx):
     """
@@ -126,12 +158,12 @@ def changelog(ctx):
     commit = "166758a98d5e544aaa94fda698128e00733497f4"
     template_url = f"https://raw.githubusercontent.com/pawamoy/jinja-templates/{commit}/keepachangelog.md"
     ctx.run(
-        update_changelog,
+        update_changelog2,
         kwargs={
             "inplace_file": "CHANGELOG.md",
             "marker": "<!-- insertion marker -->",
             "version_regex": r"^## \[v?(?P<version>[^\]]+)",
-            "template_url": template_url,
+            # "template_url": template_url,
         },
         title="Updating changelog",
         pty=PTY,
