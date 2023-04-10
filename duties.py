@@ -54,73 +54,12 @@ sys.stdout.reconfigure(encoding='utf-8')
 #sys.stdin.reconfigure(encoding='utf-8')
 #sys.stdout.reconfigure(encoding='utf-8')
 
-def _latest(lines: List[str], regex: Pattern) -> Optional[str]:
-    for line in lines:
-        match = regex.search(line)
-        if match:
-            return match.groupdict()["version"]
-    return None
-
-
-def _unreleased(versions, last_release):
-    for index, version in enumerate(versions):
-        if version.tag == last_release:
-            return versions[:index]
-    return versions
-
-
 def update_changelog(
     inplace_file: str,
     marker: str,
     version_regex: str,
-    template_url: str,
-) -> None:
-    """
-    Update the given changelog file in place.
-
-    Arguments:
-        inplace_file: The file to update in-place.
-        marker: The line after which to insert new contents.
-        version_regex: A regular expression to find currently documented versions in the file.
-        template_url: The URL to the Jinja template used to render contents.
-    """
-    from git_changelog.build import Changelog
-    from git_changelog.commit import AngularConvention
-    from git_changelog.cli import build_and_render
-    from jinja2.sandbox import SandboxedEnvironment
-
-    AngularConvention.DEFAULT_RENDER.insert(0, AngularConvention.TYPES["build"])
-    env = SandboxedEnvironment(autoescape=False)
-    template_text = urlopen(template_url).read().decode("utf8")  # noqa: S310
-    template = env.from_string(template_text)
-    changelog = Changelog(".", convention=AngularConvention)
-
-    if len(changelog.versions_list) == 1:
-        last_version = changelog.versions_list[0]
-        if last_version.planned_tag is None:
-            planned_tag = "1.0.0-alpha.1"
-            last_version.tag = planned_tag
-            last_version.url += planned_tag
-            last_version.compare_url = last_version.compare_url.replace("HEAD", planned_tag)
-
-    with open(inplace_file, "r") as changelog_file:
-        lines = changelog_file.read().splitlines()
-
-    last_released = _latest(lines, re.compile(version_regex))
-    if last_released:
-        changelog.versions_list = _unreleased(changelog.versions_list, last_released)
-    rendered = template.render(changelog=changelog, inplace=True)
-    lines[lines.index(marker)] = rendered
-
-    with open(inplace_file, "w") as changelog_file:  # noqa: WPS440
-        changelog_file.write("\n".join(lines).rstrip("\n") + "\n")
-
-
-def update_changelog2(
-    inplace_file: str,
-    marker: str,
-    version_regex: str,
-    # template_url: str,
+    template: str="keepachangelog",
+    convention="basic"
 ) -> None:
     """
     Update the given changelog file in place.
@@ -132,15 +71,14 @@ def update_changelog2(
         template_url: The URL to the Jinja template used to render contents.
     """
     from git_changelog.cli import build_and_render
-    out1, out2 = build_and_render(
+    build_and_render(
         repository=".",
         output=inplace_file,
-        convention="angular",
-        template="keepachangelog",
+        convention=convention,
+        template=template,
         parse_trailers=True,
         parse_refs=False,
-        sections=("build", "deps", "feat", "fix", "refactor"),
-        bump_latest=True,
+        bump_latest=False,
         in_place=True,
         marker_line=marker,
         version_regex=version_regex,
@@ -155,15 +93,12 @@ def changelog(ctx):
     Arguments:
         ctx: The context instance (passed automatically).
     """
-    commit = "166758a98d5e544aaa94fda698128e00733497f4"
-    template_url = f"https://raw.githubusercontent.com/pawamoy/jinja-templates/{commit}/keepachangelog.md"
     ctx.run(
-        update_changelog2,
+        update_changelog,
         kwargs={
             "inplace_file": "CHANGELOG.md",
             "marker": "<!-- insertion marker -->",
             "version_regex": r"^## \[v?(?P<version>[^\]]+)",
-            # "template_url": template_url,
         },
         title="Updating changelog",
         pty=PTY,
