@@ -4,7 +4,7 @@ from pacti.terms.polyhedra.grammar import terms, TermList
 
 class TestTermListParsing(unittest.TestCase):
 
-    def test1(self):
+    def test1(self) -> None:
         t0 = pp.ParseResults(
             TermList(constant = 4.0,
                      factors = {
@@ -17,7 +17,7 @@ class TestTermListParsing(unittest.TestCase):
         s1 = f"{t1}"
         self.assertEqual(s0, s1)
 
-    def test2(self):
+    def test2(self) -> None:
         t0 = pp.ParseResults(
             TermList(constant = 4.0,
                      factors = {

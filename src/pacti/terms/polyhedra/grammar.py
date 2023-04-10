@@ -1,7 +1,7 @@
 """Grammar for polyhedral terms."""
 
 import pyparsing as pp
-from typing import Dict, Union
+from typing import Dict, Optional, Union
 import dataclasses
 
 
@@ -117,6 +117,29 @@ def _parse_term_list(t: pp.ParseResults) -> TermList:
     return TermList(constant=constant, factors=factors)
 
 
+@dataclasses.dataclass
+class AbsoluteTerm:
+    """Represents an absolute list of terms with an optional coefficient."""
+
+    term_list: TermList
+    coefficient: Optional[float] = dataclasses.field(default=None)
+
+
+def _parse_absolute_term(t: pp.ParseResults) -> AbsoluteTerm:
+    assert len(t) == 1
+    group = t[0]
+    if len(group) == 4:
+        coefficient = group[0]
+        assert isinstance(coefficient, Term)
+        assert coefficient.variable is None
+        term_list = group[2]
+        assert isinstance(term_list, TermList)
+        return AbsoluteTerm(term_list=term_list)
+    term_list = group[1]
+    assert isinstance(term_list, TermList)
+    return AbsoluteTerm(term_list=term_list, coefficient=1.0)
+
+
 # Grammar rules
 
 floating_point_number = (
@@ -149,7 +172,11 @@ signed_term = (
 # Produces a TermList
 terms = pp.Group(signed_term + pp.ZeroOrMore(symbol + term)).set_parse_action(_parse_term_list).set_name("terms")
 
-abs_term = pp.Group(pp.Optional(floating_point_number) + "|" + terms + "|").set_name("abs_term")
+abs_term = (
+    pp.Group(pp.Optional(floating_point_number) + "|" + terms + "|")
+    .set_parse_action(_parse_absolute_term)  # noqa: WPS348
+    .set_name("abs_term")  # noqa: WPS348
+)
 
 abs_or_term = pp.Group(abs_term | term).set_name("abs_or_term")
 
