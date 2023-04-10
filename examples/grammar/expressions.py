@@ -1,7 +1,5 @@
 from pacti.terms.polyhedra.grammar import *
 
-print(abs_or_terms.parse_string("|4y + 5t -y |", parse_all=True))
-
 for s in [
     "|-x + 3|",
     "|4y + 5t -y |",

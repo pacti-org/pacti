@@ -1,45 +1,71 @@
+"""Grammar for polyhedral terms."""
+
 import pyparsing as pp
-from typing import Dict, List, Union
+from typing import Dict, Union
 import dataclasses
+
 
 @dataclasses.dataclass
 class Term:
+    """A Term represents either a constant (variable=None) or a variable with a constant coefficient."""
+
     coefficient: float
     variable: Union[str, None]
 
     def __repr__(self) -> str:
         if self.variable:
             return f"{self.coefficient}{self.variable}"
-        else:
-            return f"{self.coefficient}"
+        return f"{self.coefficient}"
 
     def combine(self, other: "Term") -> "Term":
+        """
+        Combines a number term with a variable term.
+
+        Args:
+            other: a variable Term
+
+        Returns:
+            A new Term with the product of the coefficients for the other variable.
+        """
         return Term(coefficient=self.coefficient * other.coefficient, variable=other.variable)
 
 
-def parse_only_variable(t: List[pp.ParseResults]) -> Term:
-    return Term(coefficient=1.0, variable=t[0])
+def _parse_only_variable(t: pp.ParseResults) -> Term:
+    assert len(t) == 1
+    v = str(t[0])
+    return Term(coefficient=1.0, variable=v)
 
 
-def parse_only_number(t: List[pp.ParseResults]) -> Term:
+def _parse_only_number(t: pp.ParseResults) -> Term:
+    assert len(t) == 1
     return Term(coefficient=float(t[0]), variable=None)
 
 
-def parse_number_and_variable(t: List[pp.ParseResults]) -> Term:
+def _parse_number_and_variable(t: pp.ParseResults) -> Term:
+    assert len(t) == 2
     number_term = t[0]
+    assert isinstance(number_term, Term)
     variable_term = t[1]
+    assert isinstance(variable_term, Term)
     return number_term.combine(variable_term)
 
 
-def parse_term(t: List[pp.ParseResults]) -> Term:
-    term: Term = t[0]
+def _parse_term(t: pp.ParseResults) -> Term:
+    assert len(t) == 1
+    t0 = t[0]
+    assert isinstance(t0, pp.ParseResults)
+    term = t0[0]
+    assert isinstance(term, Term)
     return term
 
 
-def parse_signed_term(t: List[pp.ParseResults]) -> Term:
+def _parse_signed_term(t: pp.ParseResults) -> Term:
+    assert len(t) == 1
     group = t[0]
-    sign: str = group[0]
-    term: Term = group[1]
+    sign = group[0]
+    assert isinstance(sign, str)
+    term = group[1]
+    assert isinstance(term, Term)
     if sign == "-":
         term.coefficient *= -1
     return term
@@ -47,6 +73,8 @@ def parse_signed_term(t: List[pp.ParseResults]) -> Term:
 
 @dataclasses.dataclass
 class TermList:
+    """Represents a reduced list of terms (variables with a coefficient) with a constant."""
+
     constant: float
     factors: Dict[str, float] = dataclasses.field(default_factory=dict)
 
@@ -67,7 +95,8 @@ class TermList:
         return s
 
 
-def parse_term_list(t: List[pp.ParseResults]) -> TermList:
+def _parse_term_list(t: pp.ParseResults) -> TermList:
+    assert len(t) == 1
     group = t[0]
     constant = 0
     factors: Dict[str, float] = {}
@@ -88,33 +117,37 @@ def parse_term_list(t: List[pp.ParseResults]) -> TermList:
     return TermList(constant=constant, factors=factors)
 
 
-
-
 # Grammar rules
 
-floating_point_number = pp.Combine(
-    pp.Word(pp.nums)
-    + pp.Optional("." + pp.Optional(pp.Word(pp.nums)))
-    + pp.Optional(pp.CaselessLiteral("E") + pp.Optional(pp.oneOf("+ -")) + pp.Word(pp.nums))
-).set_parse_action(lambda t: float(t[0])).set_name("floating_point_number")
+floating_point_number = (
+    pp.Combine(
+        pp.Word(pp.nums)
+        + pp.Optional("." + pp.Optional(pp.Word(pp.nums)))
+        + pp.Optional(pp.CaselessLiteral("E") + pp.Optional(pp.oneOf("+ -")) + pp.Word(pp.nums))
+    )
+    .set_parse_action(lambda t: float(t[0]))  # noqa: WPS348
+    .set_name("floating_point_number")  # noqa: WPS348
+)
 
 variable = pp.Word(pp.alphas).set_name("variable")
 symbol = pp.oneOf("+ -").set_name("symbol")
 
 # Define term options with corresponding parse actions
 
-only_variable = variable.set_parse_action(parse_only_variable)
-number_and_variable = (floating_point_number + variable).set_parse_action(parse_number_and_variable)
-only_number = floating_point_number.set_parse_action(parse_only_number)
+only_variable = variable.set_parse_action(_parse_only_variable)
+number_and_variable = (floating_point_number + variable).set_parse_action(_parse_number_and_variable)
+only_number = floating_point_number.set_parse_action(_parse_only_number)
 
 # Produces a Term
-term = pp.Group(only_variable | number_and_variable | only_number).set_parse_action(parse_term).set_name("term")
+term = pp.Group(only_variable | number_and_variable | only_number).set_parse_action(_parse_term).set_name("term")
 
 # Produces a Term
-signed_term = pp.Group(pp.Optional(symbol, default="+") + term).set_parse_action(parse_signed_term).set_name("signed_term")
+signed_term = (
+    pp.Group(pp.Optional(symbol, default="+") + term).set_parse_action(_parse_signed_term).set_name("signed_term")
+)
 
 # Produces a TermList
-terms = pp.Group(signed_term + pp.ZeroOrMore(symbol + term)).set_parse_action(parse_term_list).set_name("terms")
+terms = pp.Group(signed_term + pp.ZeroOrMore(symbol + term)).set_parse_action(_parse_term_list).set_name("terms")
 
 abs_term = pp.Group(pp.Optional(floating_point_number) + "|" + terms + "|").set_name("abs_term")
 
@@ -169,4 +202,4 @@ expression = pp.Group(equality_expression | leq_expression | geq_expression).set
 # /* ]]> */
 # </style>
 
-#expression.create_diagram(output_html="docs/expression.html", show_groups=True)
+# expression.create_diagram(output_html="docs/expression.html", show_groups=True)
