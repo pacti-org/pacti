@@ -92,10 +92,10 @@ floating_point_number = pp.Combine(
     pp.Word(pp.nums)
     + pp.Optional("." + pp.Optional(pp.Word(pp.nums)))
     + pp.Optional(pp.CaselessLiteral("E") + pp.Optional(pp.oneOf("+ -")) + pp.Word(pp.nums))
-).set_parse_action(lambda t: float(t[0]))
+).set_parse_action(lambda t: float(t[0])).set_name("floating_point_number")
 
-variable = pp.Word(pp.alphas)
-symbol = pp.oneOf("+ -")
+variable = pp.Word(pp.alphas).set_name("variable")
+symbol = pp.oneOf("+ -").set_name("symbol")
 
 # Define term options with corresponding parse actions
 
@@ -104,23 +104,65 @@ number_and_variable = (floating_point_number + variable).set_parse_action(parse_
 only_number = floating_point_number.set_parse_action(parse_only_number)
 
 # Produces a Term
-term = pp.Group(only_variable | number_and_variable | only_number).set_parse_action(parse_term)
+term = pp.Group(only_variable | number_and_variable | only_number).set_parse_action(parse_term).set_name("term")
 
 # Produces a Term
-signed_term = pp.Group(pp.Optional(symbol, default="+") + term).set_parse_action(parse_signed_term)
+signed_term = pp.Group(pp.Optional(symbol, default="+") + term).set_parse_action(parse_signed_term).set_name("signed_term")
 
 # Produces a TermList
-terms = pp.Group(signed_term + pp.ZeroOrMore(symbol + term)).set_parse_action(parse_term_list)
+terms = pp.Group(signed_term + pp.ZeroOrMore(symbol + term)).set_parse_action(parse_term_list).set_name("terms")
 
-abs_term = pp.Group(pp.Optional(floating_point_number) + "|" + terms + "|")
-signed_abs_term = pp.Group(pp.Optional(symbol, default="+") + pp.Group(abs_term | term))
+abs_term = pp.Group(pp.Optional(floating_point_number) + "|" + terms + "|").set_name("abs_term")
 
-abs_terms = pp.Group(signed_abs_term + pp.ZeroOrMore(symbol + pp.Group(signed_abs_term | term)))
+abs_or_term = pp.Group(abs_term | term).set_name("abs_or_term")
 
-equality_expression = pp.Group(abs_terms + "==" + abs_terms)
+signed_abs_or_term = pp.Group(pp.Optional(symbol, default="+") + abs_or_term).set_name("signed_abs_or_term")
 
-leq_expression = pp.Group(abs_terms + pp.OneOrMore("<=" + abs_terms))
+abs_or_terms = pp.Group(signed_abs_or_term + pp.ZeroOrMore(symbol + abs_or_term)).set_name("abs_or_terms")
 
-geq_expression = pp.Group(abs_terms + pp.OneOrMore(">=" + abs_terms))
+equality_expression = pp.Group(abs_or_terms + "==" + abs_or_terms).set_name("equality_expression")
 
-expression = pp.Group(equality_expression | leq_expression | geq_expression)
+leq_expression = pp.Group(abs_or_terms + pp.OneOrMore("<=" + abs_or_terms)).set_name("leq_expression")
+
+geq_expression = pp.Group(abs_or_terms + pp.OneOrMore(">=" + abs_or_terms)).set_name("geq_expression")
+
+expression = pp.Group(equality_expression | leq_expression | geq_expression).set_name("expression")
+
+# The generated html is missing the styles to show shapes with a different color than the background.
+# https://github.com/pyparsing/pyparsing/blob/efb796099fd77d003dcd49df6a75d1dcc19cefb1/docs/_static/sql_railroad.html#L21-L52
+
+# If this is done outside of this file, we get an import exception.
+# <style>/* <![CDATA[ */
+#     svg.railroad-diagram {
+#         background-color:hsl(30,20%,95%);
+#     }
+#     svg.railroad-diagram path {
+#         stroke-width:3;
+#         stroke:black;
+#         fill:rgba(0,0,0,0);
+#     }
+#     svg.railroad-diagram text {
+#         font:bold 14px monospace;
+#         text-anchor:middle;
+#     }
+#     svg.railroad-diagram text.label{
+#         text-anchor:start;
+#     }
+#     svg.railroad-diagram text.comment{
+#         font:italic 12px monospace;
+#     }
+#     svg.railroad-diagram rect{
+#         stroke-width:3;
+#         stroke:black;
+#         fill:hsl(120,100%,90%);
+#     }
+#     svg.railroad-diagram rect.group-box {
+#         stroke: gray;
+#         stroke-dasharray: 10 5;
+#         fill: none;
+#     }
+
+# /* ]]> */
+# </style>
+
+expression.create_diagram(output_html="docs/expression.html", show_groups=True)
