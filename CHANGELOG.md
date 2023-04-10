@@ -12,19 +12,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
-- Adding reference ([ec6f730](https://github.com/pacti-org/pacti/commit/ec6f730886e4f24469ff91a1ab06a40f8b53256f) by Inigo Incer).
+- reference ([ec6f730](https://github.com/pacti-org/pacti/commit/ec6f730886e4f24469ff91a1ab06a40f8b53256f) by Inigo Incer).
 
 ### Fixed
 
-- fix changelog code ([8695bfc](https://github.com/pacti-org/pacti/commit/8695bfcff16235ed5d785b55acef6df0adbca27e) by ayush9pandey).
-
-### Changed
-
-- changelog generating but not correct ([2c7db60](https://github.com/pacti-org/pacti/commit/2c7db602b99339c5b96ca61eb5f8b4bff94e2958) by ayush9pandey).
+- changelog code ([8695bfc](https://github.com/pacti-org/pacti/commit/8695bfcff16235ed5d785b55acef6df0adbca27e) by ayush9pandey).
 
 ### Removed
 
-- remove changelog.md links ([c8c86a9](https://github.com/pacti-org/pacti/commit/c8c86a9424abf7c7e62ff5547785a3df2eb2b823) by ayush9pandey).
+- changelog.md links ([c8c86a9](https://github.com/pacti-org/pacti/commit/c8c86a9424abf7c7e62ff5547785a3df2eb2b823) by ayush9pandey).
 
 <!-- insertion marker -->
 
