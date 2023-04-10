@@ -72,8 +72,11 @@ def parse_term_list(t: List[pp.ParseResults]) -> TermList:
     constant = 0
     factors: Dict[str, float] = {}
 
-    # Process the terms
-    for term in [group[0], *group[2::2]]:
+    # Process the terms along with their corresponding symbols
+    for symbol, term in zip(["+"] + group[1::2], [group[0]] + group[2::2]):
+        if symbol == "-":
+            term.coefficient *= -1
+
         if term.variable is None:
             constant += term.coefficient
         else:
@@ -83,6 +86,7 @@ def parse_term_list(t: List[pp.ParseResults]) -> TermList:
                 factors[term.variable] = term.coefficient
 
     return TermList(constant=constant, factors=factors)
+
 
 
 
@@ -165,4 +169,4 @@ expression = pp.Group(equality_expression | leq_expression | geq_expression).set
 # /* ]]> */
 # </style>
 
-expression.create_diagram(output_html="docs/expression.html", show_groups=True)
+#expression.create_diagram(output_html="docs/expression.html", show_groups=True)
