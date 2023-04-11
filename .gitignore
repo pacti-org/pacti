@@ -54,6 +54,7 @@ pip-wheel-metadata/
 site/
 pdm.lock
 .pdm.toml
+.pdm-python
 __pypackages__/
 .venv/
 .vscode/
@@ -277,4 +278,3 @@ examples/.ipynb_checkpoints/*
 
 # Draw.io
 *.bkp
-.pdm-python
