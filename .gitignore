@@ -277,3 +277,4 @@ examples/.ipynb_checkpoints/*
 
 # Draw.io
 *.bkp
+.pdm-python
