@@ -12,8 +12,8 @@ classifiers = [
     "Topic :: Scientific/Engineering"
 ]
 keywords = ["system design", "contracts", "compositional"]
-#dynamic = ["version"]
-version = "1.0.0-alpha"
+dynamic = ["version"]
+# version = "1.0.0-alpha"
 dependencies = [
     "scipy>=1.10.0",
     "sympy>=1.11.1",
@@ -34,10 +34,10 @@ documentation = "https://www.pacti.org"
 #pacti = "pacti.cli:main"
 
 [project.optional-dependencies]
-[tool.pdm]
-version = {source = "scm"}
-package-dir = "src"
 
+[tool.pdm]
+package-dir = "src"
+version = { source = "src", path = "pacti/__version__.py" }
 
 [tool.pdm.build]
 package-dir = "src"
