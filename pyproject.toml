@@ -37,7 +37,7 @@ documentation = "https://www.pacti.org"
 
 [tool.pdm]
 package-dir = "src"
-version = { source = "src", path = "pacti/__version__.py" }
+version = { source = "file", path = "src/pacti/__version__.py" }
 
 [tool.pdm.build]
 package-dir = "src"
