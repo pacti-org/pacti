@@ -124,6 +124,12 @@ class AbsoluteTerm:
     term_list: TermList
     coefficient: Optional[float] = dataclasses.field(default=None)
 
+    def __repr__(self) -> str:
+        s = f"|{self.term_list}|"
+        if self.coefficient is None:
+            return s
+        return f"{self.coefficient}{s}"
+
 
 def _parse_absolute_term(t: pp.ParseResults) -> AbsoluteTerm:
     assert len(t) == 1
@@ -134,10 +140,51 @@ def _parse_absolute_term(t: pp.ParseResults) -> AbsoluteTerm:
         assert coefficient.variable is None
         term_list = group[2]
         assert isinstance(term_list, TermList)
-        return AbsoluteTerm(term_list=term_list)
+        return AbsoluteTerm(term_list=term_list, coefficient=coefficient.coefficient)
     term_list = group[1]
     assert isinstance(term_list, TermList)
-    return AbsoluteTerm(term_list=term_list, coefficient=1.0)
+    return AbsoluteTerm(term_list=term_list, coefficient=None)
+
+
+AbsoluteTermOrTerm = Union[AbsoluteTerm, Term]
+
+
+def _to_absolute_term_or_term(t: pp.ParseResults) -> AbsoluteTermOrTerm:
+    if isinstance(t, AbsoluteTerm):
+        return t
+    elif isinstance(t, Term):
+        return t
+    raise ValueError(f"Expecting either an AbsoluteTerm or a Term; got: {type(t)}")
+
+
+def _parse_absolute_term_or_term(t: pp.ParseResults) -> AbsoluteTermOrTerm:
+    assert len(t) == 1
+    group = t[0]
+    assert len(group) == 1
+    t = group[0]
+    return _to_absolute_term_or_term(t)
+
+
+def _parse_sign_of_absolute_term_or_term(t: pp.ParseResults) -> AbsoluteTermOrTerm:
+    assert len(t) == 1
+    group = t[0]
+    if len(group) == 1:
+        t = group[0]
+        return _to_absolute_term_or_term(t)
+    sign = group[0]
+    t = group[1]
+    if sign == "+":
+        return _to_absolute_term_or_term(t)
+    if isinstance(t, AbsoluteTerm):
+        if t.coefficient is None:
+            t.coefficient = -1.0
+        else:
+            t.coefficient *= -1.0
+        return t
+    elif isinstance(t, Term):
+        t.coefficient *= -1.0
+        return t
+    raise ValueError(f"Expecting either an AbsoluteTerm or a Term; got: {type(t)}")
 
 
 # Grammar rules
@@ -172,15 +219,22 @@ signed_term = (
 # Produces a TermList
 terms = pp.Group(signed_term + pp.ZeroOrMore(symbol + term)).set_parse_action(_parse_term_list).set_name("terms")
 
+# Produces an AbsoluteTerm
 abs_term = (
     pp.Group(pp.Optional(floating_point_number) + "|" + terms + "|")
     .set_parse_action(_parse_absolute_term)  # noqa: WPS348
     .set_name("abs_term")  # noqa: WPS348
 )
 
-abs_or_term = pp.Group(abs_term | term).set_name("abs_or_term")
+# Produces an AbsoluteTermOrTerm
+abs_or_term = pp.Group(abs_term | term).set_parse_action(_parse_absolute_term_or_term).set_name("abs_or_term")
 
-signed_abs_or_term = pp.Group(pp.Optional(symbol, default="+") + abs_or_term).set_name("signed_abs_or_term")
+# Produces an AbsoluteTermOrTerm
+signed_abs_or_term = (
+    pp.Group(pp.Optional(symbol, default="+") + abs_or_term)
+    .set_parse_action(_parse_sign_of_absolute_term_or_term)  # noqa: WPS348
+    .set_name("signed_abs_or_term")  # noqa: WPS348
+)
 
 abs_or_terms = pp.Group(signed_abs_or_term + pp.ZeroOrMore(symbol + abs_or_term)).set_name("abs_or_terms")
 

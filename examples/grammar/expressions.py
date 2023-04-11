@@ -2,7 +2,9 @@ from pacti.terms.polyhedra.grammar import *
 
 for s in [
     "|-x + 3|",
+    "-|-x + 3|",
     "|4y + 5t -y |",
+    "-3|4y + 5t -y |",
     "|4y - y + 5t |",
     "|-5 -x + 3 + 4x|",
     "2.0|-x + 3|",
