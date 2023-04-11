@@ -1,6 +1,7 @@
 """Grammar for polyhedral terms."""
 
 import pyparsing as pp
+from enum import Enum
 from typing import Dict, List, Optional, Union
 import dataclasses
 
@@ -350,6 +351,64 @@ def _parse_abs_or_terms(tokens: pp.ParseResults) -> AbsoluteTermList:
     return AbsoluteTermList(term_list=term_list, absolute_term_list=absolute_term_list)
 
 
+class Operator(Enum):
+    """Represents the different kinds of expression operators."""
+
+    eql = 1
+    leq = 2
+    geq = 3
+
+
+@dataclasses.dataclass
+class Expression:
+    """Represents a linear inequality expression with an operator in between sides."""
+
+    operator: Operator
+    sides: List[AbsoluteTermList] = dataclasses.field(default_factory=list)
+
+
+def _parse_equality_expression(tokens: pp.ParseResults) -> Expression:
+    assert len(tokens) == 1
+    group = tokens[0]
+    lhs = group[0]
+    assert group[1] == "=="
+    rhs = group[2]
+    if isinstance(lhs, AbsoluteTermList) & isinstance(rhs, AbsoluteTermList):
+        return Expression(operator=Operator.eql, sides=[lhs, rhs])
+    raise ValueError(f"lhs and rhs should be AbsoluteTermList, got: {type(lhs)}, {type(rhs)}")
+
+
+def _parse_expression_sides(op: Operator, tokens: pp.ParseResults) -> Expression:
+    sides: List[AbsoluteTermList] = []
+    for s in tokens.asList():
+        if isinstance(s, AbsoluteTermList):
+            sides.append(s)
+    return Expression(operator=op, sides=sides)
+
+
+def _parse_leq_expression(tokens: pp.ParseResults) -> Expression:
+    assert len(tokens) == 1
+    group = tokens[0]
+    assert group[1] == "<="
+    return _parse_expression_sides(Operator.leq, group)
+
+
+def _parse_geq_expression(tokens: pp.ParseResults) -> Expression:
+    assert len(tokens) == 1
+    group = tokens[0]
+    assert group[1] == ">="
+    return _parse_expression_sides(Operator.geq, group)
+
+
+def _parse_expression(tokens: pp.ParseResults) -> Expression:
+    assert len(tokens) == 1
+    group = tokens[0]
+    e = group[0]
+    if isinstance(e, Expression):
+        return e
+    raise ValueError(f"Expected an Expression, got: {type(e)}")
+
+
 # Grammar rules
 
 floating_point_number = (
@@ -406,13 +465,33 @@ abs_or_terms = (
     .set_name("abs_or_terms")  # noqa: WPS348
 )
 
-equality_expression = pp.Group(abs_or_terms + "==" + abs_or_terms).set_name("equality_expression")
+# Produces an Expression
+equality_expression = (
+    pp.Group(abs_or_terms + "==" + abs_or_terms)
+    .set_parse_action(_parse_equality_expression)  # noqa: WPS348
+    .set_name("equality_expression")  # noqa: WPS348
+)
 
-leq_expression = pp.Group(abs_or_terms + pp.OneOrMore("<=" + abs_or_terms)).set_name("leq_expression")
+# Produces an Expression
+leq_expression = (
+    pp.Group(abs_or_terms + pp.OneOrMore("<=" + abs_or_terms))
+    .set_parse_action(_parse_leq_expression)  # noqa: WPS348
+    .set_name("leq_expression")  # noqa: WPS348
+)
 
-geq_expression = pp.Group(abs_or_terms + pp.OneOrMore(">=" + abs_or_terms)).set_name("geq_expression")
+# Produces an Expression
+geq_expression = (
+    pp.Group(abs_or_terms + pp.OneOrMore(">=" + abs_or_terms))
+    .set_parse_action(_parse_geq_expression)  # noqa: WPS348
+    .set_name("geq_expression")  # noqa: WPS348
+)
 
-expression = pp.Group(equality_expression | leq_expression | geq_expression).set_name("expression")
+# Produces an Expression
+expression = (
+    pp.Group(equality_expression | leq_expression | geq_expression)
+    .set_parse_action(_parse_expression)  # noqa: WPS348
+    .set_name("expression")  # noqa: WPS348
+)
 
 # The generated html is missing the styles to show shapes with a different color than the background.
 # https://github.com/pyparsing/pyparsing/blob/efb796099fd77d003dcd49df6a75d1dcc19cefb1/docs/_static/sql_railroad.html#L21-L52
