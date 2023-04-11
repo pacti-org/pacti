@@ -16,6 +16,8 @@ class TestTermListParsing(unittest.TestCase):
         s0 = f"{t0}"
         s1 = f"{t1}"
         self.assertEqual(s0, s1)
+        self.assertTrue(isinstance(t1[0], TermList))
+        self.assertTrue(t1[0].is_positive())
 
     def test2(self) -> None:
         t0 = pp.ParseResults(
@@ -29,6 +31,8 @@ class TestTermListParsing(unittest.TestCase):
         s0 = f"{t0}"
         s1 = f"{t1}"
         self.assertEqual(s0, s1)
+        self.assertTrue(isinstance(t1[0], TermList))
+        self.assertTrue(t1[0].is_positive())
 
 if __name__ == "__main__":
     unittest.main()

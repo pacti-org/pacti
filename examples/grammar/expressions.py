@@ -11,19 +11,20 @@ for s in [
     "5t + |-x + 3|",
     "|-x + 3| + 5t",
     "-1 + |-x + 3| + 5t",
-    "-1 + 2|-x + 3| + 5t",
+    "t -1 + 2|-x + 3| + 4t",
     "-5 + 3|-x + 3| + 5t",
     "|-x + 3| - 3 |4y + 5t| - 7z",
 ]:
     print(f"\nabs_terms: {s}")
-    r = abs_or_terms.parse_string(s, parse_all=True)
-    print(r)
+    tokens = abs_or_terms.parse_string(s, parse_all=True)
+    print(tokens)
 
 
 for s in [
     "|-x + 3| - 3 |4y + 5t| - 7z <= 8t + |x - y|",
     "|-x + 3| - 3 |4y + 5t| - 7z == 8t + |x - y|",
     "|- 2 -x + 3 + 6x | <= - 3 |4y + 5t -y | - 7z <= 8t + |x - y| <= 10",
+    "|- 2 -x + 3 + 6x | <= |4y + 5t -y | - 7z - 4 |4y + 5t -y |<= 8t + |x - y| <= 10",
 ]:
     print(f"\nexpression: {s}")
     result = expression.parseString(s, parse_all=True)
