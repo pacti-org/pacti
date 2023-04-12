@@ -29,3 +29,8 @@ for s in [
     print(f"\nexpression: {s}")
     result = expression.parseString(s, parse_all=True)
     print(result)
+
+my_list = ['A', 'B', 'C']
+
+for a, b in zip(my_list, my_list[1:]):
+    print(a, b)

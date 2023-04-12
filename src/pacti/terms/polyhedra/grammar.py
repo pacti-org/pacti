@@ -3,6 +3,8 @@
 import pyparsing as pp
 from enum import Enum
 from typing import Dict, List, Optional, Union
+from itertools import product
+from pacti.terms.polyhedra.polyhedra import numeric, PolyhedralTerm, Var
 import dataclasses
 
 
@@ -61,10 +63,9 @@ def _parse_only_number(tokens: pp.ParseResults) -> Term:
 
 
 def _parse_number_and_variable(tokens: pp.ParseResults) -> Term:
-    assert len(tokens) == 2
     number_term = tokens[0]
     assert isinstance(number_term, Term)
-    variable_term = tokens[1]
+    variable_term = tokens[len(tokens)-1]
     assert isinstance(variable_term, Term)
     return number_term.combine(variable_term)
 
@@ -104,8 +105,10 @@ class TermList:
         Returns:
             True if either the constant is positive or, if the first ordered factor is positive.
         """
-        if self.constant is not None:
-            return self.constant > 0
+        if self.constant > 0:
+            return True
+        elif self.constant < 0:
+            return False
         var = sorted(self.factors)[0]
         return self.factors[var] > 0
 
@@ -125,9 +128,63 @@ class TermList:
         else:
             if term.variable in self.factors:
                 self.factors[term.variable] += term.coefficient
+                fv = f"{self.factors[term.variable]}"
+                if fv == "0.0":
+                    self.factors.pop(term.variable)
+                elif fv == "-0.0":
+                    self.factors.pop(term.variable)
             else:
                 self.factors[term.variable] = term.coefficient
         return self
+
+    def negate(self: "TermList") -> "TermList":
+        """
+        Negated TermList
+
+        Returns:
+            A TermList with the negated constant and all factors negated.
+        """
+        if self.constant is None:
+            c = None
+        else:
+            c = -self.constant
+        fs = {}
+        for f, v in self.factors.items():
+            fs[f] = -v
+        return TermList(constant=c, factors=fs)
+
+    def add(self: "TermList", other: "TermList") -> "TermList":
+        """
+        Addition of TermList.
+
+        Args:
+            other: a TermList to add to self.
+
+        Returns:
+            A new TermList with the sum of the constants and with the factors added by their variables.
+        """
+        fs = self.factors.copy()
+        for f, v in other.factors.items():
+            if f in fs:
+                fs[f] += v
+                fv = f"{fs[f]}"
+                if fv == "0.0":
+                    fs.pop(f)
+                elif fv == "-0.0":
+                    fs.pop(f)
+            else:
+                fs[f] = v
+        return TermList(constant=self.constant + other.constant, factors=fs)
+
+    def to_polyhedral_term(self: "TermList") -> PolyhedralTerm:
+        """
+        Converts a TermList to a PolyhedralTerm.
+
+        Returns:
+            A PolyhedralTerm with th constant from the TermList and variables mapped from the TermList factors.
+        """
+        fs: Dict[Var, numeric] = {Var(k): v for k, v in self.factors.items()}
+        return PolyhedralTerm(variables=fs, constant=self.constant)
 
     def __repr__(self) -> str:
         if self.constant == 0:
@@ -217,6 +274,23 @@ class AbsoluteTerm:
         o = f"{other.term_list}"
         return s == o
 
+    def to_term_list(self: "AbsoluteTerm") -> TermList:
+        """
+        Converts an AbsoluteTerm into a TermList.
+
+        Returns:
+            A TermList with the AbsoluteTerm coefficient applied as a multiplier for the constant and factors of the term_list.
+        """
+        if self.coefficient is None:
+            m = 1.0
+        else:
+            m = self.coefficient
+        c = m * self.term_list.constant
+        fs: Dict[str, float] = {}
+        for f, v in self.term_list.factors.items():
+            fs[f] = m * v
+        return TermList(constant=c, factors=fs)
+
 
 def _parse_absolute_term(tokens: pp.ParseResults) -> AbsoluteTerm:
     assert len(tokens) == 1
@@ -274,6 +348,19 @@ def _parse_sign_of_absolute_term_or_term(tokens: pp.ParseResults) -> AbsoluteTer
     raise ValueError(f"Expecting either an AbsoluteTerm or a Term; got: {type(tokens)}")
 
 
+def _generate_absolute_term_combinations(absolute_term_list: List[AbsoluteTerm]) -> List[TermList]:
+    cs = []
+    for signs in product([True, False], repeat=len(absolute_term_list)):
+        c = TermList(constant=0, factors={})
+        for i, is_positive in enumerate(signs):
+            if is_positive:
+                c = c.add(absolute_term_list[i].to_term_list())
+            else:
+                c = c.add(absolute_term_list[i].negate().to_term_list())
+        cs.append(c)
+    return cs
+
+
 @dataclasses.dataclass
 class AbsoluteTermList:
     """Represents lists of absolute terms and of terms."""
@@ -289,6 +376,57 @@ class AbsoluteTermList:
             else:
                 s += f" {a}"
         return s
+
+    def expand(self) -> List[TermList]:
+        """
+        Expand all positive/negative combinations of AbsoluteTermList into TermLists.
+
+        Expands the AbsoluteTermList into a list of TermLists. Each TermList corresponds to
+        combining the term_list of a given AbsoluteTerm with one of all possible
+        combinations of the positive and negative variants of the absolute_term_list elements.
+        If n is the length of the absolute_term_list, then the result has 2^n TermLists, one
+        for each of the positive/negative combinations of each absolute_term_list element combined
+        with the term_list.
+
+        Returns:
+            A list of TermList instances.
+        """
+        if len(self.absolute_term_list) == 0:
+            return [self.term_list]
+
+        expanded: List[TermList] = []
+
+        for tl in _generate_absolute_term_combinations(self.absolute_term_list):
+            tlc = TermList(constant=self.term_list.constant, factors=self.term_list.factors.copy()).add(tl)
+            expanded.append(tlc)
+
+        return expanded
+
+    def negate(self) -> "AbsoluteTermList":
+        """
+        Negated AbsoluteTermList
+
+        Returns:
+            An AbsoluteTermList with negated term_list and all absolute_term_list negated.
+        """
+        return AbsoluteTermList(
+            term_list=self.term_list.negate(), absolute_term_list=[at.negate() for at in self.absolute_term_list]
+        )
+
+    def add(self, other: "AbsoluteTermList") -> "AbsoluteTermList":
+        """
+        Addition of AbsoluteTermList
+
+        Args:
+            other: An AbsoluteTermList to add to self.
+
+        Returns:
+            An AbsoluteTermList with the term_list added
+        """
+        atl = self.absolute_term_list.copy()
+        for at in other.absolute_term_list:
+            atl = _combine_or_append(atl, at)
+        return AbsoluteTermList(term_list=self.term_list.add(other.term_list), absolute_term_list=atl)
 
 
 def _update_term_list(term_list: TermList, symbol: str, term: Term) -> TermList:
@@ -371,7 +509,7 @@ def _parse_equality_expression(tokens: pp.ParseResults) -> Expression:
     assert len(tokens) == 1
     group = tokens[0]
     lhs = group[0]
-    assert group[1] == "=="
+    assert group[1] == "==" or group[1] == "="
     rhs = group[2]
     if isinstance(lhs, AbsoluteTermList) & isinstance(rhs, AbsoluteTermList):
         return Expression(operator=Operator.eql, sides=[lhs, rhs])
@@ -421,13 +559,13 @@ floating_point_number = (
     .set_name("floating_point_number")  # noqa: WPS348
 )
 
-variable = pp.Word(pp.alphas).set_name("variable")
+variable = pp.Word(pp.alphas, pp.alphanums + "_").set_name("variable")
 symbol = pp.oneOf("+ -").set_name("symbol")
 
 # Define term options with corresponding parse actions
 
 only_variable = variable.set_parse_action(_parse_only_variable)
-number_and_variable = (floating_point_number + variable).set_parse_action(_parse_number_and_variable)
+number_and_variable = (floating_point_number + pp.Optional("*") + variable).set_parse_action(_parse_number_and_variable)
 only_number = floating_point_number.set_parse_action(_parse_only_number)
 
 # Produces a Term
@@ -465,9 +603,11 @@ abs_or_terms = (
     .set_name("abs_or_terms")  # noqa: WPS348
 )
 
+equality_operator = pp.Or(["==", "="])
+
 # Produces an Expression
 equality_expression = (
-    pp.Group(abs_or_terms + "==" + abs_or_terms)
+    pp.Group(abs_or_terms + equality_operator + abs_or_terms)
     .set_parse_action(_parse_equality_expression)  # noqa: WPS348
     .set_name("equality_expression")  # noqa: WPS348
 )

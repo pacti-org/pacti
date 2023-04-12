@@ -1,13 +1,14 @@
 """Transformations between polyhedral structures and strings."""
-import re
-from typing import Dict, List, Match, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 import numpy as np
 import sympy
 
-from pacti.iocontract import Var
+import pyparsing as pp
+
 from pacti.terms.polyhedra.polyhedra import PolyhedralTerm
 from pacti.utils.errors import ContractFormatError
+from pacti.terms.polyhedra.grammar import expression, AbsoluteTermList, Expression, Operator
 
 numeric = Union[int, float]
 
@@ -118,6 +119,22 @@ def _lhs_str(term: PolyhedralTerm) -> str:  # noqa: WPS231
     return res
 
 
+# opposite terms means:
+# - same set of variables
+# - the variable coefficients of self are approximatively the negative of those of other.
+def _are_polyhedral_terms_opposite(self: PolyhedralTerm, other: PolyhedralTerm) -> bool:
+    for var in other.variables.keys():
+        if not self.contains_var(var):
+            return False
+
+    for var, value in self.variables.items():
+        if not other.contains_var(var):
+            return False
+        if not _are_numbers_approximatively_equal(-value, other.variables[var]):
+            return False
+    return True
+
+
 def polyhedral_term_list_to_strings(  # noqa: WPS231 too much cognitive complexity
     terms: List[PolyhedralTerm],
 ) -> Tuple[str, List[PolyhedralTerm]]:
@@ -174,194 +191,93 @@ def polyhedral_term_list_to_strings(  # noqa: WPS231 too much cognitive complexi
     return s, ts
 
 
-# Patterns for the syntax of constant numbers.
+def _eql_expression_to_polyhedral_terms(e: Expression) -> List[PolyhedralTerm]:
+    """
+    Convert equality expression
 
-internal_plus_pattern = re.compile(r"^\s*\+\s*$")
-internal_minus_pattern = re.compile(r"^\s*\-\s*$")
-internal_signed_number = re.compile(r"^\s*(?P<sign>[+-])?\s*(?P<float>(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)\s*$")
+    Args:
+        e: Expression
 
+    Returns:
+        The list of PolyhedralTerms resulting from expanding the following conversion from:
+            lhs == rhs
+        into:
+            lhs - rhs <= 0
+            rhs - lhs <= 0
+    """
+    assert len(e.sides) == 2
+    lhs: AbsoluteTermList = e.sides[0]
+    rhs: AbsoluteTermList = e.sides[1]
 
-# Patterns for the syntax of variables with numeric coefficients
+    pts: List[PolyhedralTerm] = []
 
-internal_variable_pattern = re.compile(
-    "^"
-    r"\s*(?P<coefficient>[+-]\s*((\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)?)"
-    r"\s*(?P<multiplication>\*)?"
-    r"\s*(?P<variable>[a-zA-Z]\w*)"
-    r"(?P<variables>(\s*[+-]\s*(((\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?(\s*\*\s*)?)?)?\s*[a-zA-Z]\w*)*)"
-    r"\s*$"
-)
+    lhs_minus_rhs: AbsoluteTermList = lhs.add(rhs.negate())
+    for tl in lhs_minus_rhs.expand():
+        pts.append(tl.to_polyhedral_term())
 
+    rhs_minus_lhs: AbsoluteTermList = rhs.add(lhs.negate())
+    for tl in rhs_minus_lhs.expand():
+        pts.append(tl.to_polyhedral_term())
 
-# Patterns for polyhedral term syntax
-
-internal_polyhedral_term_canonical_pattern = re.compile(
-    "^"
-    r"\s*(?P<coefficient>([+-]?(\s*(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)?)?)"
-    r"\s*(?P<multiplication>\*)?"
-    r"\s*(?P<variable>[a-zA-Z]\w*)"
-    r"(?P<variables>(\s*[+-]\s*((\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?\s*\*?)?\s*[a-zA-Z]\w*)*)"
-    r"\s*<="
-    r"\s*(?P<constant>[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)"
-    "$"
-)
-
-internal_polyhedral_term_absolute_less_than_pattern = re.compile(  # noqa: WPS118 Found too long name
-    "^"
-    r"\s*\|"
-    r"(?P<LHS>([+-]?(\s*(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)?)?\s*\*?\s*"
-    r"[a-zA-Z]\w*(\s*[+-]\s*((\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?\s*\*?)?\s*[a-zA-Z]\w*)*)"
-    r"\s*\|"
-    r"\s*<="
-    r"\s*(?P<RHS>[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)"
-    "$"
-)
-
-internal_polyhedral_term_absolute_zero_pattern = re.compile(  # noqa: WPS118 Found too long name
-    "^"
-    r"\s*\|"
-    r"(?P<LHS>([+-]?(\s*(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)?)?\s*\*?\s*"
-    r"[a-zA-Z]\w*(\s*[+-]\s*((\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?\s*\*?)?\s*[a-zA-Z]\w*)*)"
-    r"\s*\|"
-    r"\s*="
-    r"\s*0"
-    "$"
-)
-
-internal_polyhedral_term_equality_pattern = re.compile(
-    "^"
-    r"(?P<LHS>([+-]?(\s*(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)?)?\s*\*?\s*"
-    r"[a-zA-Z]\w*(\s*[+-]\s*((\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?\s*\*?)?\s*[a-zA-Z]\w*)*)"
-    r"\s*="
-    r"\s*(?P<RHS>[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)"
-    "$"
-)
+    return pts
 
 
-# opposite terms means:
-# - same set of variables
-# - the variable coefficients of self are approximatively the negative of those of other.
-def _are_polyhedral_terms_opposite(self: PolyhedralTerm, other: PolyhedralTerm) -> bool:
-    for var in other.variables.keys():
-        if not self.contains_var(var):
-            return False
+def _leq_expression_to_polyhedral_terms(e: Expression) -> List[PolyhedralTerm]:
+    """
+    Convert less-than-or-equal expression
 
-    for var, value in self.variables.items():
-        if not other.contains_var(var):
-            return False
-        if not _are_numbers_approximatively_equal(-value, other.variables[var]):
-            return False
-    return True
+    Args:
+        e: Expression
 
+    Returns:
+        The list of PolyhedralTerms resulting from expanding the following conversion from:
+            atl[i] <= atl[i+1] for i in [0, len(e.sides)-2]
+        into:
+            atl[i] - atl[i+1] <= 0 for i in [0, len(e.sides)-2]
+    """
+    assert len(e.sides) >= 2
 
-def _internal_parse_constant(val: str) -> numeric:
-    if val == "":
-        return 1.0
-    elif internal_plus_pattern.match(val):
-        return 1.0
-    elif internal_minus_pattern.match(val):
-        return -1.0
-    m = internal_signed_number.match(val)
-    if not m:
-        raise ValueError(f"Constant syntax mismatch: {val}")
+    pts: List[PolyhedralTerm] = []
 
-    s = m.group("sign")
-    n = float(m.group("float"))
+    for a, b in zip(e.sides, e.sides[1:]):
+        a_minus_b: AbsoluteTermList = a.add(b.negate())
+        for tl in a_minus_b.expand():
+            pts.append(tl.to_polyhedral_term())
 
-    if s == "-":
-        return -n
-    return n
+    return pts
 
 
-def _internal_add_variable(terms: str, variables: Dict[str, numeric], v: str, c: str) -> None:
-    if v in variables:
-        raise (ValueError(f"Multiple coefficients involving the same variable: {v} in: {terms}"))
+def _geq_expression_to_polyhedral_terms(e: Expression) -> List[PolyhedralTerm]:
+    """
+    Convert greater-than-or-equal expression
 
-    n = _internal_parse_constant(c)
-    variables.update({v: n})
+    Args:
+        e: Expression
 
+    Returns:
+        The list of PolyhedralTerms resulting from expanding the following conversion from:
+            atl[i] >= atl[i+1] for i in [0, len(e.sides)-2]
+        into:
+            -atl[i] + atl[i+1] <= 0 for i in [0, len(e.sides)-2]
+    """
+    assert len(e.sides) >= 2
 
-def _internal_parse_variables(variables: Dict[str, numeric], terms: str) -> None:
-    t = internal_variable_pattern.match(terms)
-    if not t:
-        raise (ValueError(f"Polyhedral variable syntax mismatch: {terms}"))
+    pts: List[PolyhedralTerm] = []
 
-    v = t.group("variable")
-    c = t.group("coefficient")
-    _internal_add_variable(terms, variables, v, c)
+    for a, b in zip(e.sides, e.sides[1:]):
+        minus_a_plus_b: AbsoluteTermList = a.negate().add(b)
+        for tl in minus_a_plus_b.expand():
+            pts.append(tl.to_polyhedral_term())
 
-    rest = t.group("variables")
-    if rest:
-        _internal_parse_variables(variables, rest)
-    else:
-        variables
-
-
-def _internal_pt_from_canonical_match(m: Match[str]) -> PolyhedralTerm:
-    variables: Dict[str, numeric] = {}
-
-    v = m.group("variable")
-    c = m.group("coefficient")
-    _internal_add_variable(m.group(0), variables, v, c)
-
-    rest = m.group("variables")
-    if rest:
-        _internal_parse_variables(variables, rest)
-
-    constant = float(m.group("constant"))
-    return PolyhedralTerm({Var(k): v for k, v in variables.items()}, constant)
+    return pts
 
 
-# rewrite as 2 terms given input match: | LHS | <= RHS
-# pos: LHS <= RHS
-# neg: -(LHS) <= RHS
-# result is [pos,neg]
-def _internal_pt_from_absolute_less_than_match(m: Match[str]) -> List[PolyhedralTerm]:
-    s1 = f"{m.group('LHS')} <= {m.group('RHS')}"
-    m1 = internal_polyhedral_term_canonical_pattern.match(s1)
-    if not m1:
-        raise ValueError(f"Invalid 'LHS <= RHS' syntax in: {s1}")
-
-    pos: PolyhedralTerm = _internal_pt_from_canonical_match(m1)
-    neg: PolyhedralTerm = pos.copy()
-    for key, value in neg.variables.items():
-        neg.variables.update({key: -value})
-    return [pos, neg]
-
-
-# rewrite as 2 terms given input match: | LHS | = 0
-# pos: LHS <= 0
-# neg: -(LHS) <= 0
-# result is [pos,neg]
-def _internal_pt_from_absolute_zero_match(m: Match[str]) -> List[PolyhedralTerm]:
-    s1 = f"{m.group('LHS')} <= 0"
-    m1 = internal_polyhedral_term_canonical_pattern.match(s1)
-    if not m1:
-        raise ValueError(f"Invalid 'LHS <= 0' syntax in: {s1}")
-
-    pos: PolyhedralTerm = _internal_pt_from_canonical_match(m1)
-    neg: PolyhedralTerm = pos.copy()
-    for key, value in neg.variables.items():
-        neg.variables.update({key: -value})
-    return [pos, neg]
-
-
-# rewrite as 2 terms given input match: LHS = RHS
-# pos: LHS <= RHS
-# neg: -(LHS) <= -(RHS)
-# result is [pos,neg]
-def _internal_pt_from_equality_match(m: Match[str]) -> List[PolyhedralTerm]:
-    s1 = f"{m.group('LHS')} <= {m.group('RHS')}"
-    m1 = internal_polyhedral_term_canonical_pattern.match(s1)
-    if not m1:
-        raise ValueError(f"Invalid 'LHS <= RHS' syntax in: {s1}")
-
-    pos: PolyhedralTerm = _internal_pt_from_canonical_match(m1)
-    neg: PolyhedralTerm = pos.copy()
-    for key, value in neg.variables.items():
-        neg.variables.update({key: -value})
-    neg.constant = -neg.constant
-    return [pos, neg]
+def _expression_to_polyhedral_terms(e: Expression) -> List[PolyhedralTerm]:
+    if e.operator == Operator.eql:
+        return _eql_expression_to_polyhedral_terms(e)
+    elif e.operator == Operator.leq:
+        return _leq_expression_to_polyhedral_terms(e)
+    return _geq_expression_to_polyhedral_terms(e)
 
 
 def polyhedral_termlist_from_string(str_rep: str) -> List[PolyhedralTerm]:
@@ -377,20 +293,14 @@ def polyhedral_termlist_from_string(str_rep: str) -> List[PolyhedralTerm]:
     Raises:
         ValueError: constraint syntax invalid.
     """
-    m1 = internal_polyhedral_term_canonical_pattern.match(str_rep)
-    m2 = internal_polyhedral_term_absolute_less_than_pattern.match(str_rep)
-    m3 = internal_polyhedral_term_absolute_zero_pattern.match(str_rep)
-    m4 = internal_polyhedral_term_equality_pattern.match(str_rep)
-    if m1:
-        return [_internal_pt_from_canonical_match(m1)]
+    try:
+        tokens: pp.ParseResults = expression.parse_string(str_rep, parse_all=True)
+    except pp.ParseException as pe:
+        raise ValueError(f"Polyhedral term syntax mismatch in: {str_rep}\n{pe.explain(depth=0)}")
 
-    elif m2:
-        return _internal_pt_from_absolute_less_than_match(m2)
+    if len(tokens) == 1:
+        e = tokens[0]
+        if isinstance(e, Expression):
+            return _expression_to_polyhedral_terms(e)
 
-    elif m3:
-        return _internal_pt_from_absolute_zero_match(m3)
-
-    elif m4:
-        return _internal_pt_from_equality_match(m4)
-
-    raise ValueError(f"Polyhedral term syntax mismatch: {str_rep}")
+    raise ValueError(f"Polyhedral term syntax unrecognized in: {str_rep}")
