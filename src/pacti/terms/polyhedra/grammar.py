@@ -65,7 +65,7 @@ def _parse_only_number(tokens: pp.ParseResults) -> Term:
 def _parse_number_and_variable(tokens: pp.ParseResults) -> Term:
     number_term = tokens[0]
     assert isinstance(number_term, Term)
-    variable_term = tokens[len(tokens)-1]
+    variable_term = tokens[len(tokens) - 1]
     assert isinstance(variable_term, Term)
     return number_term.combine(variable_term)
 
@@ -184,7 +184,7 @@ class TermList:
             A PolyhedralTerm with th constant from the TermList and variables mapped from the TermList factors.
         """
         fs: Dict[Var, numeric] = {Var(k): v for k, v in self.factors.items()}
-        return PolyhedralTerm(variables=fs, constant=self.constant)
+        return PolyhedralTerm(variables=fs, constant=-self.constant)
 
     def __repr__(self) -> str:
         if self.constant == 0:
@@ -396,9 +396,12 @@ class AbsoluteTermList:
 
         expanded: List[TermList] = []
 
-        for tl in _generate_absolute_term_combinations(self.absolute_term_list):
-            tlc = TermList(constant=self.term_list.constant, factors=self.term_list.factors.copy()).add(tl)
-            expanded.append(tlc)
+        if len(self.absolute_term_list) > 0:
+            for tl in _generate_absolute_term_combinations(self.absolute_term_list):
+                tlc = TermList(constant=self.term_list.constant, factors=self.term_list.factors.copy()).add(tl)
+                expanded.append(tlc)
+        else:
+            expanded.append(TermList(constant=self.term_list.constant, factors=self.term_list.factors.copy()))
 
         return expanded
 
@@ -427,6 +430,19 @@ class AbsoluteTermList:
         for at in other.absolute_term_list:
             atl = _combine_or_append(atl, at)
         return AbsoluteTermList(term_list=self.term_list.add(other.term_list), absolute_term_list=atl)
+
+    def is_constant(self) -> bool:
+        """
+        Is this AbsoluteTermList equivalent to a constant.
+
+        Returns:
+            True if there are no AbsoluteTerms and no factors in the term_list.
+        """
+        if len(self.absolute_term_list) > 0:
+            return False
+        if len(self.term_list.factors) > 0:
+            return False
+        return True
 
 
 def _update_term_list(term_list: TermList, symbol: str, term: Term) -> TermList:
@@ -603,7 +619,7 @@ abs_or_terms = (
     .set_name("abs_or_terms")  # noqa: WPS348
 )
 
-equality_operator = pp.Or(["==", "="])
+equality_operator = pp.Or([pp.Literal("=="), pp.Literal("=")])
 
 # Produces an Expression
 equality_expression = (

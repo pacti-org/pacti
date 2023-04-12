@@ -211,13 +211,17 @@ def _eql_expression_to_polyhedral_terms(e: Expression) -> List[PolyhedralTerm]:
 
     pts: List[PolyhedralTerm] = []
 
-    lhs_minus_rhs: AbsoluteTermList = lhs.add(rhs.negate())
-    for tl in lhs_minus_rhs.expand():
-        pts.append(tl.to_polyhedral_term())
+    if not lhs.is_constant():
+        lhs_minus_rhs: AbsoluteTermList = lhs.add(rhs.negate())
+        for tl in lhs_minus_rhs.expand():
+            pts.append(tl.to_polyhedral_term())
 
-    rhs_minus_lhs: AbsoluteTermList = rhs.add(lhs.negate())
-    for tl in rhs_minus_lhs.expand():
-        pts.append(tl.to_polyhedral_term())
+    if not rhs.is_constant():
+        rhs_minus_lhs: AbsoluteTermList = rhs.add(lhs.negate())
+        for tl in rhs_minus_lhs.expand():
+            pts.append(tl.to_polyhedral_term())
+
+    assert len(pts) > 0
 
     return pts
 
