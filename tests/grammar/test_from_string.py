@@ -19,7 +19,7 @@ class TestFromString(unittest.TestCase):
     
     def test3(self) -> None:
         pts: List[PolyhedralTerm] = serializer.polyhedral_termlist_from_string("0.002757617728531856DHBA - xRFP = -0.02031855955678674")
-        self.assertTrue(len(pts) == 2)
+        self.assertTrue(len(pts) == 1)
     
 if __name__ == "__main__":
     unittest.main()
