@@ -54,7 +54,7 @@ def test_pattern3_contract() -> None:
     assert 1 == len(c.inputvars)
     assert "x" == c.inputvars[0].name
     assert 0 == len(c.outputvars)
-    assert 2 == len(c.a.terms)
+    assert 4 == len(c.a.terms)
 
     t0 = c.a.terms[0]
     assert isinstance(t0, PolyhedralTerm)

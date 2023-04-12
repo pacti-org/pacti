@@ -203,7 +203,7 @@ def _eql_expression_to_polyhedral_terms(e: Expression) -> List[PolyhedralTerm]:
             lhs == rhs
         into:
             lhs - rhs <= 0
-            rhs - lhs <= 0
+            -(lhs - rhs) <= 0
     """
     assert len(e.sides) == 2
     lhs: AbsoluteTermList = e.sides[0]
@@ -215,11 +215,13 @@ def _eql_expression_to_polyhedral_terms(e: Expression) -> List[PolyhedralTerm]:
         lhs_minus_rhs: AbsoluteTermList = lhs.add(rhs.negate())
         for tl in lhs_minus_rhs.expand():
             pts.append(tl.to_polyhedral_term())
+            pts.append(tl.negate().to_polyhedral_term())
 
     if not rhs.is_constant():
         rhs_minus_lhs: AbsoluteTermList = rhs.add(lhs.negate())
         for tl in rhs_minus_lhs.expand():
             pts.append(tl.to_polyhedral_term())
+            pts.append(tl.negate().to_polyhedral_term())
 
     assert len(pts) > 0
 

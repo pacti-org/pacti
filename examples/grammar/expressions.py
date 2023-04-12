@@ -21,6 +21,8 @@ for s in [
 
 
 for s in [
+    "|x| = 0",
+    "|x| + y = 0",
     "|-x + 3| - 3 |4y + 5t| - 7z <= 8t + |x - y|",
     "|-x + 3| - 3 |4y + 5t| - 7z == 8t + |x - y|",
     "|- 2 -x + 3 + 6x | <= - 3 |4y + 5t -y | - 7z <= 8t + |x - y| <= 10",
@@ -30,7 +32,4 @@ for s in [
     result = expression.parseString(s, parse_all=True)
     print(result)
 
-my_list = ['A', 'B', 'C']
 
-for a, b in zip(my_list, my_list[1:]):
-    print(a, b)
