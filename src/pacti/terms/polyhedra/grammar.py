@@ -79,6 +79,22 @@ def _parse_term(tokens: pp.ParseResults) -> Term:
     return term
 
 
+def _parse_first_term(tokens: pp.ParseResults) -> Term:
+    assert len(tokens) == 1
+    group = tokens[0]
+    if len(group) == 2:
+        sign = group[0]
+        assert isinstance(sign, str)
+        term = group[1]
+        assert isinstance(term, Term)
+        if sign == "-":
+            term.coefficient *= -1
+        return term
+    term = group[0]
+    assert isinstance(term, Term)
+    return term
+
+
 def _parse_signed_term(tokens: pp.ParseResults) -> Term:
     assert len(tokens) == 1
     group = tokens[0]
@@ -210,10 +226,7 @@ def _parse_term_list(tokens: pp.ParseResults) -> TermList:
     factors: Dict[str, float] = {}
 
     # Process the terms along with their corresponding symbols
-    for symbol, term in zip(["+"] + group[1::2], [group[0]] + group[2::2]):
-        if symbol == "-":
-            term.coefficient *= -1
-
+    for term in group:
         if term.variable is None:
             constant += term.coefficient
         else:
@@ -297,14 +310,37 @@ def _parse_absolute_term(tokens: pp.ParseResults) -> AbsoluteTerm:
     group = tokens[0]
     if len(group) == 4:
         coefficient = group[0]
+        # group[1] = "|"
+        # group[3] = "|"
         assert isinstance(coefficient, Term)
         assert coefficient.variable is None
         term_list = group[2]
         assert isinstance(term_list, TermList)
         return AbsoluteTerm(term_list=term_list, coefficient=coefficient.coefficient)
+    # group[0] = "|"
+    # group[2] = "|"
     term_list = group[1]
     assert isinstance(term_list, TermList)
     return AbsoluteTerm(term_list=term_list, coefficient=None)
+
+
+def _parse_positive_abs_term(tokens: pp.ParseResults) -> AbsoluteTerm:
+    assert len(tokens) == 1
+    group = tokens[0]
+    term = group[1]
+    assert isinstance(term, AbsoluteTerm)
+    return term
+
+
+def _parse_first_abs_term(tokens: pp.ParseResults) -> AbsoluteTerm:
+    assert len(tokens) == 1
+    group = tokens[0]
+    if len(group) == 2:
+        term = group[1]
+    else:
+        term = group[0]
+    assert isinstance(term, AbsoluteTerm)
+    return term
 
 
 AbsoluteTermOrTerm = Union[AbsoluteTerm, Term]
@@ -318,34 +354,12 @@ def _to_absolute_term_or_term(tokens: pp.ParseResults) -> AbsoluteTermOrTerm:
     raise ValueError(f"Expecting either an AbsoluteTerm or a Term; got: {type(tokens)}")
 
 
-def _parse_absolute_term_or_term(tokens: pp.ParseResults) -> AbsoluteTermOrTerm:
+def _parse_abs_or_term(tokens: pp.ParseResults) -> AbsoluteTermOrTerm:
     assert len(tokens) == 1
     group = tokens[0]
     assert len(group) == 1
     tokens = group[0]
     return _to_absolute_term_or_term(tokens)
-
-
-def _parse_sign_of_absolute_term_or_term(tokens: pp.ParseResults) -> AbsoluteTermOrTerm:
-    assert len(tokens) == 1
-    group = tokens[0]
-    if len(group) == 1:
-        tokens = group[0]
-        return _to_absolute_term_or_term(tokens)
-    sign = group[0]
-    tokens = group[1]
-    if sign == "+":
-        return _to_absolute_term_or_term(tokens)
-    if isinstance(tokens, AbsoluteTerm):
-        if tokens.coefficient is None:
-            tokens.coefficient = -1.0
-        else:
-            tokens.coefficient *= -1.0
-        return tokens
-    elif isinstance(tokens, Term):
-        tokens.coefficient *= -1.0
-        return tokens
-    raise ValueError(f"Expecting either an AbsoluteTerm or a Term; got: {type(tokens)}")
 
 
 def _generate_absolute_term_combinations(absolute_term_list: List[AbsoluteTerm]) -> List[TermList]:
@@ -445,14 +459,6 @@ class AbsoluteTermList:
         return True
 
 
-def _update_term_list(term_list: TermList, symbol: str, term: Term) -> TermList:
-    if symbol == "-":
-        term_list = term_list.combine(term.negate())
-    else:
-        term_list = term_list.combine(term)
-    return term_list
-
-
 def _combine_optional_floats(f1: Optional[float], f2: Optional[float]) -> Optional[float]:
     if f1 is None:
         if f2 is None:
@@ -481,14 +487,6 @@ def _combine_or_append(atl: List[AbsoluteTerm], term: AbsoluteTerm) -> List[Abso
     return r
 
 
-def _update_absolute_term_list(
-    absolute_term_list: List[AbsoluteTerm], symbol: str, term: AbsoluteTerm
-) -> List[AbsoluteTerm]:
-    if symbol == "-":
-        return _combine_or_append(absolute_term_list, term.negate())
-    return _combine_or_append(absolute_term_list, term)
-
-
 def _parse_abs_or_terms(tokens: pp.ParseResults) -> AbsoluteTermList:
     assert len(tokens) == 1
     group = tokens[0]
@@ -496,11 +494,11 @@ def _parse_abs_or_terms(tokens: pp.ParseResults) -> AbsoluteTermList:
     term_list: TermList = TermList(constant=0)
     absolute_term_list: List[AbsoluteTerm] = []
 
-    for symbol, term in zip(["+"] + group[1::2], [group[0]] + group[2::2]):
+    for term in group:
         if isinstance(term, Term):
-            term_list = _update_term_list(term_list, symbol, term)
+            term_list = term_list.combine(term)
         elif isinstance(term, AbsoluteTerm):
-            absolute_term_list = _update_absolute_term_list(absolute_term_list, symbol, term)
+            absolute_term_list = _combine_or_append(absolute_term_list, term)
 
     return AbsoluteTermList(term_list=term_list, absolute_term_list=absolute_term_list)
 
@@ -588,12 +586,14 @@ only_number = floating_point_number.set_parse_action(_parse_only_number)
 term = pp.Group(only_variable | number_and_variable | only_number).set_parse_action(_parse_term).set_name("term")
 
 # Produces a Term
-signed_term = (
-    pp.Group(pp.Optional(symbol, default="+") + term).set_parse_action(_parse_signed_term).set_name("signed_term")
+first_term = (
+    pp.Group(pp.Optional(symbol, default="+") + term).set_parse_action(_parse_first_term).set_name("first_term")
 )
 
+signed_term = pp.Group(symbol + term).set_parse_action(_parse_signed_term).set_name("signed_term")
+
 # Produces a TermList
-terms = pp.Group(signed_term + pp.ZeroOrMore(symbol + term)).set_parse_action(_parse_term_list).set_name("terms")
+terms = pp.Group(first_term + pp.ZeroOrMore(signed_term)).set_parse_action(_parse_term_list).set_name("terms")
 
 # Produces an AbsoluteTerm
 abs_term = (
@@ -602,22 +602,42 @@ abs_term = (
     .set_name("abs_term")  # noqa: WPS348
 )
 
-# Produces an AbsoluteTermOrTerm
-abs_or_term = pp.Group(abs_term | term).set_parse_action(_parse_absolute_term_or_term).set_name("abs_or_term")
+# Produces an AbsoluteTerm
+positive_abs_term = (
+    pp.Group("+" + abs_term)
+    .set_parse_action(_parse_positive_abs_term)  # noqa: WPS348
+    .set_name("positive_abs_term")  # noqa: WPS348
+)
+
+# Produces an AbsoluteTerm
+first_abs_term = (
+    pp.Group(pp.Optional("+") + abs_term)
+    .set_parse_action(_parse_first_abs_term)  # noqa: WPS348
+    .set_name("first_abs_term")  # noqa: WPS348
+)
 
 # Produces an AbsoluteTermOrTerm
-signed_abs_or_term = (
-    pp.Group(pp.Optional(symbol, default="+") + abs_or_term)
-    .set_parse_action(_parse_sign_of_absolute_term_or_term)  # noqa: WPS348
-    .set_name("signed_abs_or_term")  # noqa: WPS348
+first_abs_or_term = (
+    pp.Group(first_abs_term | first_term)
+    .set_parse_action(_parse_abs_or_term)  # noqa: WPS348
+    .set_name("first_abs_or_term")  # noqa: WPS348
+)
+
+
+# Produces an AbsoluteTermOrTerm
+addl_abs_or_term = (
+    pp.Group(positive_abs_term | signed_term)
+    .set_parse_action(_parse_abs_or_term)  # noqa: WPS348
+    .set_name("addl_abs_or_term")  # noqa: WPS348
 )
 
 # Produces an AbsoluteTermList
 abs_or_terms = (
-    pp.Group(signed_abs_or_term + pp.ZeroOrMore(symbol + abs_or_term))
-    .set_parse_action(_parse_abs_or_terms)  # noqa: WPS348
-    .set_name("abs_or_terms")  # noqa: WPS348
+    pp.Group(first_abs_or_term + pp.ZeroOrMore(addl_abs_or_term))
+    .set_parse_action(_parse_abs_or_terms)
+    .set_name("abs_or_terms")
 )
+
 
 equality_operator = pp.Or([pp.Literal("=="), pp.Literal("=")])
 
@@ -648,42 +668,3 @@ expression = (
     .set_parse_action(_parse_expression)  # noqa: WPS348
     .set_name("expression")  # noqa: WPS348
 )
-
-# The generated html is missing the styles to show shapes with a different color than the background.
-# https://github.com/pyparsing/pyparsing/blob/efb796099fd77d003dcd49df6a75d1dcc19cefb1/docs/_static/sql_railroad.html#L21-L52
-
-# If this is done outside of this file, we get an import exception.
-# <style>/* <![CDATA[ */
-#     svg.railroad-diagram {
-#         background-color:hsl(30,20%,95%);
-#     }
-#     svg.railroad-diagram path {
-#         stroke-width:3;
-#         stroke:black;
-#         fill:rgba(0,0,0,0);
-#     }
-#     svg.railroad-diagram text {
-#         font:bold 14px monospace;
-#         text-anchor:middle;
-#     }
-#     svg.railroad-diagram text.label{
-#         text-anchor:start;
-#     }
-#     svg.railroad-diagram text.comment{
-#         font:italic 12px monospace;
-#     }
-#     svg.railroad-diagram rect{
-#         stroke-width:3;
-#         stroke:black;
-#         fill:hsl(120,100%,90%);
-#     }
-#     svg.railroad-diagram rect.group-box {
-#         stroke: gray;
-#         stroke-dasharray: 10 5;
-#         fill: none;
-#     }
-
-# /* ]]> */
-# </style>
-
-# expression.create_diagram(output_html="docs/expression.html", show_groups=True)

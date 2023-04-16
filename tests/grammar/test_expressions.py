@@ -14,7 +14,7 @@ class TestExpressions(unittest.TestCase):
                         absolute_term_list=[
                             AbsoluteTerm(term_list=TermList(constant=3.0, factors={"x": -1.0}), coefficient=None),
                             AbsoluteTerm(
-                                term_list=TermList(constant=0, factors={"y": 4.0, "t": 5.0}), coefficient=-3.0
+                                term_list=TermList(constant=0, factors={"y": 4.0, "t": 5.0}), coefficient=3.0
                             ),
                         ],
                     ),
@@ -29,7 +29,7 @@ class TestExpressions(unittest.TestCase):
                 ],
             )
         )
-        t1 = expression.parse_string("|-x + 3| - 3 |4y + 5t| - 7z == 8t + |x - y|", parse_all=True)
+        t1 = expression.parse_string("|-x + 3| + 3 |4y + 5t| - 7z == 8t + |x - y|", parse_all=True)
         s0 = f"{t0}"
         s1 = f"{t1}"
         self.assertEqual(s0, s1)
@@ -44,7 +44,7 @@ class TestExpressions(unittest.TestCase):
                         absolute_term_list=[
                             AbsoluteTerm(term_list=TermList(constant=3.0, factors={"x": -1.0}), coefficient=None),
                             AbsoluteTerm(
-                                term_list=TermList(constant=0, factors={"y": 4.0, "t": 5.0}), coefficient=-3.0
+                                term_list=TermList(constant=0, factors={"y": 4.0, "t": 5.0}), coefficient=3.0
                             ),
                         ],
                     ),
@@ -60,7 +60,7 @@ class TestExpressions(unittest.TestCase):
                         term_list=TermList(factors={"t": -2.0}, constant=0),
                         absolute_term_list=[
                             AbsoluteTerm(
-                                term_list=TermList(constant=0, factors={"x": -1.0, "y": -1.0}), coefficient=-1.0
+                                term_list=TermList(constant=0, factors={"x": -1.0, "y": -1.0}), coefficient=None
                             )
                         ],
                     ),
@@ -68,7 +68,7 @@ class TestExpressions(unittest.TestCase):
             )
         )
         t1 = expression.parse_string(
-            "|-x + 3| - 3 |4y + 5t| - 7z <= 8t + |x - y| <= -2t - |y - 2y - x|", parse_all=True
+            "|-x + 3| + 3 |4y + 5t| - 7z <= 8t + |x - y| <= -2t + |y - 2y - x|", parse_all=True
         )
         s0 = f"{t0}"
         s1 = f"{t1}"

@@ -12,7 +12,7 @@ class TestFromString(unittest.TestCase):
 
     def test2(self) -> None:
         pts: List[PolyhedralTerm] = serializer.polyhedral_termlist_from_string("|x| = 0")
-        self.assertTrue(len(pts) == 4, f"{len(pts)}")
+        self.assertTrue(len(pts) == 2, f"{len(pts)}")
 
     def test3(self) -> None:
         pts: List[PolyhedralTerm] = serializer.polyhedral_termlist_from_string(
