@@ -29,6 +29,8 @@ Use `pdm add` to install new packages.
 2. run `make test` to run the tests (fix any issue)
 3. run `make check` to check everything (types, docs, quality, and dependencies)
 4. make sure that all tests pass and the source code coverage meets our criteria
+
+Finally, in your commit message, try to use helpful keywords such as "add", "fix", "remove", "change" to describe the changes that you have proposed. This helps in generating change log documentation appropriately. You can read more about writing good commit messages [here](https://opensource.com/article/22/12/git-commit-message) and [here](https://cbea.ms/git-commit/).
     
 ## Continuous Integration and Development
 Pacti has continuous integration and development setup with Github Actions. Some workflows are automatically run while others are manual. Instructions for all developers:
