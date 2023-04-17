@@ -3,6 +3,7 @@
 import pyparsing as pp
 from enum import Enum
 from typing import Dict, List, Optional, Union
+from functools import reduce
 from itertools import product
 from pacti.terms.polyhedra.polyhedra import numeric, PolyhedralTerm, Var
 import dataclasses
@@ -15,96 +16,6 @@ def _factor_repr(f: float, v: str) -> str:
     elif n == "-1.0":
         return f"-{v}"
     return f"{n}{v}"
-
-
-@dataclasses.dataclass
-class Term:
-    """A Term represents either a constant (variable=None) or a variable with a constant coefficient."""
-
-    coefficient: float
-    variable: Union[str, None]
-
-    def __repr__(self) -> str:
-        if self.variable:
-            return _factor_repr(self.coefficient, self.variable)
-        return f"{self.coefficient}"
-
-    def combine(self, other: "Term") -> "Term":
-        """
-        Combines a number term with a variable term.
-
-        Args:
-            other: a variable Term
-
-        Returns:
-            A new Term with the product of the coefficients for the other variable.
-        """
-        return Term(coefficient=self.coefficient * other.coefficient, variable=other.variable)
-
-    def negate(self: "Term") -> "Term":
-        """
-        Negates this term.
-
-        Returns:
-            The negative of this term.
-        """
-        return Term(coefficient=-1.0, variable=None).combine(self)
-
-
-def _parse_only_variable(tokens: pp.ParseResults) -> Term:
-    assert len(tokens) == 1
-    v = str(tokens[0])
-    return Term(coefficient=1.0, variable=v)
-
-
-def _parse_only_number(tokens: pp.ParseResults) -> Term:
-    assert len(tokens) == 1
-    return Term(coefficient=float(tokens[0]), variable=None)
-
-
-def _parse_number_and_variable(tokens: pp.ParseResults) -> Term:
-    number_term = tokens[0]
-    assert isinstance(number_term, Term)
-    variable_term = tokens[len(tokens) - 1]
-    assert isinstance(variable_term, Term)
-    return number_term.combine(variable_term)
-
-
-def _parse_term(tokens: pp.ParseResults) -> Term:
-    assert len(tokens) == 1
-    t0 = tokens[0]
-    assert isinstance(t0, pp.ParseResults)
-    term = t0[0]
-    assert isinstance(term, Term)
-    return term
-
-
-def _parse_first_term(tokens: pp.ParseResults) -> Term:
-    assert len(tokens) == 1
-    group = tokens[0]
-    if len(group) == 2:
-        sign = group[0]
-        assert isinstance(sign, str)
-        term = group[1]
-        assert isinstance(term, Term)
-        if sign == "-":
-            term.coefficient *= -1
-        return term
-    term = group[0]
-    assert isinstance(term, Term)
-    return term
-
-
-def _parse_signed_term(tokens: pp.ParseResults) -> Term:
-    assert len(tokens) == 1
-    group = tokens[0]
-    sign = group[0]
-    assert isinstance(sign, str)
-    term = group[1]
-    assert isinstance(term, Term)
-    if sign == "-":
-        term.coefficient *= -1
-    return term
 
 
 @dataclasses.dataclass
@@ -127,31 +38,6 @@ class TermList:
             return False
         var = sorted(self.factors)[0]
         return self.factors[var] > 0
-
-    def combine(self: "TermList", term: Term) -> "TermList":
-        """
-        Additively combine an extra Term into this TermList.
-
-        Args:
-            term: A Term.
-
-        Returns:
-            The TermList with the extra term additively combined as a factor or a constant according
-            to whether the term has a variable or not.
-        """
-        if term.variable is None:
-            self.constant += term.coefficient
-        else:
-            if term.variable in self.factors:
-                self.factors[term.variable] += term.coefficient
-                fv = f"{self.factors[term.variable]}"
-                if fv == "0.0":
-                    self.factors.pop(term.variable)
-                elif fv == "-0.0":
-                    self.factors.pop(term.variable)
-            else:
-                self.factors[term.variable] = term.coefficient
-        return self
 
     def negate(self: "TermList") -> "TermList":
         """
@@ -219,23 +105,93 @@ class TermList:
         return s
 
 
+def _parse_only_variable(tokens: pp.ParseResults) -> TermList:
+    assert len(tokens) == 1
+    v = tokens[0]
+    assert isinstance(v, str)
+    return TermList(constant=0, factors={v: 1.0})
+
+
+def _parse_number_and_variable(tokens: pp.ParseResults) -> TermList:
+    number = tokens[0]
+    assert isinstance(number, float)
+    variable_term = tokens[len(tokens) - 1]
+    assert isinstance(variable_term, TermList)
+    assert variable_term.constant == 0
+    for k in variable_term.factors:
+        variable_term.factors[k] *= number
+    return variable_term
+
+
+def _parse_term(tokens: pp.ParseResults) -> TermList:
+    assert len(tokens) == 1
+    t0 = tokens[0]
+    assert isinstance(t0, pp.ParseResults)
+    tl = t0[0]
+    if isinstance(tl, TermList):
+        return tl
+    if isinstance(tl, float):
+        return TermList(constant=tl, factors={})
+    raise ValueError(f"_parse_term should involve either a TermList or a float, got: {type(tl)}")
+
+
+def _parse_first_term(tokens: pp.ParseResults) -> TermList:
+    assert len(tokens) == 1
+    group = tokens[0]
+    if len(group) == 2:
+        sign = group[0]
+        assert isinstance(sign, str)
+        tl = group[1]
+        assert isinstance(tl, TermList)
+        if sign == "-":
+            tl.constant *= -1
+            for k in tl.factors:
+                tl.factors[k] *= -1
+        return tl
+    tl = group[0]
+    assert isinstance(tl, TermList)
+    return tl
+
+
+def _parse_signed_term(tokens: pp.ParseResults) -> TermList:
+    assert len(tokens) == 1
+    group = tokens[0]
+    sign = group[0]
+    assert isinstance(sign, str)
+    tl = group[1]
+    assert isinstance(tl, TermList)
+    if sign == "-":
+        tl.constant *= -1
+        for k in tl.factors:
+            tl.factors[k] *= -1
+    return tl
+
+
 def _parse_term_list(tokens: pp.ParseResults) -> TermList:
     assert len(tokens) == 1
     group = tokens[0]
-    constant = 0
-    factors: Dict[str, float] = {}
+    return reduce(TermList.add, group, TermList(constant=0, factors={}))
 
-    # Process the terms along with their corresponding symbols
-    for term in group:
-        if term.variable is None:
-            constant += term.coefficient
-        else:
-            if term.variable in factors:
-                factors[term.variable] += term.coefficient
-            else:
-                factors[term.variable] = term.coefficient
 
-    return TermList(constant=constant, factors=factors)
+def _parse_paren_terms(tokens: pp.ParseResults) -> TermList:
+    assert len(tokens) == 1
+    group = tokens[0]
+    tl = group[1]
+    assert isinstance(tl, TermList)
+    return tl
+
+
+def _parse_factor_paren_terms(tokens: pp.ParseResults) -> TermList:
+    assert len(tokens) == 1
+    group = tokens[0]
+    f = group[0]
+    assert isinstance(f, float)
+    pt = group[len(group) - 1]
+    assert isinstance(pt, TermList)
+    pt.constant *= f
+    for k in pt.factors:
+        pt.factors[k] *= f
+    return pt
 
 
 @dataclasses.dataclass
@@ -312,11 +268,10 @@ def _parse_absolute_term(tokens: pp.ParseResults) -> AbsoluteTerm:
         coefficient = group[0]
         # group[1] = "|"
         # group[3] = "|"
-        assert isinstance(coefficient, Term)
-        assert coefficient.variable is None
+        assert isinstance(coefficient, float)
         term_list = group[2]
         assert isinstance(term_list, TermList)
-        return AbsoluteTerm(term_list=term_list, coefficient=coefficient.coefficient)
+        return AbsoluteTerm(term_list=term_list, coefficient=coefficient)
     # group[0] = "|"
     # group[2] = "|"
     term_list = group[1]
@@ -343,13 +298,13 @@ def _parse_first_abs_term(tokens: pp.ParseResults) -> AbsoluteTerm:
     return term
 
 
-AbsoluteTermOrTerm = Union[AbsoluteTerm, Term]
+AbsoluteTermOrTerm = Union[AbsoluteTerm, TermList]
 
 
 def _to_absolute_term_or_term(tokens: pp.ParseResults) -> AbsoluteTermOrTerm:
     if isinstance(tokens, AbsoluteTerm):
         return tokens
-    elif isinstance(tokens, Term):
+    elif isinstance(tokens, TermList):
         return tokens
     raise ValueError(f"Expecting either an AbsoluteTerm or a Term; got: {type(tokens)}")
 
@@ -495,12 +450,33 @@ def _parse_abs_or_terms(tokens: pp.ParseResults) -> AbsoluteTermList:
     absolute_term_list: List[AbsoluteTerm] = []
 
     for term in group:
-        if isinstance(term, Term):
-            term_list = term_list.combine(term)
+        if isinstance(term, TermList):
+            term_list = term_list.add(term)
         elif isinstance(term, AbsoluteTerm):
             absolute_term_list = _combine_or_append(absolute_term_list, term)
 
     return AbsoluteTermList(term_list=term_list, absolute_term_list=absolute_term_list)
+
+
+def _parse_paren_abs_or_terms(tokens: pp.ParseResults) -> AbsoluteTermList:
+    assert len(tokens) == 1
+    group = tokens[0]
+    if len(group) == 3:
+        atl = group[1]
+        assert isinstance(atl, AbsoluteTermList)
+        return atl
+    f = group[0]
+    assert isinstance(f, float)
+    atl = group[2]
+    assert isinstance(atl, AbsoluteTermList)
+    for k in atl.term_list.factors:
+        atl.term_list.factors[k] *= f
+    for at in atl.absolute_term_list:
+        if at.coefficient is None:
+            at.coefficient = f
+        else:
+            at.coefficient *= f
+    return atl
 
 
 class Operator(Enum):
@@ -563,6 +539,7 @@ def _parse_expression(tokens: pp.ParseResults) -> Expression:
 
 # Grammar rules
 
+# Produces a float
 floating_point_number = (
     pp.Combine(
         pp.Word(pp.nums)
@@ -576,16 +553,36 @@ floating_point_number = (
 variable = pp.Word(pp.alphas, pp.alphanums + "_").set_name("variable")
 symbol = pp.oneOf("+ -").set_name("symbol")
 
+# Define a forward declaration for parenthesized terms
+paren_terms = pp.Forward().set_name("paren_terms")
+
 # Define term options with corresponding parse actions
 
+# Produces a TermList
 only_variable = variable.set_parse_action(_parse_only_variable)
-number_and_variable = (floating_point_number + pp.Optional("*") + variable).set_parse_action(_parse_number_and_variable)
-only_number = floating_point_number.set_parse_action(_parse_only_number)
 
-# Produces a Term
+# Produces a TermList
+number_and_variable = (floating_point_number + pp.Optional("*") + variable).set_parse_action(_parse_number_and_variable)
+
+# Produces a float
+only_number = floating_point_number
+
+# Add support for parenthesized terms
+# Produces a TermList
+only_variable |= paren_terms
+
+# Produces a TermList
+number_and_variable |= pp.Group(floating_point_number + pp.Optional("*") + paren_terms).set_parse_action(
+    _parse_factor_paren_terms
+)
+
+# Produces a TermList
+only_number |= paren_terms
+
+# Produces a TermList
 term = pp.Group(only_variable | number_and_variable | only_number).set_parse_action(_parse_term).set_name("term")
 
-# Produces a Term
+# Produces a TermList
 first_term = (
     pp.Group(pp.Optional(symbol, default="+") + term).set_parse_action(_parse_first_term).set_name("first_term")
 )
@@ -594,6 +591,10 @@ signed_term = pp.Group(symbol + term).set_parse_action(_parse_signed_term).set_n
 
 # Produces a TermList
 terms = pp.Group(first_term + pp.ZeroOrMore(signed_term)).set_parse_action(_parse_term_list).set_name("terms")
+
+# Define the rule for parenthesized terms
+# Produces a TermList
+paren_terms <<= pp.Group("(" + terms + ")").set_parse_action(_parse_paren_terms).set_name("paren_terms_contents")
 
 # Produces an AbsoluteTerm
 abs_term = (
@@ -623,7 +624,6 @@ first_abs_or_term = (
     .set_name("first_abs_or_term")  # noqa: WPS348
 )
 
-
 # Produces an AbsoluteTermOrTerm
 addl_abs_or_term = (
     pp.Group(positive_abs_term | signed_term)
@@ -638,6 +638,12 @@ abs_or_terms = (
     .set_name("abs_or_terms")
 )
 
+# Produces an AbsoluteTermList
+# paren_abs_or_terms = (
+#     pp.Group(pp.Optional(floating_point_number) + abs_or_terms)
+#     .set_parse_action(_parse_paren_abs_or_terms)
+#     .set_name("paren_abs_or_terms")
+# )
 
 equality_operator = pp.Or([pp.Literal("=="), pp.Literal("=")])
 
