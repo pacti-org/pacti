@@ -7,6 +7,7 @@ from functools import reduce
 from itertools import product
 from pacti.terms.polyhedra.polyhedra import numeric, PolyhedralTerm, Var
 import dataclasses
+from typing import cast
 
 
 def _factor_repr(f: float, v: str) -> str:
@@ -554,7 +555,7 @@ variable = pp.Word(pp.alphas, pp.alphanums + "_").set_name("variable")
 symbol = pp.oneOf("+ -").set_name("symbol")
 
 # Define a forward declaration for parenthesized terms
-paren_terms = pp.Forward().set_name("paren_terms")
+paren_terms = cast(pp.Forward, pp.Forward().set_name("paren_terms"))
 
 # Define term options with corresponding parse actions
 
