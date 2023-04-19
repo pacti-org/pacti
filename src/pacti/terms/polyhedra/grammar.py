@@ -468,8 +468,9 @@ def _parse_paren_abs_or_terms(tokens: pp.ParseResults) -> AbsoluteTermList:
         return atl
     f = group[0]
     assert isinstance(f, float)
-    atl = group[2]
+    atl = group[len(group) - 2]
     assert isinstance(atl, AbsoluteTermList)
+    atl.term_list.constant *= f
     for k in atl.term_list.factors:
         atl.term_list.factors[k] *= f
     for at in atl.absolute_term_list:
@@ -478,6 +479,46 @@ def _parse_paren_abs_or_terms(tokens: pp.ParseResults) -> AbsoluteTermList:
         else:
             at.coefficient *= f
     return atl
+
+
+def _parse_first_or_addl_paren_abs_or_terms(tokens: pp.ParseResults) -> AbsoluteTermList:
+    assert len(tokens) == 1
+    group = tokens[0]
+    term = group[len(group) - 1]
+
+    term_list: TermList = TermList(constant=0)
+    absolute_term_list: List[AbsoluteTerm] = []
+
+    if isinstance(term, TermList):
+        term_list = term_list.add(term)
+    elif isinstance(term, AbsoluteTerm):
+        absolute_term_list = _combine_or_append(absolute_term_list, term)
+    elif isinstance(term, AbsoluteTermList):
+        current = AbsoluteTermList(term_list=term_list, absolute_term_list=absolute_term_list).add(term)
+        term_list = current.term_list
+        absolute_term_list = current.absolute_term_list
+
+    return AbsoluteTermList(term_list=term_list, absolute_term_list=absolute_term_list)
+
+
+def _parse_multi_paren_abs_or_terms(tokens: pp.ParseResults) -> AbsoluteTermList:
+    assert len(tokens) == 1
+    group = tokens[0]
+
+    term_list: TermList = TermList(constant=0)
+    absolute_term_list: List[AbsoluteTerm] = []
+
+    for term in group:
+        if isinstance(term, TermList):
+            term_list = term_list.add(term)
+        elif isinstance(term, AbsoluteTerm):
+            absolute_term_list = _combine_or_append(absolute_term_list, term)
+        elif isinstance(term, AbsoluteTermList):
+            current = AbsoluteTermList(term_list=term_list, absolute_term_list=absolute_term_list).add(term)
+            term_list = current.term_list
+            absolute_term_list = current.absolute_term_list
+
+    return AbsoluteTermList(term_list=term_list, absolute_term_list=absolute_term_list)
 
 
 class Operator(Enum):
@@ -588,6 +629,7 @@ first_term = (
     pp.Group(pp.Optional(symbol, default="+") + term).set_parse_action(_parse_first_term).set_name("first_term")
 )
 
+# Produces a TermList
 signed_term = pp.Group(symbol + term).set_parse_action(_parse_signed_term).set_name("signed_term")
 
 # Produces a TermList
@@ -640,31 +682,52 @@ abs_or_terms = (
 )
 
 # Produces an AbsoluteTermList
-# paren_abs_or_terms = (
-#     pp.Group(pp.Optional(floating_point_number) + abs_or_terms)
-#     .set_parse_action(_parse_paren_abs_or_terms)
-#     .set_name("paren_abs_or_terms")
-# )
+paren_abs_or_terms = (
+    pp.Group(pp.Optional(floating_point_number + pp.Optional("*")) + "(" + abs_or_terms + ")")
+    .set_parse_action(_parse_paren_abs_or_terms)
+    .set_name("paren_abs_or_terms")
+)
+
+# Produces an AbsoluteTermList
+first_paren_abs_or_terms = (
+    pp.Group(pp.Optional("+") + paren_abs_or_terms | first_abs_or_term)
+    .set_parse_action(_parse_first_or_addl_paren_abs_or_terms)
+    .set_name("first_paren_abs_or_terms")
+)
+
+# Produces an AbsoluteTermList
+addl_paren_abs_or_terms = (
+    pp.Group("+" + paren_abs_or_terms | addl_abs_or_term)
+    .set_parse_action(_parse_first_or_addl_paren_abs_or_terms)
+    .set_name("addl_paren_abs_or_terms")
+)
+
+# Produces an AbsoluteTermList
+multi_paren_abs_or_terms = (
+    pp.Group(first_paren_abs_or_terms + pp.ZeroOrMore(addl_paren_abs_or_terms))
+    .set_parse_action(_parse_multi_paren_abs_or_terms)
+    .set_name("multi_paren_abs_or_terms")
+)
 
 equality_operator = pp.Or([pp.Literal("=="), pp.Literal("=")])
 
 # Produces an Expression
 equality_expression = (
-    pp.Group(abs_or_terms + equality_operator + abs_or_terms)
+    pp.Group(multi_paren_abs_or_terms + equality_operator + multi_paren_abs_or_terms)
     .set_parse_action(_parse_equality_expression)  # noqa: WPS348
     .set_name("equality_expression")  # noqa: WPS348
 )
 
 # Produces an Expression
 leq_expression = (
-    pp.Group(abs_or_terms + pp.OneOrMore("<=" + abs_or_terms))
+    pp.Group(multi_paren_abs_or_terms + pp.OneOrMore("<=" + multi_paren_abs_or_terms))
     .set_parse_action(_parse_leq_expression)  # noqa: WPS348
     .set_name("leq_expression")  # noqa: WPS348
 )
 
 # Produces an Expression
 geq_expression = (
-    pp.Group(abs_or_terms + pp.OneOrMore(">=" + abs_or_terms))
+    pp.Group(multi_paren_abs_or_terms + pp.OneOrMore(">=" + multi_paren_abs_or_terms))
     .set_parse_action(_parse_geq_expression)  # noqa: WPS348
     .set_name("geq_expression")  # noqa: WPS348
 )
