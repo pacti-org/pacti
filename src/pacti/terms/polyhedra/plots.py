@@ -2,7 +2,7 @@
 
 
 from math import atan2
-from typing import Dict, Tuple, Union
+from typing import Union, Callable, Optional
 
 import matplotlib.pyplot as plt  # noqa: WPS301 Found dotted raw import
 import numpy as np
@@ -72,7 +72,12 @@ def plot_guarantees(
     var_values: Dict[Var, numeric],
     x_lims: Tuple[numeric, numeric],
     y_lims: Tuple[numeric, numeric],
-    show: bool = True
+    new_x_var: Optional[str] = None,
+    new_y_var: Optional[str] = None,
+    x_transform: Optional[Callable[[numeric], numeric]] = None,
+    y_transform: Optional[Callable[[numeric], numeric]] = None,
+    number_of_points: Optional[int] = 30,
+    show: Optional[bool] = True,
 ) -> MplFigure:
     """
     Plots the guarantees and assumptions of an IoContract with polyhedral terms.
@@ -104,7 +109,13 @@ def plot_guarantees(
     for var in var_values.keys():  # noqa: VNE002
         if var not in contract.vars:
             raise ValueError("Var %s from var_values is not in the interface of the contract." % (var))
-    fig = _plot_constraints(contract.a | contract.g, x_var, y_var, var_values, x_lims, y_lims, show)
+    if x_transform is not None and y_transform is not None:
+        fig = _plot_transformed_constraints(contract.a | contract.g, x_var, y_var, var_values,
+                                            x_lims, y_lims, new_x_var, new_y_var, x_transform, 
+                                            y_transform, number_of_points, show)
+    else:
+        fig = _plot_constraints(contract.a | contract.g, x_var, y_var, var_values, x_lims, y_lims, show)
+        
     ax = fig.axes[0]
     ax.set_title("Guarantees")
     return fig
@@ -181,15 +192,14 @@ def _gen_boundary_constraints(
     return PolyhedralTermList(constraints)
 
 
-def _plot_constraints(
+def constraints_to_vectices(
     constraints: PolyhedralTermList,
     x_var: Var,
     y_var: Var,
-    var_values: Dict[Var, numeric],
-    x_lims: Tuple[numeric, numeric],
-    y_lims: Tuple[numeric, numeric],
-    show: bool,
-) -> MplFigure:
+    var_values: dict[Var, numeric],
+    x_lims: tuple[numeric, numeric],
+    y_lims: tuple[numeric, numeric]
+) -> tuple[tuple, tuple]:
     if not isinstance(constraints, PolyhedralTermList):
         raise ValueError("Expecting polyhedral constraints. Constraint type: %s" % (type(constraints)))
     if x_var in var_values.keys():
@@ -212,7 +222,19 @@ def _plot_constraints(
         # place the x variable in first row
         a_mat[:, [0, 1]] = a_mat[:, [1, 0]]  # noqa: WPS359 Found an iterable unpacking to list
 
-    x, y = _get_bounding_vertices(a_mat, b)
+    return _get_bounding_vertices(a_mat, b)
+
+
+def _plot_constraints(
+    constraints: PolyhedralTermList,
+    x_var: Var,
+    y_var: Var,
+    var_values: dict[Var, numeric],
+    x_lims: tuple[numeric, numeric],
+    y_lims: tuple[numeric, numeric],
+    show: bool,
+) -> MplFigure:
+    x, y = constraints_to_vectices(constraints, x_var, y_var, var_values, x_lims, y_lims)
 
     # generate figure
     fig = plt.figure()
@@ -229,6 +251,57 @@ def _plot_constraints(
     ax.add_patch(poly)
     if not show:
         plt.close(fig)
+    return fig
+
+
+def get_path(x0:numeric, x1:numeric, y0:numeric, y1:numeric, x_transform, y_transform, number_of_points:int):
+    xx = np.linspace(x0, x1, number_of_points)
+    m = (y1-y0)/(x1-x0)
+    yy = m*(xx - x0) + y0
+    x_tranform_vec = np.vectorize(x_transform)
+    y_tranform_vec = np.vectorize(y_transform)
+    return x_tranform_vec(xx,yy).tolist(), y_tranform_vec(xx,yy).tolist()
+
+
+def _plot_transformed_constraints(
+    constraints: PolyhedralTermList,
+    x_var: Var,
+    y_var: Var,
+    var_values: dict[Var, numeric],
+    x_lims: tuple[numeric, numeric],
+    y_lims: tuple[numeric, numeric],
+    new_x_var: str,
+    new_y_var: str,
+    x_transform: Optional[Callable[[numeric], numeric]],
+    y_transform: Optional[Callable[[numeric], numeric]],
+    number_of_points: int,
+    show: bool
+) -> MplFigure:
+    x, y = constraints_to_vectices(constraints, x_var, y_var, var_values, x_lims, y_lims)
+
+
+
+    # generate figure
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1, aspect="auto")
+    #for i in range(len(x)):
+    #    xx, yy = get_path(x[i-1],x[i],y[i-1],y[i],x_transform,y_transform,number_of_points)
+    #    ax.plot(xx,yy)
+    xx = []
+    yy = []
+    for i in range(len(x)):
+        newx, newy = get_path(x[i-1],x[i],y[i-1],y[i],x_transform,y_transform,number_of_points)
+        xx = xx + newx
+        yy = yy + newy
+    plt.fill(xx, yy, facecolor="deepskyblue")
+    #ax.set_xlim(x_lims)
+    #ax.set_ylim(y_lims)
+    ax.set_xlabel(new_x_var)
+    ax.set_ylabel(new_y_var)
+    #ax.set_aspect((x_lims[1] - x_lims[0]) / (y_lims[1] - y_lims[0]))
+    if not show:
+        plt.close(fig)
+
     return fig
 
 
