@@ -26,6 +26,7 @@ def plot_assumptions(
     var_values: Dict[Var, numeric],
     x_lims: Tuple[numeric, numeric],
     y_lims: Tuple[numeric, numeric],
+    show: bool = True
 ) -> MplFigure:
     """
     Plots the assumptions of an IoContract with polyhedral terms.
@@ -37,6 +38,8 @@ def plot_assumptions(
         var_values: values of other variables appearing in the assumptions.
         x_lims: range of values in the x-axis.
         y_lims: range of values in the y-axis.
+        show: If `True` (default), the figure is displayed. 
+              If `False` the display is suppressed.
 
     Returns:
         Figure element with a single "axes" object showing the feasible region for the assumptions.
@@ -56,7 +59,7 @@ def plot_assumptions(
     for var in var_values.keys():  # noqa: VNE002
         if var not in contract.vars:
             raise ValueError("Var %s from var_values is not in the interface of the contract." % (var))
-    fig = _plot_constraints(contract.a, x_var, y_var, var_values, x_lims, y_lims)
+    fig = _plot_constraints(contract.a, x_var, y_var, var_values, x_lims, y_lims, show)
     ax = fig.axes[0]
     ax.set_title("Assumptions")
     return fig
@@ -69,6 +72,7 @@ def plot_guarantees(
     var_values: Dict[Var, numeric],
     x_lims: Tuple[numeric, numeric],
     y_lims: Tuple[numeric, numeric],
+    show: bool = True
 ) -> MplFigure:
     """
     Plots the guarantees and assumptions of an IoContract with polyhedral terms.
@@ -80,7 +84,8 @@ def plot_guarantees(
         var_values: values of other variables appearing in the assumptions & guarantees.
         x_lims: range of values in the x-axis.
         y_lims: range of values in the y-axis.
-
+        show: If `True` (default), the figure is displayed. 
+              If `False` the display is suppressed.
     Returns:
         Figure element with a single "axes" object showing the feasible region for the assumptions & guarantees.
 
@@ -99,7 +104,7 @@ def plot_guarantees(
     for var in var_values.keys():  # noqa: VNE002
         if var not in contract.vars:
             raise ValueError("Var %s from var_values is not in the interface of the contract." % (var))
-    fig = _plot_constraints(contract.a | contract.g, x_var, y_var, var_values, x_lims, y_lims)
+    fig = _plot_constraints(contract.a | contract.g, x_var, y_var, var_values, x_lims, y_lims, show)
     ax = fig.axes[0]
     ax.set_title("Guarantees")
     return fig
@@ -183,6 +188,7 @@ def _plot_constraints(
     var_values: Dict[Var, numeric],
     x_lims: Tuple[numeric, numeric],
     y_lims: Tuple[numeric, numeric],
+    show: bool,
 ) -> MplFigure:
     if not isinstance(constraints, PolyhedralTermList):
         raise ValueError("Expecting polyhedral constraints. Constraint type: %s" % (type(constraints)))
@@ -221,7 +227,8 @@ def _plot_constraints(
         np.column_stack([x, y]), animated=False, closed=True, facecolor="deepskyblue", edgecolor="deepskyblue"
     )
     ax.add_patch(poly)
-
+    if not show:
+        plt.close(fig)
     return fig
 
 
