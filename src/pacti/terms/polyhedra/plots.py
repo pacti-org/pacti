@@ -21,8 +21,8 @@ numeric = Union[int, float]
 
 def plot_assumptions(
     contract: PolyhedralContract,
-    x_var: Var,
-    y_var: Var,
+    x_var: Union[Var, str],
+    y_var: Union[Var, str],
     var_values: Dict[Var, numeric],
     x_lims: Tuple[numeric, numeric],
     y_lims: Tuple[numeric, numeric],
@@ -59,8 +59,8 @@ def plot_assumptions(
 
 def plot_guarantees(
     contract: PolyhedralContract,
-    x_var: Var,
-    y_var: Var,
+    x_var: Union[Var, str],
+    y_var: Union[Var, str],
     var_values: Dict[Var, numeric],
     x_lims: Tuple[numeric, numeric],
     y_lims: Tuple[numeric, numeric],
@@ -82,10 +82,15 @@ def plot_guarantees(
     Raises:
         ValueError: arguments provided failed sanity checks.
     """
-    if x_var not in contract.vars:
+    str_list_of_vars =[str(var) for var in contract.vars]
+    if x_var not in contract.vars and x_var not in str_list_of_vars:
         raise ValueError("Variable %s is not in an input or output variable of contract." % (x_var))
-    if y_var not in contract.vars:
+    if y_var not in contract.vars and y_var not in str_list_of_vars:
         raise ValueError("Variable %s is not in an input or output variable of contract." % (y_var))
+    if x_var in str_list_of_vars:
+        x_var = contract.vars[str_list_of_vars.index(x_var)]
+    if y_var in str_list_of_vars:
+        y_var = contract.vars[str_list_of_vars.index(y_var)]
     for var in var_values.keys():  # noqa: VNE002
         if var not in contract.vars:
             raise ValueError("Var %s from var_values is not in the interface of the contract." % (var))
