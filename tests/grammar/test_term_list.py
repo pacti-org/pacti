@@ -196,5 +196,23 @@ class TestTermList(unittest.TestCase):
         self.assertEqual(s0, s1)
         self.assertTrue(isinstance(t1[0], AbsoluteTermList))
     
+    def test_parse7(self) -> None:
+        t0 = pp.ParseResults(AbsoluteTermList(
+                        term_list=TermList(factors={"z": -7.0}, constant=0),
+                        absolute_term_list=[
+                            AbsoluteTerm(term_list=TermList(constant=3.0, factors={"x": -1.0}), coefficient=None),
+                            AbsoluteTerm(
+                                term_list=TermList(constant=0, factors={"y": 4.0, "t": 5.0}), coefficient=3.0
+                            ),
+                        ],
+                    ))
+        t1 = multi_paren_abs_or_terms.parse_string("(|-x + 3| + |t+5(y + t)-(y+t)| - z) + 2 (|t+5(y + t)-(y+t)| - 3z )", parse_all=True)
+        t2 = multi_paren_abs_or_terms.parse_string("-7z + |-x + 3| + 3|4y+5t|", parse_all=True)
+        s0 = f"{t0}"
+        s1 = f"{t1}"
+        s2 = f"{t2}"
+        self.assertEqual(s0, s1)
+        self.assertEqual(s0, s2)
+        self.assertTrue(isinstance(t1[0], AbsoluteTermList))
 if __name__ == "__main__":
     unittest.main()

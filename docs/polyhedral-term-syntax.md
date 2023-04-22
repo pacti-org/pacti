@@ -40,11 +40,11 @@ multi_paren_abs_or_terms = first_paren_abs_or_terms, addl_paren_abs_or_terms*;
 
 equality_operator = "==" | "=";
 
-equality_expression = abs_or_terms , equality_operator , abs_or_terms;
+equality_expression = multi_paren_abs_or_terms , equality_operator , multi_paren_abs_or_terms;
 
-leq_expression = abs_or_terms , ("<=" , abs_or_terms)+;
+leq_expression = multi_paren_abs_or_terms , ("<=" , multi_paren_abs_or_terms)+;
 
-geq_expression = abs_or_terms , (">=" , abs_or_terms)+;
+geq_expression = multi_paren_abs_or_terms , (">=" , multi_paren_abs_or_terms)+;
 
 expression = equality_expression | leq_expression | geq_expression;
 ```
@@ -58,18 +58,24 @@ Parsing rules produce an intermediate representation that facilitates performing
   This parsing handles parenthesized terms with an optional multiplicative factor.
 
   Examples:
-  - `1+2` is equivalent to `3`, yielding a `TermList` with `constant=3` and no `factors`.
-  - `x+2x` is equivalent to `3x`, yielding a `TermList` with `constant=0` and `factors={'x'=3}`.
-  - `2(x+1)-(2-1+x)` is equivalent to `x+1`, yielding a `TermList` with `constant=1` and `factors={'x'=1}`.
-  - `2(3(t -1)+t)` is equivalent to `8t-6`, yielding a `TermList` with `constant=-6` and `factors={'t'=7}`.
+  - `1+2` is equivalent to `3`, yielding:
+    - A `TermList` with `constant=3` and no `factors`.
+  - `x+2x` is equivalent to `3x`, yielding:
+    - A `TermList` with `constant=0` and `factors={'x'=3}`.
+  - `2(x+1)-(2-1+x)` is equivalent to `x+1`, yielding:
+    - A `TermList` with `constant=1` and `factors={'x'=1}`.
+  - `2(3(t -1)+t)` is equivalent to `8t-6`, yielding:
+    - A `TermList` with `constant=-6` and `factors={'t'=7}`.
 
 - The parsing of `abs_term`, `positive_abs_term`, or `first_abs_term` each produces a `pacti.terms.polyhedra.grammar.AbsoluteTerm`, which represents:
   - An optional multiplicative `coefficient` floating-point number.
   - A `term_list`, which is the simplified `pacti.terms.polyhedra.grammar.TermList` of all terms between the absolute bars.
 
   Examples:
-  - `|1+2|` is equivalent to `|3|`, yielding a `AbsoluteTerm` with no `coefficient` and a `term_list` with `constant=3` and no `factors`.
-  - `4|x+2x|` is equivalent to `4|3x|`, yielding a `AbsoluteTerm` with `coefficient=4` and a `term_list` with `constant=0` and no `factors={'x'=3}`.
+  - `|1+2|` is equivalent to `|3|`, yielding:
+    - An `AbsoluteTerm` with no `coefficient` and a `term_list` with `constant=3` and no `factors`.
+  - `4|x+2x|` is equivalent to `4|3x|`, yielding:
+    - An `AbsoluteTerm` with `coefficient=4` and a `term_list` with `constant=0` and no `factors={'x'=3}`.
   
 - The parsing of `first_abs_or_term` or `addl_abs_or_term` each produces a `pacti.terms.polyhedra.grammar.AbsoluteTermOrTerm`, which represents the union of `AbsoluteTerm` and `Term` as the constituents of the side of an `expression`.
 
@@ -80,7 +86,17 @@ Parsing rules produce an intermediate representation that facilitates performing
 - The parsing of `paren_abs_or_terms`, `first_paren_abs_or_terms`, `addl_paren_abs_or_terms`, or `multi_paren_abs_or_terms` each produces a `pacti.terms.polyhedra.grammar.AbsoluteTermList` by handling parentheses with an optional positive multiplicative factor.
 
   Examples:
-  - `2(3(t -1)+t) + 2|x - y| + |x - y|` is equivalent to `-6+8t+3|x-y|`, yielding a `AbsoluteTermList` with a `term_list` with `constant=-6` and `factors={'t': 8}` and an `absolute_term_list` with a single `AbsoluteTerm` with `coefficient=3` and a `term_list` with `constant=0` and `factors={'x':1, 'y':-1}`.
+  - `2(3(t -1)+t) + 2|x - y| + |x - y|` is equivalent to `-6+8t+3|x-y|`, yielding:
+    - An `AbsoluteTermList` with:
+      - A `term_list` with `constant=-6` and `factors={'t': 8}`
+      - An `absolute_term_list` with a single `AbsoluteTerm` with:
+        - `coefficient=3` and a `term_list` with `constant=0` and `factors={'x':1, 'y':-1}`.
+  - `(|-x + 3| + |t+5(y + t)-(y+t)| - z) + 2(|t+5(y + t)-(y+t)| - 3z)` is equivalent to `-7z + |-x + 3| + 3|4y+5t|`, yielding:
+    - An `AbsoluteTermList` with:
+      - A `term_list` with `constant=0` and `factors={'z': -7}`
+      - An `absolute_term_list` with two `AbsoluteTerm` with:
+        - `coefficient=None` and a `term_list` with `constant=-3` and `factors={'x':-1}`;
+        - `coefficient=3.0` and a `term_list` with `constant=0` and `factors={'y':4, 't':5}`.
 
 - The parsing of `expression` produces an `pacti.terms.polyhedra.grammar.Expression` that, in the serializer module, is converted to a `pacti.terms.polyhedra.PolyhedralTerm`. The parser handles three forms of `expression`:
   - The parsing of `equality_expression` handles the syntax of equality expressions of the form: `LHS ('==' | '=') RHS` where `LHS` and `RHS` are parsed as `multi_paren_abs_or_terms`.
