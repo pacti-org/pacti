@@ -50,7 +50,7 @@ def test_pattern2_contract() -> None:
 
 # | LHS | = 0
 def test_pattern3_contract() -> None:
-    c = PolyhedralContract.from_string(input_vars=["x"], output_vars=[], assumptions=["|x| = 0"], guarantees=[])
+    c = PolyhedralContract.from_string(input_vars=["x"], output_vars=[], assumptions=["|x| <= 10"], guarantees=[])
     assert 1 == len(c.inputvars)
     assert "x" == c.inputvars[0].name
     assert 0 == len(c.outputvars)

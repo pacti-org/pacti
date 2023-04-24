@@ -1,4 +1,4 @@
-from pacti.terms.polyhedra.grammar import *
+from pacti.terms.polyhedra.syntax.grammar import *
 
 
 for s in [
@@ -34,7 +34,7 @@ for s in [
     "|-x + 3|",
     "(|-x + 3|)",
     "1|-x + 3|",
-    "|4y + 5t -y |",
+    "|4*y + 5t -y |",
     "3|4y + 5t -y |",
     "(|4y + 5t -y |)",
     "2*(|4y + 5t -y |)",
@@ -74,13 +74,14 @@ for s in [
 
 
 for s in [
-    "|x| = 0",
-    "|x| + y = 0",
-    "|-x + 3| + 3 |4y + 5t| - 7z <= 8t + |x - y|",
-    "|-x + 3| + 2(|4y + 5t| - 7z) + (|4y + 5t| - 7z) <= 8t + |x - y|",
-    "|-x + 3| + 3 |(4y + 5t)+2(4y + 5t)| - 7z == 8t + |x - y|",
-    "|- 2 -x + 3 + 6x | <= + 3 |4y + 5t -y | - 7z <= 8t + |x - y| <= 10",
-    "|- 2 -x + 3 + 6x | <= |4y + 5t -y | - 7z + 4 |4y + 5t -y |<= 8t + |x - y| <= 10",
+    "2|x| <= 0",
+    "|x| <= 2|x|",
+    "3|x| + y >= 3|y|",
+    "|-x + 3| + 3 |4y + 5t| - 7z <= 8t - |x - y|",
+    "|-x + 3| + 2(|4y + 5t| - 7z) + (|4y + 5t| - 7z) <= 8t - |x - y|",
+    "|-x + 3| + 3 |(4*y + 5t)+2(4y + 5t)| - 7z <= 8t - |x - y|",
+    "|- 2 -x + 3 + 6x | <= + 3 |4y + 5t -y | - 7z <= 8t - |x - y| <= 10",
+    "|- 2 -x + 3 + 6x | <= - |4y + 5t -y | - 7z - 4 |4y + 5t -y |<= 8t - |x - y| <= 10",
 ]:
     print(f"\nexpression: {s}")
     result = expression.parseString(s, parse_all=True)

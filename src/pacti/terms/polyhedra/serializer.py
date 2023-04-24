@@ -1,5 +1,16 @@
 """Transformations between polyhedral structures and strings."""
 from typing import Dict, List, Tuple, Union
+from pacti.terms.polyhedra.syntax.data import (
+    PolyhedralSyntaxTermList,
+    PolyhedralSyntaxAbsoluteTerm,
+    PolyhedralSyntaxAbsoluteTermList,
+    PolyhedralSyntaxEqlExpression,
+    PolyhedralSyntaxExpression,
+    PolyhedralSyntaxIneqExpression,
+    PolyhedralSyntaxOperator,
+)
+
+from pacti.utils.errors import PolyhedralSyntaxException, PolyhedralSyntaxConvexException
 
 import numpy as np
 import sympy
@@ -8,7 +19,9 @@ import pyparsing as pp
 
 from pacti.terms.polyhedra.polyhedra import PolyhedralTerm
 from pacti.utils.errors import ContractFormatError
-from pacti.terms.polyhedra.grammar import expression, AbsoluteTermList, Expression, Operator
+from pacti.terms.polyhedra.syntax.grammar import (
+    expression,
+)
 
 numeric = Union[int, float]
 
@@ -191,7 +204,7 @@ def polyhedral_term_list_to_strings(  # noqa: WPS231 too much cognitive complexi
     return s, ts
 
 
-def _eql_expression_to_polyhedral_terms(e: Expression) -> List[PolyhedralTerm]:
+def _eql_expression_to_polyhedral_terms(e: PolyhedralSyntaxEqlExpression) -> List[PolyhedralTerm]:
     """
     Convert equality expression
 
@@ -205,34 +218,28 @@ def _eql_expression_to_polyhedral_terms(e: Expression) -> List[PolyhedralTerm]:
             lhs - rhs <= 0
             -(lhs - rhs) <= 0
     """
-    assert len(e.sides) == 2
-    lhs: AbsoluteTermList = e.sides[0]
-    rhs: AbsoluteTermList = e.sides[1]
 
     pts: List[PolyhedralTerm] = []
 
-    if not lhs.is_constant():
-        lhs_minus_rhs: AbsoluteTermList = lhs.add(rhs.negate())
-        add_negated = len(lhs_minus_rhs.term_list.factors) > 0
-        for tl in lhs_minus_rhs.expand():
-            pts.append(tl.to_polyhedral_term())
-            if add_negated:
-                pts.append(tl.negate().to_polyhedral_term())
+    lhs_minus_rhs: PolyhedralSyntaxTermList = e.lhs.add(e.rhs.negate())
+    pts.append(lhs_minus_rhs.to_polyhedral_term())
 
-    if not rhs.is_constant():
-        rhs_minus_lhs: AbsoluteTermList = rhs.add(lhs.negate())
-        add_negated = len(rhs_minus_lhs.term_list.factors) > 0
-        for tl in rhs_minus_lhs.expand():
-            pts.append(tl.to_polyhedral_term())
-            if add_negated:
-                pts.append(tl.negate().to_polyhedral_term())
-
-    assert len(pts) > 0
+    rhs_minus_lhs: PolyhedralSyntaxTermList = e.rhs.add(e.lhs.negate())
+    pts.append(rhs_minus_lhs.to_polyhedral_term())
 
     return pts
 
 
-def _leq_expression_to_polyhedral_terms(e: Expression) -> List[PolyhedralTerm]:
+def _check_absolute_terms(str_rep: str, absolute_term_list: List[PolyhedralSyntaxAbsoluteTerm]) -> None:
+    negative_absolute_terms: List[str] = []
+    for at in absolute_term_list:
+        if not at.is_positive():
+            negative_absolute_terms.append(str(at))
+    if len(negative_absolute_terms) > 0:
+        raise PolyhedralSyntaxConvexException(str_rep, negative_absolute_terms)
+
+
+def _leq_expression_to_polyhedral_terms(str_rep: str, e: PolyhedralSyntaxIneqExpression) -> List[PolyhedralTerm]:
     """
     Convert less-than-or-equal expression
 
@@ -249,15 +256,22 @@ def _leq_expression_to_polyhedral_terms(e: Expression) -> List[PolyhedralTerm]:
 
     pts: List[PolyhedralTerm] = []
 
+    # e represents the following: s1 <= s2 <= .... <= sn
+    # In the loop below, we iterate over si, si+1 as follows:
+    # a=s1, b=s2
+    # a=s2, b=s3
+    # ...
+    # At each iteration, we have: 'a <= b'; which we convert as 'a - (b) <= 0'
     for a, b in zip(e.sides, e.sides[1:]):
-        a_minus_b: AbsoluteTermList = a.add(b.negate())
+        a_minus_b: PolyhedralSyntaxAbsoluteTermList = a.add(b.negate())
+        _check_absolute_terms(str_rep, a_minus_b.absolute_term_list)
         for tl in a_minus_b.expand():
             pts.append(tl.to_polyhedral_term())
 
     return pts
 
 
-def _geq_expression_to_polyhedral_terms(e: Expression) -> List[PolyhedralTerm]:
+def _geq_expression_to_polyhedral_terms(str_rep: str, e: PolyhedralSyntaxIneqExpression) -> List[PolyhedralTerm]:
     """
     Convert greater-than-or-equal expression
 
@@ -274,20 +288,25 @@ def _geq_expression_to_polyhedral_terms(e: Expression) -> List[PolyhedralTerm]:
 
     pts: List[PolyhedralTerm] = []
 
+    # here, we have 'a >= b'; which we convert as '-(a) + b <= 0'
     for a, b in zip(e.sides, e.sides[1:]):
-        minus_a_plus_b: AbsoluteTermList = a.negate().add(b)
+        minus_a_plus_b: PolyhedralSyntaxAbsoluteTermList = a.negate().add(b)
+        _check_absolute_terms(str_rep, minus_a_plus_b.absolute_term_list)
         for tl in minus_a_plus_b.expand():
             pts.append(tl.to_polyhedral_term())
 
     return pts
 
 
-def _expression_to_polyhedral_terms(e: Expression) -> List[PolyhedralTerm]:
-    if e.operator == Operator.eql:
+def _expression_to_polyhedral_terms(str_rep: str, e: PolyhedralSyntaxExpression) -> List[PolyhedralTerm]:
+    if isinstance(e, PolyhedralSyntaxEqlExpression):
         return _eql_expression_to_polyhedral_terms(e)
-    elif e.operator == Operator.leq:
-        return _leq_expression_to_polyhedral_terms(e)
-    return _geq_expression_to_polyhedral_terms(e)
+    if isinstance(e, PolyhedralSyntaxIneqExpression):
+        if e.operator == PolyhedralSyntaxOperator.leq:
+            return _leq_expression_to_polyhedral_terms(str_rep, e)
+        return _geq_expression_to_polyhedral_terms(str_rep, e)
+
+    assert False, f"Unexpected syntax type for the parsing of '{str_rep}': {type(e)}"
 
 
 def polyhedral_termlist_from_string(str_rep: str) -> List[PolyhedralTerm]:
@@ -301,16 +320,18 @@ def polyhedral_termlist_from_string(str_rep: str) -> List[PolyhedralTerm]:
         A PolyhedralTermList representing the input expression.
 
     Raises:
-        ValueError: constraint syntax invalid.
+        PolyhedralSyntaxConvexException: constraint syntax involves non-convex absolute terms.
+        PolyhedralSyntaxException: constraint syntax error w.r.t the polyhedral term grammar.
+
     """
     try:
         tokens: pp.ParseResults = expression.parse_string(str_rep, parse_all=True)
-    except pp.ParseException as pe:
-        raise ValueError(f"Polyhedral term syntax mismatch in: {str_rep}\n{pe.explain(depth=0)}")
+    except pp.ParseBaseException as pe:
+        raise PolyhedralSyntaxException(pe, str_rep)
 
     if len(tokens) == 1:
         e = tokens[0]
-        if isinstance(e, Expression):
-            return _expression_to_polyhedral_terms(e)
+        if isinstance(e, PolyhedralSyntaxExpression):
+            return _expression_to_polyhedral_terms(str_rep, e)
 
-    raise ValueError(f"Polyhedral term syntax unrecognized in: {str_rep}")
+    assert False, f"Polyhedral term syntax unrecognized in: {str_rep}"
