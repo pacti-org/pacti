@@ -33,4 +33,5 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           name: codecov-pacti
           fail_ci_if_error: true
+          files: htmlcov/*
           verbose: true
