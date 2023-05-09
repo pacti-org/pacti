@@ -3,6 +3,7 @@
 
 from math import atan2
 from typing import Union, Callable, Optional
+from typing import Dict, Tuple, Union
 
 import matplotlib.pyplot as plt  # noqa: WPS301 Found dotted raw import
 import numpy as np
@@ -69,7 +70,7 @@ def plot_guarantees(
     contract: PolyhedralContract,
     x_var: Union[Var, str],
     y_var: Union[Var, str],
-    var_values: Dict[Var, numeric],
+    var_values: Dict[Union[Var, str], numeric],
     x_lims: Tuple[numeric, numeric],
     y_lims: Tuple[numeric, numeric],
     new_x_var: Optional[str] = None,
@@ -106,9 +107,16 @@ def plot_guarantees(
         raise ValueError("Variable %s is not in an input or output variable of contract." % (x_var))
     if y_var not in contract.vars:
         raise ValueError("Variable %s is not in an input or output variable of contract." % (y_var))
+    var_values_updated = dict(var_values)
     for var in var_values.keys():  # noqa: VNE002
+        if var in str_list_of_vars:
+            contract_var = contract.vars[str_list_of_vars.index(var)]
+            del var_values_updated[var]
+            var_values_updated[contract_var] = var_values[var]
+            var = contract_var
         if var not in contract.vars:
             raise ValueError("Var %s from var_values is not in the interface of the contract." % (var))
+    var_values = dict(var_values_updated)
     if x_transform is not None and y_transform is not None:
         fig = _plot_transformed_constraints(contract.a | contract.g, x_var, y_var, var_values,
                                             x_lims, y_lims, new_x_var, new_y_var, x_transform, 
@@ -196,10 +204,10 @@ def constraints_to_vectices(
     constraints: PolyhedralTermList,
     x_var: Var,
     y_var: Var,
-    var_values: dict[Var, numeric],
-    x_lims: tuple[numeric, numeric],
-    y_lims: tuple[numeric, numeric]
-) -> tuple[tuple, tuple]:
+    var_values: Dict[Var, numeric],
+    x_lims: Tuple[numeric, numeric],
+    y_lims: Tuple[numeric, numeric]
+) -> Tuple[tuple, tuple]:
     if not isinstance(constraints, PolyhedralTermList):
         raise ValueError("Expecting polyhedral constraints. Constraint type: %s" % (type(constraints)))
     if x_var in var_values.keys():
@@ -229,9 +237,9 @@ def _plot_constraints(
     constraints: PolyhedralTermList,
     x_var: Var,
     y_var: Var,
-    var_values: dict[Var, numeric],
-    x_lims: tuple[numeric, numeric],
-    y_lims: tuple[numeric, numeric],
+    var_values: Dict[Var, numeric],
+    x_lims: Tuple[numeric, numeric],
+    y_lims: Tuple[numeric, numeric],
     show: bool,
 ) -> MplFigure:
     x, y = constraints_to_vectices(constraints, x_var, y_var, var_values, x_lims, y_lims)
@@ -267,9 +275,9 @@ def _plot_transformed_constraints(
     constraints: PolyhedralTermList,
     x_var: Var,
     y_var: Var,
-    var_values: dict[Var, numeric],
-    x_lims: tuple[numeric, numeric],
-    y_lims: tuple[numeric, numeric],
+    var_values: Dict[Var, numeric],
+    x_lims: Tuple[numeric, numeric],
+    y_lims: Tuple[numeric, numeric],
     new_x_var: str,
     new_y_var: str,
     x_transform: Optional[Callable[[numeric], numeric]],
