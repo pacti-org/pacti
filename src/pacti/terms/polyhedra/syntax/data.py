@@ -1,9 +1,9 @@
+import dataclasses
 from enum import Enum
 from itertools import product
-from pacti.terms.polyhedra.polyhedra import PolyhedralTerm, Var, numeric
-
-import dataclasses
 from typing import Dict, List, Optional, Union
+
+from pacti.terms.polyhedra.polyhedra import PolyhedralTerm, Var, numeric
 
 
 def _factor_repr(f: float, v: str) -> str:

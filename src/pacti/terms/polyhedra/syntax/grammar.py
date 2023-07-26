@@ -1,9 +1,9 @@
 """Grammar for polyhedral terms."""
 
-import pyparsing as pp
-from typing import List
 from functools import reduce
-from typing import cast
+from typing import List, cast
+
+import pyparsing as pp
 
 from pacti.terms.polyhedra.syntax.data import (
     PolyhedralSyntaxAbsoluteTerm,

@@ -1,27 +1,22 @@
 """Transformations between polyhedral structures and strings."""
 from typing import Dict, List, Tuple, Union
+
+import numpy as np
+import pyparsing as pp
+import sympy
+
+from pacti.terms.polyhedra.polyhedra import PolyhedralTerm
 from pacti.terms.polyhedra.syntax.data import (
-    PolyhedralSyntaxTermList,
     PolyhedralSyntaxAbsoluteTerm,
     PolyhedralSyntaxAbsoluteTermList,
     PolyhedralSyntaxEqlExpression,
     PolyhedralSyntaxExpression,
     PolyhedralSyntaxIneqExpression,
     PolyhedralSyntaxOperator,
+    PolyhedralSyntaxTermList,
 )
-
-from pacti.utils.errors import PolyhedralSyntaxException, PolyhedralSyntaxConvexException
-
-import numpy as np
-import sympy
-
-import pyparsing as pp
-
-from pacti.terms.polyhedra.polyhedra import PolyhedralTerm
-from pacti.utils.errors import ContractFormatError
-from pacti.terms.polyhedra.syntax.grammar import (
-    expression,
-)
+from pacti.terms.polyhedra.syntax.grammar import expression
+from pacti.utils.errors import ContractFormatError, PolyhedralSyntaxConvexException, PolyhedralSyntaxException
 
 numeric = Union[int, float]
 

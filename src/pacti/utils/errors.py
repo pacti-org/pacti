@@ -1,6 +1,7 @@
 """Global error classes."""
 import dataclasses
 from typing import List
+
 import pyparsing as pp
 
 
@@ -46,7 +47,9 @@ class PolyhedralSyntaxConvexException(pp.ParseBaseException):
         msg = []
         msg.append("pacti.terms.polyhedra.PolyhedralTerm non-convexity error.")
         msg.append(f"Convexity requires that the parsing of '{self.string_input}'")
-        msg.append(f"yields only positive absolute value terms; but we got {len(self.negative_absolute_terms)} negative.")
+        msg.append(
+            f"yields only positive absolute value terms; but we got {len(self.negative_absolute_terms)} negative."
+        )
         for nat in self.negative_absolute_terms:
             msg.append(nat)
 
