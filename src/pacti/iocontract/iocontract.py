@@ -389,7 +389,10 @@ class IoContract(Generic[TermList_t]):
         self.inputvars = input_vars.copy()
         self.outputvars = output_vars.copy()
         # simplify the guarantees with the assumptions
-        self.g = guarantees.simplify(self.a)
+        self.g = guarantees.copy()
+
+    def simplify(self):
+        self.g = self.g.simplify(self.a)
 
     @property
     def vars(self) -> List[Var]:  # noqa: A003
