@@ -242,7 +242,7 @@ class TermList(ABC):
         """
 
     @abstractmethod
-    def elim_vars_by_refining(self: TermList_t, context: TermList_t, vars_to_elim: List[Var]) -> TermList_t:
+    def elim_vars_by_refining(self: TermList_t, context: TermList_t, vars_to_elim: List[Var], simplify:bool) -> TermList_t:
         """
         Eliminate variables from termlist by refining it in a context.
 
@@ -264,7 +264,7 @@ class TermList(ABC):
         """
 
     @abstractmethod
-    def elim_vars_by_relaxing(self: TermList_t, context: TermList_t, vars_to_elim: List[Var]) -> TermList_t:
+    def elim_vars_by_relaxing(self: TermList_t, context: TermList_t, vars_to_elim: List[Var], simplify:bool) -> TermList_t:
         """
         Eliminate variables from termlist by relaxing it in a context
 
@@ -558,7 +558,7 @@ class IoContract(Generic[TermList_t]):
         guarantees_check: bool = (self.g | other.a) <= (other.g | other.a)
         return assumptions_check and guarantees_check
 
-    def compose(self: IoContract_t, other: IoContract_t, vars_to_keep: Any = None) -> IoContract_t:  # noqa: WPS231
+    def compose(self: IoContract_t, other: IoContract_t, vars_to_keep: Any = None, simplify:bool = True) -> IoContract_t:  # noqa: WPS231
         """Compose IO contracts.
 
         Compute the composition of the two given contracts and abstract the
@@ -615,7 +615,7 @@ class IoContract(Generic[TermList_t]):
             raise IncompatibleArgsError("Cannot compose contracts due to feedback")
         elif self_helps_other and not other_helps_self:
             logging.debug("Assumption computation: self provides context for other")
-            new_a: TermList_t = other.a.elim_vars_by_refining(self.a | self.g, assumptions_forbidden_vars)
+            new_a: TermList_t = other.a.elim_vars_by_refining(self.a | self.g, assumptions_forbidden_vars, simplify)
             conflict_variables = list_intersection(new_a.vars, assumptions_forbidden_vars)
             if conflict_variables:
                 raise IncompatibleArgsError(
@@ -626,7 +626,7 @@ class IoContract(Generic[TermList_t]):
             assumptions = new_a | self.a
         elif other_helps_self and not self_helps_other:
             logging.debug("****** Assumption computation: other provides context for self")
-            new_a = self.a.elim_vars_by_refining(other.a | other.g, assumptions_forbidden_vars)
+            new_a = self.a.elim_vars_by_refining(other.a | other.g, assumptions_forbidden_vars, simplify)
             conflict_variables = list_intersection(new_a.vars, assumptions_forbidden_vars)
             if conflict_variables:
                 raise IncompatibleArgsError(
@@ -648,10 +648,10 @@ class IoContract(Generic[TermList_t]):
         logging.debug("****** Computing guarantees")
         g1_t = self.g.copy()
         g2_t = other.g.copy()
-        g1 = g1_t.elim_vars_by_relaxing(g2_t, intvars)
-        g2 = g2_t.elim_vars_by_relaxing(g1_t, intvars)
+        g1 = g1_t.elim_vars_by_relaxing(g2_t, intvars, simplify)
+        g2 = g2_t.elim_vars_by_relaxing(g1_t, intvars, simplify)
         allguarantees = g1 | g2
-        allguarantees = allguarantees.elim_vars_by_relaxing(assumptions, intvars)
+        allguarantees = allguarantees.elim_vars_by_relaxing(assumptions, intvars, simplify)
 
         # eliminate terms with forbidden vars
         terms_to_elim = allguarantees.get_terms_with_vars(intvars)

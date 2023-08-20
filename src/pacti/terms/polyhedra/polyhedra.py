@@ -577,7 +577,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
             retval = False
         return retval
 
-    def elim_vars_by_refining(self, context: PolyhedralTermList, vars_to_elim: list) -> PolyhedralTermList:
+    def elim_vars_by_refining(self, context: PolyhedralTermList, vars_to_elim: list, simplify:bool = True) -> PolyhedralTermList:
         """
         Eliminate variables from PolyhedralTermList by refining it in context.
 
@@ -605,12 +605,15 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         logging.debug("Refining from terms: %s", self)
         logging.debug("Context: %s", context)
         logging.debug("Vars to elim: %s", vars_to_elim)
-        #try:
-        #    termlist = self.simplify(context)
-        #except ValueError as e:
-        #    raise ValueError(
-        #        "Provided constraints \n{}\n".format(self) + "are unsatisfiable in context \n{}".format(context)
-        #    ) from e
+        if simplify:
+            try:
+                termlist = self.simplify(context)
+            except ValueError as e:
+                raise ValueError(
+                    "Provided constraints \n{}\n".format(self) + "are unsatisfiable in context \n{}".format(context)
+                ) from e
+        else:
+            termlist = self.copy()
         try:
             return termlist._transform(context=context, vars_to_elim=vars_to_elim, refine=True)
         except ValueError as e:
@@ -630,7 +633,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         """
         return len(self.terms) == 0
 
-    def elim_vars_by_relaxing(self, context: PolyhedralTermList, vars_to_elim: list) -> PolyhedralTermList:
+    def elim_vars_by_relaxing(self, context: PolyhedralTermList, vars_to_elim: list, simplify: bool=True) -> PolyhedralTermList:
         """
         Eliminate variables from PolyhedralTermList by abstracting it in context.
 
@@ -659,12 +662,15 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         logging.debug("Relaxing from terms %s", self)
         logging.debug("Context: %s", context)
         logging.debug("Vars to elim: %s", vars_to_elim)
-        #try:
-        #    termlist = self.simplify(context)
-        #except ValueError as e:
-        #    raise ValueError(
-        #        "Provided constraints \n{}\n".format(self) + "are unsatisfiable in context \n{}".format(context)
-        #    ) from e
+        if simplify:
+            try:
+                termlist = self.simplify(context)
+            except ValueError as e:
+                raise ValueError(
+                    "Provided constraints \n{}\n".format(self) + "are unsatisfiable in context \n{}".format(context)
+                ) from e
+        else:
+            termlist = self.copy()
         try:
             termlist = termlist._transform(context=context, vars_to_elim=vars_to_elim, refine=False)
         except ValueError as e:
