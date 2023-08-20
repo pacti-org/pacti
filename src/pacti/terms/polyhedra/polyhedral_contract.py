@@ -160,7 +160,7 @@ class PolyhedralContract(IoContract):
             guarantees=g,
         )
 
-    def compose(self, other: PolyhedralContract, vars_to_keep: Optional[List[str]] = None) -> PolyhedralContract:
+    def compose(self, other: PolyhedralContract, vars_to_keep: Optional[List[str]] = None, simplify:bool = True) -> PolyhedralContract:
         """Compose polyhedral contracts.
 
         Compute the composition of the two given contracts and abstract the
@@ -173,13 +173,15 @@ class PolyhedralContract(IoContract):
                 The second contract being composed.
             vars_to_keep:
                 A list of variables that should be kept as top-level outputs.
+            simplify:
+                Whether to simplify the result of variable elimination by refining or relaxing.
 
         Returns:
             The abstracted composition of the two contracts.
         """
         if vars_to_keep is None:
             vars_to_keep = []
-        return super().compose(other, [Var(x) for x in vars_to_keep])
+        return super().compose(other, [Var(x) for x in vars_to_keep], simplify)
 
     def optimize(self, expr: str, maximize: bool = True) -> Optional[numeric]:
         """Optimize linear objective over the contract.

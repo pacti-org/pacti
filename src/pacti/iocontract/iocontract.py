@@ -571,6 +571,8 @@ class IoContract(Generic[TermList_t]):
                 The second contract being composed.
             vars_to_keep:
                 A list of variables that should be kept as top-level outputs.
+            simplify:
+                Whether to simplify the result of variable elimination by refining or relaxing.
 
         Returns:
             The abstracted composition of the two contracts.
