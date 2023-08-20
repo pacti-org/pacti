@@ -605,12 +605,12 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         logging.debug("Refining from terms: %s", self)
         logging.debug("Context: %s", context)
         logging.debug("Vars to elim: %s", vars_to_elim)
-        try:
-            termlist = self.simplify(context)
-        except ValueError as e:
-            raise ValueError(
-                "Provided constraints \n{}\n".format(self) + "are unsatisfiable in context \n{}".format(context)
-            ) from e
+        #try:
+        #    termlist = self.simplify(context)
+        #except ValueError as e:
+        #    raise ValueError(
+        #        "Provided constraints \n{}\n".format(self) + "are unsatisfiable in context \n{}".format(context)
+        #    ) from e
         try:
             return termlist._transform(context=context, vars_to_elim=vars_to_elim, refine=True)
         except ValueError as e:
@@ -659,12 +659,12 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         logging.debug("Relaxing from terms %s", self)
         logging.debug("Context: %s", context)
         logging.debug("Vars to elim: %s", vars_to_elim)
-        try:
-            termlist = self.simplify(context)
-        except ValueError as e:
-            raise ValueError(
-                "Provided constraints \n{}\n".format(self) + "are unsatisfiable in context \n{}".format(context)
-            ) from e
+        #try:
+        #    termlist = self.simplify(context)
+        #except ValueError as e:
+        #    raise ValueError(
+        #        "Provided constraints \n{}\n".format(self) + "are unsatisfiable in context \n{}".format(context)
+        #    ) from e
         try:
             termlist = termlist._transform(context=context, vars_to_elim=vars_to_elim, refine=False)
         except ValueError as e:
