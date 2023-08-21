@@ -408,6 +408,7 @@ class IoContract(Generic[TermList_t]):
         self.g = guarantees.copy()
 
     def simplify(self) -> None:
+        """Simplifies guarantees given assumptions."""
         self.g = self.g.simplify(self.a)
 
     @property
@@ -579,7 +580,7 @@ class IoContract(Generic[TermList_t]):
         other: IoContract_t,
         vars_to_keep: Any = None,
         simplify: bool = True,
-        tactics_order: List[int] = [],
+        tactics_order: Optional[List[int]] = None,
     ) -> Tuple[IoContract_t, List[int]]:  # noqa: WPS231
         """Compose IO contracts.
 
@@ -604,6 +605,8 @@ class IoContract(Generic[TermList_t]):
         Raises:
             IncompatibleArgsError: An error occurred during composition.
         """
+        if tactics_order is None:
+            tactics_order = []
         if vars_to_keep is None:
             vars_to_keep = []
         conflict_vars = list_diff(vars_to_keep, list_union(self.outputvars, other.outputvars))
@@ -701,7 +704,7 @@ class IoContract(Generic[TermList_t]):
         other: IoContract_t,
         additional_inputs: Optional[List[Var]] = None,
         simplify: bool = True,
-        tactics_order: List[int] = [],
+        tactics_order: Optional[List[int]] = None,
     ) -> Tuple[IoContract_t, List[int]]:
         """Compute the contract quotient.
 
@@ -728,6 +731,8 @@ class IoContract(Generic[TermList_t]):
         Raises:
             IncompatibleArgsError: Arguments provided are incompatible with computation of the quotient.
         """
+        if tactics_order is None:
+            tactics_order = []
         if not additional_inputs:
             additional_inputs = []
         if not self.can_quotient_by(other):

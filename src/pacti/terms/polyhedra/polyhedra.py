@@ -791,11 +791,13 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         return PolyhedralTermList.is_polytope_empty(self_mat, self_cons)
 
     def _transform(
-        self, context: PolyhedralTermList, vars_to_elim: list, refine: bool, tactics_order: list[int] = [1, 3, 2, 4]
+        self, context: PolyhedralTermList, vars_to_elim: list, refine: bool, tactics_order: Optional[List[int]] = None
     ) -> Tuple[PolyhedralTermList, List[int]]:
         logging.debug("Transforming: %s", self)
         logging.debug("Context terms: %s", context)
         logging.debug("Variables to eliminate: %s", vars_to_elim)
+        if tactics_order is None:
+            tactics_order = TACTICS_ORDER
         term_list = list(self.terms)
         new_terms = self.copy()
 
@@ -1357,14 +1359,14 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
             return term.substitute_variable(var_to_elim, return_term)
         raise ValueError("Tactic 4 unsuccessful")
 
-    TACTICS = {
+    TACTICS = {  # noqa: WPS115
         1: _tactic_1.__func__,  # type: ignore
         2: _tactic_2.__func__,  # type: ignore
         3: _tactic_3.__func__,  # type: ignore
         4: lambda term, context, vars_to_elim, refine: PolyhedralTermList._tactic_4(
             term, context, vars_to_elim, refine, []
         ),
-    }  # noqa: WPS115
+    }
 
     @staticmethod
     def _transform_term(
@@ -1372,18 +1374,20 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         context: PolyhedralTermList,
         vars_to_elim: list,
         refine: bool,
-        tactics_order: list[int] = [1, 3, 2, 4],
+        tactics_order: Optional[List[int]] = None,
     ) -> Tuple[PolyhedralTerm, int]:
+        if tactics_order is None:
+            tactics_order = TACTICS_ORDER
+
         if not list_intersection(term.vars, vars_to_elim):
             return term, 0
 
         logging.debug("Transforming term: %s", term)
         logging.debug("Context: %s", context)
 
-        for tactic_num in tactics_order:
+        for tactic_num in tactics_order:  # noqa WPS327
             try:
-                result = PolyhedralTermList.TACTICS[tactic_num](term, context, vars_to_elim, refine)
-                return result, tactic_num
+                return PolyhedralTermList.TACTICS[tactic_num](term, context, vars_to_elim, refine), tactic_num
             except ValueError:
                 continue
 
