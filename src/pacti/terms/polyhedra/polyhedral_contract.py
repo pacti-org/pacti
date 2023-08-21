@@ -15,6 +15,8 @@ ser_contract = TypedDict(
     {"input_vars": List[str], "output_vars": List[str], "assumptions": List[ser_pt], "guarantees": List[ser_pt]},
 )
 
+TACTICS_ORDER = [1, 2, 3, 4]  # noqa: WPS407
+
 
 class PolyhedralContract(IoContract):
     """IO Contracts with assumptions and guarantees expressed as polyhedral constraints."""
@@ -160,7 +162,13 @@ class PolyhedralContract(IoContract):
             guarantees=g,
         )
 
-    def compose(self, other: PolyhedralContract, vars_to_keep: Optional[List[str]] = None, simplify:bool = True) -> PolyhedralContract:
+    def compose(
+        self,
+        other: PolyhedralContract,
+        vars_to_keep: Optional[List[str]] = None,
+        simplify: bool = True,
+        tactics_order: Optional[List[int]] = None,
+    ) -> Tuple[PolyhedralContract, List[int]]:
         """Compose polyhedral contracts.
 
         Compute the composition of the two given contracts and abstract the
@@ -175,13 +183,52 @@ class PolyhedralContract(IoContract):
                 A list of variables that should be kept as top-level outputs.
             simplify:
                 Whether to simplify the result of variable elimination by refining or relaxing.
+            tactics_order:
+                The order of tactics to try for variable term elimination.
 
         Returns:
-            The abstracted composition of the two contracts.
+            The tuple of the abstracted composition of the two contracts and of the list of tactics used.
         """
+        if tactics_order is None:
+            tactics_order = TACTICS_ORDER
+
         if vars_to_keep is None:
             vars_to_keep = []
-        return super().compose(other, [Var(x) for x in vars_to_keep], simplify)
+        return super().compose(other, [Var(x) for x in vars_to_keep], simplify, tactics_order)
+
+    def quotient(
+        self: PolyhedralContract,
+        other: PolyhedralContract,
+        additional_inputs: Optional[List[Var]] = None,
+        simplify: bool = True,
+        tactics_order: Optional[List[int]] = None,
+    ) -> Tuple[PolyhedralContract, List[int]]:
+        """Quotient polyhedral contracts.
+
+        Compute the quotient of the two given contracts and abstract the
+        result in such a way that the result is a well-defined IO contract,
+        i.e., that assumptions refer only to inputs, and guarantees to both
+        inputs and outputs.
+
+        Args:
+            other:
+                The contract by which we take the quotient.
+            additional_inputs:
+                Additional variables that the quotient is allowed to consider as
+                inputs. These variables can be either top level-inputs or
+                outputs of the other argument.
+            simplify:
+                Whether to simplify the result of variable elimination by refining or relaxing.
+            tactics_order:
+                The order of tactics to try for variable term elimination.
+
+        Returns:
+            The tuple of the abstracted quotient of the two contracts and of the list of tactics used.
+        """
+        if tactics_order is None:
+            tactics_order = TACTICS_ORDER
+
+        return super().quotient(other, additional_inputs, simplify, tactics_order)
 
     def optimize(self, expr: str, maximize: bool = True) -> Optional[numeric]:
         """Optimize linear objective over the contract.

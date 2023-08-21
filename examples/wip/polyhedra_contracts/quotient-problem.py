@@ -16,7 +16,7 @@ C2 = PolyhedralContract.from_string(
     assumptions =[ "-t1 <= 0" ],
     guarantees  =[ "t2 - t1 - dt1 = 0" ])
 
-C12 = C1.compose(C2)
+C12, _ = C1.compose(C2)
 print(C12)
 
 TOP = PolyhedralContract.from_string(
@@ -25,5 +25,5 @@ TOP = PolyhedralContract.from_string(
     assumptions =["-t0 - dt0 <= 0", "-t0 <= 0"],
     guarantees  =["t2 - t0 - dt1 - dt0 = 0"])
 
-Q = TOP.quotient(C1)
+Q, _ = TOP.quotient(C1)
 print(Q)

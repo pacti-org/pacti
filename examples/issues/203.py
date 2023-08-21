@@ -12,7 +12,7 @@ contract2 = PolyhedralContract.from_string(
     assumptions=["o <= 0.2", "-o <= 1"],
     guarantees=["o_p - o <= 0"])
 
-system_contract = contract1.compose(contract2)
+system_contract, _ = contract1.compose(contract2)
 print(system_contract)
-system_contract = contract1.compose(contract2, vars_to_keep=["o"])
+system_contract, _ = contract1.compose(contract2, vars_to_keep=["o"])
 print(system_contract)

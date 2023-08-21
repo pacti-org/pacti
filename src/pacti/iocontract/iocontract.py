@@ -20,7 +20,7 @@ from __future__ import annotations
 import copy
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Generic, List, Optional, TypeVar
+from typing import Any, Generic, List, Optional, Tuple, TypeVar
 
 from pacti.utils.errors import IncompatibleArgsError
 from pacti.utils.lists import list_diff, list_intersection, list_union, lists_equal
@@ -242,7 +242,9 @@ class TermList(ABC):
         """
 
     @abstractmethod
-    def elim_vars_by_refining(self: TermList_t, context: TermList_t, vars_to_elim: List[Var], simplify:bool) -> TermList_t:
+    def elim_vars_by_refining(
+        self: TermList_t, context: TermList_t, vars_to_elim: List[Var], simplify: bool, tactics_order: List[int]
+    ) -> Tuple[TermList_t, List[int]]:
         """
         Eliminate variables from termlist by refining it in a context.
 
@@ -256,15 +258,23 @@ class TermList(ABC):
                 List of context terms that will be used to refine the TermList.
             vars_to_elim:
                 Variables to be eliminated.
+            simplify:
+                Whether to simplify self in the given context before variable elimination
+            tactics_order:
+                The order of the tactics to use when transforming each term in the list.
 
         Returns:
-            A list of terms not containing any variables in `vars_to_elim`
-            and which, in the context provided, imply the terms contained in the
-            calling termlist.
+            A tuple consisting of:
+            - a list of terms not containing any variables in `vars_to_elim`
+              and which, in the context provided, imply the terms contained in the
+              calling termlist;
+            - the list of tactics used in variable elimination for each term.
         """
 
     @abstractmethod
-    def elim_vars_by_relaxing(self: TermList_t, context: TermList_t, vars_to_elim: List[Var], simplify:bool) -> TermList_t:
+    def elim_vars_by_relaxing(
+        self: TermList_t, context: TermList_t, vars_to_elim: List[Var], simplify: bool, tactics_order: List[int]
+    ) -> Tuple[TermList_t, List[int]]:
         """
         Eliminate variables from termlist by relaxing it in a context
 
@@ -278,11 +288,17 @@ class TermList(ABC):
                 List of context terms that will be used to abstract the TermList.
             vars_to_elim:
                 Variables that cannot be present in TermList after relaxation.
+            simplify:
+                Whether to simplify self in the given context before variable elimination
+            tactics_order:
+                The order of the tactics to use when transforming each term in the list.
 
         Returns:
-            A list of terms not containing any variables in `vars_to_elim`
-            and which, in the context provided, are implied by the terms
-            contained in the calling termlist.
+            A tuple consisting of:
+            - a list of terms not containing any variables in `vars_to_elim`
+              and which, in the context provided, are implied by the terms
+              contained in the calling termlist;
+            - the list of tactics used in variable elimination for each term.
         """
 
     @abstractmethod
@@ -391,7 +407,7 @@ class IoContract(Generic[TermList_t]):
         # simplify the guarantees with the assumptions
         self.g = guarantees.copy()
 
-    def simplify(self):
+    def simplify(self) -> None:
         self.g = self.g.simplify(self.a)
 
     @property
@@ -558,7 +574,13 @@ class IoContract(Generic[TermList_t]):
         guarantees_check: bool = (self.g | other.a) <= (other.g | other.a)
         return assumptions_check and guarantees_check
 
-    def compose(self: IoContract_t, other: IoContract_t, vars_to_keep: Any = None, simplify:bool = True) -> IoContract_t:  # noqa: WPS231
+    def compose(
+        self: IoContract_t,
+        other: IoContract_t,
+        vars_to_keep: Any = None,
+        simplify: bool = True,
+        tactics_order: List[int] = [],
+    ) -> Tuple[IoContract_t, List[int]]:  # noqa: WPS231
         """Compose IO contracts.
 
         Compute the composition of the two given contracts and abstract the
@@ -573,9 +595,11 @@ class IoContract(Generic[TermList_t]):
                 A list of variables that should be kept as top-level outputs.
             simplify:
                 Whether to simplify the result of variable elimination by refining or relaxing.
+            tactics_order:
+                The order of tactics to try for variable term elimination.
 
         Returns:
-            The abstracted composition of the two contracts.
+            A tuple of the abstracted composition of the two contracts and of the list of tactics used.
 
         Raises:
             IncompatibleArgsError: An error occurred during composition.
@@ -612,12 +636,17 @@ class IoContract(Generic[TermList_t]):
         self_helps_other = len(list_intersection(other.inputvars, self.outputvars)) > 0
         other_drives_const_inputs = len(list_intersection(other.outputvars, selfinputconst)) > 0
         self_drives_const_inputs = len(list_intersection(self.outputvars, otherinputconst)) > 0
+
+        tactics_used = []
         # process assumptions
         if cycle_present and (other_drives_const_inputs or self_drives_const_inputs):
             raise IncompatibleArgsError("Cannot compose contracts due to feedback")
         elif self_helps_other and not other_helps_self:
             logging.debug("Assumption computation: self provides context for other")
-            new_a: TermList_t = other.a.elim_vars_by_refining(self.a | self.g, assumptions_forbidden_vars, simplify)
+            (new_a, used) = other.a.elim_vars_by_refining(
+                self.a | self.g, assumptions_forbidden_vars, simplify, tactics_order
+            )
+            tactics_used.append(used)
             conflict_variables = list_intersection(new_a.vars, assumptions_forbidden_vars)
             if conflict_variables:
                 raise IncompatibleArgsError(
@@ -628,7 +657,10 @@ class IoContract(Generic[TermList_t]):
             assumptions = new_a | self.a
         elif other_helps_self and not self_helps_other:
             logging.debug("****** Assumption computation: other provides context for self")
-            new_a = self.a.elim_vars_by_refining(other.a | other.g, assumptions_forbidden_vars, simplify)
+            (new_a, used) = self.a.elim_vars_by_refining(
+                other.a | other.g, assumptions_forbidden_vars, simplify, tactics_order
+            )
+            tactics_used.append(used)
             conflict_variables = list_intersection(new_a.vars, assumptions_forbidden_vars)
             if conflict_variables:
                 raise IncompatibleArgsError(
@@ -650,20 +682,27 @@ class IoContract(Generic[TermList_t]):
         logging.debug("****** Computing guarantees")
         g1_t = self.g.copy()
         g2_t = other.g.copy()
-        g1 = g1_t.elim_vars_by_relaxing(g2_t, intvars, simplify)
-        g2 = g2_t.elim_vars_by_relaxing(g1_t, intvars, simplify)
+        (g1, used) = g1_t.elim_vars_by_relaxing(g2_t, intvars, simplify, tactics_order)
+        tactics_used.append(used)
+        (g2, used) = g2_t.elim_vars_by_relaxing(g1_t, intvars, simplify, tactics_order)
+        tactics_used.append(used)
         allguarantees = g1 | g2
-        allguarantees = allguarantees.elim_vars_by_relaxing(assumptions, intvars, simplify)
+        (allguarantees, used) = allguarantees.elim_vars_by_relaxing(assumptions, intvars, simplify, tactics_order)
+        tactics_used.append(used)
 
         # eliminate terms with forbidden vars
         terms_to_elim = allguarantees.get_terms_with_vars(intvars)
         allguarantees -= terms_to_elim
 
-        return type(self)(assumptions, allguarantees, inputvars, outputvars)
+        return type(self)(assumptions, allguarantees, inputvars, outputvars), tactics_used
 
     def quotient(
-        self: IoContract_t, other: IoContract_t, additional_inputs: Optional[List[Var]] = None
-    ) -> IoContract_t:
+        self: IoContract_t,
+        other: IoContract_t,
+        additional_inputs: Optional[List[Var]] = None,
+        simplify: bool = True,
+        tactics_order: List[int] = [],
+    ) -> Tuple[IoContract_t, List[int]]:
         """Compute the contract quotient.
 
         Compute the quotient self/other of the two given contracts and refine
@@ -678,9 +717,13 @@ class IoContract(Generic[TermList_t]):
                 Additional variables that the quotient is allowed to consider as
                 inputs. These variables can be either top level-inputs or
                 outputs of the other argument.
+            simplify:
+                Whether to simplify the result of variable elimination by refining or relaxing.
+            tactics_order:
+                The order of tactics to try for variable term elimination.
 
         Returns:
-            The refined quotient self/other.
+            A tuple of the refined quotient self/other and the list of tactics used.
 
         Raises:
             IncompatibleArgsError: Arguments provided are incompatible with computation of the quotient.
@@ -704,6 +747,7 @@ class IoContract(Generic[TermList_t]):
         )
         intvars = list_diff(intvars, additional_inputs)
 
+        tactics_used = []
         # get assumptions
         logging.debug("Computing quotient assumptions")
         assumptions = copy.deepcopy(self.a)
@@ -711,7 +755,10 @@ class IoContract(Generic[TermList_t]):
         if assumptions.refines(other.a):
             logging.debug("Extending top-level assumptions with divisor's guarantees")
             assumptions = assumptions | other.g
-        assumptions = assumptions.elim_vars_by_relaxing(empty_context, list_union(intvars, outputvars))
+        (assumptions, used) = assumptions.elim_vars_by_relaxing(
+            empty_context, list_union(intvars, outputvars), simplify, tactics_order
+        )
+        tactics_used.append(used)
         logging.debug("Assumptions after processing: %s", assumptions)
 
         # get guarantees
@@ -719,14 +766,16 @@ class IoContract(Generic[TermList_t]):
         guarantees: TermList_t = self.g
         logging.debug("Using existing guarantees to aid system-level guarantees")
         try:
-            guarantees = guarantees.elim_vars_by_refining(other.g | other.a, intvars)
+            (guarantees, used) = guarantees.elim_vars_by_refining(other.g | other.a, intvars, simplify, tactics_order)
+            tactics_used.append(used)
         except ValueError:
             guarantees = self.g
         logging.debug("Guarantees are %s" % (guarantees))
         logging.debug("Using system-level assumptions to aid quotient guarantees")
         guarantees = guarantees | other.a
         try:
-            guarantees = guarantees.elim_vars_by_refining(self.a, intvars)
+            (guarantees, used) = guarantees.elim_vars_by_refining(self.a, intvars, simplify, tactics_order)
+            tactics_used.append(used)
         except ValueError:
             ...
         logging.debug("Guarantees after processing: %s", guarantees)
@@ -737,7 +786,7 @@ class IoContract(Generic[TermList_t]):
                 + "by refining the guarantees \n{}\n".format(guarantees.get_terms_with_vars(intvars))
             )
 
-        return type(self)(assumptions, guarantees, inputvars, outputvars)
+        return type(self)(assumptions, guarantees, inputvars, outputvars), used
 
     def merge(self: IoContract_t, other: IoContract_t) -> IoContract_t:
         """

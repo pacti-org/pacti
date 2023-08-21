@@ -24,7 +24,7 @@ def test_composition_success(test_instance: str) -> None:
     assert len(c) == 3
     expected = c[2]
     try:
-        obtained = c[0].compose(c[1])
+        obtained, _ = c[0].compose(c[1])
     except:
         assert False
     print("*** Arg1")
@@ -80,7 +80,7 @@ def test_quotient_success(test_instance: str) -> None:
     assert len(c) == 3
     expected = c[2]
     try:
-        obtained = c[0].quotient(c[1])
+        obtained, _ = c[0].quotient(c[1], simplify=True)
     except:
         assert False
     assert expected == obtained
