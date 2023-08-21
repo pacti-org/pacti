@@ -20,7 +20,7 @@ from pacti.utils.lists import list_diff, list_intersection, list_union
 
 numeric = Union[int, float]
 
-TACTICS_ORDER = [1, 2, 3, 4]  # noqa: WPS407
+TACTICS_ORDER = [1, 2, 3, 4, 5]  # noqa: WPS407
 
 
 class PolyhedralTerm(Term):
@@ -1359,6 +1359,12 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
             return term.substitute_variable(var_to_elim, return_term)
         raise ValueError("Tactic 4 unsuccessful")
 
+    @staticmethod
+    def _tactic_trivial(  # noqa: WPS231
+        term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, refine: bool
+    ) -> PolyhedralTerm:
+        return term.copy()
+
     TACTICS = {  # noqa: WPS115
         1: _tactic_1.__func__,  # type: ignore
         2: _tactic_2.__func__,  # type: ignore
@@ -1366,6 +1372,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         4: lambda term, context, vars_to_elim, refine: PolyhedralTermList._tactic_4(
             term, context, vars_to_elim, refine, []
         ),
+        5: _tactic_trivial.__func__,  # type: ignore
     }
 
     @staticmethod
@@ -1391,4 +1398,4 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
             except ValueError:
                 continue
 
-        return term.copy(), 0
+        return term.copy(), -1

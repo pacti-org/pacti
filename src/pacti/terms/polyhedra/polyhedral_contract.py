@@ -15,7 +15,7 @@ ser_contract = TypedDict(
     {"input_vars": List[str], "output_vars": List[str], "assumptions": List[ser_pt], "guarantees": List[ser_pt]},
 )
 
-TACTICS_ORDER = [1, 2, 3, 4]  # noqa: WPS407
+TACTICS_ORDER = [1, 2, 3, 4, 5]  # noqa: WPS407
 
 
 class PolyhedralContract(IoContract):
