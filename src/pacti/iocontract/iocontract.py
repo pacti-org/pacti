@@ -244,7 +244,7 @@ class TermList(ABC):
     @abstractmethod
     def elim_vars_by_refining(
         self: TermList_t, context: TermList_t, vars_to_elim: List[Var], simplify: bool, tactics_order: List[int]
-    ) -> Tuple[TermList_t, List[int]]:
+    ) -> Tuple[TermList_t, List[Tuple[int, float, int]]]:
         """
         Eliminate variables from termlist by refining it in a context.
 
@@ -268,13 +268,13 @@ class TermList(ABC):
             - a list of terms not containing any variables in `vars_to_elim`
               and which, in the context provided, imply the terms contained in the
               calling termlist;
-            - the list of tactics used in variable elimination for each term.
+            - the list of tuples, for each term processed, of the tactic used, time spent, and tactic invocation count.
         """
 
     @abstractmethod
     def elim_vars_by_relaxing(
         self: TermList_t, context: TermList_t, vars_to_elim: List[Var], simplify: bool, tactics_order: List[int]
-    ) -> Tuple[TermList_t, List[int]]:
+    ) -> Tuple[TermList_t, List[Tuple[int, float, int]]]:
         """
         Eliminate variables from termlist by relaxing it in a context
 
@@ -298,7 +298,7 @@ class TermList(ABC):
             - a list of terms not containing any variables in `vars_to_elim`
               and which, in the context provided, are implied by the terms
               contained in the calling termlist;
-            - the list of tactics used in variable elimination for each term.
+            - the list of tuples, for each term processed, of the tactic used, time spent, and tactic invocation count.
         """
 
     @abstractmethod
@@ -581,7 +581,7 @@ class IoContract(Generic[TermList_t]):
         vars_to_keep: Any = None,
         simplify: bool = True,
         tactics_order: Optional[List[int]] = None,
-    ) -> Tuple[IoContract_t, List[int]]:  # noqa: WPS231
+    ) -> Tuple[IoContract_t, List[Tuple[int, float, int]]]:  # noqa: WPS231
         """Compose IO contracts.
 
         Compute the composition of the two given contracts and abstract the
@@ -705,7 +705,7 @@ class IoContract(Generic[TermList_t]):
         additional_inputs: Optional[List[Var]] = None,
         simplify: bool = True,
         tactics_order: Optional[List[int]] = None,
-    ) -> Tuple[IoContract_t, List[int]]:
+    ) -> Tuple[IoContract_t, List[Tuple[int, float, int]]]:
         """Compute the contract quotient.
 
         Compute the quotient self/other of the two given contracts and refine
