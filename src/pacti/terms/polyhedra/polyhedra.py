@@ -832,7 +832,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
                     tactic_count = 0
                 tactics_used.append((tactic_num, tactic_time, tactic_count))
 
-            new_terms.terms[i] = new_term.copy()
+            new_terms.terms[i] = new_term
 
         that = PolyhedralTermList(new_terms.terms)
 
