@@ -814,21 +814,25 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         tactics_used: List[Tuple[int, float, int]] = []
 
         for i, term in enumerate(term_list):
-            copy_new_terms = new_terms.copy()
-            copy_new_terms.terms.remove(term)
-            helpers = context | copy_new_terms
-            try:
-                (new_term, tactic_num, tactic_time, tactic_count) = PolyhedralTermList._transform_term(
-                    term, helpers, vars_to_elim, refine, tactics_order
-                )
-            except ValueError:
+            if not list_intersection(term.vars, vars_to_elim):
                 new_term = term.copy()
-                tactic_num = 0
-                tactic_time = 0
-                tactic_count = 0
+                
+            else:
+                copy_new_terms = new_terms.copy()
+                copy_new_terms.terms.remove(term)
+                helpers = context | copy_new_terms
+                try:
+                    (new_term, tactic_num, tactic_time, tactic_count) = PolyhedralTermList._transform_term(
+                        term, helpers, vars_to_elim, refine, tactics_order
+                    )
+                except ValueError:
+                    new_term = term.copy()
+                    tactic_num = 0
+                    tactic_time = 0
+                    tactic_count = 0
+                tactics_used.append((tactic_num, tactic_time, tactic_count))
 
             new_terms.terms[i] = new_term.copy()
-            tactics_used.append((tactic_num, tactic_time, tactic_count))
 
         that = PolyhedralTermList(new_terms.terms)
 
@@ -1416,7 +1420,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
             tactics_order = TACTICS_ORDER
 
         if not list_intersection(term.vars, vars_to_elim):
-            return term, 0, 0, 0
+            raise ValueError("Irrelevant transform term call!")
 
         logging.debug("Transforming term: %s", term)
         logging.debug("Context: %s", context)
