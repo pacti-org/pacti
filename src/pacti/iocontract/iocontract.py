@@ -581,7 +581,7 @@ class IoContract(Generic[TermList_t]):
         vars_to_keep: Any = None,
         simplify: bool = True,
         tactics_order: Optional[List[int]] = None,
-    ) -> Tuple[IoContract_t, List[Tuple[int, float, int]]]:  # noqa: WPS231
+    ) -> Tuple[IoContract_t, List[List[Tuple[int, float, int]]]]:  # noqa: WPS231
         """Compose IO contracts.
 
         Compute the composition of the two given contracts and abstract the
@@ -640,7 +640,7 @@ class IoContract(Generic[TermList_t]):
         other_drives_const_inputs = len(list_intersection(other.outputvars, selfinputconst)) > 0
         self_drives_const_inputs = len(list_intersection(self.outputvars, otherinputconst)) > 0
 
-        tactics_used = []
+        tactics_used: List[List[Tuple[int, float, int]]] = []
         # process assumptions
         if cycle_present and (other_drives_const_inputs or self_drives_const_inputs):
             raise IncompatibleArgsError("Cannot compose contracts due to feedback")
@@ -705,7 +705,7 @@ class IoContract(Generic[TermList_t]):
         additional_inputs: Optional[List[Var]] = None,
         simplify: bool = True,
         tactics_order: Optional[List[int]] = None,
-    ) -> Tuple[IoContract_t, List[Tuple[int, float, int]]]:
+    ) -> Tuple[IoContract_t, List[List[Tuple[int, float, int]]]]:
         """Compute the contract quotient.
 
         Compute the quotient self/other of the two given contracts and refine
@@ -752,7 +752,7 @@ class IoContract(Generic[TermList_t]):
         )
         intvars = list_diff(intvars, additional_inputs)
 
-        tactics_used = []
+        tactics_used: List[List[Tuple[int, float, int]]] = []
         # get assumptions
         logging.debug("Computing quotient assumptions")
         assumptions = copy.deepcopy(self.a)

@@ -168,7 +168,7 @@ class PolyhedralContract(IoContract):
         vars_to_keep: Optional[List[str]] = None,
         simplify: bool = True,
         tactics_order: Optional[List[int]] = None,
-    ) -> Tuple[PolyhedralContract, List[Tuple[int, float, int]]]:
+    ) -> Tuple[PolyhedralContract, List[List[Tuple[int, float, int]]]]:
         """Compose polyhedral contracts.
 
         Compute the composition of the two given contracts and abstract the
@@ -202,7 +202,7 @@ class PolyhedralContract(IoContract):
         additional_inputs: Optional[List[Var]] = None,
         simplify: bool = True,
         tactics_order: Optional[List[int]] = None,
-    ) -> Tuple[PolyhedralContract, List[Tuple[int, float, int]]]:
+    ) -> Tuple[PolyhedralContract, List[List[Tuple[int, float, int]]]]:
         """Quotient polyhedral contracts.
 
         Compute the quotient of the two given contracts and abstract the
