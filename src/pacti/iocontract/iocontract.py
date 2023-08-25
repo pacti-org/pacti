@@ -791,7 +791,7 @@ class IoContract(Generic[TermList_t]):
                 + "by refining the guarantees \n{}\n".format(guarantees.get_terms_with_vars(intvars))
             )
 
-        return type(self)(assumptions, guarantees, inputvars, outputvars), used
+        return type(self)(assumptions, guarantees, inputvars, outputvars), tactics_used
 
     def merge(self: IoContract_t, other: IoContract_t) -> IoContract_t:
         """
