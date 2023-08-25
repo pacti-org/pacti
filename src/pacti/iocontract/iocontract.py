@@ -580,9 +580,39 @@ class IoContract(Generic[TermList_t]):
         other: IoContract_t,
         vars_to_keep: Any = None,
         simplify: bool = True,
+    ) -> IoContract_t:
+        """Compose IO contracts.
+
+        Compute the composition of the two given contracts and abstract the
+        result in such a way that the result is a well-defined IO contract,
+        i.e., that assumptions refer only to inputs, and guarantees to both
+        inputs and outputs.
+
+        Args:
+            other:
+                The second contract being composed.
+            vars_to_keep:
+                A list of variables that should be kept as top-level outputs.
+            simplify:
+                Whether to simplify the result of variable elimination by refining or relaxing.
+
+        Returns:
+            The abstracted composition of the two contracts.
+
+        Raises:
+            IncompatibleArgsError: An error occurred during composition.
+        """
+        result, _ = self.compose_tactics(other, vars_to_keep, simplify)
+        return result
+    
+    def compose_tactics(
+        self: IoContract_t,
+        other: IoContract_t,
+        vars_to_keep: Any = None,
+        simplify: bool = True,
         tactics_order: Optional[List[int]] = None,
     ) -> Tuple[IoContract_t, List[List[Tuple[int, float, int]]]]:  # noqa: WPS231
-        """Compose IO contracts.
+        """Compose IO contracts with support for specifying the order of tactics and measuring their use.
 
         Compute the composition of the two given contracts and abstract the
         result in such a way that the result is a well-defined IO contract,
@@ -704,9 +734,41 @@ class IoContract(Generic[TermList_t]):
         other: IoContract_t,
         additional_inputs: Optional[List[Var]] = None,
         simplify: bool = True,
+    ) -> IoContract_t:
+        """Compute the contract quotient.
+
+        Compute the quotient self/other of the two given contracts and refine
+        the result in such a way that the result is a well-defined IO contract,
+        i.e., that assumptions refer only to inputs, and guarantees to both
+        inputs and outputs.
+
+        Args:
+            other:
+                The contract by which we take the quotient.
+            additional_inputs:
+                Additional variables that the quotient is allowed to consider as
+                inputs. These variables can be either top level-inputs or
+                outputs of the other argument.
+            simplify:
+                Whether to simplify the result of variable elimination by refining or relaxing.
+
+        Returns:
+            The refined quotient self/other.
+
+        Raises:
+            IncompatibleArgsError: Arguments provided are incompatible with computation of the quotient.
+        """
+        result, _ = self.quotient_tactics(other, additional_inputs, simplify)
+        return result
+                    
+    def quotient_tactics(
+        self: IoContract_t,
+        other: IoContract_t,
+        additional_inputs: Optional[List[Var]] = None,
+        simplify: bool = True,
         tactics_order: Optional[List[int]] = None,
     ) -> Tuple[IoContract_t, List[List[Tuple[int, float, int]]]]:
-        """Compute the contract quotient.
+        """Compute the contract quotient with support for specifying the order of tactics and measuring their use.
 
         Compute the quotient self/other of the two given contracts and refine
         the result in such a way that the result is a well-defined IO contract,

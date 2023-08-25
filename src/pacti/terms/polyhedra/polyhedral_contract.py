@@ -167,6 +167,34 @@ class PolyhedralContract(IoContract):
         other: PolyhedralContract,
         vars_to_keep: Optional[List[str]] = None,
         simplify: bool = True,
+    ) -> PolyhedralContract:
+        """Compose polyhedral contracts.
+
+        Compute the composition of the two given contracts and abstract the
+        result in such a way that the result is a well-defined IO contract,
+        i.e., that assumptions refer only to inputs, and guarantees to both
+        inputs and outputs.
+
+        Args:
+            other:
+                The second contract being composed.
+            vars_to_keep:
+                A list of variables that should be kept as top-level outputs.
+            simplify:
+                Whether to simplify the result of variable elimination by refining or relaxing.
+
+        Returns:
+            The abstracted composition of the two contracts.
+        """
+        if vars_to_keep is None:
+            vars_to_keep = []
+        return super().compose(other, [Var(x) for x in vars_to_keep], simplify)
+
+    def compose_tactics(
+        self,
+        other: PolyhedralContract,
+        vars_to_keep: Optional[List[str]] = None,
+        simplify: bool = True,
         tactics_order: Optional[List[int]] = None,
     ) -> Tuple[PolyhedralContract, List[List[Tuple[int, float, int]]]]:
         """Compose polyhedral contracts.
@@ -194,16 +222,44 @@ class PolyhedralContract(IoContract):
 
         if vars_to_keep is None:
             vars_to_keep = []
-        return super().compose(other, [Var(x) for x in vars_to_keep], simplify, tactics_order)
+        return super().compose_tactics(other, [Var(x) for x in vars_to_keep], simplify, tactics_order)
 
     def quotient(
         self: PolyhedralContract,
         other: PolyhedralContract,
         additional_inputs: Optional[List[Var]] = None,
         simplify: bool = True,
+    ) -> PolyhedralContract:
+        """Quotient polyhedral contracts.
+
+        Compute the quotient of the two given contracts and abstract the
+        result in such a way that the result is a well-defined IO contract,
+        i.e., that assumptions refer only to inputs, and guarantees to both
+        inputs and outputs.
+
+        Args:
+            other:
+                The contract by which we take the quotient.
+            additional_inputs:
+                Additional variables that the quotient is allowed to consider as
+                inputs. These variables can be either top level-inputs or
+                outputs of the other argument.
+            simplify:
+                Whether to simplify the result of variable elimination by refining or relaxing.
+
+        Returns:
+            The abstracted quotient of the two contracts.
+        """
+        return super().quotient(other, additional_inputs, simplify)
+
+    def quotient_tactics(
+        self: PolyhedralContract,
+        other: PolyhedralContract,
+        additional_inputs: Optional[List[Var]] = None,
+        simplify: bool = True,
         tactics_order: Optional[List[int]] = None,
     ) -> Tuple[PolyhedralContract, List[List[Tuple[int, float, int]]]]:
-        """Quotient polyhedral contracts.
+        """Quotient polyhedral contracts with support for specifying the order of tactics and measuring their use.
 
         Compute the quotient of the two given contracts and abstract the
         result in such a way that the result is a well-defined IO contract,
@@ -228,7 +284,7 @@ class PolyhedralContract(IoContract):
         if tactics_order is None:
             tactics_order = TACTICS_ORDER
 
-        return super().quotient(other, additional_inputs, simplify, tactics_order)
+        return super().quotient_tactics(other, additional_inputs, simplify, tactics_order)
 
     def optimize(self, expr: str, maximize: bool = True) -> Optional[numeric]:
         """Optimize linear objective over the contract.
