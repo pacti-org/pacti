@@ -1170,17 +1170,24 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         return matrix_row_terms, forbidden_vars
 
     @staticmethod
-    def _tactic_1(
-        term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, refine: bool
+    def _context_reduction(
+        term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, refine: bool, strategy: int
     ) -> PolyhedralTerm:
-        logging.debug("********** Tactic 1")
+        logging.debug("********** Context reduction")
         logging.debug("Vars_to_elim %s \nTerm %s \nContext %s " % (vars_to_elim, term, context))
         try:
-            matrix_row_terms, forbidden_vars = PolyhedralTermList._get_kaykobad_context(
-                term, context, vars_to_elim, refine
-            )
+            if strategy == 1:
+                matrix_row_terms, forbidden_vars = PolyhedralTermList._get_kaykobad_context(
+                    term, context, vars_to_elim, refine
+                )
+            elif strategy == 5:
+                matrix_row_terms, forbidden_vars = PolyhedralTermList._get_tlp_context(
+                    term, context, vars_to_elim, refine
+                )
+            else:
+                raise ValueError("Unknown strategy")
         except ValueError:
-            logging.debug("Could not transform %s using Tactic 1", term)
+            logging.debug("Could not transform %s using Context reduction", term)
             raise ValueError("Could not transform term {}".format(term))
         matrix_row_terms_tl = PolyhedralTermList(list(matrix_row_terms))
         sols = PolyhedralTerm.solve_for_variables(matrix_row_terms_tl, list(forbidden_vars))
@@ -1193,6 +1200,13 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         logging.debug("Term %s transformed to %s", term, result)
 
         return result
+
+    @staticmethod
+    def _tactic_1(
+        term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, refine: bool
+    ) -> PolyhedralTerm:
+        logging.debug("********** Tactic 1")
+        return PolyhedralTermList._context_reduction(term, context, vars_to_elim, refine, 1)
 
     @staticmethod
     def _tactic_2(  # noqa: WPS231
@@ -1317,6 +1331,58 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
                 continue
             return term.substitute_variable(var_to_elim, return_term)
         raise ValueError("Tactic 4 unsuccessful")
+
+    @staticmethod
+    def _get_tlp_context(  # noqa: WPS231
+        term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, refine: bool
+    ) -> Tuple[List[PolyhedralTerm], List[Var]]:
+        forbidden_vars = list_intersection(vars_to_elim, term.vars)
+        matrix_row_terms = []
+
+        var_list, B, b, _, _ = PolyhedralTermList.termlist_to_polytope(  # noqa: WPS236, N806
+            terms=context, context=PolyhedralTermList([])
+        )
+        objective = np.array([term.get_coefficient(var) if var in forbidden_vars else 0 for var in var_list])
+        if refine:
+            objective *= -1
+
+        res = linprog(c=objective, A_ub=B, b_ub=b, bounds=(None, None))
+        # Linprog's status values
+        # 0 : Optimization proceeding nominally.
+        # 1 : Iteration limit reached.
+        # 2 : Problem appears to be infeasible.
+        # 3 : Problem appears to be unbounded.
+        # 4 : Numerical difficulties encountered.
+        if res["status"] == 3:
+            raise ValueError("Unbounded")
+        elif res["status"] != 0:
+            raise ValueError("Constraints are unfeasible")
+
+        num_vars_to_elim = len(forbidden_vars)
+        slack = res["slack"]
+        indices = np.where(np.isclose(slack, 0))[0]
+
+        assert len(indices) >= num_vars_to_elim
+        terms_added = 0
+        for index in indices:
+            context_term = context.terms[index]
+            if list_intersection(context_term.vars, forbidden_vars):
+                matrix_row_terms.append(context_term)
+                terms_added += 1
+                if terms_added == num_vars_to_elim:
+                    break
+
+        if terms_added < num_vars_to_elim:
+            raise ValueError("Context has insufficient information")
+
+        return matrix_row_terms, forbidden_vars
+
+    @staticmethod
+    def _tactic_5(  # noqa: WPS231
+        term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, refine: bool
+    ) -> PolyhedralTerm:
+        logging.debug("************ Tactic 5")
+        return PolyhedralTermList._context_reduction(term, context, vars_to_elim, refine, 5)
 
     @staticmethod
     def _transform_term(
