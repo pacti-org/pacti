@@ -1354,18 +1354,26 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         # 3 : Problem appears to be unbounded.
         # 4 : Numerical difficulties encountered.
         if res["status"] == 3:
-            ValueError("Unbounded")
+            raise ValueError("Unbounded")
         elif res["status"] != 0:
             raise ValueError("Constraints are unfeasible")
         
         num_vars_to_elim = len(forbidden_vars)
         slack = res["slack"]
-        indices = np.where(np.any(np.abs(slack)<1E-5))
+        indices = np.where(np.abs(slack)<1E-5)[0]
                 
-        assert len(indices) >= len(num_vars_to_elim)
-        for i in range(num_vars_to_elim):
-            index = indices[i]
-            matrix_row_terms.append(context.terms[index])
+        assert len(indices) >= num_vars_to_elim
+        terms_added = 0
+        for index in indices:
+            context_term = context.terms[index]
+            if list_intersection(context_term.vars, forbidden_vars):
+                matrix_row_terms.append(context_term)
+                terms_added += 1
+                if terms_added == num_vars_to_elim:
+                    break
+
+        if terms_added < num_vars_to_elim:
+            raise ValueError("Context has insufficient information")
         
         return matrix_row_terms, forbidden_vars
 
