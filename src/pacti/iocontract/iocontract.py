@@ -677,7 +677,7 @@ class IoContract(Generic[TermList_t]):
         elif self_helps_other and not other_helps_self:
             logging.debug("Assumption computation: self provides context for other")
             (new_a, used) = other.a.elim_vars_by_refining(
-                self.a | self.g, assumptions_forbidden_vars, simplify, tactics_order
+                self.a | self.g, assumptions_forbidden_vars, simplify=True, tactics_order=tactics_order
             )
             tactics_used.append(used)
             conflict_variables = list_intersection(new_a.vars, assumptions_forbidden_vars)
@@ -691,7 +691,7 @@ class IoContract(Generic[TermList_t]):
         elif other_helps_self and not self_helps_other:
             logging.debug("****** Assumption computation: other provides context for self")
             (new_a, used) = self.a.elim_vars_by_refining(
-                other.a | other.g, assumptions_forbidden_vars, simplify, tactics_order
+                other.a | other.g, assumptions_forbidden_vars, simplify=True, tactics_order=tactics_order
             )
             tactics_used.append(used)
             conflict_variables = list_intersection(new_a.vars, assumptions_forbidden_vars)
@@ -709,7 +709,8 @@ class IoContract(Generic[TermList_t]):
             logging.debug("****** Assumption computation: other provides context for self")
             assumptions = self.a | other.a
         logging.debug("Assumption computation: computed assumptions:\n%s", assumptions)
-        assumptions = assumptions.simplify()
+        if simplify:
+            assumptions = assumptions.simplify()
 
         # process guarantees
         logging.debug("****** Computing guarantees")
