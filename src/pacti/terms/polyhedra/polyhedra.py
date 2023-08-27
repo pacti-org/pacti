@@ -1450,7 +1450,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
     @staticmethod
     def _tactic_5(  # noqa: WPS231
         term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, refine: bool
-    ) -> PolyhedralTerm:
+    ) -> Tuple[Optional[PolyhedralTerm], int]:
         logging.debug("************ Tactic 5")
         return PolyhedralTermList._context_reduction(term, context, vars_to_elim, refine, 5), 1
 
