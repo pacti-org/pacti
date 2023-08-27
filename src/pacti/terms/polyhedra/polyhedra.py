@@ -1467,7 +1467,8 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         4: lambda term, context, vars_to_elim, refine: PolyhedralTermList._tactic_4(
             term, context, vars_to_elim, refine, []
         ),
-        5: _tactic_trivial.__func__,  # type: ignore
+        5: _tactic_5.__func__,
+        6: _tactic_trivial.__func__,  # type: ignore
     }
 
     # Return: 
