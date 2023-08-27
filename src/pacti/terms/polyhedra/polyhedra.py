@@ -630,7 +630,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
             termlist = self.copy()
         try:
             return termlist._transform(
-                context=context, vars_to_elim=vars_to_elim, refine=True, tactics_order=tactics_order
+                context=context, vars_to_elim=vars_to_elim, refine=True, simplify=simplify, tactics_order=tactics_order
             )
         except ValueError as e:
             raise ValueError(
@@ -700,7 +700,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
             termlist = self.copy()
         try:
             (termlist, tactics_data) = termlist._transform(
-                context=context, vars_to_elim=vars_to_elim, refine=False, tactics_order=tactics_order
+                context=context, vars_to_elim=vars_to_elim, refine=False, simplify=simplify, tactics_order=tactics_order
             )
         except ValueError as e:
             raise ValueError(
@@ -800,7 +800,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
     # - transformed term list
     # - a list of tuples of the tactic used, time spent, and invocation count
     def _transform(
-        self, context: PolyhedralTermList, vars_to_elim: list, refine: bool, tactics_order: Optional[List[int]] = None
+        self, context: PolyhedralTermList, vars_to_elim: list, refine: bool, simplify: bool, tactics_order: Optional[List[int]] = None
     ) -> Tuple[PolyhedralTermList, List[Tuple[int, float, int]]]:
         logging.debug("Transforming: %s", self)
         logging.debug("Context terms: %s", context)
@@ -838,7 +838,10 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
 
         # the last step needs to be a simplification
         logging.debug("Ending transformation with simplification")
-        return that.simplify(context), tactics_used
+        if simplify:
+            return that.simplify(context), tactics_used
+        else:
+            return that, tactics_used
 
     def optimize(self, objective: Dict[Var, numeric], maximize: bool = True) -> Optional[numeric]:
         """
@@ -1467,7 +1470,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         4: lambda term, context, vars_to_elim, refine: PolyhedralTermList._tactic_4(
             term, context, vars_to_elim, refine, []
         ),
-        5: _tactic_5.__func__,
+        5: _tactic_5.__func__,  # type: ignore
         6: _tactic_trivial.__func__,  # type: ignore
     }
 
