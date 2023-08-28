@@ -617,19 +617,19 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         logging.debug("Refining from terms: %s", self)
         logging.debug("Context: %s", context)
         logging.debug("Vars to elim: %s", vars_to_elim)
-        if tactics_order is None:
-            tactics_order = TACTICS_ORDER
-        if simplify:
-            try:
-                termlist = self.simplify(context)
-            except ValueError as e:
-                raise ValueError(
-                    "Provided constraints \n{}\n".format(self) + "are unsatisfiable in context \n{}".format(context)
-                ) from e
-        else:
-            termlist = self.copy()
+        # if tactics_order is None:
+        #     tactics_order = TACTICS_ORDER
+        # if simplify:
+        #     try:
+        #         termlist = self.simplify(context)
+        #     except ValueError as e:
+        #         raise ValueError(
+        #             "Provided constraints \n{}\n".format(self) + "are unsatisfiable in context \n{}".format(context)
+        #         ) from e
+        # else:
+        #     termlist = self
         try:
-            return termlist._transform(
+            return self._transform(
                 context=context, vars_to_elim=vars_to_elim, refine=True, simplify=simplify, tactics_order=tactics_order
             )
         except ValueError as e:
