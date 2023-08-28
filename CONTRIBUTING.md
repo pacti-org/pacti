@@ -23,6 +23,8 @@ shows all available tasks.
 We use [pdm](https://pdm.fming.dev/latest/) to manage dependencies.
 Use `pdm add` to install new packages.
 
+Add unit tests to make sure the new functionality is covered. If your functionality falls into one of the existing classes, add your tests to the corresponding file under the tests/ directory. Otherwise, create a new file. We use `pytest` to run our tests. Make sure that your test starts with the name *test* to ensure that it will be executed when `make test` is invoked.
+
 **Before committing:**
 
 1. run `make format` to auto-format the code
