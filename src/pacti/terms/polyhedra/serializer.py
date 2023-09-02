@@ -317,6 +317,7 @@ def polyhedral_termlist_from_string(str_rep: str) -> List[PolyhedralTerm]:
 
     Raises:
         PolyhedralSyntaxException: constraint syntax error w.r.t the polyhedral term grammar.
+        ValueError: Number of tokens invalid.
     """
     try:
         tokens: pp.ParseResults = expression.parse_string(str_rep, parse_all=True)
@@ -328,4 +329,4 @@ def polyhedral_termlist_from_string(str_rep: str) -> List[PolyhedralTerm]:
         if isinstance(e, PolyhedralSyntaxExpression):
             return _expression_to_polyhedral_terms(str_rep, e)
 
-    raise PolyhedralSyntaxException(f"Polyhedral term syntax unrecognized in: {str_rep}")
+    raise ValueError(f"Polyhedral term syntax unrecognized in: {str_rep}")
