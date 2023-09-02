@@ -1,6 +1,6 @@
 # Syntax for Pacti's PolyhedralTerms
 
-The `pacti.terms.polyhedra.PolyhedralContract.from_string()` API invokes a parser for `pacti.terms.polyhedra.PolyhedralTerm` to construct the assumptions and guarantees of a `PolyhedralContract`. The syntactic `expression` of a `PolyhedralTerm` is defined by the following BNF grammar in the `pacti.terms.polyhedra.syntax.grammar` module:
+The `pacti.contracts.PolyhedralIoContract.from_strings()` API invokes a parser for `pacti.terms.polyhedra.PolyhedralTerm` to construct the assumptions and guarantees of a `PolyhedralIoContract`. The syntactic `expression` of a `PolyhedralTerm` is defined by the following BNF grammar in the `pacti.terms.polyhedra.syntax.grammar` module:
 
 ```text
 

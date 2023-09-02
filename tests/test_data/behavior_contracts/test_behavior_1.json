@@ -1,7 +1,7 @@
 [
   {
     "name": "contract",
-    "type": "PolyhedralContract",
+    "type": "PolyhedralIoContract",
     "data": {
       "input_vars": [
         "x"

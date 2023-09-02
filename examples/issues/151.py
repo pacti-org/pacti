@@ -1,9 +1,9 @@
 
-from pacti.terms.polyhedra import PolyhedralContractCompound
+from pacti.terms.polyhedra import PolyhedralIoContractCompound
 from pacti.iocontract import Var
 from pacti import read_contracts_from_file, write_contracts_to_file
 
-c1 = PolyhedralContractCompound.from_string(
+c1 = PolyhedralIoContractCompound.from_strings(
     input_vars=["x"],
     output_vars=["y"],
     assumptions=[["x <= 2"], ["-x <= -4"]],
@@ -12,7 +12,7 @@ c1 = PolyhedralContractCompound.from_string(
 
 print(c1)
 
-c2 = PolyhedralContractCompound.from_string(
+c2 = PolyhedralIoContractCompound.from_strings(
     input_vars=["i"],
     output_vars=["o"],
     assumptions=[["i <= 5"], ["-i <= -7"]],

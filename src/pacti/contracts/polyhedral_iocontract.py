@@ -16,10 +16,10 @@ ser_contract = TypedDict(
 )
 
 
-class PolyhedralContract(IoContract):
+class PolyhedralIoContract(IoContract):
     """IO Contracts with assumptions and guarantees expressed as polyhedral constraints."""
 
-    def rename_variables(self, variable_mappings: List[Tuple[str, str]]) -> PolyhedralContract:
+    def rename_variables(self, variable_mappings: List[Tuple[str, str]]) -> PolyhedralIoContract:
         """
         Rename variables in a contract.
 
@@ -80,12 +80,12 @@ class PolyhedralContract(IoContract):
         return c_temp
 
     @staticmethod
-    def from_string(
+    def from_strings(
         assumptions: List[str],
         guarantees: List[str],
         input_vars: List[str],
         output_vars: List[str],
-    ) -> PolyhedralContract:
+    ) -> PolyhedralIoContract:
         """
         Create contract from several lists of strings.
 
@@ -106,7 +106,7 @@ class PolyhedralContract(IoContract):
         if guarantees:
             g = [item for x in guarantees for item in serializer.polyhedral_termlist_from_string(x)]
 
-        return PolyhedralContract(
+        return PolyhedralIoContract(
             input_vars=[Var(x) for x in input_vars],
             output_vars=[Var(x) for x in output_vars],
             assumptions=PolyhedralTermList(a),
@@ -114,7 +114,7 @@ class PolyhedralContract(IoContract):
         )
 
     @staticmethod
-    def from_dict(contract: dict) -> PolyhedralContract:
+    def from_dict(contract: dict) -> PolyhedralIoContract:
         """
         Create contract from a dictionary.
 
@@ -153,14 +153,14 @@ class PolyhedralContract(IoContract):
         else:
             raise ValueError("Guarantees must be a list of dicts.")
 
-        return PolyhedralContract(
+        return PolyhedralIoContract(
             input_vars=[Var(x) for x in contract["input_vars"]],
             output_vars=[Var(x) for x in contract["output_vars"]],
             assumptions=a,
             guarantees=g,
         )
 
-    def compose(self, other: PolyhedralContract, vars_to_keep: Optional[List[str]] = None) -> PolyhedralContract:
+    def compose(self, other: PolyhedralIoContract, vars_to_keep: Optional[List[str]] = None) -> PolyhedralIoContract:
         """Compose polyhedral contracts.
 
         Compute the composition of the two given contracts and abstract the
@@ -234,7 +234,7 @@ class NestedPolyhedra(NestedTermList):
         super().__init__(nested_termlist, force_empty_intersection)
 
 
-class PolyhedralContractCompound(IoContractCompound):
+class PolyhedralIoContractCompound(IoContractCompound):
     """
     Compound IO contract with polyhedral assumptions and guarantees.
 
@@ -251,12 +251,12 @@ class PolyhedralContractCompound(IoContractCompound):
     """
 
     @staticmethod
-    def from_string(
+    def from_strings(
         assumptions: List[list[str]],
         guarantees: List[list[str]],
         input_vars: List[str],
         output_vars: List[str],
-    ) -> PolyhedralContractCompound:
+    ) -> PolyhedralIoContractCompound:
         """
         Create contract from several lists of strings.
 
@@ -281,7 +281,7 @@ class PolyhedralContractCompound(IoContractCompound):
                 g_termlist = [item for x in termlist_str for item in serializer.polyhedral_termlist_from_string(x)]
                 g.append(PolyhedralTermList(g_termlist))
 
-        return PolyhedralContractCompound(
+        return PolyhedralIoContractCompound(
             input_vars=[Var(x) for x in input_vars],
             output_vars=[Var(x) for x in output_vars],
             assumptions=NestedPolyhedra(a, force_empty_intersection=True),
