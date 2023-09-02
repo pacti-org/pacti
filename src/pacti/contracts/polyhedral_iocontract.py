@@ -80,7 +80,7 @@ class PolyhedralIoContract(IoContract):
         return c_temp
 
     @staticmethod
-    def from_string(
+    def from_strings(
         assumptions: List[str],
         guarantees: List[str],
         input_vars: List[str],
@@ -251,7 +251,7 @@ class PolyhedralIoContractCompound(IoContractCompound):
     """
 
     @staticmethod
-    def from_string(
+    def from_strings(
         assumptions: List[list[str]],
         guarantees: List[list[str]],
         input_vars: List[str],

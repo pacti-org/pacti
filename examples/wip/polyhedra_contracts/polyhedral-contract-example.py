@@ -13,7 +13,7 @@ def input2output(i: str, outputs: List[Var], varPrefixes: List[str]) -> str:
 varPrefixes=["t", "soc", "d", "e", "r"]
 
 def connect(c1: IoContract, c2: IoContract, varPrefixes: List[str]) -> IoContract:
-    c12 = PolyhedralIoContract.from_string(
+    c12 = PolyhedralIoContract.from_strings(
       input_vars = list(map(lambda x: x.name, c1.outputvars)),
       output_vars = list(map(lambda x: x.name, c2.inputvars)),
       assumptions = [],
@@ -23,7 +23,7 @@ def connect(c1: IoContract, c2: IoContract, varPrefixes: List[str]) -> IoContrac
 
 def initial_contract() -> Tuple[int, PolyhedralIoContract]:
   e=1
-  spec = PolyhedralIoContract.from_string(
+  spec = PolyhedralIoContract.from_strings(
     input_vars = [],
     output_vars= [
       f"t{e}",    # Scheduled end time
@@ -45,7 +45,7 @@ def initial_contract() -> Tuple[int, PolyhedralIoContract]:
 
 def SBO_contract(s: int, duration: float, generation: float, consumption: float, improvement: float) -> Tuple[int, PolyhedralIoContract]:
   e = s+1
-  spec = PolyhedralIoContract.from_string(
+  spec = PolyhedralIoContract.from_strings(
     input_vars = [
       f"t{s}",    # Scheduled start time
       f"soc{s}",  # initial battery SOC

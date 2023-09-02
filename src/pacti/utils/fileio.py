@@ -43,9 +43,9 @@ def read_contracts_from_file(  # noqa: WPS231 too much cognitive complexity
             names.append(entry["name"])
         elif entry["type"] == "PolyhedralIoContract":
             polyhedra.serializer.validate_contract_dict(entry["data"], entry["name"], machine_representation=False)
-            contracts.append(PolyhedralIoContract.from_string(**entry["data"]))
+            contracts.append(PolyhedralIoContract.from_strings(**entry["data"]))
         elif entry["type"] == "PolyhedralIoContractCompound":
-            contracts.append(PolyhedralIoContractCompound.from_string(**entry["data"]))
+            contracts.append(PolyhedralIoContractCompound.from_strings(**entry["data"]))
         else:
             raise ValueError()
 

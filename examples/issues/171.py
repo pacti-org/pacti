@@ -4,13 +4,13 @@ import logging
 FORMAT = "%(asctime)s:%(levelname)s:%(name)s:%(message)s"
 logging.basicConfig(filename="../pacti.log", filemode="w", level=logging.DEBUG, format=FORMAT)
 
-C1 = PolyhedralIoContract.from_string(
+C1 = PolyhedralIoContract.from_strings(
     input_vars   =["t0", "dt0"],
     output_vars  =["t1"],
     assumptions =["-t0 <= 0"],
     guarantees  =["t1 - t0 - dt0 = 0"])
 
-C2 = PolyhedralIoContract.from_string(
+C2 = PolyhedralIoContract.from_strings(
     input_vars   =[ "t1", "dt1" ],
     output_vars  =[ "t2" ],
     assumptions =[ "-t1 <= 0" ],
@@ -19,7 +19,7 @@ C2 = PolyhedralIoContract.from_string(
 C12 = C1.compose(C2)
 print(C12)
 
-TOP = PolyhedralIoContract.from_string(
+TOP = PolyhedralIoContract.from_strings(
     input_vars   =[ "t0", "dt0", "dt1" ],
     output_vars  =["t2"],
     assumptions =["-t0 - dt0 <= 0", "-t0 <= 0"],

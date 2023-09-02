@@ -2,7 +2,7 @@ from pacti.terms.polyhedra import *
 from pacti.contracts import PolyhedralIoContract
 
 def test_empty_contract() -> None:
-    c = PolyhedralIoContract.from_string(input_vars=[], output_vars=[], assumptions=[], guarantees=[])
+    c = PolyhedralIoContract.from_strings(input_vars=[], output_vars=[], assumptions=[], guarantees=[])
     assert 0 == len(c.inputvars)
     assert 0 == len(c.outputvars)
     assert 0 == len(c.a.terms)
@@ -10,7 +10,7 @@ def test_empty_contract() -> None:
 
 
 def test_simple_contract() -> None:
-    c = PolyhedralIoContract.from_string(input_vars=["x"], output_vars=[], assumptions=["-3x <= 0"], guarantees=[])
+    c = PolyhedralIoContract.from_strings(input_vars=["x"], output_vars=[], assumptions=["-3x <= 0"], guarantees=[])
     assert 1 == len(c.inputvars)
     assert "x" == c.inputvars[0].name
     assert 0 == len(c.outputvars)
@@ -26,7 +26,7 @@ def test_simple_contract() -> None:
 
 # | LHS | <= RHS
 def test_pattern2_contract() -> None:
-    c = PolyhedralIoContract.from_string(input_vars=["x"], output_vars=[], assumptions=["|x| <= 0"], guarantees=[])
+    c = PolyhedralIoContract.from_strings(input_vars=["x"], output_vars=[], assumptions=["|x| <= 0"], guarantees=[])
     assert 1 == len(c.inputvars)
     assert "x" == c.inputvars[0].name
     assert 0 == len(c.outputvars)
@@ -50,7 +50,7 @@ def test_pattern2_contract() -> None:
 
 # | LHS | = 0
 def test_pattern3_contract() -> None:
-    c = PolyhedralIoContract.from_string(input_vars=["x"], output_vars=[], assumptions=["|x| <= 10"], guarantees=[])
+    c = PolyhedralIoContract.from_strings(input_vars=["x"], output_vars=[], assumptions=["|x| <= 10"], guarantees=[])
     assert 1 == len(c.inputvars)
     assert "x" == c.inputvars[0].name
     assert 0 == len(c.outputvars)
@@ -74,7 +74,7 @@ def test_pattern3_contract() -> None:
 
 # LHS = RHS
 def test_pattern4_contract() -> None:
-    c = PolyhedralIoContract.from_string(input_vars=["x"], output_vars=[], assumptions=["x = 1"], guarantees=[])
+    c = PolyhedralIoContract.from_strings(input_vars=["x"], output_vars=[], assumptions=["x = 1"], guarantees=[])
     assert 1 == len(c.inputvars)
     assert "x" == c.inputvars[0].name
     assert 0 == len(c.outputvars)
@@ -99,7 +99,7 @@ def test_pattern4_contract() -> None:
 
 
 def test_epsilon_contract() -> None:
-    c = PolyhedralIoContract.from_string(
+    c = PolyhedralIoContract.from_strings(
         input_vars=["i"], output_vars=[], assumptions=["|i| <= 1.23456789e-5"], guarantees=[]
     )
 

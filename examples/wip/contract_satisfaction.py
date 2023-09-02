@@ -3,7 +3,7 @@ from pacti.terms.polyhedra import PolyhedralIoContract, PolyhedralTermList, Poly
 from pacti.iocontract import Var
 
 
-contract = PolyhedralIoContract.from_string(
+contract = PolyhedralIoContract.from_strings(
     input_vars=["x"],
     output_vars=["y"],
     assumptions=["x <= 2"],
