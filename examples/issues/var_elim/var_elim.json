@@ -1,7 +1,7 @@
 [
   {
     "name": "c1",
-    "type": "PolyhedralContract_machine",
+    "type": "PolyhedralIoContract_machine",
     "data": {
       "input_vars": [
         "d1_entry",
@@ -128,7 +128,7 @@
   },
   {
     "name": "c2",
-    "type": "PolyhedralContract_machine",
+    "type": "PolyhedralIoContract_machine",
     "data": {
       "input_vars": [
         "duration_sbo3",

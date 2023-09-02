@@ -1,7 +1,7 @@
 [
   {
     "name": "contract1",
-    "type": "PolyhedralContract",
+    "type": "PolyhedralIoContract",
     "data": {
       "input_vars": [
         "i"
@@ -20,7 +20,7 @@
   },
   {
     "name": "contract2",
-    "type": "PolyhedralContract",
+    "type": "PolyhedralIoContract",
     "data": {
       "input_vars": [
         "o"
@@ -39,7 +39,7 @@
   },
   {
     "name": "system_contract",
-    "type": "PolyhedralContract",
+    "type": "PolyhedralIoContract",
     "data": {
       "input_vars": [
         "i"
