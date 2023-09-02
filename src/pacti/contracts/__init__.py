@@ -1,2 +1,1 @@
 from .polyhedral_iocontract import PolyhedralIoContract, PolyhedralIoContractCompound
-from .plots import plot_assumptions, plot_guarantees
