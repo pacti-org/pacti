@@ -150,7 +150,7 @@ class PolyhedralTerm(Term):
 
         Returns:
             `True` if the syntax of the term refers to the given variable;
-            `False` otherwise.
+                `False` otherwise.
         """
         return var_to_seek in self.vars
 
@@ -183,8 +183,8 @@ class PolyhedralTerm(Term):
 
         Returns:
             `True` if the variable's polarity matches `polarity` and
-            `False` otherwise. If the variable's coefficient in the term
-            is zero, return `True`.
+                `False` otherwise. If the variable's coefficient in the term
+                is zero, return `True`.
         """
         if polarity:
             return self.variables[var] >= 0
@@ -236,8 +236,8 @@ class PolyhedralTerm(Term):
 
         Returns:
             If all variables in the term match the polarities specified in the
-            argument, the routine returns the matching variables.  Otherwise,
-            it returns an empty list.
+                argument, the routine returns the matching variables.  Otherwise,
+                it returns an empty list.
         """
         variable_list = []
         for var in variable_polarity.keys():  # noqa: VNE002
@@ -298,7 +298,7 @@ class PolyhedralTerm(Term):
 
         Returns:
             A new term in which the variable is substituted with the given term
-            understood as an equality.
+                understood as an equality.
         """
         if self.contains_var(var):
             term = subst_with_term.multiply(self.get_coefficient(var))
@@ -322,7 +322,7 @@ class PolyhedralTerm(Term):
 
         Returns:
             A new term which corresponds to the isolation of the indicated
-            variable.
+                variable.
 
         Raises:
             ValueError: the indicated variable is not contained in the term.
@@ -350,7 +350,7 @@ class PolyhedralTerm(Term):
                 PolyhedralTerm.to_symbolic(term)
             ```
 
-            yields the expression $-2x + 3y$.
+            yields the expression $-2x + 3y - 4$.
 
         Args:
             term:
@@ -412,7 +412,7 @@ class PolyhedralTerm(Term):
 
         Returns:
             A tuple consisting of (i) the ordered list of coefficients and (ii)
-            the term's constant.
+                the term's constant.
         """
         coeffs = []
         for var in variable_list:  # noqa: VNE002
@@ -455,7 +455,7 @@ class PolyhedralTerm(Term):
 
         Returns:
             A dictionary mapping variables to their solutions. The solutions are
-            expressed as PolyhedralTerm instances.
+                expressed as PolyhedralTerm instances.
         """
         logging.debug("GetVals: %s Vars: %s", context, vars_to_elim)
         vars_to_solve = list_intersection(context.vars, vars_to_elim)
@@ -536,7 +536,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
 
         Returns:
             A new PolyhedralTermList in which the variables have been
-            substituted with the values provided.
+                substituted with the values provided.
 
         Raises:
             ValueError: constraints are unsatisfiable under these valuation of variables.
@@ -906,7 +906,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
 
         Returns:
             A tuple `variables, A, b, a_h, b_h` consisting of the variable
-            order and the matrix-vector pairs for the terms and the context.
+                order and the matrix-vector pairs for the terms and the context.
         """
         variables = list(list_union(terms.vars, context.vars))
         a = []

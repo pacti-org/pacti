@@ -311,9 +311,9 @@ class TermList(ABC):
                 the TermList.
 
         Returns:
-            Let $S$ be this TermList. Simplify will return $S_T = S \\setminus T$
-            where $T \\subseteq S$ is a maximal subset such that $\\frac{\\Gamma, S_T\\colon \\;
-            \\top}{\\Gamma, S_T\\colon \\; \\wedge_{t \\in T} t}$.
+            Let $S$ be this TermList. Simplify will return
+                $S_T = S \\setminus T$, where $T \\subseteq S$ is a maximal subset such that
+                $\\frac{\\Gamma, S_T\\colon \\; \\top}{\\Gamma, S_T\\colon \\; \\wedge_{t \\in T} t}$.
         """
 
     @abstractmethod
@@ -535,7 +535,7 @@ class IoContract(Generic[TermList_t]):
 
         Returns:
             True if the IO profiles of the contracts allow the quotient to
-            exist. False otherwise.
+                exist. False otherwise.
         """
         # make sure the top level outputs not contained in outputs of the
         # existing component do not intersect with the inputs of the existing
