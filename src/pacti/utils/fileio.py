@@ -4,12 +4,14 @@ import json
 import os
 from typing import Any, Dict, List, Tuple
 
+from pacti import iocontract
+from pacti.contracts import PolyhedralIoContract, PolyhedralIoContractCompound
 from pacti.terms import polyhedra
 
 
 def read_contracts_from_file(  # noqa: WPS231 too much cognitive complexity
     file_name: str,
-) -> Tuple[List[polyhedra.PolyhedralContract], List[str]]:
+) -> Tuple[List[iocontract.IoContract], List[str]]:
     """
     Read contracts from a file.
 
@@ -35,15 +37,15 @@ def read_contracts_from_file(  # noqa: WPS231 too much cognitive complexity
     contracts: List[Any] = []
     names = []
     for entry in file_data:
-        if entry["type"] == "PolyhedralContract_machine":
+        if entry["type"] == "PolyhedralIoContract_machine":
             polyhedra.serializer.validate_contract_dict(entry["data"], entry["name"], machine_representation=True)
-            contracts.append(polyhedra.PolyhedralContract.from_dict(entry["data"]))
+            contracts.append(PolyhedralIoContract.from_dict(entry["data"]))
             names.append(entry["name"])
-        elif entry["type"] == "PolyhedralContract":
+        elif entry["type"] == "PolyhedralIoContract":
             polyhedra.serializer.validate_contract_dict(entry["data"], entry["name"], machine_representation=False)
-            contracts.append(polyhedra.PolyhedralContract.from_string(**entry["data"]))
-        elif entry["type"] == "PolyhedralContractCompound":
-            contracts.append(polyhedra.PolyhedralContractCompound.from_string(**entry["data"]))
+            contracts.append(PolyhedralIoContract.from_string(**entry["data"]))
+        elif entry["type"] == "PolyhedralIoContractCompound":
+            contracts.append(PolyhedralIoContractCompound.from_string(**entry["data"]))
         else:
             raise ValueError()
 
@@ -51,7 +53,7 @@ def read_contracts_from_file(  # noqa: WPS231 too much cognitive complexity
 
 
 def write_contracts_to_file(  # noqa: WPS231 too much cognitive complexity
-    contracts: List[polyhedra.PolyhedralContract],
+    contracts: List[iocontract.IoContract],
     names: List[str],
     file_name: str,
     machine_representation: bool = False,
@@ -72,20 +74,20 @@ def write_contracts_to_file(  # noqa: WPS231 too much cognitive complexity
     assert len(contracts) == len(names)
     for i, c in enumerate(contracts):
         entry: Dict[str, Any] = {}
-        if isinstance(c, polyhedra.PolyhedralContract):
+        if isinstance(c, PolyhedralIoContract):
             entry["name"] = names[i]
             if machine_representation:
-                entry["type"] = "PolyhedralContract_machine"
+                entry["type"] = "PolyhedralIoContract_machine"
                 entry["data"] = c.to_machine_dict()
 
             else:
-                entry["type"] = "PolyhedralContract"
+                entry["type"] = "PolyhedralIoContract"
                 entry["data"] = c.to_dict()
-        elif isinstance(c, polyhedra.PolyhedralContractCompound):
+        elif isinstance(c, PolyhedralIoContractCompound):
             entry["name"] = names[i]
             if machine_representation:
                 raise ValueError("Unsupported representation")
-            entry["type"] = "PolyhedralContractCompound"
+            entry["type"] = "PolyhedralIoContractCompound"
             entry["data"] = c.to_dict()
 
         else:
