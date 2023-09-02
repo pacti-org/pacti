@@ -1,7 +1,7 @@
 [
   {
     "name": "contract_OC6_lin",
-    "type": "PolyhedralContract",
+    "type": "PolyhedralIoContract",
     "data": {
       "input_vars": [
         "OC6"
@@ -20,7 +20,7 @@
   },
   {
     "name": "dCas9_contract_on",
-    "type": "PolyhedralContract",
+    "type": "PolyhedralIoContract",
     "data": {
       "input_vars": [
         "xRFP",
@@ -42,7 +42,7 @@
   },
   {
     "name": "successful_comp_OC6",
-    "type": "PolyhedralContract",
+    "type": "PolyhedralIoContract",
     "data": {
       "input_vars": [
         "OC6",

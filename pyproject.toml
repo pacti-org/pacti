@@ -89,6 +89,7 @@ dev = [
     "certifi>=2022.9.24",
     "tox>=4.4.7",
     "editables>=0.3",
+    "ipykernel"
 ]
 
 [tool.black]
