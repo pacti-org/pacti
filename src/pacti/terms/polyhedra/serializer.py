@@ -238,6 +238,7 @@ def _leq_expression_to_polyhedral_terms(str_rep: str, e: PolyhedralSyntaxIneqExp
     Convert less-than-or-equal expression
 
     Args:
+        str_rep: The linear expression passed as a string.
         e: Expression
 
     Returns:
@@ -270,6 +271,7 @@ def _geq_expression_to_polyhedral_terms(str_rep: str, e: PolyhedralSyntaxIneqExp
     Convert greater-than-or-equal expression
 
     Args:
+        str_rep: The linear expression passed as a string.
         e: Expression
 
     Returns:
