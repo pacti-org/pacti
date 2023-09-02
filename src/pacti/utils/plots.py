@@ -12,7 +12,7 @@ from scipy.optimize import linprog
 from scipy.spatial import HalfspaceIntersection, QhullError
 
 from pacti.iocontract import Var
-from pacti.terms.polyhedra import PolyhedralContract
+from pacti.contracts import PolyhedralIoContract
 from pacti.terms.polyhedra.polyhedra import PolyhedralTerm, PolyhedralTermList
 from pacti.utils.lists import list_diff, list_union
 
@@ -20,7 +20,7 @@ numeric = Union[int, float]
 
 
 def plot_assumptions(
-    contract: PolyhedralContract,
+    contract: PolyhedralIoContract,
     x_var: Var,
     y_var: Var,
     var_values: Dict[Var, numeric],
@@ -58,7 +58,7 @@ def plot_assumptions(
 
 
 def plot_guarantees(
-    contract: PolyhedralContract,
+    contract: PolyhedralIoContract,
     x_var: Var,
     y_var: Var,
     var_values: dict[Var, numeric],
@@ -296,7 +296,7 @@ if __name__ == "__main__":
         ],
         "guarantees": [{"coefficients": {"x_1": -1}, "constant": -1.5}],
     }
-    c1 = PolyhedralContract.from_dict(contract1)
+    c1 = PolyhedralIoContract.from_dict(contract1)
     fig = plot_assumptions(
         contract=c1, x_var=Var("u_1"), y_var=Var("u_2"), var_values={Var("x_1"): 0}, x_lims=(-2, 2), y_lims=(-2, 2)
     )
@@ -313,7 +313,7 @@ if __name__ == "__main__":
             {"coefficients": {"v1": -1}, "constant": -1600},
         ],
     }
-    c2 = PolyhedralContract.from_dict(contract2)
+    c2 = PolyhedralIoContract.from_dict(contract2)
     fig = plot_guarantees(
         contract=c2,
         x_var=Var("t0"),
@@ -342,7 +342,7 @@ if __name__ == "__main__":
             {"constant": float(0), "coefficients": {"r11": -1.0, "r10": 1.0}},
         ],
     }
-    c3 = PolyhedralContract.from_dict(contract3)
+    c3 = PolyhedralIoContract.from_dict(contract3)
 
     fig = plot_guarantees(
         contract=c3,

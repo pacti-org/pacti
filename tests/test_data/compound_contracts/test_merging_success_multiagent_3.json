@@ -1,7 +1,7 @@
 [
   {
     "name": "contract1",
-    "type": "PolyhedralContractCompound",
+    "type": "PolyhedralIoContractCompound",
     "data": {
       "input_vars": [
         "x_A_0",
@@ -47,7 +47,7 @@
   },
   {
     "name": "contract2",
-    "type": "PolyhedralContractCompound",
+    "type": "PolyhedralIoContractCompound",
     "data": {
       "input_vars": [
         "current_distance",
@@ -87,7 +87,7 @@
   },
   {
     "name": "contract3",
-    "type": "PolyhedralContractCompound",
+    "type": "PolyhedralIoContractCompound",
     "data": {
       "input_vars": [
         "x_A_0",
