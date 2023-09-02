@@ -5,7 +5,7 @@ from typing import List, cast
 
 import pyparsing as pp
 
-from pacti.terms.polyhedra.syntax.data import (  # noqa: WPS235 too many imported names
+from pacti.terms.polyhedra.syntax.data import (  # noqa: WPS235, WPS450 too many imported names, _combine_or_append is protected
     PolyhedralSyntaxAbsoluteTerm,
     PolyhedralSyntaxAbsoluteTermList,
     PolyhedralSyntaxAbsoluteTermOrTerm,
