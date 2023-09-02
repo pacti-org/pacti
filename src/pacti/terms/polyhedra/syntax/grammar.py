@@ -28,7 +28,7 @@ def _parse_only_variable(tokens: pp.ParseResults) -> PolyhedralSyntaxTermList:
 def _parse_number_and_variable(tokens: pp.ParseResults) -> PolyhedralSyntaxTermList:
     number = tokens[0]
     assert isinstance(number, float)
-    variable_term = tokens[len(tokens) - 1]
+    variable_term = tokens[len(tokens) - 1]  # noqa: WPS530 Found implicit negative index
     assert isinstance(variable_term, PolyhedralSyntaxTermList)
     assert variable_term.constant == 0
     for k in variable_term.factors:
@@ -95,7 +95,7 @@ def _parse_factor_paren_terms(tokens: pp.ParseResults) -> PolyhedralSyntaxTermLi
     group = tokens[0]
     f = group[0]
     assert isinstance(f, float)
-    pt = group[len(group) - 1]
+    pt = group[len(group) - 1]  # noqa: WPS530 Found implicit negative index
     assert isinstance(pt, PolyhedralSyntaxTermList)
     pt.constant *= f
     for k in pt.factors:
@@ -115,7 +115,7 @@ def _parse_absolute_term(tokens: pp.ParseResults) -> PolyhedralSyntaxAbsoluteTer
 
     coefficient = group[0]
     assert isinstance(coefficient, float)
-    term_list = group[len(group) - 2]
+    term_list = group[len(group) - 2]  # noqa: WPS530 Found implicit negative index
     assert isinstance(term_list, PolyhedralSyntaxTermList)
     return PolyhedralSyntaxAbsoluteTerm(term_list=term_list, coefficient=coefficient)
 
@@ -188,7 +188,7 @@ def _parse_paren_abs_or_terms(tokens: pp.ParseResults) -> PolyhedralSyntaxAbsolu
         return atl
     f = group[0]
     assert isinstance(f, float)
-    atl = group[len(group) - 2]
+    atl = group[len(group) - 2]  # noqa: WPS530 Found implicit negative index
     assert isinstance(atl, PolyhedralSyntaxAbsoluteTermList)
     atl.term_list.constant *= f
     for k in atl.term_list.factors:

@@ -1,3 +1,5 @@
+"""Basis data structures for polyhedral parsing."""
+
 import dataclasses
 from enum import Enum
 from itertools import product
