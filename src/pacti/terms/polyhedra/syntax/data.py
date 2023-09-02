@@ -325,7 +325,9 @@ class PolyhedralSyntaxEqlExpression(PolyhedralSyntaxExpression):
     operator: PolyhedralSyntaxOperator = dataclasses.field(init=False)
 
     def __post_init__(self) -> None:
-        self.operator = PolyhedralSyntaxOperator.eql
+        # For the validity of the following supression, see
+        # https://github.com/wemake-services/wemake-python-styleguide/issues/1926
+        self.operator = PolyhedralSyntaxOperator.eql  # noqa: WPS601 Found shadowed class attribute.
 
 
 @dataclasses.dataclass
