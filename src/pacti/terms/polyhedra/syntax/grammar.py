@@ -201,7 +201,9 @@ def _parse_paren_abs_or_terms(tokens: pp.ParseResults) -> PolyhedralSyntaxAbsolu
     return atl
 
 
-def _parse_first_or_addl_paren_abs_or_terms(tokens: pp.ParseResults) -> PolyhedralSyntaxAbsoluteTermList:
+def _parse_first_or_addl_paren_abs_or_terms(  # noqa: WPS231
+    tokens: pp.ParseResults,
+) -> PolyhedralSyntaxAbsoluteTermList:
     assert len(tokens) == 1
     group = tokens[0]
 
@@ -259,7 +261,7 @@ def _parse_equality_expression(tokens: pp.ParseResults) -> PolyhedralSyntaxExpre
     assert len(tokens) == 1
     group = tokens[0]
     lhs = group[0]
-    assert group[1] == "==" or group[1] == "="
+    assert group[1] in {"==", "="}
     rhs = group[2]
     if isinstance(lhs, PolyhedralSyntaxTermList) & isinstance(rhs, PolyhedralSyntaxTermList):
         return PolyhedralSyntaxEqlExpression(lhs=lhs, rhs=rhs)  # (VS-Code) # type: ignore
@@ -395,36 +397,36 @@ addl_abs_or_term = (
 # Produces an PolyhedralSyntaxAbsoluteTermList
 abs_or_terms = (
     pp.Group(first_abs_or_term + pp.ZeroOrMore(addl_abs_or_term))
-    .set_parse_action(_parse_abs_or_terms)
-    .set_name("abs_or_terms")
+    .set_parse_action(_parse_abs_or_terms)  # noqa: WPS348
+    .set_name("abs_or_terms")  # noqa: WPS348
 )
 
 # Produces an PolyhedralSyntaxAbsoluteTermList
 paren_abs_or_terms = (
     pp.Group(pp.Optional(floating_point_number + pp.Optional("*")) + "(" + abs_or_terms + ")")
-    .set_parse_action(_parse_paren_abs_or_terms)
-    .set_name("paren_abs_or_terms")
+    .set_parse_action(_parse_paren_abs_or_terms)  # noqa: WPS348
+    .set_name("paren_abs_or_terms")  # noqa: WPS348
 )
 
 # Produces an PolyhedralSyntaxAbsoluteTermList
 first_paren_abs_or_terms = (
     pp.Group(pp.Optional(symbol, default="+") + paren_abs_or_terms | first_abs_or_term)
-    .set_parse_action(_parse_first_or_addl_paren_abs_or_terms)
-    .set_name("first_paren_abs_or_terms")
+    .set_parse_action(_parse_first_or_addl_paren_abs_or_terms)  # noqa: WPS348
+    .set_name("first_paren_abs_or_terms")  # noqa: WPS348
 )
 
 # Produces an PolyhedralSyntaxAbsoluteTermList
 addl_paren_abs_or_terms = (
     pp.Group(symbol + paren_abs_or_terms | addl_abs_or_term)
-    .set_parse_action(_parse_first_or_addl_paren_abs_or_terms)
-    .set_name("addl_paren_abs_or_terms")
+    .set_parse_action(_parse_first_or_addl_paren_abs_or_terms)  # noqa: WPS348
+    .set_name("addl_paren_abs_or_terms")  # noqa: WPS348
 )
 
 # Produces an PolyhedralSyntaxAbsoluteTermList
 multi_paren_abs_or_terms = (
     pp.Group(first_paren_abs_or_terms + pp.ZeroOrMore(addl_paren_abs_or_terms))
-    .set_parse_action(_parse_multi_paren_abs_or_terms)
-    .set_name("multi_paren_abs_or_terms")
+    .set_parse_action(_parse_multi_paren_abs_or_terms)  # noqa: WPS348
+    .set_name("multi_paren_abs_or_terms")  # noqa: WPS348
 )
 
 equality_operator = pp.Or([pp.Literal("=="), pp.Literal("=")])

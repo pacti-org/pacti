@@ -25,6 +25,7 @@ class PolyhedralSyntaxTermList:
     def is_positive(self: "PolyhedralSyntaxTermList") -> bool:
         """
         Checks whether the TermList is positive.
+
         Returns:
             True if either the constant is positive or, if the first ordered factor is positive.
         """
@@ -38,6 +39,7 @@ class PolyhedralSyntaxTermList:
     def negate(self: "PolyhedralSyntaxTermList") -> "PolyhedralSyntaxTermList":
         """
         Negated PolyhedralSyntaxTermList
+
         Returns:
             A PolyhedralSyntaxTermList with the negated constant and all factors negated.
         """
@@ -50,8 +52,10 @@ class PolyhedralSyntaxTermList:
     def add(self: "PolyhedralSyntaxTermList", other: "PolyhedralSyntaxTermList") -> "PolyhedralSyntaxTermList":
         """
         Addition for PolyhedralSyntaxTermList.
+
         Args:
             other: a PolyhedralSyntaxTermList to add to self.
+
         Returns:
             A new PolyhedralSyntaxTermList with the sum of the constants and with the factors added by their variables.
         """
@@ -71,6 +75,7 @@ class PolyhedralSyntaxTermList:
     def to_polyhedral_term(self: "PolyhedralSyntaxTermList") -> PolyhedralTerm:
         """
         Converts a PolyhedralSyntaxTermList to a PolyhedralTerm.
+
         Returns:
             A PolyhedralTerm with the right-hand-side constant as the negated constant of the PolyhedralSyntaxTermList
             and left-hand-side variables mapped from the PolyhedralSyntaxTermList variables with their multiplicative coefficients.
@@ -111,6 +116,7 @@ class PolyhedralSyntaxAbsoluteTerm:
     def is_positive(self: "PolyhedralSyntaxAbsoluteTerm") -> bool:
         """
         Checks whether this PolyhedralSyntaxAbsoluteTerm is positive.
+
         Returns:
             True if either there is no coefficient or the coefficient is positive.
         """
@@ -121,6 +127,7 @@ class PolyhedralSyntaxAbsoluteTerm:
     def negate(self: "PolyhedralSyntaxAbsoluteTerm") -> "PolyhedralSyntaxAbsoluteTerm":
         """
         Negated PolyhedralSyntaxAbsoluteTerm.
+
         Returns:
             A negated copy of this PolyhedralSyntaxAbsoluteTerm.
         """
@@ -131,8 +138,10 @@ class PolyhedralSyntaxAbsoluteTerm:
     def same_term_list(self, other: "PolyhedralSyntaxAbsoluteTerm") -> bool:
         """
         Check whether this PolyhedralSyntaxAbsoluteTerm has the same term_list as other.
+
         Args:
             other: Another PolyhedralSyntaxAbsoluteTerm
+
         Returns:
             True if the representation of self's term_list is equal to that of other's.
         """
@@ -143,6 +152,7 @@ class PolyhedralSyntaxAbsoluteTerm:
     def to_term_list(self: "PolyhedralSyntaxAbsoluteTerm") -> PolyhedralSyntaxTermList:
         """
         Converts an PolyhedralSyntaxAbsoluteTerm into a PolyhedralSyntaxTermList.
+
         Returns:
             A PolyhedralSyntaxTermList with the PolyhedralSyntaxAbsoluteTerm coefficient
             applied as a multiplier for the constant and factors of the term_list.
@@ -225,11 +235,15 @@ class PolyhedralSyntaxAbsoluteTermList:
     def expand(self) -> List[PolyhedralSyntaxTermList]:
         """
         Expand all positive/negative combinations of the absolute_term_list into PolyhedralSyntaxTermList.
-        Each expanded PolyhedralSyntaxTermList corresponds to combining the term_list of
-        a given PolyhedralSyntaxAbsoluteTerm with one of all possible combinations of
-        the positive and negative variants of the absolute_term_list elements.
-        If n is the length of the absolute_term_list, then the result has 2^n PolyhedralSyntaxTermList,
-        one for each of the positive/negative combinations of each absolute_term_list element combined with the term_list.
+
+        Each expanded PolyhedralSyntaxTermList corresponds to combining the
+        term_list of a given PolyhedralSyntaxAbsoluteTerm with one of all
+        possible combinations of the positive and negative variants of the
+        absolute_term_list elements. If n is the length of the
+        absolute_term_list, then the result has 2^n PolyhedralSyntaxTermList,
+        one for each of the positive/negative combinations of each
+        absolute_term_list element combined with the term_list.
+
         Returns:
             A list of PolyhedralSyntaxTermList instances.
         """
@@ -254,6 +268,7 @@ class PolyhedralSyntaxAbsoluteTermList:
     def negate(self) -> "PolyhedralSyntaxAbsoluteTermList":
         """
         Negated PolyhedralSyntaxAbsoluteTermList
+
         Returns:
             An PolyhedralSyntaxAbsoluteTermList with negated term_list and all absolute_term_list negated.
         """
@@ -264,8 +279,10 @@ class PolyhedralSyntaxAbsoluteTermList:
     def add(self, other: "PolyhedralSyntaxAbsoluteTermList") -> "PolyhedralSyntaxAbsoluteTermList":
         """
         Addition for PolyhedralSyntaxAbsoluteTermList
+
         Args:
             other: An PolyhedralSyntaxAbsoluteTermList to add to self.
+
         Returns:
             An PolyhedralSyntaxAbsoluteTermList with the term_list added
         """
@@ -277,14 +294,11 @@ class PolyhedralSyntaxAbsoluteTermList:
     def is_constant(self) -> bool:
         """
         Is this PolyhedralSyntaxAbsoluteTermList equivalent to a constant.
+
         Returns:
             True if there are no PolyhedralSyntaxAbsoluteTermList and no factors in the term_list.
         """
-        if len(self.absolute_term_list) > 0:
-            return False
-        if len(self.term_list.factors) > 0:
-            return False
-        return True
+        return len(self.absolute_term_list) == 0 and len(self.term_list.factors) == 0
 
 
 class PolyhedralSyntaxOperator(Enum):
