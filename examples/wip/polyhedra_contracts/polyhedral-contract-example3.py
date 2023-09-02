@@ -1,5 +1,5 @@
 
-from pacti.terms.polyhedra import *
+from pacti.contracts import PolyhedralIoContract
 import logging
 
 FORMAT = "%(asctime)s:%(levelname)s:%(name)s:%(message)s"
@@ -11,7 +11,7 @@ atmospheric_t_entry = 0.0
 atmospheric_t_exit = 90.0
 atmospheric_min_deacceleration = abs((atmospheric_v_entry - atmospheric_v_exit) / (atmospheric_t_entry - atmospheric_t_exit))
 
-atmospheric_entry_contract = PolyhedralContract.from_string(
+atmospheric_entry_contract = PolyhedralIoContract.from_strings(
     input_vars=[
       "t0",           # time @ entry
       "v0"            # velocity @ entry
@@ -51,7 +51,7 @@ parachute_t_entry = 90.0
 parachute_t_exit = 260.0
 parachute_min_deacceleration = abs((parachute_v_entry - parachute_v_exit) / (parachute_t_entry - parachute_t_exit))
 
-parachute_deployment_contract = PolyhedralContract.from_string(
+parachute_deployment_contract = PolyhedralIoContract.from_strings(
     input_vars=[
       "t1",           # entry time
       "v1"            # entry velocity

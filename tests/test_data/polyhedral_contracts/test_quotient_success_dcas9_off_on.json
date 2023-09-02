@@ -1,7 +1,7 @@
 [
   {
     "name": "top_off_on",
-    "type": "PolyhedralContract",
+    "type": "PolyhedralIoContract",
     "data": {
       "input_vars": [
         "Sal",
@@ -22,7 +22,7 @@
   },
   {
     "name": "csal_atc",
-    "type": "PolyhedralContract",
+    "type": "PolyhedralIoContract",
     "data": {
       "input_vars": [
         "Sal",
@@ -45,7 +45,7 @@
   },
   {
     "name": "dCas_off_on",
-    "type": "PolyhedralContract",
+    "type": "PolyhedralIoContract",
     "data": {
       "input_vars": [
         "xRFP",

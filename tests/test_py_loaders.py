@@ -4,7 +4,7 @@ import pytest
 from test_iocontract import validate_iocontract
 
 import pacti.iocontract as iocontract
-from pacti.terms.polyhedra import *
+from pacti.contracts import PolyhedralIoContract
 
 
 def create_contracts(num: int = 1) -> List[dict]:
@@ -31,11 +31,11 @@ def test_read_contract() -> None:
     # Create 1 contract and read it
     c_i = create_contracts(1)
     for c in c_i:
-        assert validate_iocontract(PolyhedralContract.from_dict(c))
+        assert validate_iocontract(PolyhedralIoContract.from_dict(c))
 
     # Create 5 contracts and read
     c_i = create_contracts(5)
-    io_contracts = [PolyhedralContract.from_dict(c) for c in c_i]
+    io_contracts = [PolyhedralIoContract.from_dict(c) for c in c_i]
     assert len(io_contracts) == 5
     for io_c in io_contracts:
         assert isinstance(io_c, iocontract.IoContract)
@@ -43,4 +43,4 @@ def test_read_contract() -> None:
     # Ensure that all contracts are dictionaries
     c_n = {"input_vars": "u", "output_vars": "x"}
     with pytest.raises(ValueError, match="Passed dictionary does not have key assumptions."):
-        PolyhedralContract.from_dict(c_n)
+        PolyhedralIoContract.from_dict(c_n)

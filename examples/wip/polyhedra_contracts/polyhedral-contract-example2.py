@@ -1,4 +1,4 @@
-from pacti.terms.polyhedra import *
+from pacti.contracts import PolyhedralIoContract
 
 contract1 = {
         "input_vars":[
@@ -21,5 +21,5 @@ contract1 = {
             "constant":-1.5}
         ]
     }
-c1 = PolyhedralContract.from_dict(contract1)
+c1 = PolyhedralIoContract.from_dict(contract1)
 print(c1)

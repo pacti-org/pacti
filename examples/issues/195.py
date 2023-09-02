@@ -1,10 +1,10 @@
-from pacti.terms.polyhedra import PolyhedralContract
+from pacti.contracts import PolyhedralIoContract
 import logging
 
 FORMAT = "%(asctime)s:%(levelname)s:%(name)s:%(message)s"
 logging.basicConfig(filename="../pacti.log", filemode="w", level=logging.DEBUG, format=FORMAT)
 
-c1 = PolyhedralContract.from_string(
+c1 = PolyhedralIoContract.from_strings(
     input_vars = ["Sal", "aTc"],
     output_vars = ["RFP"],
     assumptions = [
@@ -18,7 +18,7 @@ c1 = PolyhedralContract.from_string(
     ]
 )
 
-c0 = PolyhedralContract.from_string(
+c0 = PolyhedralIoContract.from_strings(
 input_vars = ["Sal", "aTc"],
 output_vars = ["xRFP", "dCas9"],
 assumptions = [

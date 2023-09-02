@@ -1,9 +1,9 @@
 
-from pacti.terms.polyhedra import PolyhedralContract, PolyhedralTermList, PolyhedralTerm
+from pacti.terms.polyhedra import PolyhedralIoContract, PolyhedralTermList, PolyhedralTerm
 from pacti.iocontract import Var
 
 
-contract = PolyhedralContract.from_string(
+contract = PolyhedralIoContract.from_strings(
     input_vars=["x"],
     output_vars=["y"],
     assumptions=["x <= 2"],

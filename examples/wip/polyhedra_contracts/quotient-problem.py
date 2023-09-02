@@ -1,16 +1,16 @@
-from pacti.terms.polyhedra import *
+from pacti.contracts import PolyhedralIoContract
 import logging
 
 FORMAT = "%(asctime)s:%(levelname)s:%(name)s:%(message)s"
 logging.basicConfig(filename="../pacti.log", filemode="w", level=logging.DEBUG, format=FORMAT)
 
-C1 = PolyhedralContract.from_string(
+C1 = PolyhedralIoContract.from_strings(
     InputVars   =["t0", "dt0"],
     OutputVars  =["t1"],
     assumptions =["-t0 <= 0"],
     guarantees  =["t1 - t0 - dt0 = 0"])
 
-C2 = PolyhedralContract.from_string(
+C2 = PolyhedralIoContract.from_strings(
     InputVars   =[ "t1", "dt1" ],
     OutputVars  =[ "t2" ],
     assumptions =[ "-t1 <= 0" ],
@@ -19,7 +19,7 @@ C2 = PolyhedralContract.from_string(
 C12 = C1.compose(C2)
 print(C12)
 
-TOP = PolyhedralContract.from_string(
+TOP = PolyhedralIoContract.from_strings(
     InputVars   =[ "t0", "dt0", "dt1" ],
     OutputVars  =["t2"],
     assumptions =["-t0 - dt0 <= 0", "-t0 <= 0"],

@@ -1,7 +1,7 @@
 [
   {
     "name": "contract1",
-    "type": "PolyhedralContractCompound",
+    "type": "PolyhedralIoContractCompound",
     "data": {
       "input_vars": [
         "current_distance"
@@ -35,7 +35,7 @@
   },
   {
     "name": "contract2",
-    "type": "PolyhedralContractCompound",
+    "type": "PolyhedralIoContractCompound",
     "data": {
       "input_vars": [
         "delta_x",
@@ -57,7 +57,7 @@
   },
   {
     "name": "contract3",
-    "type": "PolyhedralContractCompound",
+    "type": "PolyhedralIoContractCompound",
     "data": {
       "input_vars": [
         "current_distance",

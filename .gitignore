@@ -38,7 +38,6 @@ pacti.egg-info
 *.rst.txt
 .venv
 .vscode
-*_case_studies*
 .history
 
 .idea/
@@ -55,6 +54,7 @@ pip-wheel-metadata/
 site/
 pdm.lock
 .pdm.toml
+.pdm-python
 __pypackages__/
 .venv/
 .vscode/
@@ -172,6 +172,7 @@ pip-delete-this-directory.txt
 .cache
 nosetests.xml
 coverage.xml
+coverage.json
 *.cover
 .hypothesis/
 

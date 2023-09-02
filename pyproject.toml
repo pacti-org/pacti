@@ -4,29 +4,41 @@ build-backend = "pdm.pep517.api"
 
 [project]
 name = "Pacti"
-description = "pacti-description"
-authors = [{name = "pacti-authors-name", email = "pacti-authors-email"}]
+description = "A package for compositional system analysis and design"
+authors = [{name = "Pacti developers", email = "info@pacti.org"}]
 license = "BSD-3-Clause"
-readme = "README.md"
-keywords = []
+readme = "docs/dist-README.md"
+classifiers = [
+    "Topic :: Scientific/Engineering"
+]
+keywords = ["system design", "contracts", "compositional"]
 dynamic = ["version"]
+# version = "1.0.0-alpha"
 dependencies = [
     "scipy>=1.10.0",
     "sympy>=1.11.1",
     "numpy>=1.24.1",
     "matplotlib>=3.6.2",
     "typing-extensions>=4.5.0",
+    "pyparsing>=3.0.9",
 ]
 requires-python = ">=3.8, <3.12"
+
+
+[project.urls]
+repository    = "https://github.com/pacti-org/pacti"
+documentation = "https://www.pacti.org"
+"Bug Tracker" = "https://github.com/pacti-org/pacti/issues"
+
 
 [project.scripts]
 #pacti = "pacti.cli:main"
 
 [project.optional-dependencies]
-[tool.pdm]
-version = {source = "scm"}
-package-dir = "src"
 
+[tool.pdm]
+package-dir = "src"
+version = { source = "file", path = "src/pacti/__version__.py" }
 
 [tool.pdm.build]
 package-dir = "src"
@@ -76,6 +88,8 @@ security = ["safety>=2"]
 dev = [
     "certifi>=2022.9.24",
     "tox>=4.4.7",
+    "editables>=0.3",
+    "ipykernel"
 ]
 
 [tool.black]
@@ -84,6 +98,7 @@ exclude = "tests/fixtures"
 
 [tool.isort]
 line_length = 120
+skip = ["__init__.py"]
 #not_skip = "__init__.py"
 multi_line_output = 3
 force_single_line = false

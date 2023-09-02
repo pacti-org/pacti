@@ -1,6 +1,6 @@
-from pacti.terms.polyhedra import PolyhedralContract
+from pacti.contracts import PolyhedralIoContract
 
-contract1 = PolyhedralContract.from_string(
+contract1 = PolyhedralIoContract.from_strings(
     input_vars=["i"],
     output_vars=["o"],
     assumptions=["|i| <= 2"],
