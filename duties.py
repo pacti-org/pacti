@@ -301,6 +301,7 @@ def coverage(ctx):
     ctx.run("coverage combine", nofail=True)
     ctx.run("coverage report --rcfile=config/coverage.ini", capture=False)
     ctx.run("coverage xml --rcfile=config/coverage.ini")
+    ctx.run("coverage html --rcfile=config/coverage.ini")
 
 
 @duty
