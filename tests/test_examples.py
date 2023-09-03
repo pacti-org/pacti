@@ -1,6 +1,7 @@
 import pacti.iocontract as iocontract
 from pacti.contracts import PolyhedralIoContract
 
+
 def test_examples() -> None:
     contract1 = {
         "input_vars": ["u_1"],
