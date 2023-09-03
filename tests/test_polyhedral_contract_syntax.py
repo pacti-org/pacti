@@ -1,5 +1,6 @@
-from pacti.terms.polyhedra import *
 from pacti.contracts import PolyhedralIoContract
+from pacti.terms.polyhedra import *
+
 
 def test_empty_contract() -> None:
     c = PolyhedralIoContract.from_strings(input_vars=[], output_vars=[], assumptions=[], guarantees=[])
