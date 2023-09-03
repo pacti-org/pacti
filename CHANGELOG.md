@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Added tests for polyhedral contracts (by Apurva Badithela, Josefine Graebener, Inigo Incer, Piergiuseppe Mallozzi, Ayush Pandey, Nicolas Rouquette, and Sheng-Jung Yu)
 - Added methodology for software release (by Apurva Badithela, Josefine Graebener, Inigo Incer, and Ayush Pandey)
-- Added toolchain for software development (by Inigo Incer, Piergiuseppe Mallozzi, Nicolas Rouquette, and Ayush Pandey)
+- Added toolchain for software development (by Inigo Incer, Piergiuseppe Mallozzi, Ayush Pandey, and Nicolas Rouquette)
 - Added parser for polyhedral constraints (by Nicolas Rouquette)
 - Added contract support for polyhedral constraints (by Inigo Incer)
 - Added implementation of contract algebra (by Inigo Incer)
