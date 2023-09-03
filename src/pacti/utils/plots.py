@@ -1,6 +1,7 @@
 """Plotting functionality for polyhedral contracts."""
 
 
+from copy import copy
 from math import atan2
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
@@ -19,14 +20,39 @@ from pacti.utils.lists import list_diff, list_union
 numeric = Union[int, float]
 
 
+def _to_var(input_arg: Union[Var, str]) -> Var:
+    if isinstance(input_arg, str):
+        return Var(input_arg)
+    return copy(input_arg)
+
+
+def _to_vals_dict(input_arg: Dict[Union[Var, str], numeric]) -> Dict[Var, numeric]:
+    if len(input_arg) > 0:
+        keys = list(input_arg.keys())
+        newdict = {}
+        for k in keys:
+            if isinstance(k, str):
+                newdict[Var(k)] = input_arg[k]
+            else:
+                newdict[k] = input_arg[k]
+        return newdict
+    return {}
+
+
+def _to_bool(input_arg: Optional[bool]) -> bool:
+    if isinstance(input_arg, bool):
+        return input_arg
+    return False
+
+
 def plot_assumptions(
     contract: PolyhedralIoContract,
     x_var: Union[Var, str],
     y_var: Union[Var, str],
-    var_values: Dict[Var, numeric],
+    var_values: Dict[Union[Var, str], numeric],
     x_lims: Tuple[numeric, numeric],
     y_lims: Tuple[numeric, numeric],
-    show: bool = True
+    show: Optional[bool] = True,
 ) -> MplFigure:
     """
     Plots the assumptions of an IoContract with polyhedral terms.
@@ -38,7 +64,7 @@ def plot_assumptions(
         var_values: values of other variables appearing in the assumptions.
         x_lims: range of values in the x-axis.
         y_lims: range of values in the y-axis.
-        show: If `True` (default), the figure is displayed. 
+        show: If `True` (default), the figure is displayed.
               If `False` the display is suppressed.
 
     Returns:
@@ -47,19 +73,18 @@ def plot_assumptions(
     Raises:
         ValueError: arguments provided failed sanity checks.
     """
-    str_list_of_vars =[str(var) for var in contract.vars]
-    if x_var in str_list_of_vars:
-        x_var = contract.vars[str_list_of_vars.index(x_var)]
-    if y_var in str_list_of_vars:
-        y_var = contract.vars[str_list_of_vars.index(y_var)]
-    if x_var not in contract.vars:
-        raise ValueError("Variable %s is not in an input or output variable of contract." % (x_var))
-    if y_var not in contract.vars:
-        raise ValueError("Variable %s is not in an input or output variable of contract." % (y_var))
-    for var in var_values.keys():  # noqa: VNE002
+    x_var_var = _to_var(x_var)
+    y_var_var = _to_var(y_var)
+    var_values_var = _to_vals_dict(var_values)
+
+    if x_var_var not in contract.vars:
+        raise ValueError("Variable %s is not in an input or output variable of contract." % (x_var_var))
+    if y_var_var not in contract.vars:
+        raise ValueError("Variable %s is not in an input or output variable of contract." % (y_var_var))
+    for var in var_values_var.keys():  # noqa: VNE002
         if var not in contract.vars:
             raise ValueError("Var %s from var_values is not in the interface of the contract." % (var))
-    fig = _plot_constraints(contract.a, x_var, y_var, var_values, x_lims, y_lims, show)
+    fig = _plot_constraints(contract.a, x_var_var, y_var_var, var_values_var, x_lims, y_lims, _to_bool(show))
     ax = fig.axes[0]
     ax.set_title("Assumptions")
     return fig
@@ -94,7 +119,7 @@ def plot_guarantees(
         x_transform: function to map (x,y) values to new horizontal variable.
         y_transform: function to map (x,y) values to new vertical variable.
         number_of_points: number of points to transform on each side of (x,y) polyhedron.
-        show: If `True` (default), the figure is displayed. 
+        show: If `True` (default), the figure is displayed.
               If `False` the display is suppressed.
 
     Returns:
@@ -103,34 +128,27 @@ def plot_guarantees(
     Raises:
         ValueError: arguments provided failed sanity checks.
     """
-    str_list_of_vars =[str(var) for var in contract.vars]
-    if x_var in str_list_of_vars:
-        x_var = contract.vars[str_list_of_vars.index(x_var)]
-    if y_var in str_list_of_vars:
-        y_var = contract.vars[str_list_of_vars.index(y_var)]
-    if x_var not in contract.vars:
-        raise ValueError("Variable %s is not in an input or output variable of contract." % (x_var))
-    if y_var not in contract.vars:
-        raise ValueError("Variable %s is not in an input or output variable of contract." % (y_var))
-    var_values_updated = dict(var_values)
-    for var in var_values.keys():  # noqa: VNE002
-        if var in str_list_of_vars:
-            contract_var = contract.vars[str_list_of_vars.index(var)]
-            del var_values_updated[var]
-            var_values_updated[contract_var] = var_values[var]
-            var = contract_var
+    x_var_var = _to_var(x_var)
+    y_var_var = _to_var(y_var)
+    var_values_var = _to_vals_dict(var_values)
+
+    if x_var_var not in contract.vars:
+        raise ValueError("Variable %s is not in an input or output variable of contract." % (x_var_var))
+    if y_var_var not in contract.vars:
+        raise ValueError("Variable %s is not in an input or output variable of contract." % (y_var_var))
+    for var in var_values_var.keys():  # noqa: VNE002
         if var not in contract.vars:
             raise ValueError("Var %s from var_values is not in the interface of the contract." % (var))
-    var_values = dict(var_values_updated)
+
     if x_transform is not None and y_transform is not None:
         assert new_x_var
         assert new_y_var
         assert number_of_points
         fig = _plot_transformed_constraints(
             contract.a | contract.g,
-            x_var,
-            y_var,
-            var_values,
+            x_var_var,
+            y_var_var,
+            var_values_var,
             x_lims,
             y_lims,
             new_x_var,
@@ -138,10 +156,12 @@ def plot_guarantees(
             x_transform,
             y_transform,
             number_of_points,
-            show
+            _to_bool(show),
         )
     else:
-        fig = _plot_constraints(contract.a | contract.g, x_var, y_var, var_values, x_lims, y_lims, show)
+        fig = _plot_constraints(
+            contract.a | contract.g, x_var_var, y_var_var, var_values_var, x_lims, y_lims, _to_bool(show)
+        )
 
     ax = fig.axes[0]
     ax.set_title("Guarantees")
@@ -342,7 +362,7 @@ def _plot_transformed_constraints(
     x_transform: Callable,
     y_transform: Callable,
     number_of_points: int,
-    show: bool
+    show: bool,
 ) -> MplFigure:
     x, y = constraints_to_vertices(constraints, x_var, y_var, var_values, x_lims, y_lims)
 
@@ -363,7 +383,7 @@ def _plot_transformed_constraints(
     # ax.set_ylim(y_lims)
     ax.set_xlabel(new_x_var)
     ax.set_ylabel(new_y_var)
-    #ax.set_aspect((x_lims[1] - x_lims[0]) / (y_lims[1] - y_lims[0]))
+    # ax.set_aspect((x_lims[1] - x_lims[0]) / (y_lims[1] - y_lims[0]))
     if not show:
         plt.close(fig)
 
