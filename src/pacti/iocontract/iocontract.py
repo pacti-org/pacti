@@ -95,19 +95,19 @@ class Term(ABC):
 
     @abstractmethod
     def __eq__(self, other: object) -> bool:
-        pass
+        """Equality."""
 
     @abstractmethod
     def __str__(self) -> str:
-        pass
+        """Printing support."""
 
     @abstractmethod
     def __hash__(self) -> int:
-        pass
+        """Hashing."""
 
     @abstractmethod
     def __repr__(self) -> str:
-        pass
+        """Printable representation."""
 
     @abstractmethod
     def copy(self: Term_t) -> Term_t:
@@ -456,16 +456,18 @@ class IoContract(Generic[TermList_t]):
                 if target_var in outputvars:
                     raise IncompatibleArgsError("Making variable %s both an input and output" % (target_var))
                 elif target_var not in inputvars:
-                    inputvars.append(target_var)
-                inputvars.remove(source_var)
+                    inputvars[inputvars.index(source_var)] = target_var
+                else:
+                    inputvars.remove(source_var)
                 assumptions = assumptions.rename_variable(source_var, target_var)
                 guarantees = guarantees.rename_variable(source_var, target_var)
             elif source_var in outputvars:
                 if target_var in inputvars:
                     raise IncompatibleArgsError("Making variable %s both an input and output" % (target_var))
                 elif target_var not in outputvars:
-                    outputvars.append(target_var)
-                outputvars.remove(source_var)
+                    outputvars[outputvars.index(source_var)] = target_var
+                else:
+                    outputvars.remove(source_var)
                 assumptions = assumptions.rename_variable(source_var, target_var)
                 guarantees = guarantees.rename_variable(source_var, target_var)
         return type(self)(assumptions, guarantees, inputvars, outputvars)
