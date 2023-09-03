@@ -1,8 +1,8 @@
 from typing import List
 
 import pacti.iocontract as iocontract
-from pacti.terms.polyhedra import *
 from pacti.contracts import PolyhedralIoContract
+
 
 def validate_iocontract(contract: object) -> bool:
     return isinstance(contract, iocontract.IoContract)
