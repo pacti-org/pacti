@@ -287,7 +287,6 @@ def release(ctx, version):
         ctx.run("git push --tags", title="Pushing tags", pty=False)
         ctx.run("pdm build", title="Building dist/wheel", pty=PTY)
         ctx.run("twine upload --skip-existing dist/*", title="Publishing version", pty=PTY)
-        docs_deploy.run()
 
 
 @duty(silent=True)
@@ -301,6 +300,7 @@ def coverage(ctx):
     ctx.run("coverage combine", nofail=True)
     ctx.run("coverage report --rcfile=config/coverage.ini", capture=False)
     ctx.run("coverage xml --rcfile=config/coverage.ini")
+    ctx.run("coverage html --rcfile=config/coverage.ini")
 
 
 @duty
