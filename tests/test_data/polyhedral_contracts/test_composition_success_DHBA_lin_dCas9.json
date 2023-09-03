@@ -1,7 +1,7 @@
 [
   {
     "name": "contract_DHBA_lin",
-    "type": "PolyhedralContract",
+    "type": "PolyhedralIoContract",
     "data": {
       "input_vars": [
         "DHBA"
@@ -20,7 +20,7 @@
   },
   {
     "name": "dCas9_contract_on",
-    "type": "PolyhedralContract",
+    "type": "PolyhedralIoContract",
     "data": {
       "input_vars": [
         "xRFP",
@@ -42,7 +42,7 @@
   },
   {
     "name": "successful_comp_DHBA",
-    "type": "PolyhedralContract",
+    "type": "PolyhedralIoContract",
     "data": {
       "input_vars": [
         "DHBA",

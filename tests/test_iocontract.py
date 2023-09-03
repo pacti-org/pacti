@@ -1,7 +1,7 @@
 from typing import List
 
 import pacti.iocontract as iocontract
-from pacti.terms.polyhedra import *
+from pacti.contracts import PolyhedralIoContract
 
 
 def validate_iocontract(contract: object) -> bool:
@@ -25,7 +25,7 @@ def create_contracts(num: int = 1) -> List[dict]:
 
 
 def test_validate_iocontract() -> None:
-    [c_1, c_2] = [PolyhedralContract.from_dict(c) for c in create_contracts(num=2)]
+    [c_1, c_2] = [PolyhedralIoContract.from_dict(c) for c in create_contracts(num=2)]
     assert validate_iocontract(c_1)
     assert validate_iocontract(c_2)
 

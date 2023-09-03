@@ -2,8 +2,7 @@
 
 
 from math import atan2
-from typing import Union, Callable, Optional
-from typing import Dict, Tuple, Union
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt  # noqa: WPS301 Found dotted raw import
 import numpy as np
@@ -12,8 +11,8 @@ from matplotlib.patches import Polygon as MplPatchPolygon
 from scipy.optimize import linprog
 from scipy.spatial import HalfspaceIntersection, QhullError
 
+from pacti.contracts import PolyhedralIoContract
 from pacti.iocontract import Var
-from pacti.terms.polyhedra import PolyhedralContract
 from pacti.terms.polyhedra.polyhedra import PolyhedralTerm, PolyhedralTermList
 from pacti.utils.lists import list_diff, list_union
 
@@ -21,7 +20,7 @@ numeric = Union[int, float]
 
 
 def plot_assumptions(
-    contract: PolyhedralContract,
+    contract: PolyhedralIoContract,
     x_var: Union[Var, str],
     y_var: Union[Var, str],
     var_values: Dict[Var, numeric],
@@ -67,7 +66,7 @@ def plot_assumptions(
 
 
 def plot_guarantees(
-    contract: PolyhedralContract,
+    contract: PolyhedralIoContract,
     x_var: Union[Var, str],
     y_var: Union[Var, str],
     var_values: Dict[Union[Var, str], numeric],
@@ -90,8 +89,14 @@ def plot_guarantees(
         var_values: values of other variables appearing in the assumptions & guarantees.
         x_lims: range of values in the x-axis.
         y_lims: range of values in the y-axis.
+        new_x_var: name of horizontal transformed variable.
+        new_y_var: name of vertical transformed variable.
+        x_transform: function to map (x,y) values to new horizontal variable.
+        y_transform: function to map (x,y) values to new vertical variable.
+        number_of_points: number of points to transform on each side of (x,y) polyhedron.
         show: If `True` (default), the figure is displayed. 
               If `False` the display is suppressed.
+
     Returns:
         Figure element with a single "axes" object showing the feasible region for the assumptions & guarantees.
 
@@ -118,12 +123,26 @@ def plot_guarantees(
             raise ValueError("Var %s from var_values is not in the interface of the contract." % (var))
     var_values = dict(var_values_updated)
     if x_transform is not None and y_transform is not None:
-        fig = _plot_transformed_constraints(contract.a | contract.g, x_var, y_var, var_values,
-                                            x_lims, y_lims, new_x_var, new_y_var, x_transform, 
-                                            y_transform, number_of_points, show)
+        assert new_x_var
+        assert new_y_var
+        assert number_of_points
+        fig = _plot_transformed_constraints(
+            contract.a | contract.g,
+            x_var,
+            y_var,
+            var_values,
+            x_lims,
+            y_lims,
+            new_x_var,
+            new_y_var,
+            x_transform,
+            y_transform,
+            number_of_points,
+            show
+        )
     else:
         fig = _plot_constraints(contract.a | contract.g, x_var, y_var, var_values, x_lims, y_lims, show)
-        
+
     ax = fig.axes[0]
     ax.set_title("Guarantees")
     return fig
@@ -200,14 +219,31 @@ def _gen_boundary_constraints(
     return PolyhedralTermList(constraints)
 
 
-def constraints_to_vectices(
+def constraints_to_vertices(
     constraints: PolyhedralTermList,
     x_var: Var,
     y_var: Var,
     var_values: Dict[Var, numeric],
     x_lims: Tuple[numeric, numeric],
-    y_lims: Tuple[numeric, numeric]
-) -> Tuple[tuple, tuple]:
+    y_lims: Tuple[numeric, numeric],
+) -> Tuple[Tuple, Tuple]:
+    """
+    Return the bounding vertices of a set of constraints.
+
+    Args:
+        constraints: the set of constraints.
+        x_var: The variable among those in the constraints that will be used as the horizontal variable.
+        y_var: The variable among those in the constraints that will be used as the vertical variable.
+        var_values: Values to which the rest of the variables in the constraints are set.
+        x_lims: Horizontal limits of polyhedron.
+        y_lims: Vertical limits of polyhedron.
+
+    Returns:
+        A tuple of x and y tuples correponding to the vertices.
+
+    Raises:
+        ValueError: Arguments do not meet expectations, i.e., other variables are not set to constant values, etc.
+    """
     if not isinstance(constraints, PolyhedralTermList):
         raise ValueError("Expecting polyhedral constraints. Constraint type: %s" % (type(constraints)))
     if x_var in var_values.keys():
@@ -242,7 +278,7 @@ def _plot_constraints(
     y_lims: Tuple[numeric, numeric],
     show: bool,
 ) -> MplFigure:
-    x, y = constraints_to_vectices(constraints, x_var, y_var, var_values, x_lims, y_lims)
+    x, y = constraints_to_vertices(constraints, x_var, y_var, var_values, x_lims, y_lims)
 
     # generate figure
     fig = plt.figure()
@@ -262,13 +298,36 @@ def _plot_constraints(
     return fig
 
 
-def get_path(x0:numeric, x1:numeric, y0:numeric, y1:numeric, x_transform, y_transform, number_of_points:int):
+def get_path(
+    x0: numeric,
+    x1: numeric,
+    y0: numeric,
+    y1: numeric,
+    x_transform: Callable,
+    y_transform: Callable,
+    number_of_points: int,
+) -> Tuple[List, List]:
+    """
+    Transform a path in original coordinates.
+
+    Args:
+        x0: x-value of the starting point of the path to transform.
+        x1: x-value of the final point of the path to transform.
+        y0: y-value of the starting point of the path to transform.
+        y1: y-value of the final point of the path to transform.
+        x_transform: function to map (x,y) values to new horizontal variable.
+        y_transform: function to map (x,y) values to new vertical variable.
+        number_of_points: number of points to transform on each side of (x,y) polyhedron.
+
+    Returns:
+        A tuple of x tuples and y tuples corresponding to the transformed path.
+    """
     xx = np.linspace(x0, x1, number_of_points)
-    m = (y1-y0)/(x1-x0)
-    yy = m*(xx - x0) + y0
+    m = (y1 - y0) / (x1 - x0)
+    yy = m * (xx - x0) + y0
     x_tranform_vec = np.vectorize(x_transform)
     y_tranform_vec = np.vectorize(y_transform)
-    return x_tranform_vec(xx,yy).tolist(), y_tranform_vec(xx,yy).tolist()
+    return x_tranform_vec(xx, yy).tolist(), y_tranform_vec(xx, yy).tolist()
 
 
 def _plot_transformed_constraints(
@@ -280,30 +339,28 @@ def _plot_transformed_constraints(
     y_lims: Tuple[numeric, numeric],
     new_x_var: str,
     new_y_var: str,
-    x_transform: Optional[Callable[[numeric], numeric]],
-    y_transform: Optional[Callable[[numeric], numeric]],
+    x_transform: Callable,
+    y_transform: Callable,
     number_of_points: int,
     show: bool
 ) -> MplFigure:
-    x, y = constraints_to_vectices(constraints, x_var, y_var, var_values, x_lims, y_lims)
-
-
+    x, y = constraints_to_vertices(constraints, x_var, y_var, var_values, x_lims, y_lims)
 
     # generate figure
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1, aspect="auto")
-    #for i in range(len(x)):
+    # for i in range(len(x)):
     #    xx, yy = get_path(x[i-1],x[i],y[i-1],y[i],x_transform,y_transform,number_of_points)
     #    ax.plot(xx,yy)
-    xx = []
-    yy = []
-    for i in range(len(x)):
-        newx, newy = get_path(x[i-1],x[i],y[i-1],y[i],x_transform,y_transform,number_of_points)
-        xx = xx + newx
-        yy = yy + newy
+    xx: List = []
+    yy: List = []
+    for i in range(len(x)):  # noqa: WPS518 Found implicit `enumerate()` call
+        newx, newy = get_path(x[i - 1], x[i], y[i - 1], y[i], x_transform, y_transform, number_of_points)
+        xx += newx
+        yy += newy
     plt.fill(xx, yy, facecolor="deepskyblue")
-    #ax.set_xlim(x_lims)
-    #ax.set_ylim(y_lims)
+    # ax.set_xlim(x_lims)
+    # ax.set_ylim(y_lims)
     ax.set_xlabel(new_x_var)
     ax.set_ylabel(new_y_var)
     #ax.set_aspect((x_lims[1] - x_lims[0]) / (y_lims[1] - y_lims[0]))
@@ -325,7 +382,7 @@ if __name__ == "__main__":
         ],
         "guarantees": [{"coefficients": {"x_1": -1}, "constant": -1.5}],
     }
-    c1 = PolyhedralContract.from_dict(contract1)
+    c1 = PolyhedralIoContract.from_dict(contract1)
     fig = plot_assumptions(
         contract=c1, x_var=Var("u_1"), y_var=Var("u_2"), var_values={Var("x_1"): 0}, x_lims=(-2, 2), y_lims=(-2, 2)
     )
@@ -342,7 +399,7 @@ if __name__ == "__main__":
             {"coefficients": {"v1": -1}, "constant": -1600},
         ],
     }
-    c2 = PolyhedralContract.from_dict(contract2)
+    c2 = PolyhedralIoContract.from_dict(contract2)
     fig = plot_guarantees(
         contract=c2,
         x_var=Var("t0"),
@@ -371,7 +428,7 @@ if __name__ == "__main__":
             {"constant": float(0), "coefficients": {"r11": -1.0, "r10": 1.0}},
         ],
     }
-    c3 = PolyhedralContract.from_dict(contract3)
+    c3 = PolyhedralIoContract.from_dict(contract3)
 
     fig = plot_guarantees(
         contract=c3,
