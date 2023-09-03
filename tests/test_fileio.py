@@ -1,6 +1,7 @@
 
 import tempfile
 from pacti.utils import read_contracts_from_file, write_contracts_to_file
+import pytest
 
 
 def test_basic_fileio():
@@ -24,6 +25,18 @@ def test_basic_fileio():
     for i in range(len(c_list)):
         assert c_list_read[i] == c_list[i]
     assert c_names_read == c_names
+
+    # Writing machine-friendly compoound polyhedra is not supported
+    with pytest.raises(ValueError) as e:
+        write_contracts_to_file(c_list, c_names, file_name=tempfile_name, machine_representation=True)
+    assert "Unsupported representation" in str(e.value)
+
+    # Pass a bad contract type to the contract write function
+    c_bad_type = [1]*len(c_names)
+    with pytest.raises(ValueError) as e:
+        write_contracts_to_file(c_bad_type, c_names, file_name=tempfile_name, machine_representation=True)
+    assert "Unsupported argument type" in str(e.value)
+
 
 if __name__ == "__main__":
     test_basic_fileio()
