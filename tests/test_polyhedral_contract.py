@@ -2,9 +2,9 @@ import glob
 
 import pytest
 
+from pacti.contracts import PolyhedralIoContract
 from pacti.utils import read_contracts_from_file
 from pacti.utils.errors import IncompatibleArgsError
-from pacti.iocontract import Var
 
 TEST_DATA_DIR = "tests/test_data/polyhedral_contracts"
 
@@ -149,16 +149,19 @@ def test_refinement(test_instance: str) -> None:
     if c[0] != c[1]:
         assert not (c[1] <= c[0])
 
+
 renaming_test_instances = glob.glob(TEST_DATA_DIR + "**/*rename*.json", recursive=True)
 
+
 @pytest.mark.parametrize("test_instance", renaming_test_instances)
-def test_refinement(test_instance: str) -> None:
+def test_refinement_1(test_instance: str) -> None:
     try:
         c, _ = read_contracts_from_file(test_instance)
     except:
         assert False
     assert len(c) == 2
-    c_r = c[0].rename_variables([("p2_a", "p2_b"), ("p5_e","p5_f")])
+    assert isinstance(c[0], PolyhedralIoContract)
+    c_r = c[0].rename_variables([("p2_a", "p2_b"), ("p5_e", "p5_f")])
     assert c[1] == c_r
 
 

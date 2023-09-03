@@ -95,7 +95,12 @@ class Term(ABC):
 
     @abstractmethod
     def __eq__(self, other: object) -> bool:
-        """Equality."""
+        """
+        Equality.
+
+        Args:
+            other: the object against which we are comparing self.
+        """
 
     @abstractmethod
     def __str__(self) -> str:
