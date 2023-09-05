@@ -78,5 +78,5 @@ parachute_deployment_contract = PolyhedralIoContract.from_strings(
 
 print(f"parachute_deployment_contract=\n{parachute_deployment_contract}")
 
-mission_scenario_before_powered_descent, _ = atmospheric_entry_contract.compose(parachute_deployment_contract)
+mission_scenario_before_powered_descent = atmospheric_entry_contract.compose(parachute_deployment_contract)
 print(f"mission_scenario_before_powered_descent=\n{mission_scenario_before_powered_descent}")

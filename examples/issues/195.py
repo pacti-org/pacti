@@ -38,5 +38,5 @@ print(c0)
 
 
 
-cq, _ = c1.quotient(c0)
+cq = c1.quotient(c0)
 print(cq)

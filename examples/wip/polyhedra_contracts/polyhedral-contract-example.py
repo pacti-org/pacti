@@ -19,7 +19,7 @@ def connect(c1: IoContract, c2: IoContract, varPrefixes: List[str]) -> IoContrac
       assumptions = [],
       guarantees = list(map(lambda i: input2output(i.name, c1.outputvars, varPrefixes), c2.inputvars)))
 
-    return c1.compose(c12)[0].compose(c2)[0]
+    return c1.compose(c12).compose(c2)
 
 def initial_contract() -> Tuple[int, PolyhedralIoContract]:
   e=1
