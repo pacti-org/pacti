@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Dict, List, Optional, Tuple, TypedDict, Union
 
-from pacti.iocontract import IoContract, IoContractCompound, NestedTermList, Var
+from pacti.iocontract import IoContract, IoContractCompound, NestedTermList, TacticStatistics, Var
 from pacti.terms.polyhedra import serializer
 from pacti.terms.polyhedra.polyhedra import PolyhedralTerm, PolyhedralTermList
 
@@ -87,6 +87,7 @@ class PolyhedralIoContract(IoContract):
         guarantees: List[str],
         input_vars: List[str],
         output_vars: List[str],
+        simplify: bool = True,
     ) -> PolyhedralIoContract:
         """
         Create contract from several lists of strings.
@@ -96,6 +97,7 @@ class PolyhedralIoContract(IoContract):
             guarantees: contract's guarantees.
             input_vars: input variables of contract.
             output_vars: output variables of contract.
+            simplify: whether to simplify the guarantees with respect to the assumptions.
 
         Returns:
             A polyhedral contract built from the arguments provided.
@@ -113,15 +115,17 @@ class PolyhedralIoContract(IoContract):
             output_vars=[Var(x) for x in output_vars],
             assumptions=PolyhedralTermList(a),
             guarantees=PolyhedralTermList(g),
+            simplify=simplify,
         )
 
     @staticmethod
-    def from_dict(contract: dict) -> PolyhedralIoContract:
+    def from_dict(contract: dict, simplify: bool = True) -> PolyhedralIoContract:
         """
         Create contract from a dictionary.
 
         Args:
             contract: a dictionary containing the contract's data.
+            simplify: whether to simplify the guarantees with respect to the assumptions.
 
         Returns:
             A polyhedral contract built from the arguments provided.
@@ -160,6 +164,7 @@ class PolyhedralIoContract(IoContract):
             output_vars=[Var(x) for x in contract["output_vars"]],
             assumptions=a,
             guarantees=g,
+            simplify=simplify,
         )
 
     def compose(
@@ -192,11 +197,11 @@ class PolyhedralIoContract(IoContract):
 
     def compose_tactics(
         self,
-        other: PolyhedralContract,
+        other: PolyhedralIoContract,
         vars_to_keep: Optional[List[str]] = None,
         simplify: bool = True,
         tactics_order: Optional[List[int]] = None,
-    ) -> Tuple[PolyhedralContract, List[List[Tuple[int, float, int]]]]:
+    ) -> Tuple[PolyhedralIoContract, List[TacticStatistics]]:
         """Compose polyhedral contracts.
 
         Compute the composition of the two given contracts and abstract the
@@ -224,12 +229,12 @@ class PolyhedralIoContract(IoContract):
             vars_to_keep = []
         return super().compose_tactics(other, [Var(x) for x in vars_to_keep], simplify, tactics_order)
 
-    def quotient(
-        self: PolyhedralContract,
-        other: PolyhedralContract,
+    def quotient(  # noqa: WPS612
+        self: PolyhedralIoContract,
+        other: PolyhedralIoContract,
         additional_inputs: Optional[List[Var]] = None,
         simplify: bool = True,
-    ) -> PolyhedralContract:
+    ) -> PolyhedralIoContract:
         """Quotient polyhedral contracts.
 
         Compute the quotient of the two given contracts and abstract the
@@ -253,12 +258,12 @@ class PolyhedralIoContract(IoContract):
         return super().quotient(other, additional_inputs, simplify)
 
     def quotient_tactics(
-        self: PolyhedralContract,
-        other: PolyhedralContract,
+        self: PolyhedralIoContract,
+        other: PolyhedralIoContract,
         additional_inputs: Optional[List[Var]] = None,
         simplify: bool = True,
         tactics_order: Optional[List[int]] = None,
-    ) -> Tuple[PolyhedralContract, List[List[Tuple[int, float, int]]]]:
+    ) -> Tuple[PolyhedralIoContract, List[TacticStatistics]]:
         """Quotient polyhedral contracts with support for specifying the order of tactics and measuring their use.
 
         Compute the quotient of the two given contracts and abstract the

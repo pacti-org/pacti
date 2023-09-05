@@ -30,6 +30,9 @@ Term_t = TypeVar("Term_t", bound="Term")
 TermList_t = TypeVar("TermList_t", bound="TermList")
 IoContract_t = TypeVar("IoContract_t", bound="IoContract")
 
+TacticInstrumentation = Tuple[int, float, int]
+TacticStatistics = List[TacticInstrumentation]
+
 
 class Var:
     """
@@ -249,7 +252,7 @@ class TermList(ABC):
     @abstractmethod
     def elim_vars_by_refining(
         self: TermList_t, context: TermList_t, vars_to_elim: List[Var], simplify: bool, tactics_order: List[int]
-    ) -> Tuple[TermList_t, List[Tuple[int, float, int]]]:
+    ) -> Tuple[TermList_t, TacticStatistics]:
         """
         Eliminate variables from termlist by refining it in a context.
 
@@ -279,7 +282,7 @@ class TermList(ABC):
     @abstractmethod
     def elim_vars_by_relaxing(
         self: TermList_t, context: TermList_t, vars_to_elim: List[Var], simplify: bool, tactics_order: List[int]
-    ) -> Tuple[TermList_t, List[Tuple[int, float, int]]]:
+    ) -> Tuple[TermList_t, TacticStatistics]:
         """
         Eliminate variables from termlist by relaxing it in a context
 
@@ -361,7 +364,12 @@ class IoContract(Generic[TermList_t]):
     """
 
     def __init__(
-        self, assumptions: TermList_t, guarantees: TermList_t, input_vars: List[Var], output_vars: List[Var]
+        self,
+        assumptions: TermList_t,
+        guarantees: TermList_t,
+        input_vars: List[Var],
+        output_vars: List[Var],
+        simplify: bool = True,
     ) -> None:
         """
         Class constructor.
@@ -371,6 +379,7 @@ class IoContract(Generic[TermList_t]):
             guarantees: The guarantees of the contract.
             input_vars: The input variables of the contract.
             output_vars: The output variables of the contract.
+            simplify: Whether to simplify the guarantees with respect to the assumptions.
 
         Raises:
             IncompatibleArgsError: Arguments provided does not produce a valid IO contract.
@@ -409,8 +418,10 @@ class IoContract(Generic[TermList_t]):
         self.a: TermList_t = assumptions.copy()
         self.inputvars = input_vars.copy()
         self.outputvars = output_vars.copy()
-        # simplify the guarantees with the assumptions
-        self.g = guarantees.copy()
+        if simplify:
+            self.g = guarantees.simplify(self.a)
+        else:
+            self.g = guarantees.copy()
 
     def simplify(self) -> None:
         """Simplifies guarantees given assumptions."""
@@ -605,20 +616,17 @@ class IoContract(Generic[TermList_t]):
 
         Returns:
             The abstracted composition of the two contracts.
-
-        Raises:
-            IncompatibleArgsError: An error occurred during composition.
         """
         result, _ = self.compose_tactics(other, vars_to_keep, simplify)
         return result
-    
-    def compose_tactics(
+
+    def compose_tactics(  # noqa: WPS231
         self: IoContract_t,
         other: IoContract_t,
         vars_to_keep: Any = None,
         simplify: bool = True,
         tactics_order: Optional[List[int]] = None,
-    ) -> Tuple[IoContract_t, List[List[Tuple[int, float, int]]]]:  # noqa: WPS231
+    ) -> Tuple[IoContract_t, List[TacticStatistics]]:  # noqa: WPS231
         """Compose IO contracts with support for specifying the order of tactics and measuring their use.
 
         Compute the composition of the two given contracts and abstract the
@@ -677,7 +685,7 @@ class IoContract(Generic[TermList_t]):
         other_drives_const_inputs = len(list_intersection(other.outputvars, selfinputconst)) > 0
         self_drives_const_inputs = len(list_intersection(self.outputvars, otherinputconst)) > 0
 
-        tactics_used: List[List[Tuple[int, float, int]]] = []
+        tactics_used: List[TacticStatistics] = []
         # process assumptions
         if cycle_present and (other_drives_const_inputs or self_drives_const_inputs):
             raise IncompatibleArgsError("Cannot compose contracts due to feedback")
@@ -762,20 +770,17 @@ class IoContract(Generic[TermList_t]):
 
         Returns:
             The refined quotient self/other.
-
-        Raises:
-            IncompatibleArgsError: Arguments provided are incompatible with computation of the quotient.
         """
         result, _ = self.quotient_tactics(other, additional_inputs, simplify)
         return result
-                    
-    def quotient_tactics(
+
+    def quotient_tactics(  # noqa: WPS231
         self: IoContract_t,
         other: IoContract_t,
         additional_inputs: Optional[List[Var]] = None,
         simplify: bool = True,
         tactics_order: Optional[List[int]] = None,
-    ) -> Tuple[IoContract_t, List[List[Tuple[int, float, int]]]]:
+    ) -> Tuple[IoContract_t, List[TacticStatistics]]:
         """Compute the contract quotient with support for specifying the order of tactics and measuring their use.
 
         Compute the quotient self/other of the two given contracts and refine
@@ -822,7 +827,7 @@ class IoContract(Generic[TermList_t]):
         )
         intvars = list_diff(intvars, additional_inputs)
 
-        tactics_used: List[List[Tuple[int, float, int]]] = []
+        tactics_used: List[TacticStatistics] = []
         # get assumptions
         logging.debug("Computing quotient assumptions")
         assumptions = copy.deepcopy(self.a)
@@ -840,7 +845,7 @@ class IoContract(Generic[TermList_t]):
         logging.debug("Computing quotient guarantees")
         guarantees: TermList_t = self.g
         logging.debug("Using existing guarantees to aid system-level guarantees")
-        try:
+        try:  # noqa: WPS229
             (guarantees, used) = guarantees.elim_vars_by_refining(other.g | other.a, intvars, simplify, tactics_order)
             tactics_used.append(used)
         except ValueError:
@@ -848,7 +853,7 @@ class IoContract(Generic[TermList_t]):
         logging.debug("Guarantees are %s" % (guarantees))
         logging.debug("Using system-level assumptions to aid quotient guarantees")
         guarantees = guarantees | other.a
-        try:
+        try:  # noqa: WPS229
             (guarantees, used) = guarantees.elim_vars_by_refining(self.a, intvars, simplify, tactics_order)
             tactics_used.append(used)
         except ValueError:

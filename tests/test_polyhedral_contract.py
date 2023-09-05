@@ -166,5 +166,5 @@ def test_refinement_1(test_instance: str) -> None:
 
 
 if __name__ == "__main__":
-    file = r"tests\test_data\polyhedral_contracts\test_composition_success_dspexample2composition11.json"
+    file = r"tests/test_data/polyhedral_contracts/test_composition_success_Sal_lin_dCas9.json"
     test_composition_success(file)
