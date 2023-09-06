@@ -57,7 +57,7 @@ def test_examples2() -> None:
     unecessary_simplification.simplify()
     assert unecessary_simplification == contract_comp
 
-def test_IoContract_compose_tactics():
+def test_IoContract_compose_and_quotient_tactics():
     contract1 = iocontract.IoContract(
         assumptions=PolyhedralTermList(),
         guarantees=PolyhedralTermList(),
