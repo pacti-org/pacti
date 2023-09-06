@@ -119,7 +119,40 @@ def test_issue171() -> None:
     assert expected == transformed
 
 
+def test_relaxing1() -> None:
+    constraints = to_pts(
+        ["1*dt0 + 1*t0 <= 0.0", 
+         "-1*t0 <= 0.0", 
+         "-1*dt0 - 1*t0 + 1*t1 <= 0.0", 
+         "1*dt0 + 1*t0 - 1*t1 <= 0.0"]
+    )
+    (transformed, tactics) = constraints.elim_vars_by_relaxing(PolyhedralTermList([]), [Var("t0"), Var("dt0")], simplify=False)
+    expected = to_pts(["1*t1 <= 0", "0 <= 0"])
+    assert expected == transformed
+
+
+def test_relaxing2() -> None:
+    constraints = to_pts(
+        ["1*dt0 + 1*t0 <= 0.0", 
+         "-1*t0 <= 0.0", 
+         "-1*dt0 - 1*t0 + 1*t1 <= 0.0", 
+         "1*dt0 + 1*t0 - 1*t1 <= 0.0"]
+    )
+    context = to_pts(
+        ["-dt0 <= -1",
+        "dt0 <= 0"]
+    )
+    with pytest.raises(ValueError):
+        _ = constraints.elim_vars_by_relaxing(context, [Var("t0"), Var("dt0")], simplify=True)
+        
+        
+    (transformed1, _) = constraints.elim_vars_by_relaxing(context, [Var("t0"), Var("dt0")], simplify=False)
+    expected = to_pts(["1*t1 <= 0", "0 <= 0", "-1*t1 <= -1"])
+    assert expected == transformed1
+
+    (transformed2, _) = constraints._transform(context, [Var("t0"), Var("dt0")], refine=False, simplify=False)
+    expected = to_pts(["1*t1 <= 0", "-1*t0 <= 0", "0 <= 0", "-1*t1 <= -1"])
+    assert expected == transformed2
+
 if __name__ == "__main__":
-    test_polyhedral_var_elim_by_refinement_1()
-    test_polyhedral_var_elim_by_refinement_2()
-    test_polyhedral_var_elim_by_relaxation_7()
+    test_relaxing2()
