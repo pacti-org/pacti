@@ -22,8 +22,10 @@ def test_polyhedral_var_elim_by_refinement_1() -> None:
     context = to_pts(["2*x <= 5"])
     expected = reference.copy()
     vars_elim = [x]
-    (reference, _) = reference.elim_vars_by_refining(context, vars_elim)
-    assert reference.terms == expected.terms
+    (reference1, _) = reference.elim_vars_by_refining(context, vars_elim)
+    assert reference1.terms == expected.terms
+    (reference2, _) = reference.elim_vars_by_refining(context, vars_elim, simplify=False)
+    assert reference2.terms == expected.terms
 
 
 def test_polyhedral_var_elim_by_refinement_2() -> None:
@@ -33,9 +35,11 @@ def test_polyhedral_var_elim_by_refinement_2() -> None:
     context = to_pts(["2*x <= 3"])
     expected = to_pts([])
     vars_elim = [x]
-    (reference, _) = reference.elim_vars_by_refining(context, vars_elim)
-    assert reference.terms == expected.terms
-
+    (reference1, _) = reference.elim_vars_by_refining(context, vars_elim)
+    assert reference1.terms == expected.terms
+    # without simplification, only the tactics are used
+    (reference2, _) = reference.elim_vars_by_refining(context, vars_elim, simplify=False, tactics_order=[])
+    assert reference2.terms == reference.terms
 
 def test_polyhedral_var_elim_by_refinement_3() -> None:
     # the context can transform the reference
@@ -92,8 +96,11 @@ def test_polyhedral_var_elim_by_relaxation_7() -> None:
     context = to_pts(["y - z <= -1"])
     expected = to_pts(["x - z <= -2"])
     vars_elim = [y]
-    (reference, _) = reference.elim_vars_by_relaxing(context, vars_elim)
-    assert reference.terms == expected.terms
+    (reference1, _) = reference.elim_vars_by_relaxing(context, vars_elim)
+    assert reference1.terms == expected.terms
+    
+    (reference2, _) = reference.elim_vars_by_relaxing(context, vars_elim, simplify=False)
+    assert reference2.terms == expected.terms
 
 
 def test_simplify_1() -> None:
@@ -113,4 +120,6 @@ def test_issue171() -> None:
 
 
 if __name__ == "__main__":
-    test_polyhedral_var_elim_by_refinement_4()
+    test_polyhedral_var_elim_by_refinement_1()
+    test_polyhedral_var_elim_by_refinement_2()
+    test_polyhedral_var_elim_by_relaxation_7()
