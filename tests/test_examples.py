@@ -30,6 +30,7 @@ def test_examples1() -> None:
     unecessary_simplification.simplify()
     assert unecessary_simplification == contract_comp
 
+
 def test_examples2() -> None:
     contract1 = {
         "input_vars": ["u_1"],
@@ -57,18 +58,13 @@ def test_examples2() -> None:
     unecessary_simplification.simplify()
     assert unecessary_simplification == contract_comp
 
+
 def test_IoContract_compose_and_quotient_tactics():
     contract1 = iocontract.IoContract(
-        assumptions=PolyhedralTermList(),
-        guarantees=PolyhedralTermList(),
-        input_vars=[],
-        output_vars=[]
+        assumptions=PolyhedralTermList(), guarantees=PolyhedralTermList(), input_vars=[], output_vars=[]
     )
     contract2 = iocontract.IoContract(
-        assumptions=PolyhedralTermList(),
-        guarantees=PolyhedralTermList(),
-        input_vars=[],
-        output_vars=[]
+        assumptions=PolyhedralTermList(), guarantees=PolyhedralTermList(), input_vars=[], output_vars=[]
     )
     result1, _ = contract1.compose_tactics(contract2, tactics_order=None)
     assert isinstance(result1, iocontract.IoContract)
