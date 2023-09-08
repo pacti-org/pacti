@@ -323,9 +323,7 @@ arithmetic_expr = pp.infixNotation(
     ],
 )
 
-paren_arith_expr = pp.Group(
-    pp.Suppress("(") + arithmetic_expr + pp.Suppress(")")
-).setParseAction(lambda t: t[0][0])
+paren_arith_expr = pp.Group(pp.Suppress("(") + arithmetic_expr + pp.Suppress(")")).setParseAction(lambda t: t[0][0])
 
 variable = pp.Word(pp.alphas, pp.alphanums + "_").set_name("variable")
 symbol = pp.oneOf("+ -").set_name("symbol")

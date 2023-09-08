@@ -1311,7 +1311,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         logging.debug(new_context_cons)
         logging.debug(objective)
         res = linprog(c=objective, A_ub=new_context_mat, b_ub=new_context_cons, bounds=(None, None))
-        if res["status"] == 2 or res["status"] == 3:
+        if res["status"] in {2, 3}:
             # unbounded
             # return term.copy()
             raise ValueError("Tactic 2 did not succeed")

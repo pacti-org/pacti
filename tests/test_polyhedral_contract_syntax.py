@@ -1,6 +1,8 @@
+import numpy as np
+
 from pacti.contracts import PolyhedralIoContract
 from pacti.terms.polyhedra import *
-import numpy as np
+
 
 def test_empty_contract() -> None:
     c = PolyhedralIoContract.from_strings(input_vars=[], output_vars=[], assumptions=[], guarantees=[])
@@ -26,7 +28,9 @@ def test_simple_contract1() -> None:
 
 
 def test_simple_contract2() -> None:
-    c = PolyhedralIoContract.from_strings( input_vars=["a"], output_vars=["b"], assumptions=["a >= 0"], guarantees=["b <= (1/15)"] )
+    c = PolyhedralIoContract.from_strings(
+        input_vars=["a"], output_vars=["b"], assumptions=["a >= 0"], guarantees=["b <= (1/15)"]
+    )
     assert 1 == len(c.inputvars)
     assert "a" == c.inputvars[0].name
     assert 1 == len(c.outputvars)
@@ -38,14 +42,15 @@ def test_simple_contract2() -> None:
     assert isinstance(a0, PolyhedralTerm)
     assert a0.contains_var(c.inputvars[0])
     assert -1.0 == a0.get_coefficient(c.inputvars[0])
-    
+
     g0 = c.g.terms[0]
     assert isinstance(g0, PolyhedralTerm)
     assert g0.contains_var(c.outputvars[0])
     assert 1.0 == g0.get_coefficient(c.outputvars[0])
-    
-    cte = 1.0/15.0
+
+    cte = 1.0 / 15.0
     assert np.isclose(g0.constant, cte)
+
 
 # | LHS | <= RHS
 def test_pattern2_contract() -> None:
