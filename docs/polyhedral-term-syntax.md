@@ -3,14 +3,30 @@
 The `pacti.contracts.PolyhedralIoContract.from_strings()` API invokes a parser for `pacti.terms.polyhedra.PolyhedralTerm` to construct the assumptions and guarantees of a `PolyhedralIoContract`. The syntactic `expression` of a `PolyhedralTerm` is defined by the following BNF grammar in the `pacti.terms.polyhedra.syntax.grammar` module:
 
 ```text
+floating_point_number = 
+    ( '0'..'9'+ ('.' '0'..'9'*)? | '.' '0'..'9'+ )
+    ('E' | 'e') ('-' | '+')? '0'..'9'+ )?;
 
-variable = ('a'..'z' | 'A'..'Z'), ('a'..'z' | 'A'..'Z' | '0'..'9' | '_')*;
+operation = '+' | '-' | '*' | '/';
 
-floating_point_number = '0'..'9'+, ("." , '0'..'9'+)?, (("e" | "E"), ("-" | "+")?, '0'..'9'+)?;
+arithmetic_expr =
+    floating_point_number (operation floating_point_number)*;
 
-number_and_variable = floating_point_number, ("*" , variable)?;
+paren_arith_expr = '(' arithmetic_expr ')';
 
-term = variable | floating_point_number | number_and_variable | (floating_point_number '*'?)? "(" terms ")";
+variable = 'a'..'z' | 'A'..'Z' ('a'..'z' | 'A'..'Z' | '0'..'9' | '_')*;
+
+symbol = '+' | '-';
+
+only_variable = variable | paren_terms;
+
+number_and_variable = 
+    (floating_point_number | paren_arith_expr) '*'? variable
+    | (floating_point_number | paren_arith_expr) '*'? paren_terms;
+
+only_number = floating_point_number | paren_arith_expr;
+
+term = only_variable | number_and_variable | only_number;
 
 first_term = ("-" | "+")?, term;
 
@@ -18,7 +34,7 @@ signed_term = ("-" | "+") , term;
 
 terms = first_term, signed_term*;
 
-abs_term = floating_point_number?, "|", terms, "|";
+abs_term = (floating_point_number | paren_arith_expr)?, "|", terms, "|";
 
 positive_abs_term = "+", abs_term;
 
@@ -30,7 +46,7 @@ addl_abs_or_term = positive_abs_term | signed_term;
 
 abs_or_terms = first_abs_or_term, addl_abs_or_term*;
 
-paren_abs_or_terms = (floating_point_number, '*'?)?  "(", abs_or_terms, ")";
+paren_abs_or_terms = ((floating_point_number | paren_arith_expr), '*'?)?  "(", abs_or_terms, ")";
 
 first_paren_abs_or_terms = "+"? paren_abs_or_terms | first_abs_or_term;
 
@@ -76,6 +92,7 @@ Parsing rules produce an intermediate representation that facilitates performing
     - An `AbsoluteTerm` with no `coefficient` and a `term_list` with `constant=3` and no `factors`.
   - `4|x+2x|` is equivalent to `4|3x|`, yielding:
     - An `AbsoluteTerm` with `coefficient=4` and a `term_list` with `constant=0` and no `factors={'x'=3}`.
+  - `(2/3)x` is approximatively `0.66666x`
   
 - The parsing of `first_abs_or_term` or `addl_abs_or_term` each produces a `pacti.terms.polyhedra.syntax.grammar.PolyhedralSyntaxAbsoluteTermOrTerm`, which represents the union of `PolyhedralSyntaxAbsoluteTerm` and `PolyhedralSyntaxTermList` as the constituents of the side of an `expression`.
 
@@ -97,6 +114,8 @@ Parsing rules produce an intermediate representation that facilitates performing
       - An `absolute_term_list` with two `PolyhedralSyntaxAbsoluteTerm` with:
         - `coefficient=None` and a `term_list` with `constant=-3` and `factors={'x':-1}`;
         - `coefficient=3.0` and a `term_list` with `constant=0` and `factors={'y':4, 't':5}`.
+
+- Wherever the grammar accepts a floating point number as a constant, one can replace that constant with a parenthesized arithmetic expression involving the four operations: `+`, `-`, `*`, and `/`.
 
 - The parsing of `expression` produces an `pacti.terms.polyhedra.syntax.grammar.PolyhedralSyntaxExpression` that, in the serializer module, is converted to a `pacti.terms.polyhedra.PolyhedralTerm`. The parser handles three forms of `expression`:
   - The parsing of `equality_expression` handles the syntax of equality expressions of the form: `LHS ('==' | '=') RHS` where `LHS` and `RHS` are parsed as `terms`,

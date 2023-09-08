@@ -201,7 +201,7 @@ def polyhedral_term_list_to_strings(  # noqa: WPS231 too much cognitive complexi
 
 def _eql_expression_to_polyhedral_terms(e: PolyhedralSyntaxEqlExpression) -> List[PolyhedralTerm]:
     """
-    Convert equality expression
+    Convert equality expression.
 
     Args:
         e: Expression
@@ -234,12 +234,13 @@ def _check_absolute_terms(str_rep: str, absolute_term_list: List[PolyhedralSynta
 
 
 def _leq_expression_to_polyhedral_terms(str_rep: str, e: PolyhedralSyntaxIneqExpression) -> List[PolyhedralTerm]:
-    """
-    Convert less-than-or-equal expression
+    """Convert less-than-or-equal expression
 
     Args:
-        str_rep: The linear expression passed as a string.
-        e: Expression
+        str_rep:
+            string representation of the expression
+        e:
+            Expression
 
     Returns:
         The list of PolyhedralTerms resulting from expanding the following conversion from:
@@ -267,12 +268,13 @@ def _leq_expression_to_polyhedral_terms(str_rep: str, e: PolyhedralSyntaxIneqExp
 
 
 def _geq_expression_to_polyhedral_terms(str_rep: str, e: PolyhedralSyntaxIneqExpression) -> List[PolyhedralTerm]:
-    """
-    Convert greater-than-or-equal expression
+    """Convert greater-than-or-equal expression
 
     Args:
-        str_rep: The linear expression passed as a string.
-        e: Expression
+        str_rep:
+            string representation of the expression
+        e:
+            Expression
 
     Returns:
         The list of PolyhedralTerms resulting from expanding the following conversion from:

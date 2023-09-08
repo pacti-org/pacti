@@ -304,13 +304,28 @@ def _parse_expression(tokens: pp.ParseResults) -> PolyhedralSyntaxExpression:
 # Produces a float
 floating_point_number = (
     pp.Combine(
-        pp.Word(pp.nums)
-        + pp.Optional("." + pp.Optional(pp.Word(pp.nums)))
+        pp.Or([pp.Word(pp.nums) + pp.Optional("." + pp.Optional(pp.Word(pp.nums))), "." + pp.Word(pp.nums)])
         + pp.Optional(pp.CaselessLiteral("E") + pp.Optional(pp.oneOf("+ -")) + pp.Word(pp.nums))
     )
     .set_parse_action(lambda t: float(t[0]))  # noqa: WPS348
     .set_name("floating_point_number")  # noqa: WPS348
 )
+
+# Basic arithmetic operations
+plus, minus, mult, div = map(pp.Literal, "+-*/")
+
+# Using infixNotation to manage precedence of operations
+arithmetic_expr = pp.infixNotation(
+    floating_point_number,
+    [
+        (mult | div, 2, pp.opAssoc.LEFT, lambda s, l, t: t[0][0] * t[0][2] if t[0][1] == "*" else t[0][0] / t[0][2]),
+        (plus | minus, 2, pp.opAssoc.LEFT, lambda s, l, t: t[0][0] + t[0][2] if t[0][1] == "+" else t[0][0] - t[0][2]),
+    ],
+)
+
+paren_arith_expr = pp.Group(
+    pp.Suppress("(") + arithmetic_expr + pp.Suppress(")")
+).setParseAction(lambda t: t[0][0])
 
 variable = pp.Word(pp.alphas, pp.alphanums + "_").set_name("variable")
 symbol = pp.oneOf("+ -").set_name("symbol")
@@ -324,19 +339,21 @@ paren_terms = cast(pp.Forward, pp.Forward().set_name("paren_terms"))
 only_variable = variable.set_parse_action(_parse_only_variable)
 
 # Produces a PolyhedralSyntaxTermList
-number_and_variable = (floating_point_number + pp.Optional("*") + variable).set_parse_action(_parse_number_and_variable)
+number_and_variable = ((floating_point_number ^ paren_arith_expr) + pp.Optional("*") + variable).set_parse_action(
+    _parse_number_and_variable
+)
 
 # Produces a float
-only_number = floating_point_number
+only_number = floating_point_number ^ paren_arith_expr
 
 # Add support for parenthesized terms
 # Produces a PolyhedralSyntaxTermList
 only_variable |= paren_terms
 
 # Produces a PolyhedralSyntaxTermList
-number_and_variable |= pp.Group(floating_point_number + pp.Optional("*") + paren_terms).set_parse_action(
-    _parse_factor_paren_terms
-)
+number_and_variable |= pp.Group(
+    (floating_point_number ^ paren_arith_expr) + pp.Optional("*") + paren_terms
+).set_parse_action(_parse_factor_paren_terms)
 
 # Produces a PolyhedralSyntaxTermList
 only_number |= paren_terms
@@ -361,7 +378,7 @@ paren_terms <<= pp.Group("(" + terms + ")").set_parse_action(_parse_paren_terms)
 
 # Produces an PolyhedralSyntaxAbsoluteTerm
 abs_term = (
-    pp.Group(pp.Optional(floating_point_number + pp.Optional("*")) + "|" + terms + "|")
+    pp.Group(pp.Optional((floating_point_number ^ paren_arith_expr) + pp.Optional("*")) + "|" + terms + "|")
     .set_parse_action(_parse_absolute_term)  # noqa: WPS348
     .set_name("abs_term")  # noqa: WPS348
 )
@@ -403,7 +420,7 @@ abs_or_terms = (
 
 # Produces an PolyhedralSyntaxAbsoluteTermList
 paren_abs_or_terms = (
-    pp.Group(pp.Optional(floating_point_number + pp.Optional("*")) + "(" + abs_or_terms + ")")
+    pp.Group(pp.Optional((floating_point_number ^ paren_arith_expr) + pp.Optional("*")) + "(" + abs_or_terms + ")")
     .set_parse_action(_parse_paren_abs_or_terms)  # noqa: WPS348
     .set_name("paren_abs_or_terms")  # noqa: WPS348
 )

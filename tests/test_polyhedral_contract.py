@@ -81,7 +81,7 @@ def test_quotient_success(test_instance: str) -> None:
     assert len(c) == 3
     expected = c[2]
     try:
-        obtained = c[0].quotient(c[1])
+        obtained = c[0].quotient(c[1], simplify=True)
     except:
         assert False
     assert expected == obtained
@@ -166,5 +166,5 @@ def test_refinement_1(test_instance: str) -> None:
 
 
 if __name__ == "__main__":
-    file = r"tests\test_data\polyhedral_contracts\test_composition_success_dspexample2composition11.json"
+    file = r"tests/test_data/polyhedral_contracts/test_composition_success_Sal_lin_dCas9.json"
     test_composition_success(file)

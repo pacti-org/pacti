@@ -22,8 +22,10 @@ def test_polyhedral_var_elim_by_refinement_1() -> None:
     context = to_pts(["2*x <= 5"])
     expected = reference.copy()
     vars_elim = [x]
-    reference = reference.elim_vars_by_refining(context, vars_elim)
-    assert reference.terms == expected.terms
+    (reference1, _) = reference.elim_vars_by_refining(context, vars_elim)
+    assert reference1.terms == expected.terms
+    (reference2, _) = reference.elim_vars_by_refining(context, vars_elim, simplify=False)
+    assert reference2.terms == expected.terms
 
 
 def test_polyhedral_var_elim_by_refinement_2() -> None:
@@ -33,8 +35,11 @@ def test_polyhedral_var_elim_by_refinement_2() -> None:
     context = to_pts(["2*x <= 3"])
     expected = to_pts([])
     vars_elim = [x]
-    reference = reference.elim_vars_by_refining(context, vars_elim)
-    assert reference.terms == expected.terms
+    (reference1, _) = reference.elim_vars_by_refining(context, vars_elim)
+    assert reference1.terms == expected.terms
+    # without simplification, only the tactics are used
+    (reference2, _) = reference.elim_vars_by_refining(context, vars_elim, simplify=False, tactics_order=[])
+    assert reference2.terms == reference.terms
 
 
 def test_polyhedral_var_elim_by_refinement_3() -> None:
@@ -45,7 +50,7 @@ def test_polyhedral_var_elim_by_refinement_3() -> None:
     context = to_pts(["y <= 10"])
     expected = to_pts(["x <= -6"])
     vars_elim = [y]
-    reference = reference.elim_vars_by_refining(context, vars_elim)
+    (reference, _) = reference.elim_vars_by_refining(context, vars_elim)
     assert reference.terms == expected.terms
 
 
@@ -56,7 +61,7 @@ def test_polyhedral_var_elim_by_refinement_4() -> None:
     context = to_pts(["-x + y <= 0"])
     expected = to_pts(["x <= -1"])
     vars_elim = [x]
-    reference = reference.elim_vars_by_refining(context, vars_elim)
+    (reference, _) = reference.elim_vars_by_refining(context, vars_elim)
     assert reference.terms == expected.terms
 
 
@@ -67,7 +72,7 @@ def test_polyhedral_var_elim_by_refinement_5() -> None:
     context = to_pts(["x - y <= 0"])
     expected = to_pts(["y <= -1"])
     vars_elim = [x]
-    reference = reference.elim_vars_by_refining(context, vars_elim)
+    (reference, _) = reference.elim_vars_by_refining(context, vars_elim)
     assert reference.terms == expected.terms
 
 
@@ -79,7 +84,7 @@ def test_polyhedral_var_elim_by_refinement_6() -> None:
     context = to_pts(["x - y <= 0", "-z + x <= 0"])
     expected = to_pts(["y <= -1"])
     vars_elim = [x, z]
-    reference = reference.elim_vars_by_refining(context, vars_elim)
+    (reference, _) = reference.elim_vars_by_refining(context, vars_elim)
     assert reference.terms == expected.terms
 
 
@@ -92,8 +97,11 @@ def test_polyhedral_var_elim_by_relaxation_7() -> None:
     context = to_pts(["y - z <= -1"])
     expected = to_pts(["x - z <= -2"])
     vars_elim = [y]
-    reference = reference.elim_vars_by_relaxing(context, vars_elim)
-    assert reference.terms == expected.terms
+    (reference1, _) = reference.elim_vars_by_relaxing(context, vars_elim)
+    assert reference1.terms == expected.terms
+
+    (reference2, _) = reference.elim_vars_by_relaxing(context, vars_elim, simplify=False)
+    assert reference2.terms == expected.terms
 
 
 def test_simplify_1() -> None:
@@ -107,10 +115,38 @@ def test_issue171() -> None:
     constraints = to_pts(
         ["-1*dt0 - 1*t0 <= 0.0", "-1*t0 <= 0.0", "-1*dt0 - 1*t0 + 1*t1 <= 0.0", "1*dt0 + 1*t0 - 1*t1 <= 0.0"]
     )
-    transformed = constraints.elim_vars_by_relaxing(PolyhedralTermList([]), [Var("t0"), Var("dt0")])
+    (transformed, _) = constraints.elim_vars_by_relaxing(PolyhedralTermList([]), [Var("t0"), Var("dt0")])
     expected = to_pts(["-1*t1 <= 0"])
     assert expected == transformed
 
 
+def test_relaxing1() -> None:
+    constraints = to_pts(
+        ["1*dt0 + 1*t0 <= 0.0", "-1*t0 <= 0.0", "-1*dt0 - 1*t0 + 1*t1 <= 0.0", "1*dt0 + 1*t0 - 1*t1 <= 0.0"]
+    )
+    (transformed, tactics) = constraints.elim_vars_by_relaxing(
+        PolyhedralTermList([]), [Var("t0"), Var("dt0")], simplify=False
+    )
+    expected = to_pts(["1*t1 <= 0", "0 <= 0"])
+    assert expected == transformed
+
+
+def test_relaxing2() -> None:
+    constraints = to_pts(
+        ["1*dt0 + 1*t0 <= 0.0", "-1*t0 <= 0.0", "-1*dt0 - 1*t0 + 1*t1 <= 0.0", "1*dt0 + 1*t0 - 1*t1 <= 0.0"]
+    )
+    context = to_pts(["-dt0 <= -1", "dt0 <= 0"])
+    with pytest.raises(ValueError):
+        _ = constraints.elim_vars_by_relaxing(context, [Var("t0"), Var("dt0")], simplify=True)
+
+    (transformed1, _) = constraints.elim_vars_by_relaxing(context, [Var("t0"), Var("dt0")], simplify=False)
+    expected = to_pts(["1*t1 <= 0", "0 <= 0", "-1*t1 <= -1"])
+    assert expected == transformed1
+
+    (transformed2, _) = constraints._transform(context, [Var("t0"), Var("dt0")], refine=False, simplify=False)
+    expected = to_pts(["1*t1 <= 0", "-1*t0 <= 0", "0 <= 0", "-1*t1 <= -1"])
+    assert expected == transformed2
+
+
 if __name__ == "__main__":
-    test_polyhedral_var_elim_by_refinement_4()
+    test_relaxing2()
