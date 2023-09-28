@@ -1327,7 +1327,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         return result, 1
 
     @staticmethod
-    def _tactic_3(
+    def _tactic_6(
         term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, refine: bool
     ) -> Tuple[Optional[PolyhedralTerm], int]:
         logging.debug("************ Tactic 3")
@@ -1468,6 +1468,39 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
     ) -> Tuple[Optional[PolyhedralTerm], int]:
         logging.debug("************ Tactic 5")
         return PolyhedralTermList._context_reduction(term, context, vars_to_elim, refine, 5), 1
+    
+    @staticmethod
+    def _tactic_3(  # noqa: WPS231
+        term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, refine: bool
+    ) -> Tuple[Optional[PolyhedralTerm], int]:
+        logging.debug("************ Tactic 6")
+        logging.debug("Vars_to_elim %s \nTerm %s \nContext %s " % (vars_to_elim, term, context))
+        conflict_vars = list_intersection(vars_to_elim, term.vars)
+        if conflict_vars:
+            ct_var = conflict_vars[0]
+            for index, ct_term in enumerate(context.terms):
+                if ct_var in ct_term.vars:
+                    coeff_test = refine and (term.get_polarity(ct_var) == ct_term.get_polarity(ct_var)) 
+                    coeff_test = coeff_test or ((not refine) and (term.get_polarity(ct_var) != ct_term.get_polarity(ct_var)))
+                    if coeff_test:
+                        ct_conflict_vars = list_intersection(vars_to_elim, ct_term.vars)
+                        if all(ele in conflict_vars for ele in ct_conflict_vars):
+                            replacement_expr = ct_term.isolate_variable(ct_var)
+                            new_term = term.substitute_variable(ct_var, replacement_expr)
+                            new_context = context.copy()
+                            new_context.terms.pop(index)
+                            try:
+                                return PolyhedralTermList._tactic_3(new_term,new_context,vars_to_elim,refine)[0], 1
+                            except:
+                                pass
+
+            raise ValueError("Failed")
+        else:
+            return term.copy(), 1
+
+        
+
+        
 
     @staticmethod
     def _tactic_trivial(  # noqa: WPS231
@@ -1483,7 +1516,8 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
             term, context, vars_to_elim, refine, []
         ),
         5: _tactic_5.__func__,  # type: ignore
-        6: _tactic_trivial.__func__,  # type: ignore
+        6: _tactic_6.__func__,  # type: ignore
+        7: _tactic_trivial.__func__,  # type: ignore
     }
 
     # Return:
@@ -1510,7 +1544,11 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         for tactic_num in tactics_order:  # noqa WPS327
             try:  # noqa: WPS229
                 ta = time.time()
-                result, count = PolyhedralTermList.TACTICS[tactic_num](term, context, vars_to_elim, refine)
+                ve = vars_to_elim.copy()
+                if len(ve) > 2:
+                    ve[1] = vars_to_elim[2]
+                    ve[2] = vars_to_elim[1]
+                result, count = PolyhedralTermList.TACTICS[tactic_num](term, context, ve, refine)
                 tb = time.time()
                 if result is not None:
                     return result, tactic_num, tb - ta, count
