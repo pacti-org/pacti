@@ -21,7 +21,7 @@ from pacti.utils.lists import list_diff, list_intersection, list_union
 
 numeric = Union[int, float]
 
-TACTICS_ORDER = [1, 2, 3, 4, 5]  # noqa: WPS407
+TACTICS_ORDER = [1, 2, 3, 4, 5, 6, 7]  # noqa: WPS407
 
 
 class PolyhedralTerm(Term):
@@ -1330,7 +1330,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
     def _tactic_6(
         term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, refine: bool
     ) -> Tuple[Optional[PolyhedralTerm], int]:
-        logging.debug("************ Tactic 3")
+        logging.debug("************ Tactic 6")
         logging.debug("Vars_to_elim %s \nTerm %s \nContext %s " % (vars_to_elim, term, context))
         conflict_vars = list_intersection(vars_to_elim, term.vars)
         conflict_coeff = {var: term.get_coefficient(var) for var in conflict_vars}
@@ -1353,7 +1353,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
             result, count = PolyhedralTermList._tactic_1(new_term, new_context, new_elims, refine)
         except ValueError as e:  # noqa: WPS329 Found useless `except` case
             raise e
-        logging.debug("************ Leaving Tactic 3")
+        logging.debug("************ Leaving Tactic 6")
         logging.debug("Vars_to_elim %s \nTerm %s \nContext %s " % (vars_to_elim, term, context))
         return result, count
 
@@ -1473,7 +1473,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
     def _tactic_3(  # noqa: WPS231
         term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, refine: bool
     ) -> Tuple[Optional[PolyhedralTerm], int]:
-        logging.debug("************ Tactic 6")
+        logging.debug("************ Tactic 3")
         logging.debug("Vars_to_elim %s \nTerm %s \nContext %s " % (vars_to_elim, term, context))
         conflict_vars = list_intersection(vars_to_elim, term.vars)
         if conflict_vars:
