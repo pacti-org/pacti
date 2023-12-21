@@ -273,9 +273,9 @@ class TermList(ABC):
 
         Returns:
             A tuple consisting of (a) a list of terms not containing any variables in `vars_to_elim`
-              and which, in the context provided, imply the terms contained in the
-              calling termlist; and (b) the list of tuples, for each term processed, of the tactic used,
-              time spent, and tactic invocation count.
+                and which, in the context provided, imply the terms contained in the
+                calling termlist; and (b) the list of tuples, for each term processed, of the tactic used,
+                time spent, and tactic invocation count.
         """
 
     @abstractmethod
@@ -302,9 +302,9 @@ class TermList(ABC):
 
         Returns:
             A tuple consisting of (a) a list of terms not containing any variables in `vars_to_elim`
-              and which, in the context provided, are implied by the terms
-              contained in the calling termlist; and (b) the list of tuples, for each term processed,
-              of the tactic used, time spent, and tactic invocation count.
+                and which, in the context provided, are implied by the terms
+                contained in the calling termlist; and (b) the list of tuples, for each term processed,
+                of the tactic used, time spent, and tactic invocation count.
         """
 
     @abstractmethod
