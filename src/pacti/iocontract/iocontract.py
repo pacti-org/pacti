@@ -272,11 +272,10 @@ class TermList(ABC):
                 The order of the tactics to use when transforming each term in the list.
 
         Returns:
-            A tuple consisting of:
-            - a list of terms not containing any variables in `vars_to_elim`
+            A tuple consisting of (a) a list of terms not containing any variables in `vars_to_elim`
               and which, in the context provided, imply the terms contained in the
-              calling termlist;
-            - the list of tuples, for each term processed, of the tactic used, time spent, and tactic invocation count.
+              calling termlist; and (b) the list of tuples, for each term processed, of the tactic used,
+              time spent, and tactic invocation count.
         """
 
     @abstractmethod
@@ -302,11 +301,10 @@ class TermList(ABC):
                 The order of the tactics to use when transforming each term in the list.
 
         Returns:
-            A tuple consisting of:
-            - a list of terms not containing any variables in `vars_to_elim`
+            A tuple consisting of (a) a list of terms not containing any variables in `vars_to_elim`
               and which, in the context provided, are implied by the terms
-              contained in the calling termlist;
-            - the list of tuples, for each term processed, of the tactic used, time spent, and tactic invocation count.
+              contained in the calling termlist; and (b) the list of tuples, for each term processed,
+              of the tactic used, time spent, and tactic invocation count.
         """
 
     @abstractmethod

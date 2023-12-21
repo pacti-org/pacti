@@ -608,11 +608,10 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
                 Optionally, the order of tactics to invoke during transformation.
 
         Returns:
-            A tuple of:
-            - A list of terms not containing any variables in `vars_to_elim`
+            A tuple of (a) a list of terms not containing any variables in `vars_to_elim`
                 and which, in the context provided, imply the terms contained in the
-                calling termlist;
-            - The list of tuples, for each processed term, of the tactic used, time spend, and tactic invocation count.
+                calling termlist; and (b) the list of tuples, for each processed term, of
+                the tactic used, time spend, and tactic invocation count.
 
         Raises:
             ValueError: Self has empty intersection with its context.
@@ -680,11 +679,10 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
                 Optionally, the order of tactics to invoke during transformation.
 
         Returns:
-            A tuple of:
-            - A list of terms not containing any variables in `vars_to_elim`
+            A tuple of (a) a list of terms not containing any variables in `vars_to_elim`
                 and which, in the context provided, are implied by the terms
-                contained in the calling termlist;
-            - The list of tuples, for each processed term, of the tactic used, time spend, and tactic invocation count.
+                contained in the calling termlist; and (b) the list of tuples, for each
+                processed term, of the tactic used, time spend, and tactic invocation count.
 
         Raises:
             ValueError: Constraints have empty intersection with context.
