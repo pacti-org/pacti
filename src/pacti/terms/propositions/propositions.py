@@ -54,10 +54,15 @@ class PropositionalTerm(Term):
             ValueError: Unsupported argument type.
         """
         self.expression : pyeda.boolalg.expr.Expression
-        if expression == "":
-            self.expression = pyeda.boolalg.expr.expr("1")
-        else:    
-            self.expression = pyeda.boolalg.expr.expr(expression)
+        if isinstance(expression, str):
+            if expression == "":
+                self.expression = pyeda.boolalg.expr.expr("1")
+            else:    
+                self.expression = pyeda.boolalg.expr.expr(expression)
+        elif isinstance(expression, str):
+            self.expression = copy.copy(expression)
+        else:
+            raise ValueError()
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, type(self)):
@@ -96,21 +101,35 @@ class PropositionalTerm(Term):
             A term with `source_var` replaced by `target_var`.
         """
 
-
-        new_term = self.copy()
-        sourceVarEda = pyeda.boolalg.expr.exprvar(source_var.name)
-        if source_var in self.vars:
-            # do dfs over expression
-            for ex in new_term.expression.iter_dfs:
-                if isinstance(ex, pyeda.boolalg.expr.Variable):
-
-
+        def rename_expr(expression, oldvar, newvar):
+            if isinstance(expression, pyeda.boolalg.expr.Atom):
+                if isinstance(expression, pyeda.boolalg.expr.Variable):
+                    if expression == oldvar:
+                        return newvar
+                if isinstance(expression, pyeda.boolalg.expr.Complement):
+                    if expression == pyeda.boolalg.expr.Not(oldvar):
+                        return pyeda.boolalg.expr.Not(newvar)
+                return expression
+            elif isinstance(expression, pyeda.boolalg.expr.NotOp):
+                nxs = pyeda.boolalg.expr.Expression.box(rename_expr(expression.xs[0], oldvar, newvar)).node
+                return pyeda.boolalg.expr._expr(pyeda.boolalg.exprnode.not_(nxs))
+            elif isinstance(expression, pyeda.boolalg.expr.ImpliesOp):
+                nxs = [pyeda.boolalg.expr.Expression.box(rename_expr(x, oldvar, newvar)).node for x in expression.xs]
+                return pyeda.boolalg.expr._expr(pyeda.boolalg.exprnode.impl(*nxs))
+            elif isinstance(expression, pyeda.boolalg.expr.AndOp):
+                nxs = [pyeda.boolalg.expr.Expression.box(rename_expr(x, oldvar, newvar)).node for x in expression.xs]
+                return pyeda.boolalg.expr._expr(pyeda.boolalg.exprnode.and_(*nxs))
+            elif isinstance(expression, pyeda.boolalg.expr.OrOp):
+                nxs = [pyeda.boolalg.expr.Expression.box(rename_expr(x, oldvar, newvar)).node for x in expression.xs]
+                return pyeda.boolalg.expr._expr(pyeda.boolalg.exprnode.or_(*nxs))
+            else:
+                raise ValueError()
         
+        sourceVarEda = pyeda.boolalg.expr.exprvar(source_var.name)
+        targetVarEda = pyeda.boolalg.expr.exprvar(target_var.name)
+        retExpr = rename_expr(self.expression, sourceVarEda, targetVarEda)
+        return PropositionalTerm(retExpr)        
                     
-
-
-
-        return new_term
 
     @property
     def vars(self) -> List[Var]:  # noqa: A003
