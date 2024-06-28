@@ -11,9 +11,12 @@ import logging
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import pyeda.boolalg
+import pyeda.boolalg.expr
 
 from pacti.iocontract import TacticStatistics, Term, TermList, Var
 from pacti.utils.lists import list_diff, list_intersection, list_union
+
+import copy
 
 numeric = Union[int, float]
 
@@ -50,7 +53,11 @@ class PropositionalTerm(Term):
         Raises:
             ValueError: Unsupported argument type.
         """
-        self.expression = pyeda.boolalg.expr.expr(expression)
+        self.expression : pyeda.boolalg.expr.Expression
+        if expression == "":
+            self.expression = pyeda.boolalg.expr.expr("1")
+        else:    
+            self.expression = pyeda.boolalg.expr.expr(expression)
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, type(self)):
@@ -73,7 +80,9 @@ class PropositionalTerm(Term):
         Returns:
             Copy of term.
         """
-        return PropositionalTerm(str(self))
+        newterm = PropositionalTerm()
+        newterm.expression = copy.copy(self.expression())
+        return newterm
 
     def rename_variable(self, source_var: Var, target_var: Var) -> PropositionalTerm:
         """
@@ -86,12 +95,21 @@ class PropositionalTerm(Term):
         Returns:
             A term with `source_var` replaced by `target_var`.
         """
+
+
         new_term = self.copy()
+        sourceVarEda = pyeda.boolalg.expr.exprvar(source_var.name)
         if source_var in self.vars:
-            if target_var not in self.vars:
-                new_term.variables[target_var] = 0
-            new_term.variables[target_var] += new_term.variables[source_var]
-            new_term = new_term.remove_variable(source_var)
+            # do dfs over expression
+            for ex in new_term.expression.iter_dfs:
+                if isinstance(ex, pyeda.boolalg.expr.Variable):
+
+
+        
+                    
+
+
+
         return new_term
 
     @property
