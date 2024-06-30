@@ -70,6 +70,33 @@ def _atom_has_variables(atom: str, var_list: List[Var]) -> bool:
     return len(list_intersection(atoms_vars, var_list)) > 0
 
 
+def _expr_to_str(expression: edaexpr.Expression) -> str:
+    ret_val: str
+    if isinstance(expression, edaexpr.Atom):
+        if isinstance(expression, edaexpr.Variable):
+            ret_val = expression.name
+        elif isinstance(expression, edaexpr.Complement):
+            ret_val = f"~ {expression.inputs[0].name}"
+        elif isinstance(expression, edaexpr.Constant):
+            ret_val = f" {str(int(expression.VALUE))} "
+        else:
+            ValueError("Wrong datatype")
+    elif isinstance(expression, edaexpr.NotOp):
+        ret_val = f"~({_expr_to_str(expression.xs[0])})"
+    elif isinstance(expression, edaexpr.ImpliesOp):
+        ret_list = [f"({_expr_to_str(x)})" for x in expression.xs]
+        ret_val = f"{ret_list[0]} => {ret_list[1]}"
+    elif isinstance(expression, edaexpr.AndOp):
+        ret_list = [f"({_expr_to_str(x)})" for x in expression.xs]
+        ret_val = " & ".join(ret_list)
+    elif isinstance(expression, edaexpr.OrOp):
+        ret_list = [f"({_expr_to_str(x)})" for x in expression.xs]
+        ret_val = " | ".join(ret_list)
+    else:
+        raise ValueError()
+    return ret_val
+
+
 class PropositionalTerm(Term):
     """Polyhedral terms are linear inequalities over a list of variables."""
 
@@ -126,7 +153,7 @@ class PropositionalTerm(Term):
         return str(self) == str(other)
 
     def __str__(self) -> str:
-        return str(self.expression)
+        return _expr_to_str(self.expression)
 
     def __hash__(self) -> int:
         return hash(str(self))
