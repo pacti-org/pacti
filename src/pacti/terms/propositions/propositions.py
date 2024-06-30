@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import pyeda.boolalg
 import pyeda.boolalg.expr
+import pyeda.boolalg.exprnode
 
 from pacti.iocontract import TacticStatistics, Term, TermList, Var
 from pacti.utils.lists import list_diff, list_intersection, list_union
@@ -32,7 +33,7 @@ class PropositionalTerm(Term):
     # values are the coefficients of those variables in the term, and (b) a
     # constant. The term is assumed to be in the form \Sigma_i a_i v_i +
     # constant <= 0
-    def __init__(self, expression: str):
+    def __init__(self, expression: str | pyeda.boolalg.expr.Expression):
         """
         Constructor for PropositionalTerm.
 
@@ -65,11 +66,11 @@ class PropositionalTerm(Term):
             else:
                 # extract the uninterpreted terms
                 new_expr = copy.copy(expression)
-                atoms = re.findall("\w+\s*\(.*?\)", new_expr)
+                atoms = re.findall(r"\w+\s*\(.*?\)", new_expr)
                 tvars = [f"_xtempvar{i}" for i in range(len(atoms))]
                 for i in range(len(atoms)):
                     new_expr = new_expr.replace(atoms[i], tvars[i])
-                eda_expression = pyeda.boolalg.expr(new_expr)
+                eda_expression = pyeda.boolalg.expr.Expression(new_expr)
                 for i in range(len(atoms)):
                     eda_expression = PropositionalTerm.rename_expr(eda_expression, tvars[i], atoms[i])
                 self.expression = eda_expression
@@ -98,8 +99,8 @@ class PropositionalTerm(Term):
         Returns:
             Copy of term.
         """
-        newterm = PropositionalTerm()
-        newterm.expression = copy.copy(self.expression())
+        newterm = PropositionalTerm('')
+        newterm.expression = copy.copy(self.expression)
         return newterm
 
     def rename_variable(self, source_var: Var, target_var: Var) -> PropositionalTerm:
@@ -116,8 +117,10 @@ class PropositionalTerm(Term):
         retExpr = PropositionalTerm.rename_expr(self.expression, source_var.name, target_var.name)
         return PropositionalTerm(retExpr)        
     
+    
+    
     @classmethod
-    def rename_expr(expression, oldvarstr, newvarstr):
+    def rename_expr(cls, expression, oldvarstr, newvarstr) -> pyeda.boolalg.expr.Expression:
         oldvar = pyeda.boolalg.expr.exprvar(oldvarstr)
         newvar = pyeda.boolalg.expr.exprvar(newvarstr)
         if isinstance(expression, pyeda.boolalg.expr.Atom):
@@ -142,6 +145,17 @@ class PropositionalTerm(Term):
             return pyeda.boolalg.expr._expr(pyeda.boolalg.exprnode.or_(*nxs))
         else:
             raise ValueError()
+        
+    @property
+    def atoms(self) -> List[str]:  # noqa: A003
+        """
+        Atoms appearing in term.
+
+        Returns:
+            List of atoms referenced in term.
+        """
+        edavars = map(lambda x: x.name, self.expression.inputs)
+        return list(edavars)
                     
 
     @property
@@ -152,17 +166,33 @@ class PropositionalTerm(Term):
         Returns:
             List of variables referenced in term.
         """
-        edavars = map(lambda x: x.name, self.expression.inputs)
+        atoms = self.atoms
         variables = []
-        for edavar in edavars:
-            m = re.match("(\w+)\s*\((.*?)\)", edavar)
-            if m:
-                funcname = m.group(1)
-                args = m.group(2).split(',')
-                for arg in args:
-                    variables.append(Var(arg.strip()))
-            else:
-                variables.append(Var(edavar))
+        for atom in atoms:
+            variables += PropositionalTerm.get_atom_variables(atom)
+        return variables
+    
+
+    @classmethod
+    def get_atom_variables(cls, atom: str) -> List[Var]:
+        variables = []
+        m = re.match("(\w+)\s*\((.*?)\)", atom)
+        if m:
+            # observe that we are not yet using the name of the
+            # uninterpreted function, which is stored in m.group(1)
+            args = m.group(2).split(',')
+            for arg in args:
+                variables.append(Var(arg.strip()))
+        else:
+            variables.append(Var(atom))
+        return variables
+
+    
+    @classmethod
+    def atom_has_variables(cls, atom: str, var_list : List[Var]) -> bool:
+        atoms_vars = PropositionalTerm.get_atom_variables(atom)
+        retVal = len(list_intersection(atoms_vars, var_list)) > 0
+        return retVal
 
 
     def contains_var(self, var_to_seek: Var) -> bool:
@@ -284,17 +314,36 @@ class PropositionalTermList(TermList):  # noqa: WPS338
         Raises:
             ValueError: Self has empty intersection with its context.
         """
-
+        new_terms = []
+        for term in self.terms:
+            new_term : PropositionalTerm
+            if list_intersection(vars_to_elim, term.vars):
+                atoms_to_elim = []
+                for atom in term.atoms:
+                    if PropositionalTerm.atom_has_variables(atom, vars_to_elim):
+                        atoms_to_elim.append(atom)
+                context_expr = pyeda.boolalg.expr.And(*context.terms)
+                elimination_term : pyeda.boolalg.expr.Expression = pyeda.boolalg.expr.Implies(context_expr, term)
+                elimination_term = elimination_term.consensus(vs=[pyeda.boolalg.expr.exprvar(atom) for atom in atoms_to_elim])
+                # make sure the result is not empty
+                test_expr : pyeda.boolalg.expr.Expression = pyeda.boolalg.expr.And(context_expr, elimination_term)
+                if not test_expr.satisfy_one():
+                    raise ValueError(f"The variables {vars_to_elim} cannot be eliminated from the term {term} in the context {context}")
+                new_term = PropositionalTerm(elimination_term)
+            else:
+                new_term = term.copy()
+            new_terms.append(new_term)
+        return (PropositionalTermList(new_terms), [])
 
 
 
     def elim_vars_by_relaxing(
         self,
-        context: PolyhedralTermList,
+        context: PropositionalTermList,
         vars_to_elim: list,
         simplify: bool = True,
         tactics_order: Optional[List[int]] = None,
-    ) -> Tuple[PolyhedralTermList, TacticStatistics]:
+    ) -> Tuple[PropositionalTermList, TacticStatistics]:
         """
         Eliminate variables from PolyhedralTermList by abstracting it in context.
 
@@ -324,9 +373,29 @@ class PropositionalTermList(TermList):  # noqa: WPS338
         Raises:
             ValueError: Constraints have empty intersection with context.
         """
+        new_terms = []
+        for term in self.terms:
+            new_term : PropositionalTerm
+            if list_intersection(vars_to_elim, term.vars):
+                atoms_to_elim = []
+                for atom in term.atoms:
+                    if PropositionalTerm.atom_has_variables(atom, vars_to_elim):
+                        atoms_to_elim.append(atom)
+                context_expr = pyeda.boolalg.expr.And(*context.terms)
+                elimination_term : pyeda.boolalg.expr.Expression = pyeda.boolalg.expr.And(context_expr, term)
+                elimination_term = elimination_term.smoothing(vs=[pyeda.boolalg.expr.exprvar(atom) for atom in atoms_to_elim])
+                # make sure the result is not empty
+                #test_expr : pyeda.boolalg.expr.Expression = pyeda.boolalg.expr.And(context_expr, elimination_term)
+                #if not test_expr.satisfy_one():
+                #    raise ValueError(f"The variables {vars_to_elim} cannot be eliminated from the term {term} in the context {context}")
+                new_term = PropositionalTerm(elimination_term)
+            else:
+                new_term = term.copy()
+            new_terms.append(new_term)
+        return (PropositionalTermList(new_terms), [])
 
 
-    def simplify(self, context: Optional[PolyhedralTermList] = None) -> PolyhedralTermList:
+    def simplify(self, context: Optional[PropositionalTermList] = None) -> PropositionalTermList:
         """
         Remove redundant terms in the PolyhedralTermList using the provided context.
 
@@ -345,9 +414,9 @@ class PropositionalTermList(TermList):  # noqa: WPS338
         Raises:
             ValueError: The intersection of self and context is empty.
         """
+        return copy.copy(self)
 
-
-    def refines(self, other: PolyhedralTermList) -> bool:
+    def refines(self, other: PropositionalTermList) -> bool:
         """
         Tells whether the argument is a larger specification.
 
@@ -358,7 +427,12 @@ class PropositionalTermList(TermList):  # noqa: WPS338
         Returns:
             self <= other
         """
-
+        test_expr : pyeda.boolalg.expr.Expression = pyeda.boolalg.expr.Implies(pyeda.boolalg.expr.And(*self.terms), pyeda.boolalg.expr.And(*other.terms))
+        if pyeda.boolalg.expr.Not(test_expr).satisfy_one() is None:
+            return True
+        else:
+            return False
+        
 
     def is_empty(self) -> bool:
         """
@@ -367,9 +441,9 @@ class PropositionalTermList(TermList):  # noqa: WPS338
         Returns:
             True if constraints cannot be satisfied.
         """
-        _, self_mat, self_cons, _, _ = PolyhedralTermList.termlist_to_polytope(  # noqa: WPS236
-            self, PolyhedralTermList([])
-        )
-        logging.debug("Polytope is \n%s", self_mat)
-        return PolyhedralTermList.is_polytope_empty(self_mat, self_cons)
+        test_expr : pyeda.boolalg.expr.Expression = pyeda.boolalg.expr.And(*self.terms)
+        if test_expr.satisfy_one() is None:
+            return True
+        else:
+            return False
 
