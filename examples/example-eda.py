@@ -3,6 +3,7 @@ import pyeda.boolalg.exprnode
 from pyeda.inter import *
 
 
+import re
 
 import pyeda.boolalg
 
@@ -16,7 +17,7 @@ g = expr("a")
 
 
 print(f"The variables in f are: {f.inputs}")
-print(f.inputs)
+print(type(f.inputs[0].name))
 print(f.xs)
 var = f.inputs[0]
 
@@ -78,3 +79,37 @@ print(rename_expr(h,var,avar))
 print(rename_expr(i,var,avar))
 print(rename_expr(f,var,avar))
 
+
+
+cvar = exprvar('F(a,b,c,d)')
+dvar = expr('~(~a)')
+
+print(And(cvar, dvar))
+
+
+
+print("----------------")
+
+
+test_str = "a | ~ F(a,b,c,d) & G(sg,aj)"
+
+
+atoms = re.findall("\w+\s*\(.*?\)", test_str)
+tvars = [f"_xtempvar{i}" for i in range(len(atoms))]
+
+new_str = copy.copy(test_str)
+for i in range(len(atoms)):
+    new_str = new_str.replace(atoms[i], tvars[i])
+
+print(expr(new_str))
+
+
+edavar = "F(a,c,f,d , ss)"
+m = re.match("(\w+)\s*\((.*?)\)", edavar)
+if m:
+    print('capirlo')
+    funcname = m.group(1)
+    args = m.group(2)
+    print(funcname)
+    print(args)
+    print(args.split(','))

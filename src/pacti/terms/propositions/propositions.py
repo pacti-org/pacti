@@ -18,7 +18,10 @@ from pacti.utils.lists import list_diff, list_intersection, list_union
 
 import copy
 
+import re
+
 numeric = Union[int, float]
+
 
 
 
@@ -50,19 +53,29 @@ class PropositionalTerm(Term):
             variables: A dictionary mapping Var keys to numeric values.
             constant: A numeric value on the right of the inequality.
 
-        Raises:
+        Raises:o
             ValueError: Unsupported argument type.
         """
         self.expression : pyeda.boolalg.expr.Expression
-        if isinstance(expression, str):
+        if isinstance(expression, pyeda.boolalg.expr.Expression):
+            self.expression = copy.copy(expression)
+        elif isinstance(expression, str):
             if expression == "":
                 self.expression = pyeda.boolalg.expr.expr("1")
-            else:    
-                self.expression = pyeda.boolalg.expr.expr(expression)
-        elif isinstance(expression, str):
-            self.expression = copy.copy(expression)
+            else:
+                # extract the uninterpreted terms
+                new_expr = copy.copy(expression)
+                atoms = re.findall("\w+\s*\(.*?\)", new_expr)
+                tvars = [f"_xtempvar{i}" for i in range(len(atoms))]
+                for i in range(len(atoms)):
+                    new_expr = new_expr.replace(atoms[i], tvars[i])
+                eda_expression = pyeda.boolalg.expr(new_expr)
+                for i in range(len(atoms)):
+                    eda_expression = PropositionalTerm.rename_expr(eda_expression, tvars[i], atoms[i])
+                self.expression = eda_expression
         else:
-            raise ValueError()
+            raise ValueError()    
+            
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, type(self)):
@@ -100,52 +113,57 @@ class PropositionalTerm(Term):
         Returns:
             A term with `source_var` replaced by `target_var`.
         """
-
-        def rename_expr(expression, oldvar, newvar):
-            if isinstance(expression, pyeda.boolalg.expr.Atom):
-                if isinstance(expression, pyeda.boolalg.expr.Variable):
-                    if expression == oldvar:
-                        return newvar
-                if isinstance(expression, pyeda.boolalg.expr.Complement):
-                    if expression == pyeda.boolalg.expr.Not(oldvar):
-                        return pyeda.boolalg.expr.Not(newvar)
-                return expression
-            elif isinstance(expression, pyeda.boolalg.expr.NotOp):
-                nxs = pyeda.boolalg.expr.Expression.box(rename_expr(expression.xs[0], oldvar, newvar)).node
-                return pyeda.boolalg.expr._expr(pyeda.boolalg.exprnode.not_(nxs))
-            elif isinstance(expression, pyeda.boolalg.expr.ImpliesOp):
-                nxs = [pyeda.boolalg.expr.Expression.box(rename_expr(x, oldvar, newvar)).node for x in expression.xs]
-                return pyeda.boolalg.expr._expr(pyeda.boolalg.exprnode.impl(*nxs))
-            elif isinstance(expression, pyeda.boolalg.expr.AndOp):
-                nxs = [pyeda.boolalg.expr.Expression.box(rename_expr(x, oldvar, newvar)).node for x in expression.xs]
-                return pyeda.boolalg.expr._expr(pyeda.boolalg.exprnode.and_(*nxs))
-            elif isinstance(expression, pyeda.boolalg.expr.OrOp):
-                nxs = [pyeda.boolalg.expr.Expression.box(rename_expr(x, oldvar, newvar)).node for x in expression.xs]
-                return pyeda.boolalg.expr._expr(pyeda.boolalg.exprnode.or_(*nxs))
-            else:
-                raise ValueError()
-        
-        sourceVarEda = pyeda.boolalg.expr.exprvar(source_var.name)
-        targetVarEda = pyeda.boolalg.expr.exprvar(target_var.name)
-        retExpr = rename_expr(self.expression, sourceVarEda, targetVarEda)
+        retExpr = PropositionalTerm.rename_expr(self.expression, source_var.name, target_var.name)
         return PropositionalTerm(retExpr)        
+    
+    @classmethod
+    def rename_expr(expression, oldvarstr, newvarstr):
+        oldvar = pyeda.boolalg.expr.exprvar(oldvarstr)
+        newvar = pyeda.boolalg.expr.exprvar(newvarstr)
+        if isinstance(expression, pyeda.boolalg.expr.Atom):
+            if isinstance(expression, pyeda.boolalg.expr.Variable):
+                if expression == oldvar:
+                    return newvar
+            if isinstance(expression, pyeda.boolalg.expr.Complement):
+                if expression == pyeda.boolalg.expr.Not(oldvar):
+                    return pyeda.boolalg.expr.Not(newvar)
+            return expression
+        elif isinstance(expression, pyeda.boolalg.expr.NotOp):
+            nxs = pyeda.boolalg.expr.Expression.box(PropositionalTerm.rename_expr(expression.xs[0], oldvar, newvar)).node
+            return pyeda.boolalg.expr._expr(pyeda.boolalg.exprnode.not_(nxs))
+        elif isinstance(expression, pyeda.boolalg.expr.ImpliesOp):
+            nxs = [pyeda.boolalg.expr.Expression.box(PropositionalTerm.rename_expr(x, oldvar, newvar)).node for x in expression.xs]
+            return pyeda.boolalg.expr._expr(pyeda.boolalg.exprnode.impl(*nxs))
+        elif isinstance(expression, pyeda.boolalg.expr.AndOp):
+            nxs = [pyeda.boolalg.expr.Expression.box(PropositionalTerm.rename_expr(x, oldvar, newvar)).node for x in expression.xs]
+            return pyeda.boolalg.expr._expr(pyeda.boolalg.exprnode.and_(*nxs))
+        elif isinstance(expression, pyeda.boolalg.expr.OrOp):
+            nxs = [pyeda.boolalg.expr.Expression.box(PropositionalTerm.rename_expr(x, oldvar, newvar)).node for x in expression.xs]
+            return pyeda.boolalg.expr._expr(pyeda.boolalg.exprnode.or_(*nxs))
+        else:
+            raise ValueError()
                     
 
     @property
     def vars(self) -> List[Var]:  # noqa: A003
         """
-        Variables appearing in term with a nonzero coefficient.
-
-        Example:
-            For the term $ax + by \\le c$ with variables $x$ and
-            $y$, this function returns the list $\\{x, y\\}$ if
-            $a$ and $b$ are nonzero.
+        Variables appearing in term.
 
         Returns:
             List of variables referenced in term.
         """
-        varlist = self.variables.keys()
-        return list(varlist)
+        edavars = map(lambda x: x.name, self.expression.inputs)
+        variables = []
+        for edavar in edavars:
+            m = re.match("(\w+)\s*\((.*?)\)", edavar)
+            if m:
+                funcname = m.group(1)
+                args = m.group(2).split(',')
+                for arg in args:
+                    variables.append(Var(arg.strip()))
+            else:
+                variables.append(Var(edavar))
+
 
     def contains_var(self, var_to_seek: Var) -> bool:
         """
@@ -160,320 +178,6 @@ class PropositionalTerm(Term):
         """
         return var_to_seek in self.vars
 
-    def get_coefficient(self, var: Var) -> numeric:  # noqa: VNE002
-        """
-        Output the coefficient multiplying the given variable in the term.
-
-        Args:
-            var: The variable whose coefficient we are seeking.
-
-        Returns:
-            The coefficient corresponding to variable in the term.
-        """
-        if self.contains_var(var):
-            return self.variables[var]
-        return 0
-
-    def get_polarity(self, var: Var, polarity: bool = True) -> bool:  # noqa: VNE002
-        """
-        Check if variable matches given polarity
-
-        The polarity of a variable in a term is defined as the polarity of the
-        coefficient that multiplies it in a term, e.g., the variables $x$
-        and $y$ in the term $-2x + y \\le 3$ have negative and
-        positive polarities respectively.
-
-        Args:
-            var: The variable whose polarity in the term we are seeking.
-            polarity: The polarity that we are comparing against the variable's polarity.
-
-        Returns:
-            `True` if the variable's polarity matches `polarity` and
-                `False` otherwise. If the variable's coefficient in the term
-                is zero, return `True`.
-        """
-        if polarity:
-            return self.variables[var] >= 0
-        return self.variables[var] <= 0
-
-    def get_sign(self, var: Var) -> int:  # noqa: VNE002
-        """
-        Get the sign of the variable in term.
-
-        The sign of a variable in a term is defined as the sign of the
-        coefficient that multiplies it in a term, e.g., the variables $x$
-        and $y$ in the term $-2x + y \\le 3$ have $-1$ and
-        $+1$ polarities respectively. $0$ has $+1$ sign.
-
-        Args:
-            var: The variable whose polarity in the term we are seeking.
-
-        Returns:
-            The sign of the variable in the term.
-        """
-        if self.get_polarity(var=var, polarity=True):
-            return 1
-        return -1
-
-    def get_matching_vars(self, variable_polarity: Dict[Var, bool]) -> List[Var]:
-        """
-        Get list of variables whose polarities match the polarities requested.
-
-        Example:
-
-        ```
-            x = Var('x')
-            y = Var('y')
-            z = Var('z')
-            variables = {x:-2, y:3}
-            constant  = 4
-            term = PolyhedralTerm(variables, constant)
-            polarities = {y:True}
-            term.get_matching_vars(polarities)
-        ```
-
-        The last call returns `{y, z}` because the variable y matches the
-        requested polarity in the term, and the variable z has a zero
-        coefficient.
-
-        Args:
-            variable_polarity: A dictionary mapping Var instances to Boolean
-                values indicating the polarity of the given variable.
-
-        Returns:
-            If all variables in the term match the polarities specified in the
-                argument, the routine returns the matching variables.  Otherwise,
-                it returns an empty list.
-        """
-        variable_list = []
-        for var in variable_polarity.keys():  # noqa: VNE002
-            if self.contains_var(var):
-                if (self.get_polarity(var=var, polarity=True) == variable_polarity[var]) or (  # noqa: WPS337
-                    self.get_coefficient(var) == 0
-                ):
-                    variable_list.append(var)
-                else:
-                    variable_list = []
-                    break
-        return variable_list
-
-    def remove_variable(self, var: Var) -> PolyhedralTerm:
-        """
-        Eliminates a variable from a term.
-
-        Args:
-            var: variable to be eliminated.
-
-        Returns:
-            A new term with the variable eliminated.
-        """
-        if self.contains_var(var):
-            that = self.copy()
-            that.variables.pop(var)
-            return that
-        return self.copy()
-
-    def multiply(self, factor: numeric) -> PolyhedralTerm:
-        """Multiplies a term by a constant factor.
-
-        For example, multiplying the term $2x + 3y \\le 4$ by the factor 2
-        yields $4x + 6y \\le 8$.
-
-        Args:
-            factor: element by which the term is multiplied.
-
-        Returns:
-            A new term which is the result of the given term multiplied by
-            `factor`.
-        """
-        variables = {key: factor * val for key, val in self.variables.items()}
-        return PolyhedralTerm(variables, factor * self.constant)
-
-    def substitute_variable(self, var: Var, subst_with_term: PolyhedralTerm) -> PolyhedralTerm:  # noqa: VNE002
-        """
-        Substitutes a specified variable in a term with a given term.
-
-        Example:
-            In the term $2x - y \\le 6$, substituting y by the term
-            $x + z \\le 5$ yields $x - z \\le 1$. Observe that the
-            substituting term is understood as an equality.
-
-        Args:
-            var: The term variable to be substituted.
-            subst_with_term: The term used to replace var.
-
-        Returns:
-            A new term in which the variable is substituted with the given term
-                understood as an equality.
-        """
-        if self.contains_var(var):
-            term = subst_with_term.multiply(self.get_coefficient(var))
-            logging.debug("Term is %s", term)
-            that = self.remove_variable(var)
-            logging.debug(that)
-            return that + term
-        return self.copy()
-
-    def isolate_variable(self, var_to_isolate: Var) -> PolyhedralTerm:
-        """
-        Isolate a variable in a term.
-
-        Example:
-            In the term $-2x + y \\le 6$ understood as equality, isolating the
-            variable $x$ yields $x = 0.5 y - 3$, which in PolyhedralTerm
-            notation we express as $0.5 y <= -3$.
-
-        Args:
-            var_to_isolate: The variable to be isolated.
-
-        Returns:
-            A new term which corresponds to the isolation of the indicated
-                variable.
-
-        Raises:
-            ValueError: the indicated variable is not contained in the term.
-        """
-        if var_to_isolate not in self.vars:
-            raise ValueError("Variable %s is not a term variable" % (var_to_isolate))
-        return PolyhedralTerm(
-            variables={
-                k: -v / self.get_coefficient(var_to_isolate) for k, v in self.variables.items() if k != var_to_isolate
-            },
-            constant=self.constant / self.get_coefficient(var_to_isolate),
-        )
-
-    @staticmethod
-    def to_symbolic(term: PolyhedralTerm) -> Any:
-        """
-        Translates the variable terms of a PolyhedralTerm into a sympy expression.
-
-        Example:
-            The code
-
-            ```
-                x = Var('x') y = Var('y') variables = {x:-2, y:3} constant  = 4
-                term = PolyhedralTerm(variables, constant) expression =
-                PolyhedralTerm.to_symbolic(term)
-            ```
-
-            yields the expression $-2x + 3y - 4$.
-
-        Args:
-            term:
-                The term whose coefficients and variables are to be translated
-                to sympy's data structure.
-
-        Returns:
-            Sympy expression corresponding to PolyhedralTerm.
-        """
-        ex = -term.constant
-        for var in term.vars:  # noqa: VNE002
-            sv = sympy.symbols(var.name)
-            ex += sv * term.get_coefficient(var)
-        return ex
-
-    @staticmethod
-    def to_term(expression: sympy.core.expr.Expr) -> PolyhedralTerm:
-        """
-        Translates a sympy expression into a PolyhedralTerm.
-
-        Example:
-            The expression $2x + 3y - 1$ is translated into
-            `PolyhedralTerm(variables={x:2, y:3}, constant=1)`.
-
-        Args:
-            expression: The symbolic expression to be translated.
-
-        Returns:
-            PolyhedralTerm corresponding to sympy expression.
-        """
-        expression_coefficients: dict = expression.as_coefficients_dict()
-        logging.debug(expression_coefficients)
-        keys = list(expression_coefficients.keys())
-        variable_dict = {}
-        constant = 0
-        for key in keys:
-            logging.debug(type(key))
-            if isinstance(key, (str, sympy.core.symbol.Symbol)):
-                var = Var(str(key))  # noqa: VNE002
-                variable_dict[var] = expression_coefficients[key]
-            else:
-                constant = constant - expression_coefficients[key] * key
-        return PolyhedralTerm(variable_dict, constant)
-
-    @staticmethod
-    def term_to_polytope(term: PolyhedralTerm, variable_list: List[Var]) -> Tuple[List[numeric], numeric]:
-        """
-        Transform a term into a vector according to the given order.
-
-        Example:
-            The term $3x + 5y -2z \\le 7$ with `variable_list = [y,
-            x, w, z]` yields the tuple `[5, 3, 0, -2], 7`.
-
-        Args:
-            term: The term to be transformed.
-            variable_list:
-                A list of variables indicating the order of appearance of
-                variable coefficients.
-
-        Returns:
-            A tuple consisting of (i) the ordered list of coefficients and (ii)
-                the term's constant.
-        """
-        coeffs = []
-        for var in variable_list:  # noqa: VNE002
-            coeffs.append(term.get_coefficient(var))
-        return coeffs, term.constant
-
-    @staticmethod
-    def polytope_to_term(poly: List[numeric], const: numeric, variables: List[Var]) -> PolyhedralTerm:
-        """
-        Transform a list of coefficients and variables into a PolyhedralTerm.
-
-        Args:
-            poly: An ordered list of coefficients.
-            const: The term's coefficient.
-            variables: The variables corresponding to the list of coefficients.
-
-        Returns:
-            A PolyhedralTerm corresponding to the provided data.
-        """
-        assert len(poly) == len(variables)
-        variable_dict = {}
-        for i, var in enumerate(variables):  # noqa: VNE002
-            variable_dict[var] = poly[i]
-        return PolyhedralTerm(variable_dict, const)
-
-    @staticmethod
-    def solve_for_variables(context: PolyhedralTermList, vars_to_elim: List[Var]) -> dict:
-        """
-        Interpret termlist as equality and solve system of equations.
-
-        Args:
-            context:
-                The list of terms to be solved. Each term will be interpreted as
-                an equality.
-            vars_to_elim:
-                The list of variables whose solutions will be sought.
-
-        Assumptions: the number of equations matches the number of vars_to_elim
-        contained in the terms.
-
-        Returns:
-            A dictionary mapping variables to their solutions. The solutions are
-                expressed as PolyhedralTerm instances.
-        """
-        logging.debug("GetVals: %s Vars: %s", context, vars_to_elim)
-        vars_to_solve = list_intersection(context.vars, vars_to_elim)
-        assert len(context.terms) == len(vars_to_solve)
-        exprs = [PolyhedralTerm.to_symbolic(term) for term in context.terms]
-        logging.debug("Solving %s", exprs)
-        vars_to_solve_symb = [sympy.symbols(var.name) for var in vars_to_solve]
-        sols = sympy.solve(exprs, *vars_to_solve_symb)
-        logging.debug(sols)
-        if len(sols) > 0:
-            return {Var(str(key)): PolyhedralTerm.to_term(sols[key]) for key in sols.keys()}
-        return {}
 
 
 class PropositionalTermList(TermList):  # noqa: WPS338
