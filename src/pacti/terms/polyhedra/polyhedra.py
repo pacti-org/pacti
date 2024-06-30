@@ -5,6 +5,7 @@ Module provides support for linear inequalities as constraints, i.e.,
 the constraints are of the form $\\sum_{i} a_i x_i \\le c$, where the
 $x_i$ are variables and the $a_i$ and $c$ are constants.
 """
+
 from __future__ import annotations
 
 import logging

@@ -1,6 +1,5 @@
 """Plotting functionality for polyhedral contracts."""
 
-
 from copy import copy
 from math import atan2
 from typing import Callable, Dict, List, Optional, Tuple, Union
