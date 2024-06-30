@@ -12,12 +12,58 @@ import copy
 import re
 from typing import Dict, List, Optional, Tuple, Union
 
-import pyeda.boolalg
+import pyeda.boolalg.expr as edaexpr  # noqa: WPS301 allow dotted import
+import pyeda.boolalg.exprnode as edaexprnode  # noqa: WPS301 allow dotted import
 
 from pacti.iocontract import TacticStatistics, Term, TermList, Var
 from pacti.utils.lists import list_intersection
 
 numeric = Union[int, float]
+
+
+def _rename_expr(expression: edaexpr.Expression, oldvarstr: str, newvarstr: str) -> edaexpr.Expression:
+    oldvar = edaexpr.exprvar(oldvarstr)
+    newvar = edaexpr.exprvar(newvarstr)
+    if isinstance(expression, edaexpr.Atom):
+        if isinstance(expression, edaexpr.Variable):
+            if expression == oldvar:
+                return newvar
+        if isinstance(expression, edaexpr.Complement):
+            if expression == edaexpr.Not(oldvar):
+                return edaexpr.Not(newvar)
+        return expression
+    elif isinstance(expression, edaexpr.NotOp):
+        nxs = edaexpr.Expression.box(_rename_expr(expression.xs[0], oldvarstr, newvarstr)).node
+        return edaexpr._expr(edaexprnode.not_(nxs))
+    elif isinstance(expression, edaexpr.ImpliesOp):
+        nxs = [edaexpr.Expression.box(_rename_expr(x, oldvarstr, newvarstr)).node for x in expression.xs]
+        return edaexpr._expr(edaexprnode.impl(*nxs))
+    elif isinstance(expression, edaexpr.AndOp):
+        nxs = [edaexpr.Expression.box(_rename_expr(x, oldvarstr, newvarstr)).node for x in expression.xs]
+        return edaexpr._expr(edaexprnode.and_(*nxs))
+    elif isinstance(expression, edaexpr.OrOp):
+        nxs = [edaexpr.Expression.box(_rename_expr(x, oldvarstr, newvarstr)).node for x in expression.xs]
+        return edaexpr._expr(edaexprnode.or_(*nxs))
+    raise ValueError()
+
+
+def _get_atom_variables(atom: str) -> List[Var]:
+    variables = []
+    m = re.match(r"(\w+)\s*\((.*?)\)", atom)
+    if m:
+        # observe that we are not yet using the name of the
+        # uninterpreted function, which is stored in m.group(1)
+        args = m.group(2).split(",")
+        for arg in args:
+            variables.append(Var(arg.strip()))
+    else:
+        variables.append(Var(atom))
+    return variables
+
+
+def _atom_has_variables(atom: str, var_list: List[Var]) -> bool:
+    atoms_vars = _get_atom_variables(atom)
+    return len(list_intersection(atoms_vars, var_list)) > 0
 
 
 class PropositionalTerm(Term):
@@ -27,7 +73,7 @@ class PropositionalTerm(Term):
     # values are the coefficients of those variables in the term, and (b) a
     # constant. The term is assumed to be in the form \Sigma_i a_i v_i +
     # constant <= 0
-    def __init__(self, expression: str | pyeda.boolalg.expr.Expression):
+    def __init__(self, expression: str | edaexpr.Expression):
         """
         Constructor for PropositionalTerm.
 
@@ -51,12 +97,12 @@ class PropositionalTerm(Term):
         Raises:o
             ValueError: Unsupported argument type.
         """
-        self.expression: pyeda.boolalg.expr.Expression
-        if isinstance(expression, pyeda.boolalg.expr.Expression):
+        self.expression: edaexpr.Expression
+        if isinstance(expression, edaexpr.Expression):
             self.expression = copy.copy(expression)
         elif isinstance(expression, str):
             if expression == "":
-                self.expression = pyeda.boolalg.expr.expr("1")
+                self.expression = edaexpr.expr("1")
             else:
                 # extract the uninterpreted terms
                 new_expr = copy.copy(expression)
@@ -64,9 +110,9 @@ class PropositionalTerm(Term):
                 tvars = [f"_xtempvar{i}" for i in range(len(atoms))]
                 for i, atom in enumerate(atoms):
                     new_expr = new_expr.replace(atom, tvars[i])
-                eda_expression = pyeda.boolalg.expr.Expression(new_expr)
+                eda_expression = edaexpr.Expression(new_expr)
                 for i, atom in enumerate(atoms):
-                    eda_expression = PropositionalTerm._rename_expr(eda_expression, tvars[i], atom)
+                    eda_expression = _rename_expr(eda_expression, tvars[i], atom)
                 self.expression = eda_expression
         else:
             raise ValueError()
@@ -84,6 +130,43 @@ class PropositionalTerm(Term):
 
     def __repr__(self) -> str:
         return "<Term {0}>".format(self)
+
+    @property
+    def atoms(self) -> List[str]:  # noqa: A003
+        """
+        Atoms appearing in term.
+
+        Returns:
+            List of atoms referenced in term.
+        """
+        return [x.name for x in self.expression.inputs]
+
+    @property
+    def vars(self) -> List[Var]:  # noqa: A003
+        """
+        Variables appearing in term.
+
+        Returns:
+            List of variables referenced in term.
+        """
+        atoms = self.atoms
+        variables: List[Var] = []
+        for atom in atoms:
+            variables = variables + _get_atom_variables(atom)
+        return variables
+
+    def contains_var(self, var_to_seek: Var) -> bool:
+        """
+        Tell whether term contains a given variable.
+
+        Args:
+            var_to_seek: The variable that we are seeking in the current term.
+
+        Returns:
+            `True` if the syntax of the term refers to the given variable;
+                `False` otherwise.
+        """
+        return var_to_seek in self.vars
 
     def copy(self) -> PropositionalTerm:
         """
@@ -107,103 +190,8 @@ class PropositionalTerm(Term):
         Returns:
             A term with `source_var` replaced by `target_var`.
         """
-        ret_expr = PropositionalTerm._rename_expr(self.expression, source_var.name, target_var.name)
+        ret_expr = _rename_expr(self.expression, source_var.name, target_var.name)
         return PropositionalTerm(ret_expr)
-
-    @classmethod
-    def _rename_expr(
-        cls, expression: pyeda.boolalg.expr.Expression, oldvarstr: str, newvarstr: str
-    ) -> pyeda.boolalg.expr.Expression:
-        oldvar = pyeda.boolalg.expr.exprvar(oldvarstr)
-        newvar = pyeda.boolalg.expr.exprvar(newvarstr)
-        if isinstance(expression, pyeda.boolalg.expr.Atom):
-            if isinstance(expression, pyeda.boolalg.expr.Variable):
-                if expression == oldvar:
-                    return newvar
-            if isinstance(expression, pyeda.boolalg.expr.Complement):
-                if expression == pyeda.boolalg.expr.Not(oldvar):
-                    return pyeda.boolalg.expr.Not(newvar)
-            return expression
-        elif isinstance(expression, pyeda.boolalg.expr.NotOp):
-            nxs = pyeda.boolalg.expr.Expression.box(
-                PropositionalTerm._rename_expr(expression.xs[0], oldvar, newvar)
-            ).node
-            return pyeda.boolalg.expr._expr(pyeda.boolalg.exprnode.not_(nxs))
-        elif isinstance(expression, pyeda.boolalg.expr.ImpliesOp):
-            nxs = [
-                pyeda.boolalg.expr.Expression.box(PropositionalTerm._rename_expr(x, oldvar, newvar)).node
-                for x in expression.xs
-            ]
-            return pyeda.boolalg.expr._expr(pyeda.boolalg.exprnode.impl(*nxs))
-        elif isinstance(expression, pyeda.boolalg.expr.AndOp):
-            nxs = [
-                pyeda.boolalg.expr.Expression.box(PropositionalTerm._rename_expr(x, oldvar, newvar)).node
-                for x in expression.xs
-            ]
-            return pyeda.boolalg.expr._expr(pyeda.boolalg.exprnode.and_(*nxs))
-        elif isinstance(expression, pyeda.boolalg.expr.OrOp):
-            nxs = [
-                pyeda.boolalg.expr.Expression.box(PropositionalTerm._rename_expr(x, oldvar, newvar)).node
-                for x in expression.xs
-            ]
-            return pyeda.boolalg.expr._expr(pyeda.boolalg.exprnode.or_(*nxs))
-        raise ValueError()
-
-    @property
-    def atoms(self) -> List[str]:  # noqa: A003
-        """
-        Atoms appearing in term.
-
-        Returns:
-            List of atoms referenced in term.
-        """
-        return [x.name for x in self.expression.inputs]
-
-    @property
-    def vars(self) -> List[Var]:  # noqa: A003
-        """
-        Variables appearing in term.
-
-        Returns:
-            List of variables referenced in term.
-        """
-        atoms = self.atoms
-        variables : List[Var] = []
-        for atom in atoms:
-            variables = variables + PropositionalTerm._get_atom_variables(atom)
-        return variables
-
-    @classmethod
-    def _get_atom_variables(cls, atom: str) -> List[Var]:
-        variables = []
-        m = re.match(r"(\w+)\s*\((.*?)\)", atom)
-        if m:
-            # observe that we are not yet using the name of the
-            # uninterpreted function, which is stored in m.group(1)
-            args = m.group(2).split(",")
-            for arg in args:
-                variables.append(Var(arg.strip()))
-        else:
-            variables.append(Var(atom))
-        return variables
-
-    @classmethod
-    def _atom_has_variables(cls, atom: str, var_list: List[Var]) -> bool:
-        atoms_vars = PropositionalTerm._get_atom_variables(atom)
-        return len(list_intersection(atoms_vars, var_list)) > 0
-
-    def contains_var(self, var_to_seek: Var) -> bool:
-        """
-        Tell whether term contains a given variable.
-
-        Args:
-            var_to_seek: The variable that we are seeking in the current term.
-
-        Returns:
-            `True` if the syntax of the term refers to the given variable;
-                `False` otherwise.
-        """
-        return var_to_seek in self.vars
 
 
 class PropositionalTermList(TermList):  # noqa: WPS338
@@ -314,15 +302,13 @@ class PropositionalTermList(TermList):  # noqa: WPS338
             if list_intersection(vars_to_elim, term.vars):
                 atoms_to_elim = []
                 for atom in term.atoms:
-                    if PropositionalTerm._atom_has_variables(atom, vars_to_elim):
+                    if _atom_has_variables(atom, vars_to_elim):
                         atoms_to_elim.append(atom)
-                context_expr = pyeda.boolalg.expr.And(*context.terms)
-                elimination_term: pyeda.boolalg.expr.Expression = pyeda.boolalg.expr.Implies(context_expr, term)
-                elimination_term = elimination_term.consensus(
-                    vs=[pyeda.boolalg.expr.exprvar(atm) for atm in atoms_to_elim]
-                )
+                context_expr = edaexpr.And(*context.terms)
+                elimination_term: edaexpr.Expression = edaexpr.Implies(context_expr, term)
+                elimination_term = elimination_term.consensus(vs=[edaexpr.exprvar(atm) for atm in atoms_to_elim])
                 # make sure the result is not empty
-                test_expr: pyeda.boolalg.expr.Expression = pyeda.boolalg.expr.And(context_expr, elimination_term)
+                test_expr: edaexpr.Expression = edaexpr.And(context_expr, elimination_term)
                 if not test_expr.satisfy_one():
                     raise ValueError(
                         f"The variables {vars_to_elim} cannot be eliminated from the term {term} in the context {context}"
@@ -375,15 +361,13 @@ class PropositionalTermList(TermList):  # noqa: WPS338
             if list_intersection(vars_to_elim, term.vars):
                 atoms_to_elim = []
                 for atom in term.atoms:
-                    if PropositionalTerm._atom_has_variables(atom, vars_to_elim):
+                    if _atom_has_variables(atom, vars_to_elim):
                         atoms_to_elim.append(atom)
-                context_expr = pyeda.boolalg.expr.And(*context.terms)
-                elimination_term: pyeda.boolalg.expr.Expression = pyeda.boolalg.expr.And(context_expr, term)
-                elimination_term = elimination_term.smoothing(
-                    vs=[pyeda.boolalg.expr.exprvar(atm) for atm in atoms_to_elim]
-                )
+                context_expr = edaexpr.And(*context.terms)
+                elimination_term: edaexpr.Expression = edaexpr.And(context_expr, term)
+                elimination_term = elimination_term.smoothing(vs=[edaexpr.exprvar(atm) for atm in atoms_to_elim])
                 # make sure the result is not empty
-                # test_expr : pyeda.boolalg.expr.Expression = pyeda.boolalg.expr.And(context_expr, elimination_term)
+                # test_expr : edaexpr.Expression = edaexpr.And(context_expr, elimination_term)
                 # if not test_expr.satisfy_one():
                 #    raise ValueError(f"The variables {vars_to_elim} cannot be eliminated
                 #    from the term {term} in the context {context}")
@@ -422,10 +406,8 @@ class PropositionalTermList(TermList):  # noqa: WPS338
         Returns:
             self <= other
         """
-        test_expr: pyeda.boolalg.expr.Expression = pyeda.boolalg.expr.Implies(
-            pyeda.boolalg.expr.And(*self.terms), pyeda.boolalg.expr.And(*other.terms)
-        )
-        if pyeda.boolalg.expr.Not(test_expr).satisfy_one():
+        test_expr: edaexpr.Expression = edaexpr.Implies(edaexpr.And(*self.terms), edaexpr.And(*other.terms))
+        if edaexpr.Not(test_expr).satisfy_one():
             return False
         return True
 
@@ -436,7 +418,7 @@ class PropositionalTermList(TermList):  # noqa: WPS338
         Returns:
             True if constraints cannot be satisfied.
         """
-        test_expr: pyeda.boolalg.expr.Expression = pyeda.boolalg.expr.And(*self.terms)
+        test_expr: edaexpr.Expression = edaexpr.And(*self.terms)
         if test_expr.satisfy_one():
             return False
         return True
