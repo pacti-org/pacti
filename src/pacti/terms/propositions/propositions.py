@@ -26,27 +26,29 @@ def _rename_expr(  # noqa: WPS231  too much cognitive complexity
 ) -> edaexpr.Expression:
     oldvar = edaexpr.exprvar(oldvarstr)
     newvar = edaexpr.exprvar(newvarstr)
+    ret_val: edaexpr.Expression
     if isinstance(expression, edaexpr.Atom):
-        if isinstance(expression, edaexpr.Variable):
-            if expression == oldvar:
-                return newvar
-        if isinstance(expression, edaexpr.Complement):
-            if expression == edaexpr.Not(oldvar):
-                return edaexpr.Not(newvar)
-        return expression
+        if isinstance(expression, edaexpr.Variable) and expression == oldvar:
+            ret_val = newvar
+        elif isinstance(expression, edaexpr.Complement) and expression == edaexpr.Not(oldvar):
+            ret_val = edaexpr.Not(newvar)
+        else:
+            ret_val = copy.copy(expression)
     elif isinstance(expression, edaexpr.NotOp):
         nxs = edaexpr.Expression.box(_rename_expr(expression.xs[0], oldvarstr, newvarstr)).node
-        return edaexpr._expr(edaexprnode.not_(nxs))
+        ret_val = edaexpr._expr(edaexprnode.not_(nxs))
     elif isinstance(expression, edaexpr.ImpliesOp):
         nxs = [edaexpr.Expression.box(_rename_expr(x, oldvarstr, newvarstr)).node for x in expression.xs]
-        return edaexpr._expr(edaexprnode.impl(*nxs))
+        ret_val = edaexpr._expr(edaexprnode.impl(*nxs))
     elif isinstance(expression, edaexpr.AndOp):
         nxs = [edaexpr.Expression.box(_rename_expr(x, oldvarstr, newvarstr)).node for x in expression.xs]
-        return edaexpr._expr(edaexprnode.and_(*nxs))
+        ret_val = edaexpr._expr(edaexprnode.and_(*nxs))
     elif isinstance(expression, edaexpr.OrOp):
         nxs = [edaexpr.Expression.box(_rename_expr(x, oldvarstr, newvarstr)).node for x in expression.xs]
-        return edaexpr._expr(edaexprnode.or_(*nxs))
-    raise ValueError()
+        ret_val = edaexpr._expr(edaexprnode.or_(*nxs))
+    else:
+        raise ValueError()
+    return ret_val
 
 
 def _get_atom_variables(atom: str) -> List[Var]:
