@@ -70,7 +70,7 @@ def _atom_has_variables(atom: str, var_list: List[Var]) -> bool:
     return len(list_intersection(atoms_vars, var_list)) > 0
 
 
-def _expr_to_str(expression: edaexpr.Expression) -> str:
+def _expr_to_str(expression: edaexpr.Expression) -> str:  # noqa: WPS231  too much cognitive complexity
     ret_val: str
     if isinstance(expression, edaexpr.Atom):
         if isinstance(expression, edaexpr.Variable):

@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional, Tuple, TypedDict, Union
+from typing import List, Optional, Tuple, TypedDict, Union
 
 from pacti.iocontract import IoContract, TacticStatistics, Var
-
 from pacti.terms.propositions.propositions import PropositionalTerm, PropositionalTermList
 
 numeric = Union[int, float]
@@ -52,12 +51,12 @@ class PropositionalIoContract(IoContract):
             A dictionary containing the contract's information.
         """
         c_temp: ser_contract = {
-            "input_vars" : [str(x) for x in self.inputvars],
-            "output_vars" : [str(x) for x in self.outputvars],
-            "assumptions" : self.a.to_str_list(),
-            "guarantees" : self.g.to_str_list()
+            "input_vars": [str(x) for x in self.inputvars],
+            "output_vars": [str(x) for x in self.outputvars],
+            "assumptions": self.a.to_str_list(),
+            "guarantees": self.g.to_str_list(),
         }
-        return c_temp
+        return c_temp  # noqa: WPS331 c_temp only used for `return`
 
     @staticmethod
     def from_strings(
@@ -95,7 +94,6 @@ class PropositionalIoContract(IoContract):
             guarantees=PropositionalTermList(g),
             simplify=simplify,
         )
-
 
     def compose(
         self,
@@ -220,4 +218,3 @@ class PropositionalIoContract(IoContract):
             tactics_order = TACTICS_ORDER
 
         return super().quotient_tactics(other, additional_inputs, simplify, tactics_order)
-
