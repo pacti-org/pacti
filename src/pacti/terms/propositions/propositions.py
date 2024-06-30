@@ -139,8 +139,9 @@ class PropositionalTerm(Term):
                 atoms = re.findall(r"\w+\s*\(.*?\)", new_expr)
                 tvars = [f"_xtempvar{i}" for i in range(len(atoms))]
                 for i, atom in enumerate(atoms):
+                    print(f"atom is {atom}")
                     new_expr = new_expr.replace(atom, tvars[i])
-                eda_expression = edaexpr.Expression(new_expr)
+                eda_expression = edaexpr.expr(new_expr)
                 for i, atom in enumerate(atoms):
                     eda_expression = _rename_expr(eda_expression, tvars[i], atom)
                 self.expression = eda_expression
@@ -337,12 +338,20 @@ class PropositionalTermList(TermList):  # noqa: WPS338
                 for atom in term.atoms:
                     if _atom_has_variables(atom, vars_to_elim):
                         atoms_to_elim.append(atom)
-                context_expr = edaexpr.And(*context.terms)
-                elimination_term: edaexpr.Expression = edaexpr.Implies(context_expr, term)
-                elimination_term = elimination_term.consensus(vs=[edaexpr.exprvar(atm) for atm in atoms_to_elim])
+                context_expr = edaexpr.And(*[xs.expression for xs in context.terms])
+                print(f"The term is \n{term}")
+                print(f"The context is \n{context.terms}")
+                print(f"The context expression is \n{context_expr}")
+                elimination_term: edaexpr.Expression = edaexpr.Implies(context_expr, term.expression)
+                print(f"The elimination term is \n{elimination_term}")
+                quantified_atoms = [edaexpr.exprvar(atm) for atm in atoms_to_elim]
+                print(f"The quantified atoms are {quantified_atoms}")
+                elimination_term = elimination_term.consensus(vs=quantified_atoms)
+                print(f"After quantification: \n{elimination_term}")
                 # make sure the result is not empty
                 test_expr: edaexpr.Expression = edaexpr.And(context_expr, elimination_term)
                 if not test_expr.satisfy_one():
+                    print(test_expr)
                     raise ValueError(
                         f"The variables {vars_to_elim} cannot be eliminated from the term {term} in the context {context}"
                     )
