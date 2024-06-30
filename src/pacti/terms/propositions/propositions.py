@@ -21,7 +21,9 @@ from pacti.utils.lists import list_intersection
 numeric = Union[int, float]
 
 
-def _rename_expr(expression: edaexpr.Expression, oldvarstr: str, newvarstr: str) -> edaexpr.Expression:
+def _rename_expr(  # noqa: WPS231  too much cognitive complexity
+    expression: edaexpr.Expression, oldvarstr: str, newvarstr: str
+) -> edaexpr.Expression:
     oldvar = edaexpr.exprvar(oldvarstr)
     newvar = edaexpr.exprvar(newvarstr)
     if isinstance(expression, edaexpr.Atom):
@@ -73,7 +75,7 @@ class PropositionalTerm(Term):
     # values are the coefficients of those variables in the term, and (b) a
     # constant. The term is assumed to be in the form \Sigma_i a_i v_i +
     # constant <= 0
-    def __init__(self, expression: str | edaexpr.Expression):
+    def __init__(self, expression: str | edaexpr.Expression):  # noqa: WPS231  too much cognitive complexity
         """
         Constructor for PropositionalTerm.
 
@@ -91,10 +93,9 @@ class PropositionalTerm(Term):
             expression $2x + 3y \\le 3$.
 
         Args:
-            variables: A dictionary mapping Var keys to numeric values.
-            constant: A numeric value on the right of the inequality.
+            expression: A boolean expression involving uninterpreted atoms.
 
-        Raises:o
+        Raises:
             ValueError: Unsupported argument type.
         """
         self.expression: edaexpr.Expression
@@ -260,7 +261,7 @@ class PropositionalTermList(TermList):  # noqa: WPS338
         """
         raise ValueError("Not implemented")
 
-    def elim_vars_by_refining(
+    def elim_vars_by_refining(  # noqa: WPS231  too much cognitive complexity
         self,
         context: PropositionalTermList,
         vars_to_elim: list,
@@ -351,9 +352,6 @@ class PropositionalTermList(TermList):  # noqa: WPS338
                 and which, in the context provided, are implied by the terms
                 contained in the calling termlist; and (b) the list of tuples, for each
                 processed term, of the tactic used, time spend, and tactic invocation count.
-
-        Raises:
-            ValueError: Constraints have empty intersection with context.
         """
         new_terms = []
         for term in self.terms:
@@ -407,7 +405,7 @@ class PropositionalTermList(TermList):  # noqa: WPS338
             self <= other
         """
         test_expr: edaexpr.Expression = edaexpr.Implies(edaexpr.And(*self.terms), edaexpr.And(*other.terms))
-        if edaexpr.Not(test_expr).satisfy_one():
+        if edaexpr.Not(test_expr).satisfy_one():  # noqa: WPS531 if condition can be simplified
             return False
         return True
 
@@ -419,6 +417,6 @@ class PropositionalTermList(TermList):  # noqa: WPS338
             True if constraints cannot be satisfied.
         """
         test_expr: edaexpr.Expression = edaexpr.And(*self.terms)
-        if test_expr.satisfy_one():
+        if test_expr.satisfy_one():  # noqa: WPS531 if condition can be simplified
             return False
         return True
