@@ -113,3 +113,14 @@ if m:
     print(funcname)
     print(args)
     print(args.split(','))
+
+
+v1 = exprvar('a')
+v2 = exprvar('b')
+v3 = exprvar('c')
+v4 = exprvar('F(b)')
+
+ex = Implies(And(v1, v2, Implies(v1, Not(v2))), v4)
+print(ex)
+
+print(ex.consensus([v4]).simplify())

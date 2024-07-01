@@ -139,7 +139,6 @@ class PropositionalTerm(Term):
                 atoms = re.findall(r"\w+\s*\(.*?\)", new_expr)
                 tvars = [f"_xtempvar{i}" for i in range(len(atoms))]
                 for i, atom in enumerate(atoms):
-                    print(f"atom is {atom}")
                     new_expr = new_expr.replace(atom, tvars[i])
                 eda_expression = edaexpr.expr(new_expr)
                 for i, atom in enumerate(atoms):
@@ -224,6 +223,18 @@ class PropositionalTerm(Term):
         ret_expr = _rename_expr(self.expression, source_var.name, target_var.name)
         return PropositionalTerm(ret_expr)
 
+    def is_one(self) -> bool:
+        """
+        Tell whether term is a tautology.
+
+        Returns:
+            True is tautology.
+        """
+        ret_val = edaexpr.Not(self.expression).satisfy_one()
+        if ret_val is None:  # noqa: WPS531 Found simplifiable returning `if` condition in a function
+            return True
+        return False
+
 
 class PropositionalTermList(TermList):  # noqa: WPS338
     """A TermList of PolyhedralTerm instances."""
@@ -273,7 +284,7 @@ class PropositionalTermList(TermList):  # noqa: WPS338
         Returns:
             A list of strings corresponding to the terms of the termlist.
         """
-        return [str(term.expression) for term in self.terms]
+        return [str(term) for term in self.terms]
 
     def contains_behavior(self, behavior: Dict[Var, numeric]) -> bool:
         """
@@ -339,19 +350,12 @@ class PropositionalTermList(TermList):  # noqa: WPS338
                     if _atom_has_variables(atom, vars_to_elim):
                         atoms_to_elim.append(atom)
                 context_expr = edaexpr.And(*[xs.expression for xs in context.terms])
-                print(f"The term is \n{term}")
-                print(f"The context is \n{context.terms}")
-                print(f"The context expression is \n{context_expr}")
                 elimination_term: edaexpr.Expression = edaexpr.Implies(context_expr, term.expression)
-                print(f"The elimination term is \n{elimination_term}")
                 quantified_atoms = [edaexpr.exprvar(atm) for atm in atoms_to_elim]
-                print(f"The quantified atoms are {quantified_atoms}")
-                elimination_term = elimination_term.consensus(vs=quantified_atoms)
-                print(f"After quantification: \n{elimination_term}")
+                elimination_term = elimination_term.consensus(vs=quantified_atoms).simplify()
                 # make sure the result is not empty
                 test_expr: edaexpr.Expression = edaexpr.And(context_expr, elimination_term)
                 if not test_expr.satisfy_one():
-                    print(test_expr)
                     raise ValueError(
                         f"The variables {vars_to_elim} cannot be eliminated from the term {term} in the context {context}"
                     )
@@ -404,7 +408,9 @@ class PropositionalTermList(TermList):  # noqa: WPS338
                         atoms_to_elim.append(atom)
                 context_expr = edaexpr.And(*context.terms)
                 elimination_term: edaexpr.Expression = edaexpr.And(context_expr, term)
-                elimination_term = elimination_term.smoothing(vs=[edaexpr.exprvar(atm) for atm in atoms_to_elim])
+                elimination_term = elimination_term.smoothing(
+                    vs=[edaexpr.exprvar(atm) for atm in atoms_to_elim]
+                ).simplify()
                 # make sure the result is not empty
                 # test_expr : edaexpr.Expression = edaexpr.And(context_expr, elimination_term)
                 # if not test_expr.satisfy_one():
@@ -432,7 +438,23 @@ class PropositionalTermList(TermList):  # noqa: WPS338
         Returns:
             A new PolyhedralTermList with redundant terms removed using the provided context.
         """
-        return copy.copy(self)
+        terms = self.terms
+        new_tl = []
+        one_exists = False
+        others_exist = False
+        one_index = 0
+        for i, term in enumerate(terms):
+            if term.is_one():
+                if not one_exists:
+                    new_tl.append(term)
+                    one_exists = True
+                    one_index = i
+            else:
+                new_tl.append(term)
+                others_exist = True
+        if others_exist and one_exists:
+            del new_tl[one_index]
+        return PropositionalTermList(new_tl)
 
     def refines(self, other: PropositionalTermList) -> bool:
         """
