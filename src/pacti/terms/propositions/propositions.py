@@ -151,9 +151,13 @@ class PropositionalTerm(Term):
         if not isinstance(other, type(self)):
             raise ValueError()
         return str(self) == str(other)
+    
+    @staticmethod
+    def add_globally(constraint : str):
+        return 'G(' + constraint + ')'
 
     def __str__(self) -> str:
-        return _expr_to_str(self.expression)
+        return PropositionalTerm.add_globally(_expr_to_str(self.expression))
 
     def __hash__(self) -> int:
         return hash(str(self))

@@ -6,6 +6,7 @@ from typing import List, Optional, Tuple, TypedDict, Union
 
 from pacti.iocontract import IoContract, TacticStatistics, Var
 from pacti.terms.propositions.propositions import PropositionalTerm, PropositionalTermList
+import re
 
 numeric = Union[int, float]
 ser_contract = TypedDict(
@@ -57,6 +58,16 @@ class PropositionalIoContract(IoContract):
             "guarantees": self.g.to_str_list(),
         }
         return c_temp  # noqa: WPS331 c_temp only used for `return`
+    
+    @staticmethod
+    def remove_globally(constraint : str) -> str:
+        m = re.search(r'\s*G\(\s*(.*)', constraint)
+        assert(m)
+        newconstraint = m.group(1)
+        m = re.search(r'(.*)\)', newconstraint)
+        assert(m)
+        newconstraint = m.group(1)
+        return newconstraint
 
     @staticmethod
     def from_strings(
@@ -81,11 +92,11 @@ class PropositionalIoContract(IoContract):
         """
         a: List[PropositionalTerm] = []
         if assumptions:
-            a = [PropositionalTerm(x) for x in assumptions]
+            a = [PropositionalTerm(PropositionalIoContract.remove_globally(x)) for x in assumptions]
 
         g: List[PropositionalTerm] = []
         if guarantees:
-            g = [PropositionalTerm(x) for x in guarantees]
+            g = [PropositionalTerm(PropositionalIoContract.remove_globally(x)) for x in guarantees]
 
         return PropositionalIoContract(
             input_vars=[Var(x) for x in input_vars],
