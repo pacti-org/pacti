@@ -410,9 +410,9 @@ class PropositionalTermList(TermList):  # noqa: WPS338
                 for atom in term.atoms:
                     if _atom_has_variables(atom, vars_to_elim):
                         atoms_to_elim.append(atom)
-                context_expr = edaexpr.And(*context.terms)
-                elimination_term: edaexpr.Expression = edaexpr.And(context_expr, term)
-                elimination_term = elimination_term.smoothing(
+                context_expr = edaexpr.And(*[xs.expression for xs in context.terms])
+                elimination_term: edaexpr.Expression = edaexpr.And(context_expr, term.expression)
+                elimination_term_final = elimination_term.smoothing(
                     vs=[edaexpr.exprvar(atm) for atm in atoms_to_elim]
                 ).simplify()
                 # make sure the result is not empty
@@ -420,7 +420,7 @@ class PropositionalTermList(TermList):  # noqa: WPS338
                 # if not test_expr.satisfy_one():
                 #    raise ValueError(f"The variables {vars_to_elim} cannot be eliminated
                 #    from the term {term} in the context {context}")
-                new_term = PropositionalTerm(elimination_term)
+                new_term = PropositionalTerm(elimination_term_final)
             else:
                 new_term = term.copy()
             new_terms.append(new_term)
@@ -428,7 +428,7 @@ class PropositionalTermList(TermList):  # noqa: WPS338
 
     def simplify(self, context: Optional[PropositionalTermList] = None) -> PropositionalTermList:
         """
-        Remove redundant terms in the PolyhedralTermList using the provided context.
+        Remove redundant terms in the TermList using the provided context.
 
         Example:
             Suppose the TermList is $\\{x - 2y \\le 5, x - y \\le 0\\}$ and
@@ -440,7 +440,7 @@ class PropositionalTermList(TermList):  # noqa: WPS338
                 The TermList providing the context for the simplification.
 
         Returns:
-            A new PolyhedralTermList with redundant terms removed using the provided context.
+            A new TermList with redundant terms removed using the provided context.
         """
         terms = self.terms
         new_tl = []
