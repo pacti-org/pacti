@@ -46,9 +46,64 @@ def _rename_expr(  # noqa: WPS231  too much cognitive complexity
     elif isinstance(expression, edaexpr.OrOp):
         nxs = [edaexpr.Expression.box(_rename_expr(x, oldvarstr, newvarstr)).node for x in expression.xs]
         ret_val = edaexpr._expr(edaexprnode.or_(*nxs))
+    elif isinstance(expression, edaexpr.EqualOp):
+        nxs = [edaexpr.Expression.box(_rename_expr(x, oldvarstr, newvarstr)).node for x in expression.xs]
+        ret_val = edaexpr._expr(edaexprnode.eq(*nxs))
     else:
         raise ValueError()
     return ret_val
+
+
+def _subst_var(  # noqa: WPS231  too much cognitive complexity
+    expression: edaexpr.Expression, oldvarstr: str, substval: numeric
+) -> edaexpr.Expression:
+    oldvar = edaexpr.exprvar(oldvarstr)
+    if substval == 1:
+        newvar = edaexpr.expr('1')
+    elif substval == 0:
+        newvar = edaexpr.expr('0')
+    else:
+        raise ValueError()
+    ret_val: edaexpr.Expression
+    if isinstance(expression, edaexpr.Atom):
+        if isinstance(expression, edaexpr.Variable) and expression == oldvar:
+            ret_val = newvar
+        elif isinstance(expression, edaexpr.Complement) and expression == edaexpr.Not(oldvar):
+            ret_val = edaexpr.Not(newvar)
+        else:
+            ret_val = copy.copy(expression)
+    elif isinstance(expression, edaexpr.NotOp):
+        nxs = edaexpr.Expression.box(_subst_var(expression.xs[0], oldvarstr, substval)).node
+        ret_val = edaexpr._expr(edaexprnode.not_(nxs))
+    elif isinstance(expression, edaexpr.ImpliesOp):
+        nxs = [edaexpr.Expression.box(_subst_var(x, oldvarstr, substval)).node for x in expression.xs]
+        ret_val = edaexpr._expr(edaexprnode.impl(*nxs))
+    elif isinstance(expression, edaexpr.AndOp):
+        nxs = [edaexpr.Expression.box(_subst_var(x, oldvarstr, substval)).node for x in expression.xs]
+        ret_val = edaexpr._expr(edaexprnode.and_(*nxs))
+    elif isinstance(expression, edaexpr.OrOp):
+        nxs = [edaexpr.Expression.box(_subst_var(x, oldvarstr, substval)).node for x in expression.xs]
+        ret_val = edaexpr._expr(edaexprnode.or_(*nxs))
+    elif isinstance(expression, edaexpr.EqualOp):
+        nxs = [edaexpr.Expression.box(_subst_var(x, oldvarstr, substval)).node for x in expression.xs]
+        ret_val = edaexpr._expr(edaexprnode.eq(*nxs))
+    else:
+        raise ValueError()
+    return ret_val
+
+
+def _is_tautology(expression: edaexpr.Expression) -> bool:
+        """
+        Tell whether term is a tautology.
+
+        Returns:
+            True is tautology.
+        """
+        ret_val = edaexpr.Not(expression).satisfy_one()
+        if ret_val is None:  # noqa: WPS531 Found simplifiable returning `if` condition in a function
+            return True
+        return False
+
 
 
 def _get_atom_variables(atom: str) -> List[Var]:
@@ -92,8 +147,11 @@ def _expr_to_str(expression: edaexpr.Expression) -> str:  # noqa: WPS231  too mu
     elif isinstance(expression, edaexpr.OrOp):
         ret_list = [f"({_expr_to_str(x)})" for x in expression.xs]
         ret_val = " | ".join(ret_list)
+    elif isinstance(expression, edaexpr.EqualOp):
+        ret_list = [f"({_expr_to_str(x)})" for x in expression.xs]
+        ret_val = " = ".join(ret_list)
     else:
-        raise ValueError()
+        raise ValueError(f"Type: {type(expression)}")
     return ret_val
 
 
@@ -227,17 +285,14 @@ class PropositionalTerm(Term):
         ret_expr = _rename_expr(self.expression, source_var.name, target_var.name)
         return PropositionalTerm(ret_expr)
 
-    def is_one(self) -> bool:
+    def is_tautology(self) -> bool:
         """
         Tell whether term is a tautology.
 
         Returns:
             True is tautology.
-        """
-        ret_val = edaexpr.Not(self.expression).satisfy_one()
-        if ret_val is None:  # noqa: WPS531 Found simplifiable returning `if` condition in a function
-            return True
-        return False
+        """        
+        return _is_tautology(self.expression)
 
 
 class PropositionalTermList(TermList):  # noqa: WPS338
@@ -307,7 +362,11 @@ class PropositionalTermList(TermList):  # noqa: WPS338
         # this code is here to calm down the linter
         if isinstance(self, str):
             return False
-        raise ValueError("Not implemented")
+        expr = edaexpr.And(*[xs.expression for xs in self.terms])
+        new_expr = copy.copy(expr)
+        for key in behavior.keys():
+            new_expr = _subst_var(new_expr, key.name, behavior[key])
+        return _is_tautology(new_expr)
 
     def elim_vars_by_refining(  # noqa: WPS231  too much cognitive complexity
         self,
@@ -448,7 +507,7 @@ class PropositionalTermList(TermList):  # noqa: WPS338
         others_exist = False
         one_index = 0
         for i, term in enumerate(terms):
-            if term.is_one():
+            if term.is_tautology():
                 if not one_exists:
                     new_tl.append(term)
                     one_exists = True

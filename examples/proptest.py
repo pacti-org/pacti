@@ -1,7 +1,7 @@
 
 
 from pacti.contracts import PropositionalIoContract
-
+from pacti.iocontract import Var
 
 
 
@@ -20,3 +20,13 @@ c2 = PropositionalIoContract.from_strings(
 
 c3 = c1.compose(c2)
 print(c3)
+
+
+
+for i in [0,1]:
+    for j in [0,1]:
+        behavior = {Var('b') : i, Var('c') : j}
+        print(f"Testing behavior {behavior}")
+        print(c2.g.contains_behavior(behavior))
+
+
