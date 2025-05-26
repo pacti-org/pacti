@@ -215,7 +215,8 @@ class PropositionalTerm(Term):
         return 'G(' + constraint + ')'
 
     def __str__(self) -> str:
-        return PropositionalTerm.add_globally(_expr_to_str(self.expression))
+        #return PropositionalTerm.add_globally(_expr_to_str(self.expression))
+        return _expr_to_str(self.expression)
 
     def __hash__(self) -> int:
         return hash(str(self))

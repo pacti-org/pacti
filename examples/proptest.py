@@ -8,14 +8,14 @@ from pacti.iocontract import Var
 c1 = PropositionalIoContract.from_strings(
     input_vars=['a', 'x', 'y'], 
     output_vars=['b'], 
-    assumptions=['G(a)', 'G(x & ~y)'], 
-    guarantees=['G(F(b))', "G(a => ~b)"])
+    assumptions=['a', 'x & ~y'], 
+    guarantees=['F(b)', "a => ~b"])
 
 c2 = PropositionalIoContract.from_strings(
     input_vars=['b'], 
     output_vars=['c'], 
-    assumptions=['G(F(b))'], 
-    guarantees=['G(c & ~ b)', 'G(c)'])
+    assumptions=['F(b)'], 
+    guarantees=['c & ~ b', 'c'])
 
 
 c3 = c1.compose(c2)
