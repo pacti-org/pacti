@@ -22,6 +22,9 @@ dependencies = [
     "typing-extensions>=4.5.0",
     "pyparsing>=3.0.9",
     "pyeda>=0.29.0",
+    "ipdb>=0.13.13",
+    "networkx>=3.1",
+    "pygraphviz>=1.11",
 ]
 requires-python = ">=3.8, <3.12"
 
