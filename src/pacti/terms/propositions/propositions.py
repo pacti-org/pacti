@@ -18,6 +18,9 @@ import pyeda.boolalg.exprnode as edaexprnode  # noqa: WPS301 allow dotted import
 from pacti.iocontract import TacticStatistics, Term, TermList, Var
 from pacti.utils.lists import list_intersection
 
+from ipdb import set_trace as st
+from pacti.diagnostics_config import DIAGNOSTICSFILE as DFILE
+
 numeric = Union[int, float]
 
 
@@ -406,17 +409,64 @@ class PropositionalTermList(TermList):  # noqa: WPS338
             ValueError: Self has empty intersection with its context.
         """
         new_terms = []
+        diag_dict = {}
+        # print("REFINING")
+    
         for term in self.terms:
             new_term: PropositionalTerm
+
             if list_intersection(vars_to_elim, term.vars):
                 atoms_to_elim = []
                 for atom in term.atoms:
                     if _atom_has_variables(atom, vars_to_elim):
                         atoms_to_elim.append(atom)
+                # put diagnostics loop here
+                print(f"term: {term}")
+                # st()
+                print(f"context: {context}")
+                idxs_to_remove = []
+                run = 0
+
                 context_expr = edaexpr.And(*[xs.expression for xs in context.terms])
                 elimination_term: edaexpr.Expression = edaexpr.Implies(context_expr, term.expression)
                 quantified_atoms = [edaexpr.exprvar(atm) for atm in atoms_to_elim]
-                elimination_term = elimination_term.consensus(vs=quantified_atoms).simplify()
+                full_term = elimination_term.consensus(vs=quantified_atoms).simplify()
+                print(f"full term: {full_term}")
+
+
+                for i, context_term in enumerate(context.terms):
+                    print(f"Run: {run}, checking if context term {context_term} is relevant")
+                    # remove i from context, remove all indexes in idxs_to_remove
+                    skip_indxs = set(idxs_to_remove)
+                    skip_indxs.add(i)
+                    new_context = [value for idx, value in enumerate(context.terms) if idx not in skip_indxs]
+                    # original quantifier elimination using new_context
+                    context_expr = edaexpr.And(*[xs.expression for xs in new_context])
+                    elimination_term: edaexpr.Expression = edaexpr.Implies(context_expr, term.expression)
+                    quantified_atoms = [edaexpr.exprvar(atm) for atm in atoms_to_elim]
+                    elimination_term = elimination_term.consensus(vs=quantified_atoms).simplify()
+
+                    if full_term == elimination_term:
+                        print(f"Full term is the same as elimination term full = {full_term}, elim term = {elimination_term}")
+                        idxs_to_remove.append(i)
+                        print(f"removing {i}")
+                        # st()
+                    else:
+                        print(f"Full term is different from elimination term term full = {full_term}, elim term = {elimination_term}")
+                        print(f"keeping {i}")
+                        # st()
+                    run += 1
+
+                relevant_context = [value for idx, value in enumerate(context.terms) if idx not in idxs_to_remove]
+                relevant_context.append(term)
+                diag_dict.update({PropositionalTerm(full_term): relevant_context})
+                # st()
+                with open(DFILE, "a") as file:
+                    file.write(f"Computed new term: {full_term} from term: {term} and context: {[relevant_context]}\n")
+                print(f"Computed new term: {full_term} from term: {term} and context: {[relevant_context]}")
+
+                elimination_term = copy.copy(full_term) # set the result back to the original term
+
                 # make sure the result is not empty
                 test_expr: edaexpr.Expression = edaexpr.And(context_expr, elimination_term)
                 if not test_expr.satisfy_one():
@@ -426,8 +476,13 @@ class PropositionalTermList(TermList):  # noqa: WPS338
                 new_term = PropositionalTerm(elimination_term)
             else:
                 new_term = term.copy()
+                print(f'keeping term {term}')
+                try:
+                    diag_dict.update({PropositionalTerm(term): [term]})
+                except ValueError:
+                    diag_dict.update({term: [term]})
             new_terms.append(new_term)
-        return (PropositionalTermList(new_terms), [])
+        return (PropositionalTermList(new_terms), []), diag_dict
 
     def elim_vars_by_relaxing(
         self,
@@ -463,6 +518,9 @@ class PropositionalTermList(TermList):  # noqa: WPS338
                 processed term, of the tactic used, time spend, and tactic invocation count.
         """
         new_terms = []
+        diag_dict = {}
+        # print("RELAXING")
+
         for term in self.terms:
             new_term: PropositionalTerm
             if list_intersection(vars_to_elim, term.vars):
@@ -470,11 +528,53 @@ class PropositionalTermList(TermList):  # noqa: WPS338
                 for atom in term.atoms:
                     if _atom_has_variables(atom, vars_to_elim):
                         atoms_to_elim.append(atom)
+
+                # put diagnostics loop here
+                print(f"term: {term}")
+                print(f"context: {context}")
+                idxs_to_remove = []
+                run = 0
+
                 context_expr = edaexpr.And(*[xs.expression for xs in context.terms])
                 elimination_term: edaexpr.Expression = edaexpr.And(context_expr, term.expression)
-                elimination_term_final = elimination_term.smoothing(
+                full_term = elimination_term.smoothing(
                     vs=[edaexpr.exprvar(atm) for atm in atoms_to_elim]
                 ).simplify()
+                print(f"full term: {full_term}")
+
+                for i, context_term in enumerate(context.terms):
+                    print(f"run: {run}, checking if context term {context_term} is relevant")
+                    # remove i from context, remove all indexes in idxs_to_remove
+                    skip_indxs = set(idxs_to_remove)
+                    skip_indxs.add(i)
+                    new_context = [value for idx, value in enumerate(context.terms) if idx not in skip_indxs]
+                    # original quantifier elimination using new_context
+                    context_expr = edaexpr.And(*[xs.expression for xs in new_context])
+                    elimination_term: edaexpr.Expression = edaexpr.And(context_expr, term.expression)
+                    elimination_term_final = elimination_term.smoothing(
+                        vs=[edaexpr.exprvar(atm) for atm in atoms_to_elim]
+                    ).simplify()
+
+                    if full_term == elimination_term_final:
+                        print(f"Full term is the same as elimination term full = {full_term}, elim term = {elimination_term_final}")
+                        idxs_to_remove.append(i)
+                        print(f"removing {i}")
+                        # st()
+                    else:
+                        print(f"Full term is different from elimination term term full = {full_term}, elim term = {elimination_term_final}")
+                        print(f"keeping {i}")
+                        # st()
+                    run += 1
+                relevant_context = [value for idx, value in enumerate(context.terms) if idx not in idxs_to_remove]
+                relevant_context.append(term) # add the original transformed term
+                diag_dict.update({PropositionalTerm(full_term): relevant_context})
+                # write to diagnostics file
+                with open(DFILE, "a") as file:
+                    file.write(f"Computed new term: {full_term} from term: {term} and context: {[relevant_context]}\n")
+                print(f"Computed new term: {full_term} from term: {term} and context: {[relevant_context]}")
+
+                elimination_term_final = copy.copy(full_term)  # set the result back to the original term
+
                 # make sure the result is not empty
                 # test_expr : edaexpr.Expression = edaexpr.And(context_expr, elimination_term)
                 # if not test_expr.satisfy_one():
@@ -483,8 +583,10 @@ class PropositionalTermList(TermList):  # noqa: WPS338
                 new_term = PropositionalTerm(elimination_term_final)
             else:
                 new_term = term.copy()
+                print(f'keeping term {term}')
+                diag_dict.update({term: [term]}) # map the term to itself
             new_terms.append(new_term)
-        return (PropositionalTermList(new_terms), [])
+        return (PropositionalTermList(new_terms), []), diag_dict
 
     def simplify(self, context: Optional[PropositionalTermList] = None) -> PropositionalTermList:
         """

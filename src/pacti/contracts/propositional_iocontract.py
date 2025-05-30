@@ -135,6 +135,7 @@ class PropositionalIoContract(IoContract):
         if vars_to_keep is None:
             vars_to_keep = []
         return super().compose(other, [Var(x) for x in vars_to_keep], simplify)
+    
 
     def compose_tactics(
         self,
@@ -142,6 +143,7 @@ class PropositionalIoContract(IoContract):
         vars_to_keep: Optional[List[str]] = None,
         simplify: bool = True,
         tactics_order: Optional[List[int]] = None,
+        diagnose: bool = False,
     ) -> Tuple[PropositionalIoContract, List[TacticStatistics]]:
         """Compose polyhedral contracts.
 
@@ -168,7 +170,7 @@ class PropositionalIoContract(IoContract):
 
         if vars_to_keep is None:
             vars_to_keep = []
-        return super().compose_tactics(other, [Var(x) for x in vars_to_keep], simplify, tactics_order)
+        return super().compose_tactics(other, [Var(x) for x in vars_to_keep], simplify, tactics_order, diagnose)
 
     def quotient(  # noqa: WPS612
         self: PropositionalIoContract,
