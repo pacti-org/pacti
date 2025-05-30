@@ -1,5 +1,6 @@
 
 from pacti.contracts import PropositionalIoContract
+from pacti.iocontract import Var
 import networkx as nx
 import os
 from ipdb import set_trace as st
@@ -108,16 +109,26 @@ def print_graph(G):
 c1 = PropositionalIoContract.from_strings(
     input_vars=['a', 'x', 'y'], 
     output_vars=['b'], 
-    assumptions=['G(a)', 'G(x & ~y)'], 
-    guarantees=['G(F(b))', "G(a => ~b)"])
+    assumptions=['a', 'x & ~y'], 
+    guarantees=['F(b)', "a => ~b"])
 
 c2 = PropositionalIoContract.from_strings(
     input_vars=['b'], 
     output_vars=['c'], 
-    assumptions=['G(F(b))'], 
-    guarantees=['G(c & ~ b)', 'G(c)'])
+    assumptions=['F(b)'], 
+    guarantees=['c & ~ b', 'c'])
 
 
 c3, G = c1.compose_diagnostics(c2)
 print_graph(G)
 print(c3)
+
+
+
+for i in [0,1]:
+    for j in [0,1]:
+        behavior = {Var('b') : i, Var('c') : j}
+        print(f"Testing behavior {behavior}")
+        print(c2.g.contains_behavior(behavior))
+
+

@@ -92,11 +92,13 @@ class PropositionalIoContract(IoContract):
         """
         a: List[PropositionalTerm] = []
         if assumptions:
-            a = [PropositionalTerm(PropositionalIoContract.remove_globally(x)) for x in assumptions]
+            #a = [PropositionalTerm(PropositionalIoContract.remove_globally(x)) for x in assumptions]
+            a = [PropositionalTerm(x) for x in assumptions]
 
         g: List[PropositionalTerm] = []
         if guarantees:
-            g = [PropositionalTerm(PropositionalIoContract.remove_globally(x)) for x in guarantees]
+            #g = [PropositionalTerm(PropositionalIoContract.remove_globally(x)) for x in guarantees]
+            g = [PropositionalTerm(x) for x in guarantees]
 
         return PropositionalIoContract(
             input_vars=[Var(x) for x in input_vars],
