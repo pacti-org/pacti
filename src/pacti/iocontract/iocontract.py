@@ -26,8 +26,6 @@ from typing import Any, Generic, List, Optional, Tuple, TypeVar
 from pacti.utils.errors import IncompatibleArgsError
 from pacti.utils.lists import list_diff, list_intersection, list_union, lists_equal
 
-from ipdb import set_trace as st
-
 
 Var_t = TypeVar("Var_t", bound="Var")
 Term_t = TypeVar("Term_t", bound="Term")

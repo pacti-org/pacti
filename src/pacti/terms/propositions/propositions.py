@@ -19,7 +19,8 @@ from pacti.iocontract import TacticStatistics, Term, TermList, Var
 from pacti.utils.lists import list_intersection
 
 from ipdb import set_trace as st
-from pacti.diagnostics_config import DIAGNOSTICSFILE as DFILE
+#from pacti.diagnostics_config import DIAGNOSTICSFILE as DFILE
+DFILE = "kjhnkgbskjhgvbskjhg___"
 
 numeric = Union[int, float]
 
