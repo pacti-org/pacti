@@ -25,6 +25,7 @@ dependencies = [
     "ipdb>=0.13.13",
     "networkx>=3.1",
     "pygraphviz>=1.11",
+    "z3-solver>=4.15.0.0",
 ]
 requires-python = ">=3.8, <3.12"
 
