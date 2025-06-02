@@ -26,7 +26,8 @@ from typing import Any, Generic, List, Optional, Tuple, TypeVar
 from pacti.utils.errors import IncompatibleArgsError
 from pacti.utils.lists import list_diff, list_intersection, list_union, lists_equal
 
-from pacti.diagnostics_config import DIAGNOSTICSFILE as DFILE
+#from pacti.diagnostics_config import DIAGNOSTICSFILE as DFILE
+DFILE = "kjhnkgbskjhgvbskjhg___"
 # from pacti.terms.propositions import PropositionalTerm
 
 from ipdb import set_trace as st
