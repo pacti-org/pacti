@@ -17,7 +17,6 @@ c2 = PropositionalIoContract.from_strings(
 
 
 c3, G = c1.compose_diagnostics(c2)
-print_graph(G)
 print(c3)
 
 
