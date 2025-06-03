@@ -844,7 +844,6 @@ class IoContract(Generic[TermList_t]):
         tactics_used.append(used)
     
         (g2, used), g2diag_dict = g2_t.elim_vars_by_relaxing(g1_t, intvars, simplify, tactics_order)
-        print(g2diag_dict)
         ### diagnostics: connect the guarantees to the new terms in the dict
         for key,val in g2diag_dict.items():
             if key not in G.nodes: # add the node for the term if it doesnt exist yet
@@ -862,7 +861,6 @@ class IoContract(Generic[TermList_t]):
         ###
            
         (allguarantees, used), allguarantees_diag_dict = allguarantees.elim_vars_by_relaxing(assumptions, intvars, simplify, tactics_order)
-        print(allguarantees_diag_dict)
         ### diagnostics: connect the guarantees to the new terms in the dict
         for key,val in allguarantees_diag_dict.items():
             if key not in G.nodes: # add the node for the term if it doesnt exist yet

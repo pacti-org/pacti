@@ -74,14 +74,12 @@ def _get_z3_literals(z3expression: z3.BoolRef) -> List[str]:
         raise ValueError(f"Expression was type {type(z3expression)}")
     children = z3expression.children()
     if len(children) == 0:
-        if z3.is_var(z3expression):
-            return [z3expression]
-        else:
+        if z3.is_rational_value(z3expression) or z3.is_algebraic_value(z3expression):
             return []
+        else:
+            return [str(z3expression)]
     else:
         return reduce(lambda a,b: a + b, map(_get_z3_literals,z3expression.children()))
-        
-
     
 
 
@@ -146,7 +144,7 @@ class SmtTerm(Term):
         Returns:
             List of atoms referenced in term.
         """
-        return [x.name for x in _get_z3_literals(self.expression)]
+        return [x for x in _get_z3_literals(self.expression)]
 
     @property
     def vars(self) -> List[Var]:  # noqa: A003
@@ -311,33 +309,31 @@ class SmtTermList(TermList):  # noqa: WPS338
         """
         new_terms = []
         diag_dict = {}
-        # print("REFINING")
     
         for term in self.terms:
             new_term: SmtTerm
 
             if list_intersection(vars_to_elim, term.vars):
-                atoms_to_elim = []
-                for atom in term.atoms:
-                    atoms_to_elim.append(atom)
+                atoms_to_elim = list_intersection(vars_to_elim, term.vars)
 
                 context_expr = z3.And(*[xs.expression for xs in context.terms])
                 elimination_term: z3.BoolRef = z3.Implies(context_expr, term.expression)
-                quantified_atoms = [z3.Real(atm) for atm in atoms_to_elim]
+                quantified_atoms = [z3.Real(str(atm)) for atm in atoms_to_elim]
                 full_term = z3.ForAll(quantified_atoms, elimination_term)
 
                 t = z3.Tactic('qe')
-                full_term = z3.simplify(t(full_term)[0][0])
-
-                if not _is_sat(full_term):
-                    raise ValueError(
-                        f"The variables {vars_to_elim} cannot be eliminated from the term {term} in the context {context}"
-                    )
+                simplified_term = t(full_term)[0]
+                if len(simplified_term) > 0:
+                    full_term = z3.simplify(z3.And(*simplified_term))    
+                else:
+                    full_term = z3.RealVal(1) == z3.RealVal(1) 
+                
                 new_term = SmtTerm(full_term)
             else:
                 new_term = term.copy()
             new_terms.append(new_term)
         return (SmtTermList(new_terms), []), diag_dict
+
 
     def elim_vars_by_relaxing(
         self,
@@ -374,28 +370,25 @@ class SmtTermList(TermList):  # noqa: WPS338
         """
         new_terms = []
         diag_dict = {}
-        # print("REFINING")
     
         for term in self.terms:
             new_term: SmtTerm
 
             if list_intersection(vars_to_elim, term.vars):
-                atoms_to_elim = []
-                for atom in term.atoms:
-                    atoms_to_elim.append(atom)
+                atoms_to_elim = list_intersection(vars_to_elim, term.vars)
 
                 context_expr = z3.And(*[xs.expression for xs in context.terms])
                 elimination_term: z3.BoolRef = z3.And(context_expr, term.expression)
-                quantified_atoms = [z3.Real(atm) for atm in atoms_to_elim]
+                quantified_atoms = [z3.Real(str(atm)) for atm in atoms_to_elim]
                 full_term = z3.Exists(quantified_atoms, elimination_term)
 
                 t = z3.Tactic('qe')
-                full_term = z3.simplify(t(full_term)[0][0])
-
-                if _is_tautology(full_term):
-                    raise ValueError(
-                        f"The variables {vars_to_elim} cannot be eliminated from the term {term} in the context {context}"
-                    )
+                simplified_term = t(full_term)[0]
+                if len(simplified_term) > 0:
+                    full_term = z3.simplify(z3.And(*simplified_term))    
+                else:
+                    full_term = z3.RealVal(1) == z3.RealVal(1) 
+                
                 new_term = SmtTerm(full_term)
             else:
                 new_term = term.copy()
