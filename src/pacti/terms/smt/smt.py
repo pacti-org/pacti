@@ -26,87 +26,46 @@ numeric = Union[int, float]
 def _rename_expr(  # noqa: WPS231  too much cognitive complexity
     expression: z3.BoolRef, oldvarstr: str, newvarstr: str
 ) -> z3.BoolRef:
-    oldvar = edaexpr.exprvar(oldvarstr)
-    newvar = edaexpr.exprvar(newvarstr)
-    ret_val: edaexpr.Expression
-    if isinstance(expression, edaexpr.Atom):
-        if isinstance(expression, edaexpr.Variable) and expression == oldvar:
-            ret_val = newvar
-        elif isinstance(expression, edaexpr.Complement) and expression == edaexpr.Not(oldvar):
-            ret_val = edaexpr.Not(newvar)
-        else:
-            ret_val = copy.copy(expression)
-    elif isinstance(expression, edaexpr.NotOp):
-        nxs = edaexpr.Expression.box(_rename_expr(expression.xs[0], oldvarstr, newvarstr)).node
-        ret_val = edaexpr._expr(edaexprnode.not_(nxs))
-    elif isinstance(expression, edaexpr.ImpliesOp):
-        nxs = [edaexpr.Expression.box(_rename_expr(x, oldvarstr, newvarstr)).node for x in expression.xs]
-        ret_val = edaexpr._expr(edaexprnode.impl(*nxs))
-    elif isinstance(expression, edaexpr.AndOp):
-        nxs = [edaexpr.Expression.box(_rename_expr(x, oldvarstr, newvarstr)).node for x in expression.xs]
-        ret_val = edaexpr._expr(edaexprnode.and_(*nxs))
-    elif isinstance(expression, edaexpr.OrOp):
-        nxs = [edaexpr.Expression.box(_rename_expr(x, oldvarstr, newvarstr)).node for x in expression.xs]
-        ret_val = edaexpr._expr(edaexprnode.or_(*nxs))
-    elif isinstance(expression, edaexpr.EqualOp):
-        nxs = [edaexpr.Expression.box(_rename_expr(x, oldvarstr, newvarstr)).node for x in expression.xs]
-        ret_val = edaexpr._expr(edaexprnode.eq(*nxs))
-    else:
-        raise ValueError()
+    oldvar = z3.Real(oldvarstr)
+    newvar = z3.Real(newvarstr)
+    ret_val = z3.substitute(expression, (oldvar, newvar))
     return ret_val
 
 
-def _subst_var(  # noqa: WPS231  too much cognitive complexity
-    expression: edaexpr.Expression, oldvarstr: str, substval: numeric
-) -> edaexpr.Expression:
-    oldvar = edaexpr.exprvar(oldvarstr)
-    if substval == 1:
-        newvar = edaexpr.expr('1')
-    elif substval == 0:
-        newvar = edaexpr.expr('0')
-    else:
-        raise ValueError()
-    ret_val: edaexpr.Expression
-    if isinstance(expression, edaexpr.Atom):
-        if isinstance(expression, edaexpr.Variable) and expression == oldvar:
-            ret_val = newvar
-        elif isinstance(expression, edaexpr.Complement) and expression == edaexpr.Not(oldvar):
-            ret_val = edaexpr.Not(newvar)
-        else:
-            ret_val = copy.copy(expression)
-    elif isinstance(expression, edaexpr.NotOp):
-        nxs = edaexpr.Expression.box(_subst_var(expression.xs[0], oldvarstr, substval)).node
-        ret_val = edaexpr._expr(edaexprnode.not_(nxs))
-    elif isinstance(expression, edaexpr.ImpliesOp):
-        nxs = [edaexpr.Expression.box(_subst_var(x, oldvarstr, substval)).node for x in expression.xs]
-        ret_val = edaexpr._expr(edaexprnode.impl(*nxs))
-    elif isinstance(expression, edaexpr.AndOp):
-        nxs = [edaexpr.Expression.box(_subst_var(x, oldvarstr, substval)).node for x in expression.xs]
-        ret_val = edaexpr._expr(edaexprnode.and_(*nxs))
-    elif isinstance(expression, edaexpr.OrOp):
-        nxs = [edaexpr.Expression.box(_subst_var(x, oldvarstr, substval)).node for x in expression.xs]
-        ret_val = edaexpr._expr(edaexprnode.or_(*nxs))
-    elif isinstance(expression, edaexpr.EqualOp):
-        nxs = [edaexpr.Expression.box(_subst_var(x, oldvarstr, substval)).node for x in expression.xs]
-        ret_val = edaexpr._expr(edaexprnode.eq(*nxs))
-    else:
-        raise ValueError()
-    return ret_val
 
 
-def _is_tautology(expression: edaexpr.Expression) -> bool:
-        """
-        Tell whether term is a tautology.
+def _is_tautology(expression: z3.BoolRef) -> bool:
+    """
+    Tell whether term is a tautology.
 
-        Returns:
-            True is tautology.
-        """
-        ret_val = edaexpr.Not(expression).satisfy_one()
-        if ret_val is None:  # noqa: WPS531 Found simplifiable returning `if` condition in a function
-            return True
-        return False
+    Returns:
+        True is tautology.
+    """
+    s = z3.Solver()
+    s.add(z3.Not(expression))
+    result = s.check()
+    if result == z3.unsat:
+        return True
+    elif result == z3.unknown:
+        raise ValueError("SMT solver could not check formula")
+    return False
 
+def _is_sat(expression: z3.BoolRef) -> bool:
+    """
+    Tell whether term is a tautology.
 
+    Returns:
+        True is tautology.
+    """
+    s = z3.Solver()
+    s.add(expression)
+    result = s.check()
+    if result == z3.sat:
+        return True
+    elif result == z3.unknown:
+        raise ValueError("SMT solver could not check formula")
+    return False
+        
 
 
 
@@ -361,65 +320,23 @@ class SmtTermList(TermList):  # noqa: WPS338
             if list_intersection(vars_to_elim, term.vars):
                 atoms_to_elim = []
                 for atom in term.atoms:
-                    if _atom_has_variables(atom, vars_to_elim):
-                        atoms_to_elim.append(atom)
-                # put diagnostics loop here
-                print(f"term: {term}")
-                # st()
-                print(f"context: {context}")
-                idxs_to_remove = []
-                run = 0
+                    atoms_to_elim.append(atom)
 
-                context_expr = edaexpr.And(*[xs.expression for xs in context.terms])
-                elimination_term: edaexpr.Expression = edaexpr.Implies(context_expr, term.expression)
-                quantified_atoms = [edaexpr.exprvar(atm) for atm in atoms_to_elim]
-                full_term = elimination_term.consensus(vs=quantified_atoms).simplify()
-                print(f"full term: {full_term}")
+                context_expr = z3.And(*[xs.expression for xs in context.terms])
+                elimination_term: z3.BoolRef = z3.Implies(context_expr, term.expression)
+                quantified_atoms = [z3.Real(atm) for atm in atoms_to_elim]
+                full_term = z3.ForAll(quantified_atoms, elimination_term)
 
+                t = z3.Tactic('qe')
+                full_term = z3.simplify(t(full_term)[0][0])
 
-                for i, context_term in enumerate(context.terms):
-                    print(f"Run: {run}, checking if context term {context_term} is relevant")
-                    # remove i from context, remove all indexes in idxs_to_remove
-                    skip_indxs = set(idxs_to_remove)
-                    skip_indxs.add(i)
-                    new_context = [value for idx, value in enumerate(context.terms) if idx not in skip_indxs]
-                    # original quantifier elimination using new_context
-                    context_expr = edaexpr.And(*[xs.expression for xs in new_context])
-                    elimination_term: edaexpr.Expression = edaexpr.Implies(context_expr, term.expression)
-                    quantified_atoms = [edaexpr.exprvar(atm) for atm in atoms_to_elim]
-                    elimination_term = elimination_term.consensus(vs=quantified_atoms).simplify()
-
-                    if full_term == elimination_term:
-                        print(f"Full term is the same as elimination term full = {full_term}, elim term = {elimination_term}")
-                        idxs_to_remove.append(i)
-                        print(f"removing {i}")
-                        # st()
-                    else:
-                        print(f"Full term is different from elimination term term full = {full_term}, elim term = {elimination_term}")
-                        print(f"keeping {i}")
-                        # st()
-                    run += 1
-
-                relevant_context = [value for idx, value in enumerate(context.terms) if idx not in idxs_to_remove]
-                relevant_context.append(term)
-                diag_dict.update({SmtTerm(full_term): relevant_context})
-
-                elimination_term = copy.copy(full_term) # set the result back to the original term
-
-                # make sure the result is not empty
-                test_expr: edaexpr.Expression = edaexpr.And(context_expr, elimination_term)
-                if not test_expr.satisfy_one():
+                if not _is_sat(full_term):
                     raise ValueError(
                         f"The variables {vars_to_elim} cannot be eliminated from the term {term} in the context {context}"
                     )
-                new_term = SmtTerm(elimination_term)
+                new_term = SmtTerm(full_term)
             else:
                 new_term = term.copy()
-                print(f'keeping term {term}')
-                try:
-                    diag_dict.update({SmtTerm(term): [term]})
-                except ValueError:
-                    diag_dict.update({term: [term]})
             new_terms.append(new_term)
         return (SmtTermList(new_terms), []), diag_dict
 
@@ -458,68 +375,31 @@ class SmtTermList(TermList):  # noqa: WPS338
         """
         new_terms = []
         diag_dict = {}
-        # print("RELAXING")
-
+        # print("REFINING")
+    
         for term in self.terms:
             new_term: SmtTerm
+
             if list_intersection(vars_to_elim, term.vars):
                 atoms_to_elim = []
                 for atom in term.atoms:
-                    if _atom_has_variables(atom, vars_to_elim):
-                        atoms_to_elim.append(atom)
+                    atoms_to_elim.append(atom)
 
-                # put diagnostics loop here
-                print(f"term: {term}")
-                print(f"context: {context}")
-                idxs_to_remove = []
-                run = 0
+                context_expr = z3.And(*[xs.expression for xs in context.terms])
+                elimination_term: z3.BoolRef = z3.And(context_expr, term.expression)
+                quantified_atoms = [z3.Real(atm) for atm in atoms_to_elim]
+                full_term = z3.Exists(quantified_atoms, elimination_term)
 
-                context_expr = edaexpr.And(*[xs.expression for xs in context.terms])
-                elimination_term: edaexpr.Expression = edaexpr.And(context_expr, term.expression)
-                full_term = elimination_term.smoothing(
-                    vs=[edaexpr.exprvar(atm) for atm in atoms_to_elim]
-                ).simplify()
-                print(f"full term: {full_term}")
+                t = z3.Tactic('qe')
+                full_term = z3.simplify(t(full_term)[0][0])
 
-                for i, context_term in enumerate(context.terms):
-                    print(f"run: {run}, checking if context term {context_term} is relevant")
-                    # remove i from context, remove all indexes in idxs_to_remove
-                    skip_indxs = set(idxs_to_remove)
-                    skip_indxs.add(i)
-                    new_context = [value for idx, value in enumerate(context.terms) if idx not in skip_indxs]
-                    # original quantifier elimination using new_context
-                    context_expr = edaexpr.And(*[xs.expression for xs in new_context])
-                    elimination_term: edaexpr.Expression = edaexpr.And(context_expr, term.expression)
-                    elimination_term_final = elimination_term.smoothing(
-                        vs=[edaexpr.exprvar(atm) for atm in atoms_to_elim]
-                    ).simplify()
-
-                    if full_term == elimination_term_final:
-                        print(f"Full term is the same as elimination term full = {full_term}, elim term = {elimination_term_final}")
-                        idxs_to_remove.append(i)
-                        print(f"removing {i}")
-                        # st()
-                    else:
-                        print(f"Full term is different from elimination term term full = {full_term}, elim term = {elimination_term_final}")
-                        print(f"keeping {i}")
-                        # st()
-                    run += 1
-                relevant_context = [value for idx, value in enumerate(context.terms) if idx not in idxs_to_remove]
-                relevant_context.append(term) # add the original transformed term
-                diag_dict.update({SmtTerm(full_term): relevant_context})
-
-                elimination_term_final = copy.copy(full_term)  # set the result back to the original term
-
-                # make sure the result is not empty
-                # test_expr : edaexpr.Expression = edaexpr.And(context_expr, elimination_term)
-                # if not test_expr.satisfy_one():
-                #    raise ValueError(f"The variables {vars_to_elim} cannot be eliminated
-                #    from the term {term} in the context {context}")
-                new_term = SmtTerm(elimination_term_final)
+                if _is_tautology(full_term):
+                    raise ValueError(
+                        f"The variables {vars_to_elim} cannot be eliminated from the term {term} in the context {context}"
+                    )
+                new_term = SmtTerm(full_term)
             else:
                 new_term = term.copy()
-                print(f'keeping term {term}')
-                diag_dict.update({term: [term]}) # map the term to itself
             new_terms.append(new_term)
         return (SmtTermList(new_terms), []), diag_dict
 
@@ -568,10 +448,8 @@ class SmtTermList(TermList):  # noqa: WPS338
         Returns:
             self <= other
         """
-        test_expr: edaexpr.Expression = edaexpr.Implies(edaexpr.And(*self.terms), edaexpr.And(*other.terms))
-        if edaexpr.Not(test_expr).satisfy_one():  # noqa: WPS531 if condition can be simplified
-            return False
-        return True
+        test_expr: z3.BoolRef = z3.Implies(z3.And(*self.terms), z3.And(*other.terms))
+        return _is_tautology(test_expr)
 
     def is_empty(self) -> bool:
         """
@@ -580,7 +458,7 @@ class SmtTermList(TermList):  # noqa: WPS338
         Returns:
             True if constraints cannot be satisfied.
         """
-        test_expr: edaexpr.Expression = edaexpr.And(*self.terms)
-        if test_expr.satisfy_one():  # noqa: WPS531 if condition can be simplified
+        test_expr: z3.BoolRef = z3.And(*self.terms)
+        if _is_sat(test_expr):  # noqa: WPS531 if condition can be simplified
             return False
         return True

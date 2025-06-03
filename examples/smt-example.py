@@ -4,7 +4,13 @@ import z3
 from z3 import *
 x = Bool("x")
 y = Bool("y")
+y_2 = Bool("y")
+print(f"Expression is {simplify(y & y_2)}")
 s = Solver()
 s.add(And([x,Not(x)]))
 print(type(And([x,Not(x)])))
 print(type(s.check()))
+print(80*"*")
+t = Tactic('qe')
+ee = simplify(t(ForAll([x],Implies(x,y)))[0][0])
+print(ee)
