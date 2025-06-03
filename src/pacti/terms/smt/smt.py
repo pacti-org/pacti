@@ -11,7 +11,7 @@ from __future__ import annotations
 import copy
 import re
 from typing import Dict, List, Optional, Tuple, Union
-from functools import map, reduce
+from functools import reduce
 
 import z3
 
@@ -70,9 +70,9 @@ def _is_sat(expression: z3.BoolRef) -> bool:
 
 
 def _get_z3_literals(z3expression: z3.BoolRef) -> List[str]:
-    if not z3.is_bool(z3expression):
-        raise ValueError()
-    children = z3expression.children
+    if not z3.is_bool(z3expression) and not z3.is_arith(z3expression):
+        raise ValueError(f"Expression was type {type(z3expression)}")
+    children = z3expression.children()
     if len(children) == 0:
         if z3.is_var(z3expression):
             return [z3expression]
@@ -117,7 +117,7 @@ class SmtTerm(Term):
         """
         self.expression: z3.BoolRef
         if isinstance(expression, z3.BoolRef):
-            self.expression = copy.copy(expression)
+            self.expression = copy.deepcopy(expression)
         else:
             raise ValueError()
 
@@ -126,7 +126,7 @@ class SmtTerm(Term):
             raise ValueError()
         return str(self) == str(other)
     
-    @staticmethod
+    #@staticmethod
 
     def __str__(self) -> str:
         #return SmtTerm.add_globally(_expr_to_str(self.expression))
@@ -179,9 +179,8 @@ class SmtTerm(Term):
         Returns:
             Copy of term.
         """
-        newterm = SmtTerm("")
-        newterm.expression = copy.copy(self.expression)
-        return newterm
+        expression = copy.deepcopy(self.expression)
+        return SmtTerm(expression)
 
     def rename_variable(self, source_var: Var, target_var: Var) -> SmtTerm:
         """
