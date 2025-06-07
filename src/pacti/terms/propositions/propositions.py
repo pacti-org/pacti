@@ -433,6 +433,7 @@ class PropositionalTermList(TermList):  # noqa: WPS338
                 quantified_atoms = [edaexpr.exprvar(atm) for atm in atoms_to_elim]
                 full_term = elimination_term.consensus(vs=quantified_atoms).simplify()
                 print(f"full term: {full_term}")
+                context_expr_old = copy.copy(context_expr)
 
 
                 for i, context_term in enumerate(context.terms):
@@ -469,7 +470,7 @@ class PropositionalTermList(TermList):  # noqa: WPS338
                 elimination_term = copy.copy(full_term) # set the result back to the original term
 
                 # make sure the result is not empty
-                test_expr: edaexpr.Expression = edaexpr.And(context_expr, elimination_term)
+                test_expr: edaexpr.Expression = edaexpr.And(context_expr_old, elimination_term)
                 if not test_expr.satisfy_one():
                     raise ValueError(
                         f"The variables {vars_to_elim} cannot be eliminated from the term {term} in the context {context}"
@@ -524,7 +525,16 @@ class PropositionalTermList(TermList):  # noqa: WPS338
 
         for term in self.terms:
             new_term: PropositionalTerm
-            if list_intersection(vars_to_elim, term.vars):
+
+            local_vars_to_elim = list_intersection(vars_to_elim, term.vars)
+            useful_context_terms = []
+            for context_term in context.terms:
+                if len(list_intersection(context_term.vars, local_vars_to_elim)) > 0:
+                    useful_context_terms.append(copy.copy(context_term))
+            useful_context = PropositionalTermList(useful_context_terms)
+
+
+            if local_vars_to_elim:
                 atoms_to_elim = []
                 for atom in term.atoms:
                     if _atom_has_variables(atom, vars_to_elim):
@@ -532,23 +542,23 @@ class PropositionalTermList(TermList):  # noqa: WPS338
 
                 # put diagnostics loop here
                 print(f"term: {term}")
-                print(f"context: {context}")
+                print(f"context: {useful_context}")
                 idxs_to_remove = []
                 run = 0
 
-                context_expr = edaexpr.And(*[xs.expression for xs in context.terms])
+                context_expr = edaexpr.And(*[xs.expression for xs in useful_context.terms])
                 elimination_term: edaexpr.Expression = edaexpr.And(context_expr, term.expression)
                 full_term = elimination_term.smoothing(
                     vs=[edaexpr.exprvar(atm) for atm in atoms_to_elim]
                 ).simplify()
                 print(f"full term: {full_term}")
+                elimination_term_old = copy.copy(elimination_term)
 
-                for i, context_term in enumerate(context.terms):
-                    print(f"run: {run}, checking if context term {context_term} is relevant")
+                for i, context_term in enumerate(useful_context.terms):
                     # remove i from context, remove all indexes in idxs_to_remove
                     skip_indxs = set(idxs_to_remove)
                     skip_indxs.add(i)
-                    new_context = [value for idx, value in enumerate(context.terms) if idx not in skip_indxs]
+                    new_context = [value for idx, value in enumerate(useful_context.terms) if idx not in skip_indxs]
                     # original quantifier elimination using new_context
                     context_expr = edaexpr.And(*[xs.expression for xs in new_context])
                     elimination_term: edaexpr.Expression = edaexpr.And(context_expr, term.expression)
@@ -556,23 +566,11 @@ class PropositionalTermList(TermList):  # noqa: WPS338
                         vs=[edaexpr.exprvar(atm) for atm in atoms_to_elim]
                     ).simplify()
 
-                    if full_term == elimination_term_final:
-                        print(f"Full term is the same as elimination term full = {full_term}, elim term = {elimination_term_final}")
-                        idxs_to_remove.append(i)
-                        print(f"removing {i}")
-                        # st()
-                    else:
-                        print(f"Full term is different from elimination term term full = {full_term}, elim term = {elimination_term_final}")
-                        print(f"keeping {i}")
-                        # st()
                     run += 1
-                relevant_context = [value for idx, value in enumerate(context.terms) if idx not in idxs_to_remove]
+                relevant_context = [value for idx, value in enumerate(useful_context.terms) if idx not in idxs_to_remove]
                 relevant_context.append(term) # add the original transformed term
                 diag_dict.update({PropositionalTerm(full_term): relevant_context})
                 # write to diagnostics file
-                with open(DFILE, "a") as file:
-                    file.write(f"Computed new term: {full_term} from term: {term} and context: {[relevant_context]}\n")
-                print(f"Computed new term: {full_term} from term: {term} and context: {[relevant_context]}")
 
                 elimination_term_final = copy.copy(full_term)  # set the result back to the original term
 

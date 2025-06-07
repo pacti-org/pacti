@@ -5,15 +5,15 @@ from pacti.iocontract import Var
 
 c1 = PropositionalIoContract.from_strings(
     input_vars=['a', 'x', 'y'], 
-    output_vars=['b'], 
+    output_vars=['b','irr'], 
     assumptions=['a', 'x & ~y'], 
-    guarantees=['F(b)', "a => ~b"])
+    guarantees=['F(b)', "a => ~b",'irr'])
 
 c2 = PropositionalIoContract.from_strings(
-    input_vars=['b'], 
-    output_vars=['c'], 
-    assumptions=['F(b)'], 
-    guarantees=['c & ~ b', 'c'])
+    input_vars=['b','irr'], 
+    output_vars=['c','d'], 
+    assumptions=['F(b)','irr'], 
+    guarantees=['c & ~ b', 'c',"irr <=> d"])
 
 
 c3, G = c1.compose_diagnostics(c2)
