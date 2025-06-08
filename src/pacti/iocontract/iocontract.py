@@ -714,12 +714,11 @@ class IoContract(Generic[TermList_t]):
         other_drives_const_inputs = len(list_intersection(other.outputvars, selfinputconst)) > 0
         self_drives_const_inputs = len(list_intersection(self.outputvars, otherinputconst)) > 0
 
-        # for diagnostics trace
-        from ipdb import set_trace as st
+        ### for diagnostics trace
         diagnostic_trace = {}
         import networkx as nx
         G = nx.DiGraph()
-        ### set component contract terms
+        # set component contract terms
         for term in self.a.terms:
             G.add_node(term, type='assumption', component='self', input = True, output = False)
         for term in other.a.terms:
@@ -739,7 +738,6 @@ class IoContract(Generic[TermList_t]):
             (new_a, used), new_a_diag_dict = other.a.elim_vars_by_refining(
                 self.a | self.g, assumptions_forbidden_vars, simplify=True, tactics_order=tactics_order
             )
-            # print(new_a_diag_dict)
             ### diagnostics: connect the original assumptions to the new terms in the dict
             for key,val in new_a_diag_dict.items():
                 if key not in G.nodes:
@@ -765,7 +763,6 @@ class IoContract(Generic[TermList_t]):
             for node in G.nodes():
                 if node in assumptions_nodes:
                     G.nodes[node]['output'] = True
-
             ###
 
         elif other_helps_self and not self_helps_other:
@@ -773,7 +770,6 @@ class IoContract(Generic[TermList_t]):
             (new_a, used), new_a_diag_dict = self.a.elim_vars_by_refining(
                 other.a | other.g, assumptions_forbidden_vars, simplify=True, tactics_order=tactics_order
             )
-            # print(new_a_diag_dict)
             ### diagnostics: connect the original assumptions to the new terms in the dict
             for key,val in new_a_diag_dict.items():
                 if key not in G.nodes:
@@ -800,7 +796,6 @@ class IoContract(Generic[TermList_t]):
             for node in G.nodes():
                 if node in assumptions_nodes:
                     G.nodes[node]['output'] = True
-                
             ###
 
         # contracts can't help each other
@@ -817,13 +812,6 @@ class IoContract(Generic[TermList_t]):
         logging.debug("Assumption computation: computed assumptions:\n%s", assumptions)
         if simplify:
             assumptions = assumptions.simplify()
-
-        # ### diagnostics: track the assumptions nodes
-        # assumptions_nodes = [node for node in G.nodes if node in assumptions.terms]
-        # for node in G.nodes():
-        #     if node in assumptions_nodes:
-        #         G.nodes[node]['output'] = True
-        # ###
 
         # process guarantees
         logging.debug("****** Computing guarantees")
@@ -844,7 +832,6 @@ class IoContract(Generic[TermList_t]):
         tactics_used.append(used)
     
         (g2, used), g2diag_dict = g2_t.elim_vars_by_relaxing(g1_t, intvars, simplify, tactics_order)
-        # print(g2diag_dict)
         ### diagnostics: connect the guarantees to the new terms in the dict
         for key,val in g2diag_dict.items():
             if key not in G.nodes: # add the node for the term if it doesnt exist yet
@@ -862,7 +849,6 @@ class IoContract(Generic[TermList_t]):
         ###
            
         (allguarantees, used), allguarantees_diag_dict = allguarantees.elim_vars_by_relaxing(assumptions, intvars, simplify, tactics_order)
-        # print(allguarantees_diag_dict)
         ### diagnostics: connect the guarantees to the new terms in the dict
         for key,val in allguarantees_diag_dict.items():
             if key not in G.nodes: # add the node for the term if it doesnt exist yet
@@ -880,13 +866,11 @@ class IoContract(Generic[TermList_t]):
         terms_to_elim = allguarantees.get_terms_with_vars(intvars)
         allguarantees -= terms_to_elim
       
-        # drop the eliminated guarantees from the output
+        ### drop the eliminated guarantees from the diagnostics output
         for term in terms_to_elim.terms:
             G.nodes[term]['output'] = False
             G.nodes[term]['type'] = 'eliminated_guarantee'
-
-        # print(f"Kept guarantees {[guarantee for guarantee in allguarantees.terms if (guarantee.__str__() != 'G( 1 )')]}")    
-       
+        ###
 
         if diagnose:
             diagnostic_trace = G
