@@ -70,9 +70,9 @@ def _subst_var(  # noqa: WPS231  too much cognitive complexity
         raise ValueError()
     ret_val: edaexpr.Expression
     if isinstance(expression, edaexpr.Atom):
-        if isinstance(expression, edaexpr.Variable) and expression == oldvar:
+        if isinstance(expression, edaexpr.Variable) and _is_tautology(edaexpr.Equal(expression, oldvar)):
             ret_val = newvar
-        elif isinstance(expression, edaexpr.Complement) and expression == edaexpr.Not(oldvar):
+        elif isinstance(expression, edaexpr.Complement) and _is_tautology(edaexpr.Equal(expression, edaexpr.Not(oldvar))):
             ret_val = edaexpr.Not(newvar)
         else:
             ret_val = copy.copy(expression)
