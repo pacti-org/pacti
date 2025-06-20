@@ -300,8 +300,8 @@ class PolyhedralTerm(Term):
                 understood as an equality.
         """
         if self.contains_var(var):
+            logging.debug(f"Substituting var {var} in term {self} with {subst_with_term}")
             term = subst_with_term.multiply(self.get_coefficient(var))
-            logging.debug("Term is %s", term)
             that = self.remove_variable(var)
             logging.debug(that)
             return that + term
@@ -332,7 +332,7 @@ class PolyhedralTerm(Term):
             variables={
                 k: -v / self.get_coefficient(var_to_isolate) for k, v in self.variables.items() if k != var_to_isolate
             },
-            constant=self.constant / self.get_coefficient(var_to_isolate),
+            constant=-self.constant / self.get_coefficient(var_to_isolate),
         )
 
     @staticmethod
