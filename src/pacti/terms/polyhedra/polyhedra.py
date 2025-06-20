@@ -5,6 +5,7 @@ Module provides support for linear inequalities as constraints, i.e.,
 the constraints are of the form $\\sum_{i} a_i x_i \\le c$, where the
 $x_i$ are variables and the $a_i$ and $c$ are constants.
 """
+
 from __future__ import annotations
 
 import logging
@@ -1468,7 +1469,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
     ) -> Tuple[Optional[PolyhedralTerm], int]:
         logging.debug("************ Tactic 5")
         return PolyhedralTermList._context_reduction(term, context, vars_to_elim, refine, 5), 1
-    
+
     @staticmethod
     def _tactic_3(  # noqa: WPS231
         term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, refine: bool
@@ -1480,8 +1481,10 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
             ct_var = conflict_vars[0]
             for index, ct_term in enumerate(context.terms):
                 if ct_var in ct_term.vars:
-                    coeff_test = refine and (term.get_polarity(ct_var) == ct_term.get_polarity(ct_var)) 
-                    coeff_test = coeff_test or ((not refine) and (term.get_polarity(ct_var) != ct_term.get_polarity(ct_var)))
+                    coeff_test = refine and (term.get_polarity(ct_var) == ct_term.get_polarity(ct_var))
+                    coeff_test = coeff_test or (
+                        (not refine) and (term.get_polarity(ct_var) != ct_term.get_polarity(ct_var))
+                    )
                     if coeff_test:
                         ct_conflict_vars = list_intersection(vars_to_elim, ct_term.vars)
                         if all(ele in conflict_vars for ele in ct_conflict_vars):
@@ -1490,17 +1493,12 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
                             new_context = context.copy()
                             new_context.terms.pop(index)
                             try:
-                                return PolyhedralTermList._tactic_3(new_term,new_context,vars_to_elim,refine)[0], 1
-                            except:
+                                return PolyhedralTermList._tactic_3(new_term, new_context, vars_to_elim, refine)[0], 1
+                            except ValueError:
                                 pass
 
             raise ValueError("Failed")
-        else:
-            return term.copy(), 1
-
-        
-
-        
+        return term.copy(), 1
 
     @staticmethod
     def _tactic_trivial(  # noqa: WPS231
