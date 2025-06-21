@@ -57,3 +57,21 @@ def lists_equal(list1: List[Any], list2: List[Any]) -> bool:
         True if the lists are equal element-wise.
     """
     return (len(list_diff(list1, list2)) == 0) and (len(list_diff(list2, list1)) == 0)
+
+
+def list_remove_indices(list1: List[Any], indices_to_remove: List[int]) -> List[Any]:
+    """
+    Create a copy of a given list with the indicated indicated indices removed
+
+    Args:
+        list1: List to copy.
+        indices_to_remove: The indices to be removed.
+
+    Returns:
+        A new list.
+    """
+    new_list = []
+    for i, _ in enumerate(list1):
+        if i not in indices_to_remove:
+            new_list.append(list1[i])
+    return new_list
