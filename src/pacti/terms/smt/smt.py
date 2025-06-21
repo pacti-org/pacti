@@ -445,23 +445,20 @@ class SmtTermList(TermList):  # noqa: WPS338
         Returns:
             A new TermList with redundant terms removed using the provided context.
         """
-        terms = self.terms
-        new_tl = []
-        one_exists = False
-        others_exist = False
-        one_index = 0
-        for i, term in enumerate(terms):
-            if term.is_tautology():
-                if not one_exists:
-                    new_tl.append(term)
-                    one_exists = True
-                    one_index = i
+        newterms = []
+        if context:
+            external_context : SmtTermList = SmtTermList(context.terms)
+        else:
+            external_context = SmtTermList([])
+        for i, term_under_analysis in enumerate(self.terms):
+            if i == len(self.terms) - 1:
+                useful_context = SmtTermList(self.terms[i+1:]) | external_context
             else:
-                new_tl.append(term)
-                others_exist = True
-        if others_exist and one_exists:
-            del new_tl[one_index]
-        return SmtTermList(new_tl)
+                useful_context = external_context.copy()
+            if not(useful_context <= SmtTermList([term_under_analysis])):
+                newterms.append(term_under_analysis.copy())
+        return SmtTermList(newterms)
+
 
     def refines(self, other: SmtTermList) -> bool:
         """
@@ -474,7 +471,11 @@ class SmtTermList(TermList):  # noqa: WPS338
         Returns:
             self <= other
         """
-        test_expr: z3.BoolRef = z3.Implies(z3.And(*self.terms), z3.And(*other.terms))
+        print(f"Checking whether \n{self} refines \n{other}")
+        antecedent = z3.And(*[term.expression for term in self.terms])
+        consequent = z3.And(*[term.expression for term in other.terms])
+        print(antecedent)
+        test_expr: z3.BoolRef = z3.Implies(antecedent, consequent)
         return _is_tautology(test_expr)
 
     def is_empty(self) -> bool:
@@ -484,7 +485,7 @@ class SmtTermList(TermList):  # noqa: WPS338
         Returns:
             True if constraints cannot be satisfied.
         """
-        test_expr: z3.BoolRef = z3.And(*self.terms)
+        test_expr = z3.And(*[term.expression for term in self.terms])
         if _is_sat(test_expr):  # noqa: WPS531 if condition can be simplified
             return False
         return True
