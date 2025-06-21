@@ -445,20 +445,15 @@ class SmtTermList(TermList):  # noqa: WPS338
         Returns:
             A new TermList with redundant terms removed using the provided context.
         """
-        newterms = []
+        newterms: List[SmtTerm] = []
+        external_context = SmtTermList([])
         if context:
-            external_context : SmtTermList = SmtTermList(context.terms)
-        else:
-            external_context = SmtTermList([])
+            external_context = context
         for i, term_under_analysis in enumerate(self.terms):
-            if i == len(self.terms) - 1:
-                useful_context = SmtTermList(self.terms[i+1:]) | external_context
-            else:
-                useful_context = external_context.copy()
-            if not(useful_context <= SmtTermList([term_under_analysis])):
+            useful_context = SmtTermList(newterms) | SmtTermList(self.terms[i + 1 :]) | external_context
+            if not useful_context.refines(SmtTermList([term_under_analysis])):
                 newterms.append(term_under_analysis.copy())
         return SmtTermList(newterms)
-
 
     def refines(self, other: SmtTermList) -> bool:
         """
