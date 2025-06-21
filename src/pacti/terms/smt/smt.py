@@ -19,15 +19,18 @@ from pacti.utils.lists import list_diff, list_intersection
 
 numeric = Union[int, float]
 
+def _get_smt_real_variable(name: str) -> z3.ArithRef:
+    return z3.Real(name)
+
 
 def _rename_expr(expression: z3.BoolRef, oldvarstr: str, newvarstr: str) -> z3.BoolRef:
-    oldvar = z3.Real(oldvarstr)
-    newvar = z3.Real(newvarstr)
+    oldvar = _get_smt_real_variable(oldvarstr)
+    newvar = _get_smt_real_variable(newvarstr)
     return z3.substitute(expression, (oldvar, newvar))
 
 
 def _replace_var_with_val(expression: z3.BoolRef, varstr: str, value: numeric) -> z3.BoolRef:
-    vartomodify = z3.Real(varstr)
+    vartomodify = _get_smt_real_variable(varstr)
     valuetoapply = z3.RealVal(value)
     return z3.substitute(expression, (vartomodify, valuetoapply))
 
@@ -103,14 +106,14 @@ def _elim_by_refinement(
     expr_to_refine: z3.BoolRef, context_expr: z3.BoolRef, variables_to_elim: List[str]
 ) -> z3.BoolRef:
     elimination_term: z3.BoolRef = z3.Implies(context_expr, expr_to_refine)
-    quantified_atoms = [z3.Real(atm) for atm in variables_to_elim]
+    quantified_atoms = [_get_smt_real_variable(atm) for atm in variables_to_elim]
     full_term = z3.ForAll(quantified_atoms, elimination_term)
     return _eliminate_quantifiers(full_term)
 
 
 def _elim_by_relaxing(expr_to_refine: z3.BoolRef, context_expr: z3.BoolRef, variables_to_elim: List[str]) -> z3.BoolRef:
     elimination_term: z3.BoolRef = z3.And(context_expr, expr_to_refine)
-    quantified_atoms = [z3.Real(atm) for atm in variables_to_elim]
+    quantified_atoms = [_get_smt_real_variable(atm) for atm in variables_to_elim]
     full_term = z3.Exists(quantified_atoms, elimination_term)
     return _eliminate_quantifiers(full_term)
 
