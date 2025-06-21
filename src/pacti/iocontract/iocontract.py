@@ -15,6 +15,7 @@ This module implements all supported contract operations and relations. In order
 to instantiate contracts and perform this operations, it is necessary to extend
 Term and TermList with specific constraint formalisms.
 """
+
 from __future__ import annotations
 
 import copy
@@ -209,7 +210,7 @@ class TermList(ABC):
 
     @abstractmethod
     def __hash__(self) -> int:
-        ...
+        """Hashing."""
 
     def copy(self: TermList_t) -> TermList_t:
         """
@@ -844,7 +845,7 @@ class IoContract(Generic[TermList_t]):
         guarantees: TermList_t = self.g
         logging.debug("Using existing guarantees to aid system-level guarantees")
         try:  # noqa: WPS229
-            (guarantees, used) = guarantees.elim_vars_by_refining(other.g | other.a, intvars, simplify, tactics_order)
+            (guarantees, used) = guarantees.elim_vars_by_refining(other.g | self.a, intvars, simplify, tactics_order)
             tactics_used.append(used)
         except ValueError:
             guarantees = self.g
