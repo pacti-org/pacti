@@ -140,13 +140,11 @@ def test_relaxing2() -> None:
         _ = constraints.elim_vars_by_relaxing(context, [Var("t0"), Var("dt0")], simplify=True)
 
     (transformed1, _) = constraints.elim_vars_by_relaxing(context, [Var("t0"), Var("dt0")], simplify=False)
-    expected = to_pts(["0 <= -1", "0 <= 0", "-1*t1 <= -1"])
+    expected = to_pts(["1*t1 <= 0", "0 <= 0", "-1*t1 <= -1"])
     assert expected == transformed1
 
     (transformed2, _) = constraints._transform(context, [Var("t0"), Var("dt0")], refine=False, simplify=False)
-    expected = to_pts(["0 <= -1", "-1*t0 <= 0", "0 <= 0", "-1*t1 <= -1"])
-    print(expected)
-    print(transformed2)
+    expected = to_pts(["1*t1 <= 0", "-1*t0 <= 0", "0 <= 0", "-1*t1 <= -1"])
     assert expected == transformed2
 
 
