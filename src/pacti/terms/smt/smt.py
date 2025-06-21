@@ -308,7 +308,6 @@ class SmtTermList(TermList):  # noqa: WPS338
             ValueError: Self has empty intersection with its context.
         """
         new_terms = []
-        diag_dict = {}
     
         for term in self.terms:
             new_term: SmtTerm
@@ -332,7 +331,7 @@ class SmtTermList(TermList):  # noqa: WPS338
             else:
                 new_term = term.copy()
             new_terms.append(new_term)
-        return (SmtTermList(new_terms), []), diag_dict
+        return SmtTermList(new_terms), []
 
 
     def elim_vars_by_relaxing(
@@ -369,7 +368,6 @@ class SmtTermList(TermList):  # noqa: WPS338
                 processed term, of the tactic used, time spend, and tactic invocation count.
         """
         new_terms = []
-        diag_dict = {}
     
         for term in self.terms:
             new_term: SmtTerm
@@ -393,7 +391,7 @@ class SmtTermList(TermList):  # noqa: WPS338
             else:
                 new_term = term.copy()
             new_terms.append(new_term)
-        return (SmtTermList(new_terms), []), diag_dict
+        return SmtTermList(new_terms), []
 
     def simplify(self, context: Optional[SmtTermList] = None) -> SmtTermList:
         """

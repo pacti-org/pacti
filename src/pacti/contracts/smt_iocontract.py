@@ -131,8 +131,7 @@ class SmtIoContract(IoContract):
         other: SmtIoContract,
         vars_to_keep: Optional[List[str]] = None,
         simplify: bool = True,
-        tactics_order: Optional[List[int]] = None,
-        diagnose: bool = False,
+        tactics_order: Optional[List[int]] = None
     ) -> Tuple[SmtIoContract, List[TacticStatistics]]:
         """Compose SMT contracts.
 
@@ -159,7 +158,7 @@ class SmtIoContract(IoContract):
 
         if vars_to_keep is None:
             vars_to_keep = []
-        return super().compose_tactics(other, [Var(x) for x in vars_to_keep], simplify, tactics_order, diagnose)
+        return super().compose_tactics(other, [Var(x) for x in vars_to_keep], simplify, tactics_order)
 
     def quotient(  # noqa: WPS612
         self: SmtIoContract,
