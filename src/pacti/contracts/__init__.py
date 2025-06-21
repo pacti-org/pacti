@@ -1,1 +1,2 @@
 from .polyhedral_iocontract import PolyhedralIoContract, PolyhedralIoContractCompound
+from .smt_iocontract import SmtIoContract
