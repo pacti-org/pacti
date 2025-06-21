@@ -15,7 +15,7 @@ from typing import Dict, List, Optional, Tuple, Union
 import z3
 
 from pacti.iocontract import TacticStatistics, Term, TermList, Var
-from pacti.utils.lists import list_diff, list_intersection
+from pacti.utils.lists import list_diff, list_intersection, list_union
 
 numeric = Union[int, float]
 
@@ -350,12 +350,19 @@ class SmtTermList(TermList):  # noqa: WPS338
     ) -> Tuple[SmtTermList, TacticStatistics]:
         new_terms = []
 
+        # only keep the context with relevant variables
+        relevant_terms = []
+        for term in context.terms:
+            if list_intersection(term.vars, vars_to_elim):
+                relevant_terms.append(term)
+        relevant_context = SmtTermList(relevant_terms)
+
         for term in self.terms:
             new_term: SmtTerm
 
             if list_intersection(vars_to_elim, term.vars):
-                atoms_to_elim = list_intersection(vars_to_elim, term.vars)
-                context_expr = context._to_smtexpr()
+                atoms_to_elim = list_intersection(vars_to_elim, list_union(term.vars,relevant_context.vars))
+                context_expr = relevant_context._to_smtexpr()
                 if refine:
                     new_expr = _elim_by_refinement(term.expression, context_expr, [atm.name for atm in atoms_to_elim])
                 else:
