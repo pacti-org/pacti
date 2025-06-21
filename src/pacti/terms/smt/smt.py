@@ -9,16 +9,13 @@ $x_i$ are variables and the $a_i$ and $c$ are constants.
 from __future__ import annotations
 
 import copy
-import re
-from typing import Dict, List, Optional, Tuple, Union
 from functools import reduce
+from typing import Dict, List, Optional, Tuple, Union
 
 import z3
 
 from pacti.iocontract import TacticStatistics, Term, TermList, Var
 from pacti.utils.lists import list_intersection
-
-
 
 numeric = Union[int, float]
 
@@ -28,18 +25,21 @@ def _rename_expr(  # noqa: WPS231  too much cognitive complexity
 ) -> z3.BoolRef:
     oldvar = z3.Real(oldvarstr)
     newvar = z3.Real(newvarstr)
-    ret_val = z3.substitute(expression, (oldvar, newvar))
-    return ret_val
-
-
+    return z3.substitute(expression, (oldvar, newvar))
 
 
 def _is_tautology(expression: z3.BoolRef) -> bool:
     """
     Tell whether term is a tautology.
 
+    Args:
+        expression: An SMT expression to verify.
+
     Returns:
-        True is tautology.
+        True if the term is a tautology.
+
+    Raises:
+        ValueError: analysis failed.
     """
     s = z3.Solver()
     s.add(z3.Not(expression))
@@ -50,12 +50,19 @@ def _is_tautology(expression: z3.BoolRef) -> bool:
         raise ValueError("SMT solver could not check formula")
     return False
 
+
 def _is_sat(expression: z3.BoolRef) -> bool:
     """
-    Tell whether term is a tautology.
+    Tell whether term is SAT.
+
+    Args:
+        expression: An SMT expression to verify.
 
     Returns:
-        True is tautology.
+        True if satisfiable.
+
+    Raises:
+        ValueError: analysis failed.
     """
     s = z3.Solver()
     s.add(expression)
@@ -65,8 +72,6 @@ def _is_sat(expression: z3.BoolRef) -> bool:
     elif result == z3.unknown:
         raise ValueError("SMT solver could not check formula")
     return False
-        
-
 
 
 def _get_z3_literals(z3expression: z3.BoolRef) -> List[str]:
@@ -76,11 +81,8 @@ def _get_z3_literals(z3expression: z3.BoolRef) -> List[str]:
     if len(children) == 0:
         if z3.is_rational_value(z3expression) or z3.is_algebraic_value(z3expression):
             return []
-        else:
-            return [str(z3expression)]
-    else:
-        return reduce(lambda a,b: a + b, map(_get_z3_literals,z3expression.children()))
-    
+        return [str(z3expression)]
+    return reduce(lambda a, b: a + b, map(_get_z3_literals, z3expression.children()))
 
 
 class SmtTerm(Term):
@@ -123,11 +125,11 @@ class SmtTerm(Term):
         if not isinstance(other, type(self)):
             raise ValueError()
         return str(self) == str(other)
-    
-    #@staticmethod
+
+    # @staticmethod
 
     def __str__(self) -> str:
-        #return SmtTerm.add_globally(_expr_to_str(self.expression))
+        # return SmtTerm.add_globally(_expr_to_str(self.expression))
         return str(self.expression)
 
     def __hash__(self) -> int:
@@ -144,7 +146,7 @@ class SmtTerm(Term):
         Returns:
             List of atoms referenced in term.
         """
-        return [x for x in _get_z3_literals(self.expression)]
+        return _get_z3_literals(self.expression)
 
     @property
     def vars(self) -> List[Var]:  # noqa: A003
@@ -154,8 +156,7 @@ class SmtTerm(Term):
         Returns:
             List of variables referenced in term.
         """
-        variables: List[Var] = [Var(atom) for atom in self.atoms]
-        return variables
+        return [Var(atom) for atom in self.atoms]
 
     def contains_var(self, var_to_seek: Var) -> bool:
         """
@@ -200,7 +201,7 @@ class SmtTerm(Term):
 
         Returns:
             True is tautology.
-        """        
+        """
         return _is_tautology(self.expression)
 
 
@@ -308,7 +309,7 @@ class SmtTermList(TermList):  # noqa: WPS338
             ValueError: Self has empty intersection with its context.
         """
         new_terms = []
-    
+
         for term in self.terms:
             new_term: SmtTerm
 
@@ -320,19 +321,18 @@ class SmtTermList(TermList):  # noqa: WPS338
                 quantified_atoms = [z3.Real(str(atm)) for atm in atoms_to_elim]
                 full_term = z3.ForAll(quantified_atoms, elimination_term)
 
-                t = z3.Tactic('qe')
+                t = z3.Tactic("qe")
                 simplified_term = t(full_term)[0]
                 if len(simplified_term) > 0:
-                    full_term = z3.simplify(z3.And(*simplified_term))    
+                    full_term = z3.simplify(z3.And(*simplified_term))
                 else:
-                    full_term = z3.RealVal(1) == z3.RealVal(1) 
-                
+                    full_term = z3.RealVal(1) == z3.RealVal(1)
+
                 new_term = SmtTerm(full_term)
             else:
                 new_term = term.copy()
             new_terms.append(new_term)
         return SmtTermList(new_terms), []
-
 
     def elim_vars_by_relaxing(
         self,
@@ -368,7 +368,7 @@ class SmtTermList(TermList):  # noqa: WPS338
                 processed term, of the tactic used, time spend, and tactic invocation count.
         """
         new_terms = []
-    
+
         for term in self.terms:
             new_term: SmtTerm
 
@@ -380,13 +380,13 @@ class SmtTermList(TermList):  # noqa: WPS338
                 quantified_atoms = [z3.Real(str(atm)) for atm in atoms_to_elim]
                 full_term = z3.Exists(quantified_atoms, elimination_term)
 
-                t = z3.Tactic('qe')
+                t = z3.Tactic("qe")
                 simplified_term = t(full_term)[0]
                 if len(simplified_term) > 0:
-                    full_term = z3.simplify(z3.And(*simplified_term))    
+                    full_term = z3.simplify(z3.And(*simplified_term))
                 else:
-                    full_term = z3.RealVal(1) == z3.RealVal(1) 
-                
+                    full_term = z3.RealVal(1) == z3.RealVal(1)
+
                 new_term = SmtTerm(full_term)
             else:
                 new_term = term.copy()

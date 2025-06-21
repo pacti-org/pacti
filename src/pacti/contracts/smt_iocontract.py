@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
-from typing import List, Optional, Tuple, TypedDict, Union
+from typing import List, Optional, Tuple, TypedDict
 
 import z3
 
 from pacti.iocontract import IoContract, TacticStatistics, Var
 from pacti.terms.smt.smt import SmtTerm, SmtTermList
-import re
 
 ser_contract = TypedDict(
     "ser_contract",
@@ -59,7 +58,7 @@ class SmtIoContract(IoContract):
             "guarantees": self.g.to_str_list(),
         }
         return c_temp  # noqa: WPS331 c_temp only used for `return`
-    
+
     @staticmethod
     def from_z3_terms(
         assumptions: List[z3.BoolRef],
@@ -77,18 +76,18 @@ class SmtIoContract(IoContract):
             input_vars: input variables of contract.
             output_vars: output variables of contract.
             simplify: whether to simplify the guarantees with respect to the assumptions.
-        
+
         Returns:
             An SMT contract built from the arguments provided.
         """
         a: List[SmtTerm] = []
         if assumptions:
             a = [SmtTerm(x) for x in assumptions]
-        
+
         g: List[SmtTerm] = []
         if guarantees:
             g = [SmtTerm(x) for x in guarantees]
-        
+
         return SmtIoContract(
             input_vars=[Var(x) for x in input_vars],
             output_vars=[Var(x) for x in output_vars],
@@ -124,14 +123,13 @@ class SmtIoContract(IoContract):
         if vars_to_keep is None:
             vars_to_keep = []
         return super().compose(other, [Var(x) for x in vars_to_keep], simplify)
-    
 
     def compose_tactics(
         self,
         other: SmtIoContract,
         vars_to_keep: Optional[List[str]] = None,
         simplify: bool = True,
-        tactics_order: Optional[List[int]] = None
+        tactics_order: Optional[List[int]] = None,
     ) -> Tuple[SmtIoContract, List[TacticStatistics]]:
         """Compose SMT contracts.
 
