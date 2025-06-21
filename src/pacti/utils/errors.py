@@ -1,4 +1,5 @@
 """Global error classes."""
+
 import dataclasses
 from typing import List
 

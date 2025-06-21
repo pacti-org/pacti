@@ -1,4 +1,5 @@
 """Transformations between polyhedral structures and strings."""
+
 from typing import Dict, List, Tuple, Union
 
 import numpy as np
