@@ -1,5 +1,5 @@
 """
-Support for linear inequality constraints, i.e., polyhedra.
+Support for SMT constraints.
 
 Module provides support for linear inequalities as constraints, i.e.,
 the constraints are of the form $\\sum_{i} a_i x_i \\le c$, where the
@@ -15,17 +15,21 @@ from typing import Dict, List, Optional, Tuple, Union
 import z3
 
 from pacti.iocontract import TacticStatistics, Term, TermList, Var
-from pacti.utils.lists import list_intersection
+from pacti.utils.lists import list_diff, list_intersection
 
 numeric = Union[int, float]
 
 
-def _rename_expr(  # noqa: WPS231  too much cognitive complexity
-    expression: z3.BoolRef, oldvarstr: str, newvarstr: str
-) -> z3.BoolRef:
+def _rename_expr(expression: z3.BoolRef, oldvarstr: str, newvarstr: str) -> z3.BoolRef:
     oldvar = z3.Real(oldvarstr)
     newvar = z3.Real(newvarstr)
     return z3.substitute(expression, (oldvar, newvar))
+
+
+def _replace_var_with_val(expression: z3.BoolRef, varstr: str, value: numeric) -> z3.BoolRef:
+    vartomodify = z3.Real(varstr)
+    valuetoapply = z3.RealVal(value)
+    return z3.substitute(expression, (vartomodify, valuetoapply))
 
 
 def _is_tautology(expression: z3.BoolRef) -> bool:
@@ -204,6 +208,30 @@ class SmtTerm(Term):
         """
         return _is_tautology(self.expression)
 
+    def contains_behavior(self, behavior: Dict[Var, numeric]) -> bool:
+        """
+        Tell whether Term contains the given behavior.
+
+        Args:
+            behavior:
+                The behavior in question.
+
+        Returns:
+            True if the behavior satisfies the constraint; false otherwise.
+
+        Raises:
+            ValueError: Not all variables in the constraints were assigned values.
+        """
+        variables_to_substitute: List[Var] = list(behavior.keys())
+        if list_diff(self.vars, variables_to_substitute):
+            raise ValueError("Not all variables assigned")
+
+        new_expression = copy.deepcopy(self.expression)
+        relevant_variables: List[Var] = list_intersection(variables_to_substitute, self.vars)
+        for elim_var in relevant_variables:
+            new_expression = _replace_var_with_val(new_expression, elim_var.name, behavior[elim_var])
+        return _is_tautology(new_expression)
+
 
 class SmtTermList(TermList):  # noqa: WPS338
     """A TermList of PolyhedralTerm instances."""
@@ -246,6 +274,9 @@ class SmtTermList(TermList):  # noqa: WPS338
     def __hash__(self) -> int:
         return hash(tuple(self.terms))
 
+    def __le__(self, other: SmtTermList) -> bool:
+        return self.refines(other)
+
     def to_str_list(self) -> List[str]:
         """
         Convert termlist into a list of strings.
@@ -269,8 +300,13 @@ class SmtTermList(TermList):  # noqa: WPS338
         Raises:
             ValueError: Not all variables in the constraints were assigned values.
         """
-        # this code is here to calm down the linter
-        raise ValueError("Not implemented")
+        for term in self.terms:
+            try:
+                if not term.contains_behavior(behavior):
+                    return False
+            except ValueError as e:
+                raise ValueError(e)
+        return True
 
     def elim_vars_by_refining(  # noqa: WPS231  too much cognitive complexity
         self,
