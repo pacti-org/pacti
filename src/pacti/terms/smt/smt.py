@@ -48,14 +48,13 @@ def _is_tautology(expression: z3.BoolRef) -> bool:
     Raises:
         ValueError: analysis failed.
     """
-    s = z3.Solver()
-    s.add(z3.Not(expression))
-    result = s.check()
-    if result == z3.unsat:
+    try:
+        if _is_sat(z3.Not(expression)):
+            return False
         return True
-    elif result == z3.unknown:
-        raise ValueError("SMT solver could not check formula")
-    return False
+    except ValueError as e:
+        raise ValueError(e)
+
 
 
 def _is_sat(expression: z3.BoolRef) -> bool:
@@ -476,10 +475,8 @@ class SmtTermList(TermList):  # noqa: WPS338
         Returns:
             self <= other
         """
-        print(f"Checking whether \n{self} refines \n{other}")
         antecedent = self._to_smtexpr()
         consequent = other._to_smtexpr()
-        print(antecedent)
         test_expr: z3.BoolRef = z3.Implies(antecedent, consequent)
         return _is_tautology(test_expr)
 
