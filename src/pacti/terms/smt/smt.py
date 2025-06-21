@@ -298,7 +298,7 @@ class SmtTermList(TermList):  # noqa: WPS338
 
         Args:
             other:
-                The termslist against which we compare self.
+                The termlist against which we compare self.
 
         Returns:
             True if the two termlists are semantically equivalent.

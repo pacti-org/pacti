@@ -61,7 +61,7 @@ def lists_equal(list1: List[Any], list2: List[Any]) -> bool:
 
 def list_remove_indices(list1: List[Any], indices_to_remove: List[int]) -> List[Any]:
     """
-    Creaate a copy of a given list with the indicated indicated indices removed
+    Create a copy of a given list with the indicated indicated indices removed
 
     Args:
         list1: List to copy.
