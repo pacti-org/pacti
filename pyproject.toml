@@ -21,6 +21,10 @@ dependencies = [
     "matplotlib>=3.6.2",
     "typing-extensions>=4.5.0",
     "pyparsing>=3.0.9",
+    "pyeda>=0.29.0",
+    "ipdb>=0.13.13",
+    "networkx>=3.1",
+    "z3-solver>=4.15.0.0",
 ]
 requires-python = ">=3.8, <3.12"
 
@@ -30,11 +34,6 @@ repository    = "https://github.com/pacti-org/pacti"
 documentation = "https://www.pacti.org"
 "Bug Tracker" = "https://github.com/pacti-org/pacti/issues"
 
-
-[project.scripts]
-#pacti = "pacti.cli:main"
-
-[project.optional-dependencies]
 
 [tool.pdm]
 package-dir = "src"

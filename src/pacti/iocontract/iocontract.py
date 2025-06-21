@@ -26,6 +26,7 @@ from typing import Any, Generic, List, Optional, Tuple, TypeVar
 from pacti.utils.errors import IncompatibleArgsError
 from pacti.utils.lists import list_diff, list_intersection, list_union, lists_equal
 
+
 Var_t = TypeVar("Var_t", bound="Var")
 Term_t = TypeVar("Term_t", bound="Term")
 TermList_t = TypeVar("TermList_t", bound="TermList")
@@ -619,13 +620,42 @@ class IoContract(Generic[TermList_t]):
         result, _ = self.compose_tactics(other, vars_to_keep, simplify)
         return result
 
+    def compose_diagnostics(
+        self: IoContract_t,
+        other: IoContract_t,
+        vars_to_keep: Any = None,
+        simplify: bool = True,
+    ) -> IoContract_t:
+        """Compose IO contracts.
+
+        Compute the composition of the two given contracts and abstract the
+        result in such a way that the result is a well-defined IO contract,
+        i.e., that assumptions refer only to inputs, and guarantees to both
+        inputs and outputs.
+
+        Args:
+            other:
+                The second contract being composed.
+            vars_to_keep:
+                A list of variables that should be kept as top-level outputs.
+            simplify:
+                Whether to simplify the result of variable elimination by refining or relaxing.
+
+        Returns:
+            The abstracted composition of the two contracts and the diagnostics trace relating 
+            the composed assumptions and guarantees to the original ones.
+        """
+        result, _, G = self.compose_tactics(other, vars_to_keep, simplify, None, True)
+        return result, G
+
     def compose_tactics(  # noqa: WPS231
         self: IoContract_t,
         other: IoContract_t,
         vars_to_keep: Any = None,
         simplify: bool = True,
         tactics_order: Optional[List[int]] = None,
-    ) -> Tuple[IoContract_t, List[TacticStatistics]]:  # noqa: WPS231
+        diagnose: bool = False,
+    ) -> Tuple[IoContract_t, List[TacticStatistics], Optional[Any]]:  # Adjust return type
         """Compose IO contracts with support for specifying the order of tactics and measuring their use.
 
         Compute the composition of the two given contracts and abstract the
@@ -642,11 +672,11 @@ class IoContract(Generic[TermList_t]):
                 Whether to simplify the result of variable elimination by refining or relaxing.
             tactics_order:
                 The order of tactics to try for variable term elimination.
+            diagnose:
+                Whether to include diagnostic information in the output.
 
         Returns:
-            A tuple of the abstracted composition of the two contracts and of the list of tactics used.
-
-        Raises:
+            A tuple of the abstracted composition of the two contracts, the list of tactics used,
             IncompatibleArgsError: An error occurred during composition.
         """
         if tactics_order is None:
@@ -684,15 +714,42 @@ class IoContract(Generic[TermList_t]):
         other_drives_const_inputs = len(list_intersection(other.outputvars, selfinputconst)) > 0
         self_drives_const_inputs = len(list_intersection(self.outputvars, otherinputconst)) > 0
 
+        # for diagnostics trace
+        from ipdb import set_trace as st
+        diagnostic_trace = {}
+        import networkx as nx
+        G = nx.DiGraph()
+        ### set component contract terms
+        for term in self.a.terms:
+            G.add_node(term, type='assumption', component='self', input = True, output = False)
+        for term in other.a.terms:
+            G.add_node(term, type='assumption', component='other', input = True, output = False)
+        for term in self.g.terms:
+            G.add_node(term, type='guarantee', component='self', input = True, output = False)
+        for term in other.g.terms:
+            G.add_node(term, type='guarantee', component='other', input = True, output = False)
+        ### back to original code
+
         tactics_used: List[TacticStatistics] = []
         # process assumptions
         if cycle_present and (other_drives_const_inputs or self_drives_const_inputs):
             raise IncompatibleArgsError("Cannot compose contracts due to feedback")
         elif self_helps_other and not other_helps_self:
             logging.debug("Assumption computation: self provides context for other")
-            (new_a, used) = other.a.elim_vars_by_refining(
+            (new_a, used), new_a_diag_dict = other.a.elim_vars_by_refining(
                 self.a | self.g, assumptions_forbidden_vars, simplify=True, tactics_order=tactics_order
             )
+            # print(new_a_diag_dict)
+            ### diagnostics: connect the original assumptions to the new terms in the dict
+            for key,val in new_a_diag_dict.items():
+                if key not in G.nodes:
+                    G.add_node(key, type='assumption', component='composition', input = False, output = True)
+                else:
+                    G.nodes[key]['output'] = True
+                for item in val:
+                    G.add_edge(item, key, type='refinement')
+            ###
+            
             tactics_used.append(used)
             conflict_variables = list_intersection(new_a.vars, assumptions_forbidden_vars)
             if conflict_variables:
@@ -702,11 +759,31 @@ class IoContract(Generic[TermList_t]):
                     + "using guarantees \n{}\n".format(self.a | self.g)
                 )
             assumptions = new_a | self.a
+
+            ### diagnostics: track the assumptions nodes
+            assumptions_nodes = [node for node in G.nodes if node in assumptions.terms]
+            for node in G.nodes():
+                if node in assumptions_nodes:
+                    G.nodes[node]['output'] = True
+
+            ###
+
         elif other_helps_self and not self_helps_other:
             logging.debug("****** Assumption computation: other provides context for self")
-            (new_a, used) = self.a.elim_vars_by_refining(
+            (new_a, used), new_a_diag_dict = self.a.elim_vars_by_refining(
                 other.a | other.g, assumptions_forbidden_vars, simplify=True, tactics_order=tactics_order
             )
+            # print(new_a_diag_dict)
+            ### diagnostics: connect the original assumptions to the new terms in the dict
+            for key,val in new_a_diag_dict.items():
+                if key not in G.nodes:
+                    G.add_node(key, type='assumption', component='composition', input = False, output = True)
+                else:
+                    G.nodes[key]['output'] = True
+                for item in val:
+                    G.add_edge(item, key, type='refinement')
+            ###
+
             tactics_used.append(used)
             conflict_variables = list_intersection(new_a.vars, assumptions_forbidden_vars)
             if conflict_variables:
@@ -718,31 +795,102 @@ class IoContract(Generic[TermList_t]):
                     + "using guarantees \n{}\n".format(other.a | other.g)
                 )
             assumptions = new_a | other.a
+            ### diagnostics: get the assumptions nodes
+            assumptions_nodes = [node for node in G.nodes if node in assumptions.terms]
+            for node in G.nodes():
+                if node in assumptions_nodes:
+                    G.nodes[node]['output'] = True
+                
+            ###
+
         # contracts can't help each other
         else:
             logging.debug("****** Assumption computation: other provides context for self")
             assumptions = self.a | other.a
+            ### diagnostics: get the assumptions nodes
+            assumptions_nodes = [node for node in G.nodes if node in assumptions.terms]
+            for node in G.nodes():
+                if node in assumptions_nodes:
+                    G.nodes[node]['output'] = True
+            ###
+
         logging.debug("Assumption computation: computed assumptions:\n%s", assumptions)
         if simplify:
             assumptions = assumptions.simplify()
+
+        # ### diagnostics: track the assumptions nodes
+        # assumptions_nodes = [node for node in G.nodes if node in assumptions.terms]
+        # for node in G.nodes():
+        #     if node in assumptions_nodes:
+        #         G.nodes[node]['output'] = True
+        # ###
 
         # process guarantees
         logging.debug("****** Computing guarantees")
         g1_t = self.g.copy()
         g2_t = other.g.copy()
-        (g1, used) = g1_t.elim_vars_by_relaxing(g2_t, intvars, simplify, tactics_order)
+     
+        (g1, used), g1diag_dict  = g1_t.elim_vars_by_relaxing(g2_t, intvars, simplify, tactics_order)
+
+        ### diagnostics: connect the guarantees to the new terms in the dict
+        for key,val in g1diag_dict.items():
+            if key not in G.nodes: # add the node for the term if it doesnt exist yet
+                G.add_node(key, type='guarantee', component='transformed', input = False, output = False)
+            for item in val: # add the edge from the original terms to the new term
+                G.add_edge(item, key, type='relaxation')
+        ###
+        
+
         tactics_used.append(used)
-        (g2, used) = g2_t.elim_vars_by_relaxing(g1_t, intvars, simplify, tactics_order)
+    
+        (g2, used), g2diag_dict = g2_t.elim_vars_by_relaxing(g1_t, intvars, simplify, tactics_order)
+        ### diagnostics: connect the guarantees to the new terms in the dict
+        for key,val in g2diag_dict.items():
+            if key not in G.nodes: # add the node for the term if it doesnt exist yet
+                G.add_node(key, type='guarantee', component='transformed', input = False, output = False)
+            for item in val: # add the edge from the original terms to the new term
+                G.add_edge(item, key, type='relaxation')
+        ###
+
+
         tactics_used.append(used)
         allguarantees = g1 | g2
-        (allguarantees, used) = allguarantees.elim_vars_by_relaxing(assumptions, intvars, simplify, tactics_order)
+
+        ### diagnostics: track the guarantees nodes
+        allguarantee_nodes = [node for node in G.nodes if node in allguarantees.terms]
+        ###
+           
+        (allguarantees, used), allguarantees_diag_dict = allguarantees.elim_vars_by_relaxing(assumptions, intvars, simplify, tactics_order)
+        ### diagnostics: connect the guarantees to the new terms in the dict
+        for key,val in allguarantees_diag_dict.items():
+            if key not in G.nodes: # add the node for the term if it doesnt exist yet
+                G.add_node(key, type='guarantee', component='composition', input = False, output = True)
+            else:
+                G.nodes[key]['output'] = True
+            for item in val:
+                G.add_edge(item, key, type='relaxation')
+        ###
+
+
         tactics_used.append(used)
 
         # eliminate terms with forbidden vars
         terms_to_elim = allguarantees.get_terms_with_vars(intvars)
         allguarantees -= terms_to_elim
+      
+        # drop the eliminated guarantees from the output
+        for term in terms_to_elim.terms:
+            G.nodes[term]['output'] = False
+            G.nodes[term]['type'] = 'eliminated_guarantee'
 
-        return type(self)(assumptions, allguarantees, inputvars, outputvars), tactics_used
+        print(f"Kept guarantees {[guarantee for guarantee in allguarantees.terms if (guarantee.__str__() != 'G( 1 )')]}")    
+       
+
+        if diagnose:
+            diagnostic_trace = G
+            return type(self)(assumptions, allguarantees, inputvars, outputvars), tactics_used, diagnostic_trace
+
+        return type(self)(assumptions, allguarantees, inputvars, outputvars), tactics_used #
 
     def quotient(
         self: IoContract_t,
