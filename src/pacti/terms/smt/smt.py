@@ -89,6 +89,32 @@ def _get_z3_literals(z3expression: z3.BoolRef) -> List[str]:
     return reduce(lambda a, b: a + b, map(_get_z3_literals, z3expression.children()))
 
 
+def _eliminate_quantifiers(expression: z3.QuantifierRef) -> z3.BoolRef:
+    t = z3.Tactic("qe")
+    simplified_term = t(expression)[0]
+    if len(simplified_term) > 0:
+        full_term = z3.simplify(z3.And(*simplified_term))
+    else:
+        full_term = z3.RealVal(1) == z3.RealVal(1)
+    return full_term
+
+
+def _elim_by_refinement(
+    expr_to_refine: z3.BoolRef, context_expr: z3.BoolRef, variables_to_elim: List[str]
+) -> z3.BoolRef:
+    elimination_term: z3.BoolRef = z3.Implies(context_expr, expr_to_refine)
+    quantified_atoms = [z3.Real(atm) for atm in variables_to_elim]
+    full_term = z3.ForAll(quantified_atoms, elimination_term)
+    return _eliminate_quantifiers(full_term)
+
+
+def _elim_by_relaxing(expr_to_refine: z3.BoolRef, context_expr: z3.BoolRef, variables_to_elim: List[str]) -> z3.BoolRef:
+    elimination_term: z3.BoolRef = z3.And(context_expr, expr_to_refine)
+    quantified_atoms = [z3.Real(atm) for atm in variables_to_elim]
+    full_term = z3.Exists(quantified_atoms, elimination_term)
+    return _eliminate_quantifiers(full_term)
+
+
 class SmtTerm(Term):
     """Polyhedral terms are linear inequalities over a list of variables."""
 
@@ -308,6 +334,9 @@ class SmtTermList(TermList):  # noqa: WPS338
                 raise ValueError(e)
         return True
 
+    def _to_smtexpr(self) -> z3.BoolRef:
+        return z3.And(*[xs.expression for xs in self.terms])
+
     def elim_vars_by_refining(  # noqa: WPS231  too much cognitive complexity
         self,
         context: SmtTermList,
@@ -351,20 +380,9 @@ class SmtTermList(TermList):  # noqa: WPS338
 
             if list_intersection(vars_to_elim, term.vars):
                 atoms_to_elim = list_intersection(vars_to_elim, term.vars)
-
-                context_expr = z3.And(*[xs.expression for xs in context.terms])
-                elimination_term: z3.BoolRef = z3.Implies(context_expr, term.expression)
-                quantified_atoms = [z3.Real(str(atm)) for atm in atoms_to_elim]
-                full_term = z3.ForAll(quantified_atoms, elimination_term)
-
-                t = z3.Tactic("qe")
-                simplified_term = t(full_term)[0]
-                if len(simplified_term) > 0:
-                    full_term = z3.simplify(z3.And(*simplified_term))
-                else:
-                    full_term = z3.RealVal(1) == z3.RealVal(1)
-
-                new_term = SmtTerm(full_term)
+                context_expr = context._to_smtexpr()
+                new_expr = _elim_by_refinement(term.expression, context_expr, [atm.name for atm in atoms_to_elim])
+                new_term = SmtTerm(new_expr)
             else:
                 new_term = term.copy()
             new_terms.append(new_term)
@@ -410,20 +428,9 @@ class SmtTermList(TermList):  # noqa: WPS338
 
             if list_intersection(vars_to_elim, term.vars):
                 atoms_to_elim = list_intersection(vars_to_elim, term.vars)
-
-                context_expr = z3.And(*[xs.expression for xs in context.terms])
-                elimination_term: z3.BoolRef = z3.And(context_expr, term.expression)
-                quantified_atoms = [z3.Real(str(atm)) for atm in atoms_to_elim]
-                full_term = z3.Exists(quantified_atoms, elimination_term)
-
-                t = z3.Tactic("qe")
-                simplified_term = t(full_term)[0]
-                if len(simplified_term) > 0:
-                    full_term = z3.simplify(z3.And(*simplified_term))
-                else:
-                    full_term = z3.RealVal(1) == z3.RealVal(1)
-
-                new_term = SmtTerm(full_term)
+                context_expr = context._to_smtexpr()
+                new_expr = _elim_by_relaxing(term.expression, context_expr, [atm.name for atm in atoms_to_elim])
+                new_term = SmtTerm(new_expr)
             else:
                 new_term = term.copy()
             new_terms.append(new_term)
@@ -467,8 +474,8 @@ class SmtTermList(TermList):  # noqa: WPS338
             self <= other
         """
         print(f"Checking whether \n{self} refines \n{other}")
-        antecedent = z3.And(*[term.expression for term in self.terms])
-        consequent = z3.And(*[term.expression for term in other.terms])
+        antecedent = self._to_smtexpr()
+        consequent = other._to_smtexpr()
         print(antecedent)
         test_expr: z3.BoolRef = z3.Implies(antecedent, consequent)
         return _is_tautology(test_expr)
@@ -480,7 +487,7 @@ class SmtTermList(TermList):  # noqa: WPS338
         Returns:
             True if constraints cannot be satisfied.
         """
-        test_expr = z3.And(*[term.expression for term in self.terms])
+        test_expr = self._to_smtexpr()
         if _is_sat(test_expr):  # noqa: WPS531 if condition can be simplified
             return False
         return True
