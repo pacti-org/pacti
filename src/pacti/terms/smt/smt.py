@@ -1,9 +1,7 @@
 """
 Support for SMT constraints.
 
-Module provides support for linear inequalities as constraints, i.e.,
-the constraints are of the form $\\sum_{i} a_i x_i \\le c$, where the
-$x_i$ are variables and the $a_i$ and $c$ are constants.
+Module provides support for SMT expressions as constraints.
 """
 
 from __future__ import annotations
@@ -15,9 +13,10 @@ from typing import Dict, List, Optional, Tuple, Union
 import z3
 
 from pacti.iocontract import TacticStatistics, Term, TermList, Var
-from pacti.utils.lists import list_diff, list_intersection, list_union
+from pacti.utils.lists import list_diff, list_intersection, list_remove_indices, list_union
 
 numeric = Union[int, float]
+
 
 def _get_smt_real_variable(name: str) -> z3.ArithRef:
     return z3.Real(name)
@@ -49,12 +48,9 @@ def _is_tautology(expression: z3.BoolRef) -> bool:
         ValueError: analysis failed.
     """
     try:
-        if _is_sat(z3.Not(expression)):
-            return False
-        return True
+        return not _is_sat(z3.Not(expression))
     except ValueError as e:
         raise ValueError(e)
-
 
 
 def _is_sat(expression: z3.BoolRef) -> bool:
@@ -117,29 +113,25 @@ def _elim_by_relaxing(expr_to_refine: z3.BoolRef, context_expr: z3.BoolRef, vari
     return _eliminate_quantifiers(full_term)
 
 
-class SmtTerm(Term):
-    """Polyhedral terms are linear inequalities over a list of variables."""
+def _elim_variables(
+    expr_to_refine: z3.BoolRef, context_expr: z3.BoolRef, variables_to_elim: List[str], refine: bool
+) -> z3.BoolRef:
+    if refine:
+        new_expr = _elim_by_refinement(expr_to_refine, context_expr, variables_to_elim)
+    else:
+        new_expr = _elim_by_relaxing(expr_to_refine, context_expr, variables_to_elim)
+    return new_expr
 
-    # Constructor: get (i) a dictionary whose keys are variables and whose
-    # values are the coefficients of those variables in the term, and (b) a
-    # constant. The term is assumed to be in the form \Sigma_i a_i v_i +
-    # constant <= 0
+
+class SmtTerm(Term):
+    """SMT terms."""
+
     def __init__(self, expression: z3.BoolRef):  # noqa: WPS231  too much cognitive complexity
         """
         Constructor for SmtTerm.
 
         Usage:
-            Polyhedral terms are initialized as follows:
-
-            ```
-                variables = {Var('x'):2, Var('y'):3}
-                constant = 3
-                term = PolyhedralTerm(variables, constant)
-            ```
-
-            `variables` is a dictionary whose keys are `Var` instances,
-            and `constant` is a number. Thus, our example represents the
-            expression $2x + 3y \\le 3$.
+            SMT terms are initialized by passing an SMT expression.
 
         Args:
             expression: A boolean expression involving uninterpreted atoms.
@@ -157,8 +149,6 @@ class SmtTerm(Term):
         if not isinstance(other, type(self)):
             raise ValueError()
         return str(self) == str(other)
-
-    # @staticmethod
 
     def __str__(self) -> str:
         # return SmtTerm.add_globally(_expr_to_str(self.expression))
@@ -205,7 +195,7 @@ class SmtTerm(Term):
 
     def copy(self) -> SmtTerm:
         """
-        Generates copy of polyhedral term.
+        Generates copy of term.
 
         Returns:
             Copy of term.
@@ -232,9 +222,18 @@ class SmtTerm(Term):
         Tell whether term is a tautology.
 
         Returns:
-            True is tautology.
+            True if tautology.
         """
         return _is_tautology(self.expression)
+
+    def is_sat(self) -> bool:
+        """
+        Tell whether term is a satisfiable.
+
+        Returns:
+            True if satisfiable.
+        """
+        return _is_sat(self.expression)
 
     def contains_behavior(self, behavior: Dict[Var, numeric]) -> bool:
         """
@@ -262,26 +261,14 @@ class SmtTerm(Term):
 
 
 class SmtTermList(TermList):  # noqa: WPS338
-    """A TermList of PolyhedralTerm instances."""
+    """A TermList of SmtTerm instances."""
 
     def __init__(self, terms: Optional[List[SmtTerm]] = None):
         """
-        Constructor for PolyhedralTermList.
-
-        Usage:
-            PolyhedralTermList objects are initialized as follows:
-
-            ```
-                term1 = PolyhedralTerm({Var('x'):2, Var('y'):3}, 3)
-                term2 = PolyhedralTerm({Var('x'):-1, Var('y'):2}, 4)
-                pt_list = [term1, term2]
-                termlist = PolyhedralTermList(pt_list)
-            ```
-
-            Our example represents the constraints $\\{2x + 3y \\le 3, -x + 2y \\le 4\\}$.
+        Constructor for SmtTermList.
 
         Args:
-            terms: A list of PolyhedralTerm objects.
+            terms: A list of SmtTerm objects.
 
         Raises:
             ValueError: incorrect argument type provided.
@@ -291,7 +278,7 @@ class SmtTermList(TermList):  # noqa: WPS338
         elif all(isinstance(t, SmtTerm) for t in terms):
             self.terms = terms.copy()
         else:
-            raise ValueError("PolyhedralTermList constructor argument must be a list of PolyhedralTerms.")
+            raise ValueError("SmtTermList constructor argument must be a list of SmtTerms.")
 
     def __str__(self) -> str:
         res = "[\n  "
@@ -304,6 +291,19 @@ class SmtTermList(TermList):  # noqa: WPS338
 
     def __le__(self, other: SmtTermList) -> bool:
         return self.refines(other)
+
+    def is_semantically_equivalent_to(self, other: SmtTermList) -> bool:
+        """
+        Tell whether two termlists are semantically equivalent.
+
+        Args:
+            other:
+                The termslist against which we compare self.
+
+        Returns:
+            True if the two termlists are semantically equivalent.
+        """
+        return self.refines(other) and other.refines(self)
 
     def to_str_list(self) -> List[str]:
         """
@@ -339,12 +339,51 @@ class SmtTermList(TermList):  # noqa: WPS338
     def _to_smtexpr(self) -> z3.BoolRef:
         return z3.And(*[xs.expression for xs in self.terms])
 
+    @staticmethod
+    def _transform_term(  # noqa: WPS231  too much cognitive complexity
+        term: SmtTerm,
+        context: SmtTermList,
+        vars_to_elim: list,
+        refine: bool,
+        simplify: bool = True,
+        tactics_order: Optional[List[int]] = None,
+    ) -> Tuple[SmtTerm, SmtTermList]:
+        new_term: SmtTerm
+
+        # Check whether there is something to do with this term
+        if list_intersection(vars_to_elim, term.vars):
+            atoms_to_elim = list(map(str, list_intersection(vars_to_elim, list_union(term.vars, context.vars))))
+            reference_term = SmtTerm(_elim_variables(term.expression, context._to_smtexpr(), atoms_to_elim, refine))
+            new_term = reference_term.copy()
+            final_context = context.copy()
+
+            # now check whether we can find equivalent "in-context" semantics using a reduced context
+            if simplify:
+                golden_compare = context | SmtTermList([reference_term])
+                indices_removed: List[int] = []
+                for i, _ in enumerate(context.terms):
+                    test_context = SmtTermList(list_remove_indices(context.terms, indices_removed + [i]))
+                    test_term = SmtTerm(
+                        _elim_variables(term.expression, test_context._to_smtexpr(), atoms_to_elim, refine)
+                    )
+                    test_compare = context | SmtTermList([test_term])
+
+                    if (golden_compare).is_semantically_equivalent_to(test_compare):
+                        indices_removed.append(i)
+                        new_term = test_term.copy()
+                        final_context = test_context.copy()
+        else:
+            new_term = term.copy()
+            final_context = context.copy()
+        if not new_term.is_sat():
+            raise ValueError("Computed term is empty")
+        return new_term, final_context
 
     def _transform_termlist(  # noqa: WPS231  too much cognitive complexity
         self,
         context: SmtTermList,
         vars_to_elim: list,
-        refine : bool,
+        refine: bool,
         simplify: bool = True,
         tactics_order: Optional[List[int]] = None,
     ) -> Tuple[SmtTermList, TacticStatistics]:
@@ -358,21 +397,14 @@ class SmtTermList(TermList):  # noqa: WPS338
         relevant_context = SmtTermList(relevant_terms)
 
         for term in self.terms:
-            new_term: SmtTerm
-
-            if list_intersection(vars_to_elim, term.vars):
-                atoms_to_elim = list_intersection(vars_to_elim, list_union(term.vars,relevant_context.vars))
-                context_expr = relevant_context._to_smtexpr()
-                if refine:
-                    new_expr = _elim_by_refinement(term.expression, context_expr, [atm.name for atm in atoms_to_elim])
-                else:
-                    new_expr = _elim_by_relaxing(term.expression, context_expr, [atm.name for atm in atoms_to_elim])
-                new_term = SmtTerm(new_expr)
-            else:
-                new_term = term.copy()
+            try:
+                new_term, _ = SmtTermList._transform_term(
+                    term, relevant_context, vars_to_elim, refine, simplify, tactics_order
+                )
+            except ValueError as e:
+                raise ValueError(e)
             new_terms.append(new_term)
         return SmtTermList(new_terms), []
-    
 
     def elim_vars_by_refining(  # noqa: WPS231  too much cognitive complexity
         self,
@@ -382,7 +414,7 @@ class SmtTermList(TermList):  # noqa: WPS338
         tactics_order: Optional[List[int]] = None,
     ) -> Tuple[SmtTermList, TacticStatistics]:
         """
-        Eliminate variables from PolyhedralTermList by refining it in context.
+        Eliminate variables from SmtTermList by refining it in context.
 
         Example:
             Suppose the current list of terms is $\\{x + y \\le 6\\}$, the
@@ -410,7 +442,12 @@ class SmtTermList(TermList):  # noqa: WPS338
         Raises:
             ValueError: Self has empty intersection with its context.
         """
-        return self._transform_termlist(context, vars_to_elim, True, simplify, tactics_order)
+        try:
+            return self._transform_termlist(
+                context=context, vars_to_elim=vars_to_elim, refine=True, simplify=simplify, tactics_order=tactics_order
+            )
+        except ValueError as e:
+            raise ValueError(e)
 
     def elim_vars_by_relaxing(
         self,
@@ -420,7 +457,7 @@ class SmtTermList(TermList):  # noqa: WPS338
         tactics_order: Optional[List[int]] = None,
     ) -> Tuple[SmtTermList, TacticStatistics]:
         """
-        Eliminate variables from PolyhedralTermList by abstracting it in context.
+        Eliminate variables from SmtTemList by abstracting it in context.
 
         Example:
             Suppose the current list of terms is $\\{x - y \\le 6\\}$, the
@@ -445,7 +482,9 @@ class SmtTermList(TermList):  # noqa: WPS338
                 contained in the calling termlist; and (b) the list of tuples, for each
                 processed term, of the tactic used, time spend, and tactic invocation count.
         """
-        return self._transform_termlist(context, vars_to_elim, False, simplify, tactics_order)
+        return self._transform_termlist(
+            context=context, vars_to_elim=vars_to_elim, refine=False, simplify=simplify, tactics_order=tactics_order
+        )
 
     def simplify(self, context: Optional[SmtTermList] = None) -> SmtTermList:
         """
