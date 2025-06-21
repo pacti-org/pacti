@@ -210,8 +210,8 @@ class TermList(ABC):
         return self.refines(other)
 
     @abstractmethod
-    def __hash__(self) -> int:  # noqa: BLK100
-        ...
+    def __hash__(self) -> int:
+        """Hashing."""
 
     def copy(self: TermList_t) -> TermList_t:
         """
@@ -993,7 +993,7 @@ class IoContract(Generic[TermList_t]):
         guarantees: TermList_t = self.g
         logging.debug("Using existing guarantees to aid system-level guarantees")
         try:  # noqa: WPS229
-            (guarantees, used) = guarantees.elim_vars_by_refining(other.g | other.a, intvars, simplify, tactics_order)
+            (guarantees, used) = guarantees.elim_vars_by_refining(other.g | self.a, intvars, simplify, tactics_order)
             tactics_used.append(used)
         except ValueError:
             guarantees = self.g
