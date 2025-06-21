@@ -339,6 +339,34 @@ class SmtTermList(TermList):  # noqa: WPS338
     def _to_smtexpr(self) -> z3.BoolRef:
         return z3.And(*[xs.expression for xs in self.terms])
 
+
+    def _transform_termlist(  # noqa: WPS231  too much cognitive complexity
+        self,
+        context: SmtTermList,
+        vars_to_elim: list,
+        refine : bool,
+        simplify: bool = True,
+        tactics_order: Optional[List[int]] = None,
+    ) -> Tuple[SmtTermList, TacticStatistics]:
+        new_terms = []
+
+        for term in self.terms:
+            new_term: SmtTerm
+
+            if list_intersection(vars_to_elim, term.vars):
+                atoms_to_elim = list_intersection(vars_to_elim, term.vars)
+                context_expr = context._to_smtexpr()
+                if refine:
+                    new_expr = _elim_by_refinement(term.expression, context_expr, [atm.name for atm in atoms_to_elim])
+                else:
+                    new_expr = _elim_by_relaxing(term.expression, context_expr, [atm.name for atm in atoms_to_elim])
+                new_term = SmtTerm(new_expr)
+            else:
+                new_term = term.copy()
+            new_terms.append(new_term)
+        return SmtTermList(new_terms), []
+    
+
     def elim_vars_by_refining(  # noqa: WPS231  too much cognitive complexity
         self,
         context: SmtTermList,
@@ -375,20 +403,7 @@ class SmtTermList(TermList):  # noqa: WPS338
         Raises:
             ValueError: Self has empty intersection with its context.
         """
-        new_terms = []
-
-        for term in self.terms:
-            new_term: SmtTerm
-
-            if list_intersection(vars_to_elim, term.vars):
-                atoms_to_elim = list_intersection(vars_to_elim, term.vars)
-                context_expr = context._to_smtexpr()
-                new_expr = _elim_by_refinement(term.expression, context_expr, [atm.name for atm in atoms_to_elim])
-                new_term = SmtTerm(new_expr)
-            else:
-                new_term = term.copy()
-            new_terms.append(new_term)
-        return SmtTermList(new_terms), []
+        return self._transform_termlist(context, vars_to_elim, True, simplify, tactics_order)
 
     def elim_vars_by_relaxing(
         self,
@@ -423,20 +438,7 @@ class SmtTermList(TermList):  # noqa: WPS338
                 contained in the calling termlist; and (b) the list of tuples, for each
                 processed term, of the tactic used, time spend, and tactic invocation count.
         """
-        new_terms = []
-
-        for term in self.terms:
-            new_term: SmtTerm
-
-            if list_intersection(vars_to_elim, term.vars):
-                atoms_to_elim = list_intersection(vars_to_elim, term.vars)
-                context_expr = context._to_smtexpr()
-                new_expr = _elim_by_relaxing(term.expression, context_expr, [atm.name for atm in atoms_to_elim])
-                new_term = SmtTerm(new_expr)
-            else:
-                new_term = term.copy()
-            new_terms.append(new_term)
-        return SmtTermList(new_terms), []
+        return self._transform_termlist(context, vars_to_elim, False, simplify, tactics_order)
 
     def simplify(self, context: Optional[SmtTermList] = None) -> SmtTermList:
         """
