@@ -22,5 +22,5 @@ Pacti's developers can be reached at info@pacti.org.
 
 The Pacti project can be acknowledged by citing
 
-[Inigo Incer, Apurva Badithela, Josefine Graebener, Piergiuseppe Mallozzi, Ayush Pandey, Sheng-Jung Yu, Albert Benveniste, Benoit Caillaud, Richard M. Murray, Alberto Sangiovanni-Vincentelli, and Sanjit A. Seshia. 
-"Pacti: Scaling Assume-Guarantee Reasoning for System Analysis and Design." ArXiv abs/2303.17751 (2023).](https://arxiv.org/abs/2303.17751)
+[Inigo Incer, Apurva Badithela, Josefine Graebener, Piergiuseppe Mallozzi, Ayush Pandey, Nicolas Rouquette, Sheng-Jung Yu, Albert Benveniste, Benoit Caillaud, Richard M. Murray, Alberto Sangiovanni-Vincentelli, and Sanjit A. Seshia. 
+"Pacti: Assume-Guarantee Contracts for Efficient Compositional Analysis and Design." ACM Transactions on Cyber-Physical Systems 9, no. 1 (2025): 1-35.](https://doi.org/10.1145/3704736)
