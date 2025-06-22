@@ -286,7 +286,7 @@ def release(ctx, version):
         ctx.run("git push", title="Pushing commits", pty=False)
         ctx.run("git push --tags", title="Pushing tags", pty=False)
         ctx.run("pdm build", title="Building dist/wheel", pty=PTY)
-        ctx.run("twine upload --skip-existing dist/*", title="Publishing version", pty=PTY)
+        #ctx.run("twine upload --skip-existing dist/*", title="Publishing version", pty=PTY)
 
 
 @duty(silent=True)
