@@ -1394,7 +1394,10 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         total_calls = 1
 
         if goal_context:
-            return term.substitute_variable(var_to_elim, goal_context[0].isolate_variable(var_to_elim)), total_calls
+            ret_val = term.substitute_variable(var_to_elim, goal_context[0].isolate_variable(var_to_elim))
+            if ret_val.vars and ret_val.constant > 0:
+                return ret_val, total_calls
+            raise ValueError("Tactic 4 unsuccessful")
 
         ############
         for useful_term in useful_context:
