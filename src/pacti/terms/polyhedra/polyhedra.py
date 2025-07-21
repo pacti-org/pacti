@@ -304,7 +304,7 @@ class PolyhedralTerm(Term):
             logging.debug(f"Substituting var {var} in term {self} with {subst_with_term}")
             term = subst_with_term.multiply(self.get_coefficient(var))
             that = self.remove_variable(var)
-            logging.debug(that)
+            logging.debug(that + term)
             return that + term
         return self.copy()
 
@@ -1359,65 +1359,46 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
     @staticmethod
     def _tactic_4(  # noqa: WPS231
         term: PolyhedralTerm, context: PolyhedralTermList, vars_to_elim: list, refine: bool, no_vars: List[Var]
-    ) -> Tuple[Optional[PolyhedralTerm], int]:
-        logging.debug("************ Tactic 4")
-        logging.debug("Vars_to_elim %s \nTerm %s \nContext %s " % (vars_to_elim, term, context))
-        if not refine:
-            raise ValueError("Only refinement is supported")
-
-        conflict_vars = list_intersection(vars_to_elim, term.vars)
-        if len(conflict_vars) > 1:
-            raise ValueError("Tactic 4 unsuccessful")
-
-        var_to_elim = conflict_vars[0]
-        goal_context: List[PolyhedralTerm] = []
-        useful_context: List[PolyhedralTerm] = []
+    ) -> PolyhedralTerm:
+        logging.debug("************ !!!!!!!!!!!!!!!!!! Tactic 4")
+        logging.debug("Vars_to_elim %s \nTerm %s \nContext %s " % (vars_to_elim, term, context))        
         polarity = -1
 
         if refine:
             polarity = 1
 
-        for context_term in context.terms:
-            if list_intersection(context_term.vars, no_vars):
-                continue
-            coeff = context_term.get_coefficient(var_to_elim)
-            if coeff != 0 and polarity * coeff * term.get_coefficient(var_to_elim) > 0:
-                temp_conflict_vars = list_intersection(context_term.vars, vars_to_elim)
-                if len(temp_conflict_vars) == 1:
-                    goal_context.append(context_term.copy())
-                if len(temp_conflict_vars) == 2:
-                    useful_context.append(context_term.copy())
+        conflict_vars = list_intersection(vars_to_elim, term.vars)
+        if not conflict_vars:
+            return term
+        
+        new_term = term.copy()
+        for conflict_var in conflict_vars:
+            # gather the possibly useful context for this term
+            for context_term in context.terms:
+                coeff = context_term.get_coefficient(conflict_var)
+                conflict_vars_in_context_term = list_intersection(context_term.vars, conflict_vars)
+                if (conflict_var in conflict_vars_in_context_term) and not (list_intersection(context_term.vars, no_vars)) and (polarity * coeff * new_term.get_coefficient(conflict_var) > 0):
+                    if len(list_intersection(context_term.vars, vars_to_elim)) == 1:
+                        ret_val = new_term.substitute_variable(conflict_var, context_term.isolate_variable(conflict_var))
+                        if not ret_val.vars and ret_val.constant < 0:
+                            raise ValueError("Tactic 4 unsuccessful")
+                        new_term = ret_val
+                    else:
+                        new_vars_to_elim = list_diff(vars_to_elim, [conflict_var])
+                        new_no_vars = no_vars + [conflict_var]
+                        new_context = PolyhedralTermList(list_diff(context.terms, [context_term]))
+                        this_context_term,_ = PolyhedralTermList._tactic_4(
+                                context_term, new_context, new_vars_to_elim, not refine, new_no_vars
+                            )
+                        ret_val = new_term.substitute_variable(conflict_var, this_context_term.isolate_variable(conflict_var))
+                        if not ret_val.vars and ret_val.constant < 0:
+                            raise ValueError("Tactic 4 unsuccessful")
+                        new_term = ret_val
 
-        if not useful_context and not goal_context:
-            raise ValueError("Tactic 4 unsuccessful")
+        return new_term, 1
 
-        total_calls = 1
 
-        if goal_context:
-            ret_val = term.substitute_variable(var_to_elim, goal_context[0].isolate_variable(var_to_elim))
-            if ret_val.vars and ret_val.constant > 0:
-                return ret_val, total_calls
-            raise ValueError("Tactic 4 unsuccessful")
 
-        ############
-        for useful_term in useful_context:
-            new_context = context.copy()
-            new_context.terms.remove(useful_term)
-            new_term = useful_term.isolate_variable(var_to_elim)
-            new_no_vars = no_vars.copy()
-            new_no_vars.append(var_to_elim)
-            try:  # noqa: WPS229
-                return_term, recursive_count = PolyhedralTermList._tactic_4(
-                    new_term, new_context, vars_to_elim, refine, new_no_vars
-                )
-                total_calls += recursive_count
-                if return_term is None:
-                    continue
-                return term.substitute_variable(var_to_elim, return_term), total_calls
-            except ValueError:
-                total_calls += 1
-
-        return None, total_calls
 
     @staticmethod
     def _get_tlp_context(  # noqa: WPS231
