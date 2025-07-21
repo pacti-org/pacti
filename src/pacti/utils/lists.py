@@ -31,6 +31,21 @@ def list_diff(list1: List[Any], list2: List[Any]) -> List[Any]:
     return [el for el in list1 if (el not in list2)]
 
 
+def list_symm_diff(list1: List[Any], list2: List[Any]) -> List[Any]:
+    """
+    Compute symmetric difference between lists.
+
+    Args:
+        list1: First argument.
+        list2: Second argument.
+
+    Returns:
+        A list containing the elements that appear in one list but not in the other
+    """
+    return list_union(list_diff(list1,list2), list_diff(list2,list1))
+
+
+
 def list_union(list1: List[Any], list2: List[Any]) -> List[Any]:
     """
     Compute the union of two lists.

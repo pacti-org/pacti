@@ -24,7 +24,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Generic, List, Optional, Tuple, TypeVar
 
 from pacti.utils.errors import IncompatibleArgsError
-from pacti.utils.lists import list_diff, list_intersection, list_union, lists_equal
+from pacti.utils.lists import list_diff, list_intersection, list_union, lists_equal, list_symm_diff
 
 Var_t = TypeVar("Var_t", bound="Var")
 Term_t = TypeVar("Term_t", bound="Term")
@@ -178,7 +178,7 @@ class TermList(ABC):
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, type(self)):
             raise ValueError()
-        return self.terms == other.terms
+        return len(list_symm_diff(self.terms, other.terms)) == 0
 
     def get_terms_with_vars(self: TermList_t, variable_list: List[Var]) -> TermList_t:
         """
