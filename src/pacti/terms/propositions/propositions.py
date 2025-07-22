@@ -108,6 +108,10 @@ def _is_tautology(expression: edaexpr.Expression) -> bool:
             return True
         return False
 
+def _are_terms_same(expr1: edaexpr.Expression, expr2: edaexpr.Expression) -> bool:
+    comparison_expression = edaexpr.And(edaexpr.Implies(expr1, expr2), edaexpr.Implies(expr2, expr1))
+    return _is_tautology(comparison_expression)
+
 
 
 def _get_atom_variables(atom: str) -> List[Var]:
@@ -443,7 +447,7 @@ class PropositionalTermList(TermList):  # noqa: WPS338
                     quantified_atoms = [edaexpr.exprvar(atm) for atm in atoms_to_elim]
                     elimination_term = elimination_term.consensus(vs=quantified_atoms).simplify()
 
-                    if full_term == elimination_term:
+                    if _are_terms_same(full_term, elimination_term):
                         idxs_to_remove.append(i)
                     run += 1
 
@@ -545,7 +549,7 @@ class PropositionalTermList(TermList):  # noqa: WPS338
                         vs=[edaexpr.exprvar(atm) for atm in atoms_to_elim]
                     ).simplify()
 
-                    if full_term == elimination_term_final:
+                    if _are_terms_same(full_term, elimination_term_final):
                         idxs_to_remove.append(i)
                     run += 1
                 relevant_context = [value for idx, value in enumerate(useful_context.terms) if idx not in idxs_to_remove]
