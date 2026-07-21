@@ -3,7 +3,7 @@ requires = ["pdm-pep517"]
 build-backend = "pdm.pep517.api"
 
 [project]
-name = "Pacti"
+name = "pacti"
 description = "A package for compositional system analysis and design"
 authors = [{name = "Pacti developers", email = "info@pacti.org"}]
 license = "BSD-3-Clause"
