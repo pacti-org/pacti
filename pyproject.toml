@@ -15,15 +15,15 @@ keywords = ["system design", "contracts", "compositional"]
 dynamic = ["version"]
 # version = "1.0.0-alpha"
 dependencies = [
-    "scipy>=1.10.0",
-    "sympy>=1.11.1",
-    "numpy>=1.24.1",
-    "matplotlib>=3.6.2",
-    "typing-extensions>=4.5.0",
-    "pyparsing>=3.0.9",
-    "z3-solver>=4.15.1.0",
+    "scipy>=1.15.3",
+    "sympy>=1.14.0",
+    "numpy>=2.2.6",
+    "matplotlib>=3.10.9",
+    "typing-extensions>=4.16.0",
+    "pyparsing>=3.3.2",
+    "z3-solver>=5.0.0.0"
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 
 
 [project.urls]
