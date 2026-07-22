@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 <!-- insertion marker -->
+## [0.3.1](https://github.com/pacti-org/pacti/releases/tag/0.3.1) - 2026-07-22
+
+<small>[Compare with 0.3.0](https://github.com/pacti-org/pacti/compare/0.3.0...0.3.1)</small>
+
+### Added
+
+- Add verbose option to PyPI publish action ([dbca0ec](https://github.com/pacti-org/pacti/commit/dbca0ece92da7afe508be66a349f7c810200c9d0) by Inigo Incer).
+- Add workflow for uploading Python package to PyPI ([4aa9a3a](https://github.com/pacti-org/pacti/commit/4aa9a3a09eb085715d3989988124a86e36ce9a31) by Inigo Incer).
+
+### Changed
+
+- Change package name from 'Pacti' to 'pacti' ([0255920](https://github.com/pacti-org/pacti/commit/02559209c8d30d48551eacba41a0ed7fe1d9f96a) by Inigo Incer).
+- Change environment from 'pypi' to 'release' ([c533b86](https://github.com/pacti-org/pacti/commit/c533b8683418ff03e4b32733e7e6b44459d7d8e1) by Inigo Incer).
+
+
 ## [0.3.0](https://github.com/pacti-org/pacti/releases/tag/0.3.0) - 2026-07-21
 
 <small>[Compare with 0.2.0](https://github.com/pacti-org/pacti/compare/0.2.0...0.3.0)</small>
