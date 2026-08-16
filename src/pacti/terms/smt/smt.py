@@ -18,13 +18,15 @@ from pacti.utils.lists import list_diff, list_intersection, list_remove_indices,
 numeric = Union[int, float]
 
 
-def _get_smt_real_variable(name: str) -> z3.ArithRef:
-    return z3.Real(name)
-
+def _get_smt_variable(name: str) -> z3.ArithRef:
+    if name.startswith("BOOL_"):
+        return z3.Bool(name)
+    else:
+        return z3.Real(name)
 
 def _rename_expr(expression: z3.BoolRef, oldvarstr: str, newvarstr: str) -> z3.BoolRef:
-    oldvar = _get_smt_real_variable(oldvarstr)
-    newvar = _get_smt_real_variable(newvarstr)
+    oldvar = _get_smt_variable(oldvarstr)
+    newvar = _get_smt_variable(newvarstr)
     return z3.substitute(expression, (oldvar, newvar))
 
 
@@ -101,14 +103,14 @@ def _elim_by_refinement(
     expr_to_refine: z3.BoolRef, context_expr: z3.BoolRef, variables_to_elim: List[str]
 ) -> z3.BoolRef:
     elimination_term: z3.BoolRef = z3.Implies(context_expr, expr_to_refine)
-    quantified_atoms = [_get_smt_real_variable(atm) for atm in variables_to_elim]
+    quantified_atoms = [_get_smt_variable(atm) for atm in variables_to_elim]
     full_term = z3.ForAll(quantified_atoms, elimination_term)
     return _eliminate_quantifiers(full_term)
 
 
 def _elim_by_relaxing(expr_to_refine: z3.BoolRef, context_expr: z3.BoolRef, variables_to_elim: List[str]) -> z3.BoolRef:
     elimination_term: z3.BoolRef = z3.And(context_expr, expr_to_refine)
-    quantified_atoms = [_get_smt_real_variable(atm) for atm in variables_to_elim]
+    quantified_atoms = [_get_smt_variable(atm) for atm in variables_to_elim]
     full_term = z3.Exists(quantified_atoms, elimination_term)
     return _eliminate_quantifiers(full_term)
 
@@ -375,8 +377,8 @@ class SmtTermList(TermList):  # noqa: WPS338
         else:
             new_term = term.copy()
             final_context = context.copy()
-        if not new_term.is_sat():
-            raise ValueError("Computed term is empty")
+        # if not new_term.is_sat():
+        #     raise ValueError("Computed term is empty")
         return new_term, final_context
 
     def _transform_termlist(  # noqa: WPS231  too much cognitive complexity
@@ -404,7 +406,12 @@ class SmtTermList(TermList):  # noqa: WPS338
             except ValueError as e:
                 raise ValueError(e)
             new_terms.append(new_term)
-        return SmtTermList(new_terms), []
+        termList = SmtTermList(new_terms)
+        if not _is_sat(termList._to_smtexpr()):
+            raise ValueError("Computed termlist is unsat")
+        return termList, []
+
+        # return SmtTermList(new_terms), []
 
     def elim_vars_by_refining(  # noqa: WPS231  too much cognitive complexity
         self,
