@@ -6,11 +6,19 @@ If we decide to move forward with the changes, please fork the repo and open a p
 
 ## Installation
 
-Clone the repo and run
+Pacti requires Python 3.10 or newer. Clone the repository, install
+[PDM](https://pdm-project.org/) using its supported installation method, and
+run:
 
 ```bash
+python3 --version
 pdm install
 ```
+
+PDM is a development tool, not a runtime requirement. To exercise only the
+installed package and examples, a standard virtual environment with
+`python -m pip install -e .` is sufficient. The complete quality tasks require
+the PDM development groups.
 
 Running
 ```bash
@@ -27,9 +35,10 @@ Add unit tests to make sure the new functionality is covered. If your functional
 
 **Before committing:**
 
-1. run `make format` to auto-format the code
-2. run `make test` to run the tests (fix any issue)
-3. run `make check` to check everything (types, docs, quality, and dependencies)
+1. run `make format` to auto-format the code;
+2. run `make test` to run the tests;
+3. run `make check` to check source types and quality, executable documentation,
+   maintained notebooks, and dependency consistency;
 4. make sure that all tests pass and the source code coverage meets our criteria
 
 Finally, in your commit message, try to use helpful keywords such as "add", "fix", "remove", "change" to describe the changes that you have proposed. This helps in generating change log documentation appropriately. You can read more about writing good commit messages [here](https://opensource.com/article/22/12/git-commit-message) and [here](https://cbea.ms/git-commit/).
@@ -37,7 +46,13 @@ Finally, in your commit message, try to use helpful keywords such as "add", "fix
 ## Continuous Integration and Development
 Pacti has continuous integration and development setup with Github Actions. Some workflows are automatically run while others are manual. Instructions for all developers:
 
-1. If you are in the process of developing a feature/fixing a bug in your own development branch: Make sure that the Pacti Development workflow passes. This will automatically be run with every commit, so you should be getting notifications of what Pacti functionality failed (if any).
-2. If you are contributing a development feature to any branch (that is, your development has finished): Run the Pacti Development Review workflow. This will test the functionality and also code quality.
-3. If you are reviewing a pull-request to the main branch from another developer: Make sure to go to the "Actions" tab and run the Pacti Pre-Production workflow manually. This workflow tests the package for functionality and quality on two Python versions.
-4. The Pacti Production workflow makes sure that the software works with all OS and all Python versions.
+1. For a feature or bug-fix branch, make sure the automatically triggered Pacti
+   Development workflow passes.
+2. Before review, run the local commands above and inspect any manually
+   triggered Development Review or Pre-Production workflow requested by a
+   maintainer.
+3. The checked-in workflows test only their explicitly configured operating
+   systems and Python versions. Do not interpret a green workflow as evidence
+   for unlisted platforms or interpreters.
+4. Package publication remains a separate maintainer-controlled process; normal
+   verification workflows must not be used to publish a distribution.
