@@ -271,7 +271,7 @@ def test(ctx, match: str = ""):
     py_version = f"{sys.version_info.major}{sys.version_info.minor}"
     os.environ["COVERAGE_FILE"] = f".coverage.{py_version}"
     ctx.run(
-        [sys.executable, "-m", "pytest", "-k", match],
+        [sys.executable, "-m", "pytest", "-c", "config/pytest.ini", "-k", match],
         title="Running tests",
         capture=False,
         pty=PTY,
