@@ -27,9 +27,9 @@ jobs:
       - name: Install dependencies
         run: pdm install
       - name: Test code
-        run: make test
+        run: pdm run make test
       - name: Compute Coverage
-        run: make coverage
+        run: pdm run make coverage
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
         with:
@@ -42,11 +42,11 @@ jobs:
           files: htmlcov/*
           verbose: true
       - name: Check types
-        run: make check-types
+        run: pdm run make check-types
       - name: Run linters on code
-        run: make check-quality
+        run: pdm run make check-quality
       - name: Check types on Jupyter notebooks
-        run: make check-jn-types
+        run: pdm run make check-jn-types
       - name: Run linters on Jupyter notebooks
-        run: make check-jn-quality
+        run: pdm run make check-jn-quality
 

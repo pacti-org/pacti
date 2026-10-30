@@ -26,13 +26,13 @@ jobs:
       - name: Install dependencies
         run: pdm install
       - name: Test code
-        run: make test
+        run: pdm run make test
       - name: Check quality, types, docs, and dependencies
-        run: make check
+        run: pdm run make check
       - name: Build wheel and source distribution
         run: pdm build
       - name: Compute Coverage
-        run: make coverage
+        run: pdm run make coverage
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
         with:

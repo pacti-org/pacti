@@ -319,6 +319,15 @@ class TermList(ABC):
 
         The default is ordinary relaxation. Specialized temporal term lists
         can override this hook when bucket provenance affects elimination.
+
+        Args:
+            context: Terms available as assumptions during elimination.
+            vars_to_elim: Variables that must not occur in the result.
+            simplify: Whether to simplify before eliminating variables.
+            tactics_order: Preferred order of elimination tactics.
+
+        Returns:
+            The relaxed terms and elimination-tactic statistics.
         """
         return self.elim_vars_by_relaxing(context, vars_to_elim, simplify, tactics_order)
 
@@ -329,7 +338,17 @@ class TermList(ABC):
         simplify: bool,
         tactics_order: List[int],
     ) -> Tuple[TermList_t, TacticStatistics]:
-        """Project quotient assumptions with divisor guarantees available."""
+        """Project quotient assumptions with divisor guarantees available.
+
+        Args:
+            context: Divisor guarantees available during projection.
+            vars_to_elim: Variables that must not occur in the result.
+            simplify: Whether to simplify before eliminating variables.
+            tactics_order: Preferred order of elimination tactics.
+
+        Returns:
+            The relaxed quotient assumptions and tactic statistics.
+        """
         combined = self | context
         empty_context = type(self)([])
         return combined.elim_vars_by_relaxing(empty_context, vars_to_elim, simplify, tactics_order)
@@ -342,7 +361,18 @@ class TermList(ABC):
         simplify: bool,
         tactics_order: List[int],
     ) -> Tuple[TermList_t, TacticStatistics]:
-        """Refine quotient guarantees in the generic combined context."""
+        """Refine quotient guarantees in the generic combined context.
+
+        Args:
+            divisor_guarantees: Guarantees supplied by the divisor contract.
+            system_assumptions: Assumptions supplied by the system contract.
+            vars_to_elim: Variables that must not occur in the result.
+            simplify: Whether to simplify before eliminating variables.
+            tactics_order: Preferred order of elimination tactics.
+
+        Returns:
+            The refined quotient guarantees and tactic statistics.
+        """
         return self.elim_vars_by_refining(
             divisor_guarantees | system_assumptions,
             vars_to_elim,

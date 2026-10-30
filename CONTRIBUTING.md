@@ -20,9 +20,10 @@ installed package and examples, a standard virtual environment with
 `python -m pip install -e .` is sufficient. The complete quality tasks require
 the PDM development groups.
 
-Running
+Run tasks through the PDM environment unless its `.venv` is already activated:
+
 ```bash
-make help
+pdm run make help
 ```
 shows all available tasks.
 
@@ -35,9 +36,9 @@ Add unit tests to make sure the new functionality is covered. If your functional
 
 **Before committing:**
 
-1. run `make format` to auto-format the code;
-2. run `make test` to run the tests;
-3. run `make check` to check source types and quality, executable documentation,
+1. run `pdm run make format` to auto-format the code;
+2. run `pdm run make test` to run the tests;
+3. run `pdm run make check` to check source types and quality, executable documentation,
    maintained notebooks, and dependency consistency;
 4. make sure that all tests pass and the source code coverage meets our criteria
 
