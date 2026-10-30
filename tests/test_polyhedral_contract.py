@@ -36,7 +36,13 @@ def test_composition_success(test_instance: str) -> None:
     print(expected)
     print("*** Obtained")
     print(obtained)
-    assert expected == obtained
+    if expected != obtained:
+        # Linear inequalities are invariant under multiplication by a positive
+        # scalar. Elimination backends can therefore return a semantically equal
+        # row with different normalization (for example, all coefficients doubled).
+        assert expected.shares_io_with(obtained)
+        assert expected.refines(obtained)
+        assert obtained.refines(expected)
 
 
 composition_failure_test_instances = glob.glob(TEST_DATA_DIR + "**/*composition_failure*.json", recursive=True)

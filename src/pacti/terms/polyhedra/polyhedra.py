@@ -1426,6 +1426,8 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         var_list, B, b, _, _ = PolyhedralTermList.termlist_to_polytope(  # noqa: WPS236, N806
             terms=context, context=PolyhedralTermList([])
         )
+        if list_diff(forbidden_vars, var_list):
+            raise ValueError("Context does not constrain every variable to eliminate")
         objective = np.array([term.get_coefficient(var) if var in forbidden_vars else 0 for var in var_list])
         if refine:
             objective *= -1
@@ -1446,7 +1448,8 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         slack = res["slack"]
         indices = np.where(np.isclose(slack, 0))[0]
 
-        assert len(indices) >= num_vars_to_elim
+        if len(indices) < num_vars_to_elim:
+            raise ValueError("Context has insufficient active constraints for elimination")
         terms_added = 0
         for index in indices:
             context_term = context.terms[index]
