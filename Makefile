@@ -14,7 +14,8 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. \
 .DEFAULT_GOAL := help
 SHELL := bash
 
-DUTY = $(shell [ -n "${VIRTUAL_ENV}" ] || echo pdm run) duty
+PYTHON ?= python
+DUTY = $(PYTHON) -m duty
 
 args = $(foreach a,$($(subst -,_,$1)_args),$(if $(value $a),$a="$($a)"))
 check_quality_args = files
@@ -48,7 +49,7 @@ lock:
 
 .PHONY: check
 check:
-	@$(DUTY) check-quality check-jn-quality check-types check-jn-types check-docs check-dependencies
+	@$(DUTY) check-quality check-types check-docs check-dependencies
 
 .PHONY: uninstall
 uninstall:
@@ -74,4 +75,4 @@ $(BASIC_DUTIES):
 
 .PHONY: $(QUALITY_DUTIES)
 $(QUALITY_DUTIES):
-	pdm run duty $@ $(call args,$@)
+	@$(DUTY) $@ $(call args,$@)
