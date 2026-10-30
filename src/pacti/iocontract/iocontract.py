@@ -308,6 +308,78 @@ class TermList(ABC):
                 of the tactic used, time spent, and tactic invocation count.
         """
 
+    def elim_vars_by_relaxing_assumptions(
+        self: TermList_t,
+        context: TermList_t,
+        vars_to_elim: List[Var],
+        simplify: bool,
+        tactics_order: List[int],
+    ) -> Tuple[TermList_t, TacticStatistics]:
+        """Relax guarantees in an assumption context during composition.
+
+        The default is ordinary relaxation. Specialized temporal term lists
+        can override this hook when bucket provenance affects elimination.
+
+        Args:
+            context: Terms available as assumptions during elimination.
+            vars_to_elim: Variables that must not occur in the result.
+            simplify: Whether to simplify before eliminating variables.
+            tactics_order: Preferred order of elimination tactics.
+
+        Returns:
+            The relaxed terms and elimination-tactic statistics.
+        """
+        return self.elim_vars_by_relaxing(context, vars_to_elim, simplify, tactics_order)
+
+    def elim_vars_by_relaxing_quotient_context(
+        self: TermList_t,
+        context: TermList_t,
+        vars_to_elim: List[Var],
+        simplify: bool,
+        tactics_order: List[int],
+    ) -> Tuple[TermList_t, TacticStatistics]:
+        """Project quotient assumptions with divisor guarantees available.
+
+        Args:
+            context: Divisor guarantees available during projection.
+            vars_to_elim: Variables that must not occur in the result.
+            simplify: Whether to simplify before eliminating variables.
+            tactics_order: Preferred order of elimination tactics.
+
+        Returns:
+            The relaxed quotient assumptions and tactic statistics.
+        """
+        combined = self | context
+        empty_context = type(self)([])
+        return combined.elim_vars_by_relaxing(empty_context, vars_to_elim, simplify, tactics_order)
+
+    def elim_vars_by_refining_quotient_context(
+        self: TermList_t,
+        divisor_guarantees: TermList_t,
+        system_assumptions: TermList_t,
+        vars_to_elim: List[Var],
+        simplify: bool,
+        tactics_order: List[int],
+    ) -> Tuple[TermList_t, TacticStatistics]:
+        """Refine quotient guarantees in the generic combined context.
+
+        Args:
+            divisor_guarantees: Guarantees supplied by the divisor contract.
+            system_assumptions: Assumptions supplied by the system contract.
+            vars_to_elim: Variables that must not occur in the result.
+            simplify: Whether to simplify before eliminating variables.
+            tactics_order: Preferred order of elimination tactics.
+
+        Returns:
+            The refined quotient guarantees and tactic statistics.
+        """
+        return self.elim_vars_by_refining(
+            divisor_guarantees | system_assumptions,
+            vars_to_elim,
+            simplify,
+            tactics_order,
+        )
+
     @abstractmethod
     def simplify(self: TermList_t, context: Optional[TermList_t] = None) -> TermList_t:
         """Remove redundant terms in TermList.
@@ -458,7 +530,7 @@ class IoContract(Generic[TermList_t]):
             raise ValueError
         return (
             self.inputvars == other.inputvars
-            and self.outputvars == self.outputvars
+            and self.outputvars == other.outputvars
             and self.a == other.a
             and self.g == other.g
         )
@@ -735,7 +807,9 @@ class IoContract(Generic[TermList_t]):
         (g2, used) = g2_t.elim_vars_by_relaxing(g1_t, intvars, simplify, tactics_order)
         tactics_used.append(used)
         allguarantees = g1 | g2
-        (allguarantees, used) = allguarantees.elim_vars_by_relaxing(assumptions, intvars, simplify, tactics_order)
+        (allguarantees, used) = allguarantees.elim_vars_by_relaxing_assumptions(
+            assumptions, intvars, simplify, tactics_order
+        )
         tactics_used.append(used)
 
         # eliminate terms with forbidden vars
@@ -831,12 +905,19 @@ class IoContract(Generic[TermList_t]):
         logging.debug("Computing quotient assumptions")
         assumptions = copy.deepcopy(self.a)
         empty_context = type(assumptions)([])
-        if assumptions.refines(other.a):
+        divisor_guarantees_are_context = assumptions.refines(other.a)
+        if divisor_guarantees_are_context:
             logging.debug("Extending top-level assumptions with divisor's guarantees")
-            assumptions = assumptions | other.g
-        (assumptions, used) = assumptions.elim_vars_by_relaxing(
-            empty_context, list_union(intvars, outputvars), simplify, tactics_order
-        )
+            (assumptions, used) = assumptions.elim_vars_by_relaxing_quotient_context(
+                other.g,
+                list_union(intvars, outputvars),
+                simplify,
+                tactics_order,
+            )
+        else:
+            (assumptions, used) = assumptions.elim_vars_by_relaxing(
+                empty_context, list_union(intvars, outputvars), simplify, tactics_order
+            )
         tactics_used.append(used)
         logging.debug("Assumptions after processing: %s", assumptions)
 
@@ -845,7 +926,13 @@ class IoContract(Generic[TermList_t]):
         guarantees: TermList_t = self.g
         logging.debug("Using existing guarantees to aid system-level guarantees")
         try:  # noqa: WPS229
-            (guarantees, used) = guarantees.elim_vars_by_refining(other.g | self.a, intvars, simplify, tactics_order)
+            (guarantees, used) = guarantees.elim_vars_by_refining_quotient_context(
+                other.g,
+                self.a,
+                intvars,
+                simplify,
+                tactics_order,
+            )
             tactics_used.append(used)
         except ValueError:
             guarantees = self.g

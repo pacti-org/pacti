@@ -1,6 +1,8 @@
 on:
   push:
     branches: ["*","!main"]
+  pull_request:
+    branches: ["main"]
 
 name: Pacti Development
 
@@ -12,7 +14,7 @@ jobs:
       max-parallel: 4
       matrix:
         os: [ubuntu-latest]
-        python-version: ["3.10"]
+        python-version: ["3.10", "3.11"]
     steps:
       - uses: actions/checkout@v3
       - name: Setup PDM
@@ -24,9 +26,13 @@ jobs:
       - name: Install dependencies
         run: pdm install
       - name: Test code
-        run: make test
+        run: pdm run make test
+      - name: Check quality, types, docs, and dependencies
+        run: pdm run make check
+      - name: Build wheel and source distribution
+        run: pdm build
       - name: Compute Coverage
-        run: make coverage
+        run: pdm run make coverage
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
         with:

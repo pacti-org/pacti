@@ -61,6 +61,8 @@ __pypackages__/
 
 data/
 output/
+experiment_out*/
+eval_*/
 
 
 
@@ -275,6 +277,7 @@ fabric.properties
 # pyenv
 .python-version
 examples/.ipynb_checkpoints/*
+examples/aeb_gr1_composition_output.txt
 
 # Draw.io
 *.bkp
