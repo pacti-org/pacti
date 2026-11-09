@@ -85,7 +85,7 @@ typing = [
     "types-markdown>=3.3",
     "types-toml>=0.10",
 ]
-security = ["safety>=2"]
+security = ["pip-audit>=2.10,<3"]
 dev = [
     "certifi>=2022.9.24",
     "tox>=4.4.7",

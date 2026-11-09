@@ -14,18 +14,6 @@ system using assume-guarantee specifications, or contracts. Pacti's capabilities
 - Computing specifications of subsystems that need to be added to a design in order to meet an objective.
 - Diagnosing incompatibilities when interconnecting components.
 
-Pacti includes typed GR(1) contracts with initial, invariant, recurring
-liveness, and bounded-next formulas. The extension supports composition,
-quotient, merge, serialization, and finite-certificate refinement. It is not a
-controller synthesizer or a complete infinite-trace realizability checker.
-`z3-solver` is installed as a normal dependency; Spot and the historical
-research artifact are optional and are not needed for the public API. The
-source distribution contains the executable quick start at
-`examples/gr1_quickstart.py` and the detailed guide at
-`docs/gr1-contracts.md`. Until maintainers announce a release containing the
-GR(1) API, install the integration branch rather than assuming the current PyPI
-package includes `GR1IoContract`.
-
 
 Documentation can be found on the project's website: www.pacti.org.
 For questions about Pacti and to interact with the community, please go to the organization's [GitHub Discussions page](https://github.com/orgs/pacti-org/discussions).
@@ -35,3 +23,6 @@ The Pacti project can be acknowledged by citing
 
 [Inigo Incer, Apurva Badithela, Josefine Graebener, Piergiuseppe Mallozzi, Ayush Pandey, Sheng-Jung Yu, Albert Benveniste, Benoit Caillaud, Richard M. Murray, Alberto Sangiovanni-Vincentelli, and Sanjit A. Seshia. 
 "Pacti: Scaling Assume-Guarantee Reasoning for System Analysis and Design." ArXiv abs/2303.17751 (2023).](https://arxiv.org/abs/2303.17751)
+
+[Yiğit Narter, Emily Zhao, and Inigo Incer.
+"Computing GR(1) Assume-Guarantee Contracts." arXiv:2610.37534 (2026).](https://arxiv.org/abs/2610.37534)

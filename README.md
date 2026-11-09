@@ -167,9 +167,9 @@ make check
 ```
 
 `make test` runs the maintained pytest suite. `make check` runs source linting,
-strict source type checking, executable documentation/notebooks, and installed
-dependency consistency. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup and CI
-details.
+strict source type checking, notebook linting and type checking, executable
+documentation/notebooks, and dependency vulnerability scanning. See
+[CONTRIBUTING.md](CONTRIBUTING.md) for setup and CI details.
 
 ## Documentation, community, and citation
 
@@ -180,13 +180,8 @@ email at info@pacti.org.
 
 The Pacti project can be acknowledged by citing:
 
-[Inigo Incer, Apurva Badithela, Josefine Graebener, Piergiuseppe Mallozzi,
-Ayush Pandey, Nicolas Rouquette, Sheng-Jung Yu, Albert Benveniste, Benoit
-Caillaud, Richard M. Murray, Alberto Sangiovanni-Vincentelli, and Sanjit A.
-Seshia. “Pacti: Assume-Guarantee Contracts for Efficient Compositional
-Analysis and Design.” ACM Transactions on Cyber-Physical Systems 9, no. 1
-(2025): 1–35.](https://doi.org/10.1145/3704736)
+[Inigo Incer, Apurva Badithela, Josefine Graebener, Piergiuseppe Mallozzi, Ayush Pandey, Nicolas Rouquette, Sheng-Jung Yu, Albert Benveniste, Benoit Caillaud, Richard M. Murray, Alberto Sangiovanni-Vincentelli, and Sanjit A. Seshia.
+"Pacti: Assume-Guarantee Contracts for Efficient Compositional Analysis and Design." ACM Transactions on Cyber-Physical Systems 9, no. 1 (2025): 1-35.](https://doi.org/10.1145/3704736)
 
-Citation metadata for the GR(1)/CAVE research extension will be added after it
-is approved by the maintainers; this pull request does not claim a conference
-status, DOI, or package release.
+[Yiğit Narter, Emily Zhao, and Inigo Incer.
+"Computing GR(1) Assume-Guarantee Contracts." arXiv:2610.37534 (2026).](https://arxiv.org/abs/2610.37534)

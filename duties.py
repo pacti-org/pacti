@@ -21,6 +21,7 @@ import os
 import pathlib
 import sys
 from pathlib import Path
+from tempfile import TemporaryDirectory
 import shutil
 
 from duty import duty
@@ -147,11 +148,40 @@ def tox(ctx):
 @duty
 def check_dependencies(ctx):
     """
-    Check installed dependency consistency.
+    Check for vulnerabilities in dependencies.
 
     Arguments:
         ctx: The context instance (passed automatically).
     """
+    # Audit the complete PDM-locked dependency set without a service account.
+    # PDM already resolved transitive dependencies, so no second resolution is needed.
+    with TemporaryDirectory(prefix="pacti-audit-") as directory:
+        requirements = str(Path(directory) / "requirements.txt")
+        ctx.run(
+            ["pdm", "export", "-f", "requirements", "-o", requirements],
+            title="Exporting dependencies as requirements",
+            allow_overrides=False,
+        )
+        ctx.run(
+            [
+                sys.executable,
+                "-m",
+                "pip_audit",
+                "--requirement", requirements,
+                "--require-hashes",
+                "--disable-pip",
+                "--strict",
+                "--progress-spinner", "off",
+            ],
+            title="Checking dependencies for vulnerabilities",
+            capture=False,
+            pty=PTY,
+        )
+
+
+@duty
+def check_dependency_consistency(ctx):
+    """Check installed requirements separately from the vulnerability audit."""
     ctx.run([sys.executable, "-m", "pip", "check"], title="Checking installed dependency consistency")
 
 
@@ -271,7 +301,7 @@ def test(ctx, match: str = ""):
     py_version = f"{sys.version_info.major}{sys.version_info.minor}"
     os.environ["COVERAGE_FILE"] = f".coverage.{py_version}"
     ctx.run(
-        [sys.executable, "-m", "pytest", "-c", "config/pytest.ini", "-k", match],
+        [sys.executable, "-m", "pytest", "-c", "config/pytest.ini", "-n", "auto", "-k", match, "tests"],
         title="Running tests",
         capture=False,
         pty=PTY,

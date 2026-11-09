@@ -303,6 +303,6 @@ notebook.
 
 This repository contains maintained source-level examples and tests, not the
 full frozen benchmark datasets or generated result directories. The historical
-TACAS reproduction artifact remains separate pending approved citation
-metadata, archival locations, and third-party redistribution review. No
-conference status, DOI, benchmark result, or package release is implied here.
+TACAS reproduction artifact remains separate pending archival locations and
+third-party redistribution review. No conference status, DOI, benchmark result,
+or package release is implied here.
