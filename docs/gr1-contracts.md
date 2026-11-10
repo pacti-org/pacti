@@ -242,8 +242,8 @@ configured tactics.
   create `examples/aeb_gr1_composition_output.txt`.
 
 The AEB source documents which numerical values are example parameters rather
-than measurements from a reference implementation. The historical TACAS
-benchmark suite is not a prerequisite for learning or using this API.
+than measurements from a reference implementation. The historical benchmark
+suite is not a prerequisite for learning or using this API.
 
 ## Optional Spot validation
 
@@ -303,6 +303,6 @@ notebook.
 
 This repository contains maintained source-level examples and tests, not the
 full frozen benchmark datasets or generated result directories. The historical
-TACAS reproduction artifact remains separate pending archival locations and
+reproduction artifact remains separate pending archival locations and
 third-party redistribution review. No conference status, DOI, benchmark result,
 or package release is implied here.
