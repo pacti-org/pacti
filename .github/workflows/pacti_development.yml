@@ -1,6 +1,8 @@
 on:
   push:
     branches: ["*","!main"]
+  pull_request:
+    branches: ["main"]
 
 name: Pacti Development
 
@@ -12,7 +14,7 @@ jobs:
       max-parallel: 4
       matrix:
         os: [ubuntu-latest]
-        python-version: ["3.10"]
+        python-version: ["3.11"]
     steps:
       - uses: actions/checkout@v3
       - name: Setup PDM
@@ -38,3 +40,7 @@ jobs:
           fail_ci_if_error: true
           files: htmlcov/*
           verbose: true
+      - name: Check quality, types, docs, and dependencies
+        run: make check
+      - name: Build wheel and source distribution
+        run: pdm build

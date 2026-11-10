@@ -17,19 +17,12 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 """
 
 import glob
-import importlib
 import os
 import pathlib
-import re
-import ssl
 import sys
-from io import StringIO
 from pathlib import Path
-from typing import List, Optional, Pattern
-from urllib.request import urlopen
+from tempfile import TemporaryDirectory
 import shutil
-
-ssl._create_default_https_context = ssl._create_unverified_context
 
 from duty import duty
 
@@ -46,8 +39,9 @@ PTY = not WINDOWS and not CI
 MYPY_FLAGS = "--allow-any-generics --implicit-reexport --allow-untyped-calls"
 FLAKE8_FLAGS_JN = "--ignore=D100,WPS226,WPS421,WPS111,BLK100,E402,WPS331,WPS221,WPS231,N806,WPS114,D212"
 
-sys.stdin.reconfigure(encoding='utf-8')
-sys.stdout.reconfigure(encoding='utf-8')
+for stream in (sys.stdin, sys.stdout):
+    if hasattr(stream, "reconfigure"):
+        stream.reconfigure(encoding="utf-8")
 
 #FLAKE8_FLAGS_JN = ""
 
@@ -126,6 +120,7 @@ def check_quality(ctx, files=PY_SRC):
     """
     """Latest Flake8 cause problems with dependencies. Suppress for now."""
     ctx.run(f"flake8 --config=config/flake8.ini {files}", title="Checking code quality", pty=PTY)
+    ctx.run(f"black --check {files}", title="Checking formatting", pty=PTY)
 
 @duty  # noqa: WPS231
 def check_jn_quality(ctx):  # noqa: WPS231
@@ -158,45 +153,36 @@ def check_dependencies(ctx):
     Arguments:
         ctx: The context instance (passed automatically).
     """
-    # undo possible patching
-    # see https://github.com/pyupio/safety/issues/348
-    for module in sys.modules:  # noqa: WPS528
-        if module.startswith("safety.") or module == "safety":
-            del sys.modules[module]  # noqa: WPS420
-
-    importlib.invalidate_caches()
-
-    # reload original, unpatched safety
-    from safety.formatter import SafetyFormatter
-    from safety.safety import calculate_remediations
-    from safety.safety import check as safety_check
-    from safety.util import read_requirements
-
-    # retrieve the list of dependencies
-    requirements = ctx.run(
-        ["pdm", "export", "-f", "requirements", "--without-hashes"],
-        title="Exporting dependencies as requirements",
-        allow_overrides=False,
-    )
-
-    # check using safety as a library
-    def safety():  # noqa: WPS430
-        packages = list(read_requirements(StringIO(requirements)))
-        vulns, db_full = safety_check(packages=packages, ignore_vulns="")
-        remediations = calculate_remediations(vulns, db_full)
-        output_report = SafetyFormatter("text").render_vulnerabilities(
-            announcements=[],
-            vulnerabilities=vulns,
-            remediations=remediations,
-            full=True,
-            packages=packages,
+    # Audit the complete PDM-locked dependency set without a service account.
+    # PDM already resolved transitive dependencies, so no second resolution is needed.
+    with TemporaryDirectory(prefix="pacti-audit-") as directory:
+        requirements = str(Path(directory) / "requirements.txt")
+        ctx.run(
+            ["pdm", "export", "-f", "requirements", "-o", requirements],
+            title="Exporting dependencies as requirements",
+            allow_overrides=False,
         )
-        if vulns:
-            print(output_report)
-            return False
-        return True
+        ctx.run(
+            [
+                sys.executable,
+                "-m",
+                "pip_audit",
+                "--requirement", requirements,
+                "--require-hashes",
+                "--disable-pip",
+                "--strict",
+                "--progress-spinner", "off",
+            ],
+            title="Checking dependencies for vulnerabilities",
+            capture=False,
+            pty=PTY,
+        )
 
-    ctx.run(safety, title="Checking dependencies")
+
+@duty
+def check_dependency_consistency(ctx):
+    """Check installed requirements separately from the vulnerability audit."""
+    ctx.run([sys.executable, "-m", "pip", "check"], title="Checking installed dependency consistency")
 
 
 
@@ -209,7 +195,7 @@ def check_types(ctx):  # noqa: WPS231
     Arguments:
         ctx: The context instance (passed automatically).
     """
-    ctx.run(f"mypy --strict {MYPY_FLAGS} --config-file=config/mypy.ini {PY_SRC}", title="Type-checking", pty=PTY)
+    ctx.run(f"mypy --strict {MYPY_FLAGS} --config-file=config/mypy.ini src", title="Type-checking", pty=PTY)
 
 
 @duty  # noqa: WPS231
@@ -315,7 +301,14 @@ def test(ctx, match: str = ""):
     py_version = f"{sys.version_info.major}{sys.version_info.minor}"
     os.environ["COVERAGE_FILE"] = f".coverage.{py_version}"
     ctx.run(
-        ["pytest", "-c", "config/pytest.ini", "-n", "auto", "-k", match, "tests"],
+        [sys.executable, "-m", "pytest", "-c", "config/pytest.ini", "-n", "auto", "-k", match, "tests"],
         title="Running tests",
+        capture=False,
         pty=PTY,
     )
+
+
+@duty
+def check_docs(ctx):
+    """Execute maintained documentation examples without rewriting them."""
+    ctx.run([sys.executable, "scripts/check_docs.py"], title="Checking executable documentation", pty=PTY)

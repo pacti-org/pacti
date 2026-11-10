@@ -9,7 +9,9 @@ authors = [{name = "Pacti developers", email = "info@pacti.org"}]
 license = "BSD-3-Clause"
 readme = "docs/dist-README.md"
 classifiers = [
-    "Topic :: Scientific/Engineering"
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering",
 ]
 keywords = ["system design", "contracts", "compositional"]
 dynamic = ["version"]
@@ -23,7 +25,7 @@ dependencies = [
     "pyparsing>=3.3.2",
     "z3-solver>=5.0.0.0"
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 
 
 [project.urls]
@@ -36,16 +38,25 @@ documentation = "https://www.pacti.org"
 package-dir = "src"
 version = { source = "file", path = "src/pacti/__version__.py" }
 
+[tool.pdm.resolution.overrides]
+filelock = ">=4.2.10"
+pillow = ">=13.0.0"
+tornado = ">=6.6.1"
+
 [tool.pdm.build]
 package-dir = "src"
 editable-backend = "editables"
+source-includes = [
+    "README.md", "CONTRIBUTING.md", "CHANGELOG.md", "docs", "tests",
+    "examples", "config", "scripts", "Makefile", "duties.py",
+]
 
 [tool.pdm.dev-dependencies]
 duty = ["duty>=0.7"]
 
 format = [
-    "autoflake>=1.4",
-    "black>=21.10b0",
+    "autoflake>=1.4,<2.0",
+    "black>=26.10.1,<27.0",
     "isort>=5.10",
 ]
 maintain = [
@@ -54,7 +65,8 @@ maintain = [
 ]
 quality = [
     "darglint>=1.8",
-    "flake8>=5.0.0",
+    # WPS Light currently registers pre-Flake8-6 option types.
+    "flake8>=5.0.0,<6.0.0",
     "flake8-bandit",
     "flake8-black",
     "flake8-bugbear",
@@ -80,12 +92,14 @@ typing = [
     "types-markdown>=3.3",
     "types-toml>=0.10",
 ]
-security = ["safety>=2"]
+security = ["pip-audit>=2.10,<3"]
 dev = [
     "certifi>=2022.9.24",
     "tox>=4.4.7",
     "editables>=0.3",
-    "ipykernel"
+    "ipykernel",
+    # Required by the dependency-consistency check in duties.py.
+    "pip>=23.1"
 ]
 
 [tool.black]

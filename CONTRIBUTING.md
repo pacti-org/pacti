@@ -6,17 +6,28 @@ If we decide to move forward with the changes, please fork the repo and open a p
 
 ## Installation
 
-Clone the repo and run
+Pacti requires Python 3.11 or newer. Install [PDM](https://pdm-project.org/), clone the repo and run
 
 ```bash
 pdm install
 ```
+
+The Makefile uses PDM automatically unless a virtual environment is already active.
+If you activate a virtual environment, use the one populated by `pdm install`.
 
 Running
 ```bash
 make help
 ```
 shows all available tasks.
+
+`make check-dependencies` (also included in `make check`) exports the PDM lock
+and checks for known dependency vulnerabilities with
+[pip-audit](https://github.com/pypa/pip-audit). It requires network access to
+PyPI's public advisory API, but no account or API key. Vulnerabilities and
+incomplete or failed scans fail the check.
+`make check-dependency-consistency` separately checks installed requirement
+compatibility with `pip check`; it does not check for vulnerabilities.
 
 ## Development
 
@@ -39,5 +50,5 @@ Pacti has continuous integration and development setup with Github Actions. Some
 
 1. If you are in the process of developing a feature/fixing a bug in your own development branch: Make sure that the Pacti Development workflow passes. This will automatically be run with every commit, so you should be getting notifications of what Pacti functionality failed (if any).
 2. If you are contributing a development feature to any branch (that is, your development has finished): Run the Pacti Development Review workflow. This will test the functionality and also code quality.
-3. If you are reviewing a pull-request to the main branch from another developer: Make sure to go to the "Actions" tab and run the Pacti Pre-Production workflow manually. This workflow tests the package for functionality and quality on two Python versions.
-4. The Pacti Production workflow makes sure that the software works with all OS and all Python versions.
+3. If you are reviewing a pull-request to the main branch from another developer: Make sure to go to the "Actions" tab and run the Pacti Pre-Production workflow manually. This workflow tests the package for functionality and quality on the configured Python version.
+4. The Pacti Production workflow makes sure that the software works with all configured OS and Python versions (Windows, Ubuntu, and macOS; Python 3.11).

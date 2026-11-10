@@ -338,7 +338,7 @@ def one_envelope(m_dot_e: float, m_dot_in: float, m_dot_a: float):
     print("**************************************")
     print("** Composition:")
     print(f"s4={show_contract(s4)}")
-    exit()
+    return s4  # This legacy demonstration intentionally stops at the fourth stage.
 
     
     s5 = s4.compose(fs)
@@ -354,10 +354,11 @@ def one_envelope(m_dot_e: float, m_dot_in: float, m_dot_a: float):
     print(f"s={show_contract(s)}")
     return s
 
-m_dot_e_v = list(map(engine_fuel_flow, [5000, 10000, 15000, 20000]))
+if __name__ == "__main__":
+    m_dot_e_v = list(map(engine_fuel_flow, [5000, 10000, 15000, 20000]))
 
-m_dot_e=m_dot_e_v[0]
-m_dot_in=2
-m_dot_a=2
-if (m_dot_in > m_dot_e):
-    one_envelope(m_dot_e, m_dot_in, m_dot_a)
+    m_dot_e = m_dot_e_v[0]
+    m_dot_in = 2
+    m_dot_a = 2
+    if m_dot_in > m_dot_e:
+        one_envelope(m_dot_e, m_dot_in, m_dot_a)

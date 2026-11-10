@@ -25,6 +25,7 @@ test_args = match
 BASIC_DUTIES = \
 	changelog \
 	check-dependencies \
+	check-dependency-consistency \
 	clean \
 	coverage \
 	format \

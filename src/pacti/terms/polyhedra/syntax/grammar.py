@@ -318,8 +318,13 @@ plus, minus, mult, div = map(pp.Literal, "+-*/")
 arithmetic_expr = pp.infixNotation(
     floating_point_number,
     [
-        (mult | div, 2, pp.opAssoc.LEFT, lambda s, l, t: t[0][0] * t[0][2] if t[0][1] == "*" else t[0][0] / t[0][2]),
-        (plus | minus, 2, pp.opAssoc.LEFT, lambda s, l, t: t[0][0] + t[0][2] if t[0][1] == "+" else t[0][0] - t[0][2]),
+        (mult | div, 2, pp.opAssoc.LEFT, lambda s, loc, t: t[0][0] * t[0][2] if t[0][1] == "*" else t[0][0] / t[0][2]),
+        (
+            plus | minus,
+            2,
+            pp.opAssoc.LEFT,
+            lambda s, loc, t: t[0][0] + t[0][2] if t[0][1] == "+" else t[0][0] - t[0][2],
+        ),
     ],
 )
 

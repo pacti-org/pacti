@@ -36,7 +36,31 @@ def test_composition_success(test_instance: str) -> None:
     print(expected)
     print("*** Obtained")
     print(obtained)
-    assert expected == obtained
+    if expected != obtained:
+        # Linear inequalities are invariant under multiplication by a positive
+        # scalar. Elimination backends can therefore return a semantically equal
+        # row with different normalization (for example, all coefficients doubled).
+        assert expected.shares_io_with(obtained)
+        assert expected.refines(obtained)
+        assert obtained.refines(expected)
+
+
+def test_composition_tactic_5_uses_sufficient_active_context() -> None:
+    source = PolyhedralIoContract.from_strings(input_vars=[], output_vars=["x"], assumptions=[], guarantees=["x = 1"])
+    consumer = PolyhedralIoContract.from_strings(
+        input_vars=["x"], output_vars=["y"], assumptions=[], guarantees=["y <= x"]
+    )
+
+    composed, tactics = source.compose_tactics(consumer, simplify=False, tactics_order=[5, 7])
+    expected = PolyhedralIoContract.from_strings(
+        input_vars=[], output_vars=["y"], assumptions=[], guarantees=["y <= 1"]
+    )
+
+    # The consumer guarantee has a bounded optimum with enough active context
+    # to eliminate x via tactic 5, rather than falling back to tactic 7.
+    assert [tactic for tactic, _, _ in tactics[2]] == [5]
+    assert composed.refines(expected)
+    assert expected.refines(composed)
 
 
 composition_failure_test_instances = glob.glob(TEST_DATA_DIR + "**/*composition_failure*.json", recursive=True)

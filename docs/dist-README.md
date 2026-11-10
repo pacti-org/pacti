@@ -23,3 +23,6 @@ The Pacti project can be acknowledged by citing
 
 [Inigo Incer, Apurva Badithela, Josefine Graebener, Piergiuseppe Mallozzi, Ayush Pandey, Sheng-Jung Yu, Albert Benveniste, Benoit Caillaud, Richard M. Murray, Alberto Sangiovanni-Vincentelli, and Sanjit A. Seshia. 
 "Pacti: Scaling Assume-Guarantee Reasoning for System Analysis and Design." ArXiv abs/2303.17751 (2023).](https://arxiv.org/abs/2303.17751)
+
+[Yiğit Narter, Emily Zhao, and Inigo Incer.
+"Computing GR(1) Assume-Guarantee Contracts." arXiv:2610.37534 (2026).](https://arxiv.org/abs/2610.37534)
