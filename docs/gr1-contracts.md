@@ -22,7 +22,7 @@ justice obligation: `liv: ["p", "q"]` means `GF p & GF q`, not
 
 ## Install the integration branch
 
-Python 3.10 or newer is required. While the GR(1) pull request is under review,
+Python 3.11 or newer is required. While the GR(1) pull request is under review,
 the released PyPI package may not contain this API. Use an isolated source
 checkout of the integration branch:
 

@@ -6,7 +6,7 @@ If we decide to move forward with the changes, please fork the repo and open a p
 
 ## Installation
 
-Pacti requires Python 3.10 or newer. Install [PDM](https://pdm-project.org/), clone the repo and run
+Pacti requires Python 3.11 or newer. Install [PDM](https://pdm-project.org/), clone the repo and run
 
 ```bash
 pdm install
@@ -50,5 +50,5 @@ Pacti has continuous integration and development setup with Github Actions. Some
 
 1. If you are in the process of developing a feature/fixing a bug in your own development branch: Make sure that the Pacti Development workflow passes. This will automatically be run with every commit, so you should be getting notifications of what Pacti functionality failed (if any).
 2. If you are contributing a development feature to any branch (that is, your development has finished): Run the Pacti Development Review workflow. This will test the functionality and also code quality.
-3. If you are reviewing a pull-request to the main branch from another developer: Make sure to go to the "Actions" tab and run the Pacti Pre-Production workflow manually. This workflow tests the package for functionality and quality on two Python versions.
-4. The Pacti Production workflow makes sure that the software works with all configured OS and Python versions (Windows, Ubuntu, and macOS; Python 3.10 and 3.11).
+3. If you are reviewing a pull-request to the main branch from another developer: Make sure to go to the "Actions" tab and run the Pacti Pre-Production workflow manually. This workflow tests the package for functionality and quality on the configured Python version.
+4. The Pacti Production workflow makes sure that the software works with all configured OS and Python versions (Windows, Ubuntu, and macOS; Python 3.11).

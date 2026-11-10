@@ -27,7 +27,7 @@ internal variables during contract operations.
 
 ## Installation
 
-Pacti requires Python 3.10 or newer. Check the interpreter before creating an
+Pacti requires Python 3.11 or newer. Check the interpreter before creating an
 isolated environment:
 
 ```console
