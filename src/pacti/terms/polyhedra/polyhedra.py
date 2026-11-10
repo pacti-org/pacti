@@ -705,7 +705,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
         else:
             termlist = self.copy()
         try:
-            (termlist, tactics_data) = termlist._transform(
+            termlist, tactics_data = termlist._transform(
                 context=context, vars_to_elim=vars_to_elim, refine=False, simplify=simplify, tactics_order=tactics_order
             )
         except ValueError as e:
@@ -830,7 +830,7 @@ class PolyhedralTermList(TermList):  # noqa: WPS338
                 copy_new_terms.terms.remove(term)
                 helpers = context | copy_new_terms
                 try:
-                    (new_term, tactic_num, tactic_time, tactic_count) = PolyhedralTermList._transform_term(
+                    new_term, tactic_num, tactic_time, tactic_count = PolyhedralTermList._transform_term(
                         term, helpers, vars_to_elim, refine, tactics_order
                     )
                 except ValueError:

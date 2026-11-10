@@ -762,7 +762,7 @@ class IoContract(Generic[TermList_t]):
             raise IncompatibleArgsError("Cannot compose contracts due to feedback")
         elif self_helps_other and not other_helps_self:
             logging.debug("Assumption computation: self provides context for other")
-            (new_a, used) = other.a.elim_vars_by_refining(
+            new_a, used = other.a.elim_vars_by_refining(
                 self.a | self.g, assumptions_forbidden_vars, simplify=True, tactics_order=tactics_order
             )
             tactics_used.append(used)
@@ -776,7 +776,7 @@ class IoContract(Generic[TermList_t]):
             assumptions = new_a | self.a
         elif other_helps_self and not self_helps_other:
             logging.debug("****** Assumption computation: other provides context for self")
-            (new_a, used) = self.a.elim_vars_by_refining(
+            new_a, used = self.a.elim_vars_by_refining(
                 other.a | other.g, assumptions_forbidden_vars, simplify=True, tactics_order=tactics_order
             )
             tactics_used.append(used)
@@ -802,12 +802,12 @@ class IoContract(Generic[TermList_t]):
         logging.debug("****** Computing guarantees")
         g1_t = self.g.copy()
         g2_t = other.g.copy()
-        (g1, used) = g1_t.elim_vars_by_relaxing(g2_t, intvars, simplify, tactics_order)
+        g1, used = g1_t.elim_vars_by_relaxing(g2_t, intvars, simplify, tactics_order)
         tactics_used.append(used)
-        (g2, used) = g2_t.elim_vars_by_relaxing(g1_t, intvars, simplify, tactics_order)
+        g2, used = g2_t.elim_vars_by_relaxing(g1_t, intvars, simplify, tactics_order)
         tactics_used.append(used)
         allguarantees = g1 | g2
-        (allguarantees, used) = allguarantees.elim_vars_by_relaxing_assumptions(
+        allguarantees, used = allguarantees.elim_vars_by_relaxing_assumptions(
             assumptions, intvars, simplify, tactics_order
         )
         tactics_used.append(used)
@@ -908,14 +908,14 @@ class IoContract(Generic[TermList_t]):
         divisor_guarantees_are_context = assumptions.refines(other.a)
         if divisor_guarantees_are_context:
             logging.debug("Extending top-level assumptions with divisor's guarantees")
-            (assumptions, used) = assumptions.elim_vars_by_relaxing_quotient_context(
+            assumptions, used = assumptions.elim_vars_by_relaxing_quotient_context(
                 other.g,
                 list_union(intvars, outputvars),
                 simplify,
                 tactics_order,
             )
         else:
-            (assumptions, used) = assumptions.elim_vars_by_relaxing(
+            assumptions, used = assumptions.elim_vars_by_relaxing(
                 empty_context, list_union(intvars, outputvars), simplify, tactics_order
             )
         tactics_used.append(used)
@@ -926,7 +926,7 @@ class IoContract(Generic[TermList_t]):
         guarantees: TermList_t = self.g
         logging.debug("Using existing guarantees to aid system-level guarantees")
         try:  # noqa: WPS229
-            (guarantees, used) = guarantees.elim_vars_by_refining_quotient_context(
+            guarantees, used = guarantees.elim_vars_by_refining_quotient_context(
                 other.g,
                 self.a,
                 intvars,
@@ -940,7 +940,7 @@ class IoContract(Generic[TermList_t]):
         logging.debug("Using system-level assumptions to aid quotient guarantees")
         guarantees = guarantees | other.a
         try:  # noqa: WPS229
-            (guarantees, used) = guarantees.elim_vars_by_refining(self.a, intvars, simplify, tactics_order)
+            guarantees, used = guarantees.elim_vars_by_refining(self.a, intvars, simplify, tactics_order)
             tactics_used.append(used)
         except ValueError:
             ...
