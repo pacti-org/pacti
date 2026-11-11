@@ -8,7 +8,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 <!-- insertion marker -->
 ## [0.4.0](https://github.com/pacti-org/pacti/releases/tag/0.4.0) - 2026-11-10
 
-<small>[Compare with 0.3.1](https://github.com/pacti-org/pacti/compare/0.3.1...0.4.0)</small>
+<small>[Compare with latest](https://github.com/pacti-org/pacti/compare/0.3.1...HEAD)</small>
+
+### Added
+
+- Added implementation of GR(1) contracts (by Yigit Narter)
+
 
 ### Fixed
 
