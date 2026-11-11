@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 <!-- insertion marker -->
+## Unreleased
+
+<small>[Compare with latest](https://github.com/pacti-org/pacti/compare/0.3.1...HEAD)</small>
+
+### Added
+
+- Added implementation of GR(1) contracts (by Yigit Narter)
+
+
+### Fixed
+
+- fix: address maintainer review and restore upstream conventions ([76edf9f](https://github.com/pacti-org/pacti/commit/76edf9fd841a5b6e5ce51d3a9ae0349b0589a90e) by Yiğit Narter).
+
+<!-- insertion marker -->
+
 ## [0.3.1](https://github.com/pacti-org/pacti/releases/tag/0.3.1) - 2026-07-22
 
 <small>[Compare with 0.3.0](https://github.com/pacti-org/pacti/compare/0.3.0...0.3.1)</small>
