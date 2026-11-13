@@ -1,7 +1,17 @@
-"""Final manuscript-conformance AEB audit using the repository's GR(1) algebra.
+"""Reproduce the manuscript's C_T and clearance-prediction AEB example.
 
-Run with ``PYTHONPATH=src .venv/bin/python -u examples/aeb_predicted_clearance.py``.
-Only the baseline factories are imported; no baseline or core file is mutated.
+See Sections 2.5 and 5.1 of "Computing GR(1) Assume-Guarantee Contracts"
+(arXiv:2610.37534) and examples/README.md for the paper-to-code mapping.
+The given C_S and C_V come from aeb_gr1_composition.py; make_prediction()
+adds C_D. Composition exposes predicted clearance z. The quotient C_T / C_V
+computes a missing supervisor contract, not the predictor. The audit checks
+C_S <= Q, C_V || Q <= C_T, and C_S || C_V <= C_T.
+
+Run from the repository root with ``python examples/aeb_predicted_clearance.py``.
+This writes a detailed report beside the script and measures ten repetitions,
+using instrumentation from gr1_cave_scalability.py. For a shorter check, run
+``python -m pytest -q tests/test_aeb_predicted_clearance.py``.
+Observation helpers delegate to the unchanged production operations.
 """
 
 from __future__ import annotations

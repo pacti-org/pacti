@@ -27,26 +27,15 @@ internal variables during contract operations.
 
 ## Installation
 
-Pacti requires Python 3.11 or newer. Check the interpreter before creating an
-isolated environment:
+Pacti requires Python 3.11 or newer. Install the published package with:
 
 ```console
-python3 --version
-git clone https://github.com/pacti-org/pacti.git
-cd pacti
-git switch feature/gr1-contracts
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -e .
-python -c "from pacti.iocontract import GR1IoContract; print('GR(1) import: OK')"
+pip install pacti
 ```
 
-On Windows PowerShell, activate the environment with
-`.venv\Scripts\Activate.ps1`. The branch-selection command is temporary while
-the GR(1) pull request is under review. The currently published PyPI package
-may not yet contain `GR1IoContract`; until a release containing this work is
-announced, install the feature branch or a local checkout as shown above.
+Typed GR(1) contracts are available starting with Pacti 0.4.0. To run the
+repository examples, clone this repository and run the commands from its root
+using the environment where Pacti is installed.
 
 `z3-solver` is a declared dependency and supplies the Python bindings used by
 GR(1); no separate Z3 executable is needed. Spot, Docker, and PDM are not
@@ -55,65 +44,42 @@ optional research and development tools.
 
 ## Quick start
 
-This standalone example declares a Boolean request/grant contract. Environment
-assumptions may mention only inputs; guarantees may relate inputs and outputs.
-The three buckets mean “initially,” “at every step,” and “infinitely often.”
-`X(grant)` denotes the grant value at the next step.
+This GR(1) example connects two Boolean components through an internal wire.
+Each component copies its input to its output at every step; composition
+eliminates the wire and computes the relation between request and response.
 
 ```python
 from pacti.iocontract import GR1IoContract
 
-request_grant = GR1IoContract.from_dict({
-    "input_vars": ["request"],
-    "output_vars": ["grant"],
-    "variable_sorts": {"request": "bool", "grant": "bool"},
-    "assumptions": {
-        "init": ["!request"],
-        "liv": ["request"],
-    },
-    "guarantees": {
-        "init": ["!grant"],
-        "inv": ["request -> X(grant)"],
-        "liv": ["grant"],
-    },
-})
+def connector(input_name, output_name):
+    return GR1IoContract.from_dict({
+        "input_vars": [input_name],
+        "output_vars": [output_name],
+        "variable_sorts": {input_name: "bool", output_name: "bool"},
+        "assumptions": {},
+        "guarantees": {"inv": [f"{output_name} = {input_name}"]},
+    })
 
-print(request_grant.to_pretty_string())
-assert [variable.name for variable in request_grant.inputvars] == ["request"]
-assert [variable.name for variable in request_grant.outputvars] == ["grant"]
-
-# An implementation with a stronger same-step guarantee refines its spec.
-specification = GR1IoContract.from_dict({
-    "input_vars": ["request"],
-    "output_vars": ["grant"],
-    "variable_sorts": {"request": "bool", "grant": "bool"},
-    "assumptions": {},
-    "guarantees": {"inv": ["request -> grant"]},
-})
-implementation = GR1IoContract.from_dict({
-    "input_vars": ["request"],
-    "output_vars": ["grant"],
-    "variable_sorts": {"request": "bool", "grant": "bool"},
-    "assumptions": {},
-    "guarantees": {"inv": ["grant = request"]},
-})
-assert implementation.refines(specification)
+producer = connector("request", "wire")
+consumer = connector("wire", "response")
+system = producer.compose(consumer)
+print(system.g.to_pretty_string())
 ```
 
-A successful `refines` call is a sound finite-certificate proof. A `False`
-result is inconclusive in general: the refinement may be false, or the
-implemented finite search may not find a certificate. This is distinct from
-checking whether assumptions are locally satisfiable, and from solving the
-infinite-trace controller-realizability game.
+```text
+INV:
+  □(response = request)
+```
 
-Run the complete tutorial after installation:
+The composed contract has input `request`, output `response`, and no
+assumptions. See the [GR(1) getting started guide](docs/gr1-contracts.md) and
+[example index](examples/README.md) for temporal requirements, quotient,
+refinement, and larger systems. The executable
+[quick start](examples/gr1_quickstart.py) also covers merge and serialization:
 
 ```console
 python examples/gr1_quickstart.py
 ```
-
-It demonstrates inspection, bounded-next temporal formulas, composition,
-quotient, merge, refinement, and serialization with semantic assertions.
 
 ## Supported contract types and operations
 
@@ -131,16 +97,13 @@ unsupported quantifier-elimination results raise an explicit error instead of
 being treated as a proof.
 
 Read the [GR(1) contracts guide](docs/gr1-contracts.md) for syntax, operation
-semantics, limitations, and troubleshooting. The executable
-[contract-operations walkthrough](examples/gr1_contract_operations.py) covers
-lower-level parsing and CAVE behavior. The
-[AEB case study](examples/aeb_gr1_composition.py) demonstrates composition and
-quotient in an engineering example without requiring the historical research
-artifact:
-
-```console
-python examples/aeb_gr1_composition.py --no-report
-```
+semantics, and limitations. Refinement uses sound, incomplete finite-certificate
+checks; see [Refinement](docs/gr1-contracts.md#refinement) for interpreting results.
+The [AEB composition case study](examples/aeb_gr1_composition.py) computes a
+system specification from supervisor and vehicle contracts. The
+[manuscript example](examples/README.md#aeb-quotient-and-manuscript-example)
+adds clearance prediction and the safety target `C_T`, and verifies the
+quotient and target-refinement results from the [GR(1) paper](https://arxiv.org/abs/2610.37534).
 
 ## Dependencies
 
@@ -154,7 +117,7 @@ python examples/aeb_gr1_composition.py --no-report
   selected independent temporal checks. Do not install the unrelated package
   named `spot` from PyPI; follow the
   [official Spot installation instructions](https://spot.lre.epita.fr/install.html).
-  Historical TACAS experiments and their container/data prerequisites are not
+  Historical experiments and their container/data prerequisites are not
   needed for the public API examples.
 
 ## Development and testing

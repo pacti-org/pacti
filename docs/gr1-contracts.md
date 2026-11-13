@@ -20,20 +20,17 @@ Entries in a bucket are conjoined. Each liveness entry remains a distinct
 justice obligation: `liv: ["p", "q"]` means `GF p & GF q`, not
 `GF (p & q)`.
 
-## Install the integration branch
+## Installation
 
-Python 3.11 or newer is required. While the GR(1) pull request is under review,
-the released PyPI package may not contain this API. Use an isolated source
-checkout of the integration branch:
+Python 3.11 or newer is required. GR(1) support is included in Pacti 0.4.0
+and later. To install the published package and run the repository examples:
 
 ```console
 git clone https://github.com/pacti-org/pacti.git
 cd pacti
-git switch feature/gr1-contracts
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -e .
+python -m pip install pacti
 python examples/gr1_quickstart.py
 ```
 
@@ -232,18 +229,13 @@ configured tactics.
 
 ## Examples
 
-- `python examples/gr1_quickstart.py` — beginner workflow with semantic checks.
-- `python examples/gr1_contract_operations.py` — parsing, bounded behaviors,
-  renaming, CAVE refinement/relaxation, composition, quotient, and round trip.
-- `python examples/aeb_gr1_composition.py --no-report` — nontrivial automated
-  emergency-braking composition and quotient. It shows how supervisor and
-  vehicle contracts expose only the external distance/mode-to-speed interface
-  after internal command variables are hidden. Omit `--no-report` to also
-  create `examples/aeb_gr1_composition_output.txt`.
-
-The AEB source documents which numerical values are example parameters rather
-than measurements from a reference implementation. The historical benchmark
-suite is not a prerequisite for learning or using this API.
+The [example index](../examples/README.md) distinguishes the quick start,
+introductory composition, AEB case studies, and CAVE research tools, with
+execution commands and dependencies. In particular,
+[`aeb_predicted_clearance.py`](../examples/aeb_predicted_clearance.py)
+reproduces the manuscript's clearance-prediction composition and `C_T / C_V`
+quotient; [`aeb_gr1_composition.py`](../examples/aeb_gr1_composition.py)
+uses the composed system itself as its quotient target.
 
 ## Optional Spot validation
 
@@ -263,8 +255,8 @@ above.
 ## Troubleshooting
 
 - **`ImportError` for `GR1IoContract`:** confirm that the active interpreter is
-  using this branch's checkout. The currently released PyPI package may not yet
-  expose GR(1).
+  using Pacti 0.4.0 or newer; upgrade an older installation with
+  `python -m pip install --upgrade pacti`.
 - **Sort or interface error:** inspect `input_vars`, `output_vars`, and
   `variable_sorts` on both operands. Connected names must have the same sort,
   and two composed components cannot both control the same output.

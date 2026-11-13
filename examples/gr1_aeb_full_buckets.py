@@ -5,7 +5,19 @@ the stored post-CAVE contract, and the assumption-relative Unicode display.
 All predictions are checked semantically with Z3; a mismatch is reported and
 never patched into the GR(1) implementation.
 
-Run with ``PYTHONPATH=src .venv/bin/python examples/gr1_aeb_full_buckets.py``.
+Retained as a fixture provider for tests/test_gr1_aeb_full_buckets.py.
+This historical supervisor/actuator model is separate from the manuscript's
+C_T/clearance-prediction example in aeb_predicted_clearance.py.
+
+Some hand-written quotient predictions below are obsolete: they omit a second
+recurrence assumption and successor-state context, or compare reduced buckets
+without the invariants used in reduction. Quotient need not recover the
+original actuator. The script reports these mismatches as OVERALL: FAIL but
+does not set a failing exit status. Use the maintained regression tests for
+current canonical-bucket and finite-window expectations.
+
+Run with ``python examples/gr1_aeb_full_buckets.py`` from the repository root;
+verify with ``python -m pytest -q tests/test_gr1_aeb_full_buckets.py``.
 """
 
 from __future__ import annotations

@@ -15,6 +15,10 @@ Example architecture
 The complete supervisor/vehicle interface is internal to composition.  The
 composed system therefore exposes only ``(d, URG, WRN) -> v``.
 
+The quotient here uses that composition as its target: C_COMP / C_V.
+For the manuscript's safety target C_T, clearance predictor C_D, and quotient
+C_T / C_V, run aeb_predicted_clearance.py, which reuses these component factories.
+
 The vehicle requires the mode-indexed command protocol described in
 ``make_vehicle``.  Universal compatibility generates the clear-road
 environment condition ``d >= 20``.
